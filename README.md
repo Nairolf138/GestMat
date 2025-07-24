@@ -9,8 +9,9 @@ Skeleton application for managing stage equipment sharing among theatres.
 
 ## Getting Started
 
-1. Copy `backend/.env.example` to `backend/.env` and edit values if needed.
-2. Install dependencies and start the API:
+1. Make sure MongoDB is running locally (e.g. `docker run -p 27017:27017 mongo`).
+2. Copy `backend/.env.example` to `backend/.env` and edit values if needed.
+3. Install dependencies and start the API:
 
    ```bash
    cd backend
@@ -18,7 +19,7 @@ Skeleton application for managing stage equipment sharing among theatres.
    npm start
    ```
 
-3. In another terminal, start the frontend:
+4. In another terminal, start the frontend:
 
    ```bash
    cd frontend
