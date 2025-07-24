@@ -13,7 +13,8 @@ filtered by name, type and location to quickly find the right items.
 
 ## Getting Started
 
-1. Copy `backend/.env.example` to `backend/.env` and edit values if needed.
+1. Copy `backend/.env.example` to `backend/.env` and edit values if needed. Copy
+   `frontend/.env.example` to `frontend/.env` as well.
 2. Install dependencies and start the API:
 
    ```bash
@@ -22,12 +23,19 @@ filtered by name, type and location to quickly find the right items.
    npm start
    ```
 
-3. In another terminal, start the frontend:
+3. In another terminal, start the frontend for development:
 
    ```bash
    cd frontend
    npm install
    npm run dev
+   ```
+
+4. To build the frontend for production:
+
+   ```bash
+   cd frontend
+   npm run build
    ```
 
 The React app runs on [http://localhost:3000](http://localhost:3000) and expects the API on port `5000` by default.
