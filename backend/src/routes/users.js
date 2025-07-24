@@ -6,7 +6,11 @@ const router = express.Router();
 
 router.get('/', auth('admin'), async (req, res) => {
   const users = await User.find().populate('structure');
-  res.json(users);
+  const sanitized = users.map((u) => {
+    const { password: _pw, ...data } = u.toObject();
+    return data;
+  });
+  res.json(sanitized);
 });
 
 router.delete('/:id', auth('admin'), async (req, res) => {
