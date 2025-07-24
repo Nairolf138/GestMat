@@ -5,7 +5,13 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 router.get('/', auth(), async (req, res) => {
-  const equipments = await Equipment.find().populate('structure');
+  const search = req.query.search || '';
+  const filter = search
+    ? { name: { $regex: search, $options: 'i' } }
+    : {};
+  const equipments = await Equipment.find(filter)
+    .sort({ name: 1 })
+    .populate('structure');
   res.json(equipments);
 });
 
