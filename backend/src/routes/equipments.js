@@ -1,14 +1,12 @@
 const express = require('express');
 const Equipment = require('../models/Equipment');
 const auth = require('../middleware/auth');
+const createEquipmentFilter = require('../utils/createEquipmentFilter');
 
 const router = express.Router();
 
 router.get('/', auth(), async (req, res) => {
-  const search = req.query.search || '';
-  const filter = search
-    ? { name: { $regex: search, $options: 'i' } }
-    : {};
+  const filter = createEquipmentFilter(req.query);
   const equipments = await Equipment.find(filter)
     .sort({ name: 1 })
     .populate('structure');
