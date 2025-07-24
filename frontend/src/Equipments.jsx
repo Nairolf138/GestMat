@@ -5,16 +5,23 @@ import AddEquipment from './AddEquipment';
 function Equipments() {
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState('');
+  const [type, setType] = useState('');
+  const [location, setLocation] = useState('');
 
   const fetchItems = () => {
-    api(`/equipments?search=${encodeURIComponent(search)}`)
+    const params = new URLSearchParams({
+      search,
+      type,
+      location,
+    });
+    api(`/equipments?${params.toString()}`)
       .then(setItems)
       .catch(() => setItems([]));
   };
 
   useEffect(() => {
     fetchItems();
-  }, [search]);
+  }, [search, type, location]);
 
   return (
     <div>
@@ -25,11 +32,23 @@ function Equipments() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button onClick={fetchItems}>Rechercher</button>
+        <input
+          placeholder="Type"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          style={{ marginLeft: '0.5em' }}
+        />
+        <input
+          placeholder="Emplacement"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          style={{ marginLeft: '0.5em' }}
+        />
+        <button onClick={fetchItems} style={{ marginLeft: '0.5em' }}>Rechercher</button>
       </div>
       <ul>
         {items.map((e) => (
-          <li key={e._id}>{e.name} - {e.availableQty}/{e.totalQty}</li>
+          <li key={e._id}>{e.name} ({e.location}) - {e.availableQty}/{e.totalQty}</li>
         ))}
       </ul>
       <AddEquipment onCreated={fetchItems} />

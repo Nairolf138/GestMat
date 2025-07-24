@@ -3,7 +3,8 @@
 Skeleton application for managing stage equipment sharing among theatres.
 
 This version includes an equipment management interface with search and creation
-forms to help stage managers organise their inventory.
+forms to help stage managers organise their inventory. Equipments can now be
+filtered by name, type and location to quickly find the right items.
 
 ## Folders
 
