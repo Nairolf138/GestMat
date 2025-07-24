@@ -12,3 +12,11 @@ npm start
 ```
 
 Environment variables are defined in `.env.example`.
+
+## Testing
+
+Run the backend tests with:
+
+```bash
+npm test
+```

@@ -34,3 +34,18 @@ It provides an inventory search and tracks open loan requests to help stage mana
    ```
 
 The React app runs on [http://localhost:3000](http://localhost:3000) and expects the API on port `5000` by default.
+
+## Running Tests
+
+Both parts of the project use Node's built-in test runner. To execute the backend and frontend tests run:
+
+```bash
+npm test --prefix backend
+npm test --prefix frontend
+```
+
+To build the frontend for production:
+
+```bash
+npm run build --prefix frontend
+```
