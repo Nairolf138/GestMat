@@ -41,6 +41,27 @@ filtered by name, type and location to quickly find the right items.
 
 The React app runs on [http://localhost:3000](http://localhost:3000) and expects the API on port `5000` by default.
 
+## Using MongoDB Atlas
+
+The API uses a local MongoDB instance by default. To run against a remote Atlas
+cluster:
+
+1. Create a cluster on [MongoDB Atlas](https://cloud.mongodb.com), whitelist
+   your IP in **Network Access** and create a database user.
+2. Copy the connection string and append the database name, for example
+   `gestmat`.
+3. Set that URI in `backend/.env`:
+
+   ```bash
+   MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.example.mongodb.net/gestmat
+   ```
+
+4. Check connectivity before starting the app:
+
+   ```bash
+   mongosh "mongodb+srv://<user>:<password>@cluster0.example.mongodb.net/gestmat"
+   ```
+
 ## Testing
 
 Run backend tests using Node's built-in test runner:
