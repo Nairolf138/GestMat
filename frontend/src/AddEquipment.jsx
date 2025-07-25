@@ -13,7 +13,10 @@ function AddEquipment({ onCreated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    const parsed = ['totalQty', 'availableQty'].includes(name)
+      ? Number(value)
+      : value;
+    setForm({ ...form, [name]: parsed });
   };
 
   const handleSubmit = async (e) => {
