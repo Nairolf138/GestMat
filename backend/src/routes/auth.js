@@ -1,6 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+const { JWT_SECRET } = process.env;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 const User = require('../models/User');
 
 const router = express.Router();
@@ -26,7 +31,7 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret');
+    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET);
     const { password: _pw, ...userData } = user.toObject();
     res.json({ token, user: userData });
   } catch (err) {

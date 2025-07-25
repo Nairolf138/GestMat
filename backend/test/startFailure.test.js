@@ -1,10 +1,9 @@
 const test = require('node:test');
 const assert = require('assert');
-const { start } = require('../src/index');
-
-// simulate connectDB failure and verify process exits
 
 test('start exits process if db connection fails', async () => {
+  process.env.JWT_SECRET = 'test';
+  const { start } = require('../src/index');
   let exitCode;
   const originalExit = process.exit;
   process.exit = (code) => { exitCode = code; };
@@ -12,6 +11,7 @@ test('start exits process if db connection fails', async () => {
     await start(() => Promise.reject(new Error('db fail')));
   } finally {
     process.exit = originalExit;
+    delete require.cache[require.resolve('../src/index')];
   }
   assert.strictEqual(exitCode, 1);
 });

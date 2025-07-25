@@ -13,8 +13,9 @@ filtered by name, type and location to quickly find the right items.
 
 ## Getting Started
 
-1. Copy `backend/.env.example` to `backend/.env` and edit values if needed. Copy
-   `frontend/.env.example` to `frontend/.env` as well.
+1. Copy `backend/.env.example` to `backend/.env` and edit values if needed.
+   **Make sure to set `JWT_SECRET`** or the API will refuse to start.
+   Copy `frontend/.env.example` to `frontend/.env` as well.
 2. Install dependencies and start the API:
 
    ```bash
