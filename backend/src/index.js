@@ -17,8 +17,14 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-async function start() {
-  await connectDB();
+async function start(db = connectDB) {
+  try {
+    await db();
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+    return;
+  }
 
   app.use('/api/auth', authRoutes);
   app.use('/api/users', userRoutes);
@@ -31,4 +37,8 @@ async function start() {
   });
 }
 
-start();
+if (require.main === module) {
+  start();
+}
+
+module.exports = { app, start };
