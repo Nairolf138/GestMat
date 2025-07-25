@@ -56,3 +56,10 @@ Frontend tests currently just display a placeholder message:
 cd frontend
 npm test
 ```
+
+### Manual check for AddEquipment
+
+To verify number fields work correctly, start both backend and frontend,
+open the Equipments page and create a new item. The `Quantité totale` and
+`Quantité disponible` inputs should accept numbers only and after
+submission the form resets with 0 in those fields.
