@@ -12,12 +12,14 @@ function Structures() {
   }, []);
 
   return (
-    <div>
+    <div className="container">
       <NavBar />
       <h1>Structures</h1>
-      <ul>
+      <ul className="list-group">
         {structures.map((s) => (
-          <li key={s._id}>{s.name}</li>
+          <li key={s._id} className="list-group-item">
+            {s.name}
+          </li>
         ))}
       </ul>
     </div>

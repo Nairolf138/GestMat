@@ -30,30 +30,43 @@ function Register() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="form">
+    <form onSubmit={handleSubmit} className="container mt-4">
       <h1>Inscription</h1>
       {error && <p className="error">{error}</p>}
-      <div className="form-group">
-        <label>Utilisateur</label>
-        <input value={username} onChange={(e) => setUsername(e.target.value)} />
+      <div className="mb-3">
+        <label className="form-label">Utilisateur</label>
+        <input
+          className="form-control"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
       </div>
-      <div className="form-group">
-        <label>Mot de passe</label>
+      <div className="mb-3">
+        <label className="form-label">Mot de passe</label>
         <input
           type="password"
+          className="form-control"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <div className="form-group">
-        <label>Rôle</label>
-        <input value={role} onChange={(e) => setRole(e.target.value)} />
+      <div className="mb-3">
+        <label className="form-label">Rôle</label>
+        <input
+          className="form-control"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        />
       </div>
-      <div className="form-group">
-        <label>Structure</label>
-        <input value={structure} onChange={(e) => setStructure(e.target.value)} />
+      <div className="mb-3">
+        <label className="form-label">Structure</label>
+        <input
+          className="form-control"
+          value={structure}
+          onChange={(e) => setStructure(e.target.value)}
+        />
       </div>
-      <button type="submit" className="btn">S'inscrire</button>
+      <button type="submit" className="btn btn-primary">S'inscrire</button>
     </form>
   );
 }
