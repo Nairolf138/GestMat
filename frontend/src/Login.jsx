@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { api } from './api';
 
 function Login() {
@@ -35,6 +35,9 @@ function Login() {
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
       <button type="submit">Se connecter</button>
+      <p style={{ marginTop: '1em' }}>
+        <Link to="/register">S'inscrire</Link>
+      </p>
     </form>
   );
 }
