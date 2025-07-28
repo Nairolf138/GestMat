@@ -1,26 +1,30 @@
 const express = require('express');
-const Structure = require('../models/Structure');
+const {
+  getStructures,
+  createStructure,
+  updateStructure,
+  deleteStructure,
+} = require('../models/Structure');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
 
 router.get('/', auth(), async (req, res) => {
-  const structures = await Structure.find();
+  const db = req.app.locals.db;
+  const structures = await getStructures(db);
   res.json(structures);
 });
 
 router.post('/', auth('admin'), async (req, res) => {
-  const structure = await Structure.create({ name: req.body.name });
+  const db = req.app.locals.db;
+  const structure = await createStructure(db, { name: req.body.name });
   res.json(structure);
 });
 
 router.put('/:id', auth('admin'), async (req, res) => {
   try {
-    const updated = await Structure.findByIdAndUpdate(
-      req.params.id,
-      { name: req.body.name },
-      { new: true }
-    );
+    const db = req.app.locals.db;
+    const updated = await updateStructure(db, req.params.id, { name: req.body.name });
     if (!updated) return res.status(404).json({ message: 'Not found' });
     res.json(updated);
   } catch (err) {
@@ -30,7 +34,8 @@ router.put('/:id', auth('admin'), async (req, res) => {
 
 router.delete('/:id', auth('admin'), async (req, res) => {
   try {
-    const removed = await Structure.findByIdAndDelete(req.params.id);
+    const db = req.app.locals.db;
+    const removed = await deleteStructure(db, req.params.id);
     if (!removed) return res.status(404).json({ message: 'Not found' });
     res.json({ message: 'Structure deleted' });
   } catch (err) {
