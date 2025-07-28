@@ -11,6 +11,7 @@ export async function api(path, options = {}) {
     ...options,
     headers,
   });
-  if (!res.ok) throw new Error('API error');
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'API error');
+  return data;
 }

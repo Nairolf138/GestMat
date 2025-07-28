@@ -40,7 +40,7 @@ function AddEquipment({ onCreated }) {
       setError('');
       if (onCreated) onCreated();
     } catch (err) {
-      setError('Erreur lors de la création');
+      setError(err.message || 'Erreur lors de la création');
     }
   };
 

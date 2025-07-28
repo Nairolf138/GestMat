@@ -21,7 +21,7 @@ function Register() {
       });
       navigate('/login');
     } catch (err) {
-      setError('Registration failed');
+      setError(err.message || 'Registration failed');
     }
   };
 
