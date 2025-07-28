@@ -26,14 +26,14 @@ function Register() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="form">
       <h1>Inscription</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <div>
+      {error && <p className="error">{error}</p>}
+      <div className="form-group">
         <label>Utilisateur</label>
         <input value={username} onChange={(e) => setUsername(e.target.value)} />
       </div>
-      <div>
+      <div className="form-group">
         <label>Mot de passe</label>
         <input
           type="password"
@@ -41,15 +41,15 @@ function Register() {
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <div>
+      <div className="form-group">
         <label>Rôle</label>
         <input value={role} onChange={(e) => setRole(e.target.value)} />
       </div>
-      <div>
+      <div className="form-group">
         <label>Structure</label>
         <input value={structure} onChange={(e) => setStructure(e.target.value)} />
       </div>
-      <button type="submit">S'inscrire</button>
+      <button type="submit" className="btn">S'inscrire</button>
     </form>
   );
 }
