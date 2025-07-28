@@ -13,6 +13,10 @@ filtered by name, type and location to quickly find the right items.
 
 ## Getting Started
 
+This project requires a recent Node.js version because Vite relies on the
+`crypto.hash` API available from Node.js 20 onwards. Make sure your environment
+uses **Node 20** or newer before installing dependencies.
+
 1. Copy `backend/.env.example` to `backend/.env` and edit values if needed.
    **Make sure to set `JWT_SECRET`** or the API will refuse to start.
    Copy `frontend/.env.example` to `frontend/.env` as well.
