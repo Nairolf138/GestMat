@@ -19,9 +19,6 @@ body {
   margin-right: 0.5rem;
 }
 
-.error {
-  color: red;
-}
 
 /* override Bootstrap spacing */
 .navbar-brand {

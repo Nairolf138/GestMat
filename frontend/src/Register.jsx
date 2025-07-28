@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from './api';
+import Alert from './Alert.jsx';
 
 const ROLES = [
   'Administrateur',
@@ -57,7 +58,7 @@ function Register() {
   return (
     <form onSubmit={handleSubmit} className="container mt-4">
       <h1>Inscription</h1>
-      {error && <p className="error">{error}</p>}
+      <Alert message={error} />
       <div className="mb-3">
         <label className="form-label">Utilisateur</label>
         <input

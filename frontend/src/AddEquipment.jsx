@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api } from './api';
+import Alert from './Alert.jsx';
 
 function AddEquipment({ onCreated }) {
   const [form, setForm] = useState({
@@ -47,7 +48,7 @@ function AddEquipment({ onCreated }) {
   return (
     <form onSubmit={handleSubmit} className="mt-4">
       <h2>Nouvel équipement</h2>
-      {error && <p className="error">{error}</p>}
+      <Alert message={error} />
       <div className="mb-3">
         <label className="form-label">Nom</label>
         <input

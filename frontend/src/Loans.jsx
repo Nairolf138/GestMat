@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
+import Alert from './Alert.jsx';
 
 function Loans() {
   const [loans, setLoans] = useState([]);
@@ -11,6 +12,7 @@ function Loans() {
     startDate: '',
     endDate: '',
   });
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api('/loans')
@@ -37,9 +39,10 @@ function Loans() {
         body: JSON.stringify(payload),
       });
       setForm({ owner: '', equipment: '', quantity: 1, startDate: '', endDate: '' });
+      setError('');
       api('/loans').then(setLoans);
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err.message || 'Erreur lors de la création');
     }
   };
 
@@ -55,6 +58,7 @@ function Loans() {
     <div className="container">
       <NavBar />
       <h1>Prêts</h1>
+      <Alert message={error} />
       <form onSubmit={createLoan} className="mt-3 row g-2">
         <h2>Nouvelle demande</h2>
         <div className="col-md">
