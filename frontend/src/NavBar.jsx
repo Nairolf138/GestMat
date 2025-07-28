@@ -9,16 +9,14 @@ function NavBar() {
   };
 
   return (
-    <nav style={{ marginBottom: '1em' }}>
-      <Link to="/">Équipements</Link> |
-      <Link to="/structures" style={{ marginLeft: '0.5em' }}>Structures</Link> |
-      <Link to="/users" style={{ marginLeft: '0.5em' }}>Utilisateurs</Link> |
-      <Link to="/loans" style={{ marginLeft: '0.5em' }}>Prêts</Link> |
-      <Link to="/login" style={{ marginLeft: '0.5em' }}>Connexion</Link> |
-      <Link to="/register" style={{ marginLeft: '0.5em' }}>Inscription</Link>
-      <button onClick={handleLogout} style={{ marginLeft: '0.5em' }}>
-        Se déconnecter
-      </button>
+    <nav className="navbar">
+      <Link to="/">Équipements</Link>
+      <Link to="/structures">Structures</Link>
+      <Link to="/users">Utilisateurs</Link>
+      <Link to="/loans">Prêts</Link>
+      <Link to="/login">Connexion</Link>
+      <Link to="/register">Inscription</Link>
+      <button onClick={handleLogout}>Se déconnecter</button>
     </nav>
   );
 }
