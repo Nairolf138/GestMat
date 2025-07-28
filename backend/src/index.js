@@ -10,6 +10,7 @@ const userRoutes = require('./routes/users');
 const structureRoutes = require('./routes/structures');
 const equipmentRoutes = require('./routes/equipments');
 const loanRoutes = require('./routes/loans');
+const statsRoutes = require('./routes/stats');
 
 const app = express();
 app.use(cors());
@@ -33,6 +34,7 @@ async function start(connect = connectDB) {
   app.use('/api/structures', structureRoutes);
   app.use('/api/equipments', equipmentRoutes);
   app.use('/api/loans', loanRoutes);
+  app.use('/api/stats', statsRoutes);
 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

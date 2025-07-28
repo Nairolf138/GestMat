@@ -13,6 +13,9 @@ npm start
 
 Environment variables are defined in `.env.example`.
 
+To enable email notifications, set `SMTP_URL` in `.env` with a valid SMTP
+connection string and optionally `NOTIFY_EMAIL` for the recipient address.
+
 ### MongoDB Atlas
 
 To connect the API to MongoDB Atlas instead of a local server:
