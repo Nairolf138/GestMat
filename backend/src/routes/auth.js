@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 
 const { JWT_SECRET } = process.env;
 if (!JWT_SECRET) {
@@ -10,6 +11,11 @@ const { createUser, findUserByUsername } = require('../models/User');
 const { findStructureById } = require('../models/Structure');
 
 const router = express.Router();
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: 'Too many login attempts, please try again later.'
+});
 
 router.post('/register', async (req, res) => {
   const db = req.app.locals.db;
@@ -27,7 +33,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const db = req.app.locals.db;
   try {
     const { username, password } = req.body;

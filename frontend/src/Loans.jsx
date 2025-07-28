@@ -104,8 +104,8 @@ function Loans() {
             [{l.status}]
             {l.status === 'pending' && (
               <>
-                <button onClick={() => updateStatus(l._id, 'accepted')}>Accepter</button>
-                <button onClick={() => updateStatus(l._id, 'refused')} style={{ marginLeft: '0.5em' }}>
+                <button onClick={() => updateStatus(l._id, 'accepted')} className="btn">Accepter</button>
+                <button onClick={() => updateStatus(l._id, 'refused')} className="btn">
                   Refuser
                 </button>
               </>
