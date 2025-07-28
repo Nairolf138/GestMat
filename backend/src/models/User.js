@@ -31,10 +31,21 @@ function findUserById(db, id) {
   return db.collection('users').findOne({ _id: new ObjectId(id) });
 }
 
+async function updateUser(db, id, data) {
+  if (data.structure) data.structure = new ObjectId(data.structure);
+  const res = await db.collection('users').findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: data },
+    { returnDocument: 'after' }
+  );
+  return res.value;
+}
+
 module.exports = {
   createUser,
   findUserByUsername,
   findUsers,
   deleteUserById,
   findUserById,
+  updateUser,
 };

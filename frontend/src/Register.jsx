@@ -2,6 +2,25 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from './api';
 
+const ROLES = [
+  'Administrateur',
+  'Régisseur(se) Son',
+  'Régisseur(se) Lumière',
+  'Régisseur(se) Plateau',
+  'Regisseur(se) Général',
+  'Autre',
+];
+
+const STRUCTURES = [
+  'Théâtre de l\'Olivier (Istres)',
+  'Théâtre La Colonne (Miramas)',
+  'Le Théâtre de Fos (Fos-sur-mer)',
+  "L'Usine (Istres)",
+  'Espace Gérard Philippe (Port-saint louis)',
+  'Espace Robert Hossein (Grans)',
+  "L'Oppidum (Cornillon Confoux)",
+];
+
 function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -52,19 +71,33 @@ function Register() {
       </div>
       <div className="mb-3">
         <label className="form-label">Rôle</label>
-        <input
-          className="form-control"
+        <select
+          className="form-select"
           value={role}
           onChange={(e) => setRole(e.target.value)}
-        />
+        >
+          <option value="">Choisir...</option>
+          {ROLES.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="mb-3">
         <label className="form-label">Structure</label>
-        <input
-          className="form-control"
+        <select
+          className="form-select"
           value={structure}
           onChange={(e) => setStructure(e.target.value)}
-        />
+        >
+          <option value="">Choisir...</option>
+          {STRUCTURES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
       </div>
       <button type="submit" className="btn btn-primary">S'inscrire</button>
     </form>
