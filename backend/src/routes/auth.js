@@ -20,12 +20,20 @@ const loginLimiter = rateLimit({
 router.post('/register', async (req, res) => {
   const db = req.app.locals.db;
   try {
-    const { username, password, role, structure } = req.body;
+    const { username, password, role, structure, firstName, lastName, email } = req.body;
     if (!username || !password) {
       return res.status(400).json({ message: 'Username and password are required' });
     }
     const hashed = await bcrypt.hash(password, 10);
-    const user = await createUser(db, { username, password: hashed, role, structure });
+    const user = await createUser(db, {
+      username,
+      password: hashed,
+      role,
+      structure,
+      firstName,
+      lastName,
+      email,
+    });
     const { password: _pw, ...userData } = user;
     res.json(userData);
   } catch (err) {

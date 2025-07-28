@@ -23,6 +23,9 @@ const STRUCTURES = [
 
 function Register() {
   const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [structure, setStructure] = useState('');
@@ -37,6 +40,9 @@ function Register() {
     }
     const payload = { username, password, role };
     if (structure) payload.structure = structure;
+    if (firstName) payload.firstName = firstName;
+    if (lastName) payload.lastName = lastName;
+    if (email) payload.email = email;
     try {
       await api('/auth/register', {
         method: 'POST',
@@ -58,6 +64,31 @@ function Register() {
           className="form-control"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+        />
+      </div>
+      <div className="mb-3">
+        <label className="form-label">Prénom</label>
+        <input
+          className="form-control"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
+      </div>
+      <div className="mb-3">
+        <label className="form-label">Nom</label>
+        <input
+          className="form-control"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+        />
+      </div>
+      <div className="mb-3">
+        <label className="form-label">Adresse mail</label>
+        <input
+          type="email"
+          className="form-control"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div className="mb-3">

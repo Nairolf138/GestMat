@@ -24,6 +24,9 @@ const STRUCTURES = [
 function Profile() {
   const [form, setForm] = useState({
     username: '',
+    firstName: '',
+    lastName: '',
+    email: '',
     password: '',
     role: '',
     structure: '',
@@ -70,6 +73,34 @@ function Profile() {
             name="username"
             className="form-control"
             value={form.username}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Prénom</label>
+          <input
+            name="firstName"
+            className="form-control"
+            value={form.firstName}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Nom</label>
+          <input
+            name="lastName"
+            className="form-control"
+            value={form.lastName}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Adresse mail</label>
+          <input
+            type="email"
+            name="email"
+            className="form-control"
+            value={form.email}
             onChange={handleChange}
           />
         </div>
