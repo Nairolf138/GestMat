@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from './api';
+import Alert from './Alert.jsx';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -29,7 +30,7 @@ function Login() {
   return (
     <form onSubmit={handleSubmit} className="container mt-4">
       <h1>Connexion</h1>
-      {error && <p className="error">{error}</p>}
+      <Alert message={error} />
       <div className="mb-3">
         <label className="form-label">Utilisateur</label>
         <input

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
+import Alert from './Alert.jsx';
 
 const ROLES = [
   'Administrateur',
@@ -31,12 +32,13 @@ function Profile() {
     role: '',
     structure: '',
   });
-  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     api('/users/me')
       .then((u) => setForm({ ...form, ...u, password: '' }))
-      .catch(() => setMsg('Erreur de chargement'));
+      .catch(() => setError('Erreur de chargement'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -55,9 +57,11 @@ function Profile() {
         body: JSON.stringify(payload),
       });
       setForm({ ...form, ...u, password: '' });
-      setMsg('Modifié');
+      setSuccess('Modifié');
+      setError('');
     } catch (err) {
-      setMsg(err.message || 'Erreur');
+      setError(err.message || 'Erreur');
+      setSuccess('');
     }
   };
 
@@ -65,7 +69,8 @@ function Profile() {
     <div className="container">
       <NavBar />
       <h1>Profil</h1>
-      {msg && <p>{msg}</p>}
+      <Alert message={error} />
+      <Alert type="success" message={success} />
       <form onSubmit={handleSubmit} className="mt-3">
         <div className="mb-3">
           <label className="form-label">Utilisateur</label>
