@@ -2,8 +2,17 @@ const { ObjectId } = require('mongodb');
 
 async function createUser(db, data) {
   if (data.structure) data.structure = new ObjectId(data.structure);
-  const result = await db.collection('users').insertOne(data);
-  return { _id: result.insertedId, ...data };
+  const users = db.collection('users');
+  await users.createIndex({ username: 1 }, { unique: true });
+  try {
+    const result = await users.insertOne(data);
+    return { _id: result.insertedId, ...data };
+  } catch (err) {
+    if (err.code === 11000) {
+      throw new Error('Username already exists');
+    }
+    throw err;
+  }
 }
 
 function findUserByUsername(db, username) {

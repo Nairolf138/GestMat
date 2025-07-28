@@ -15,6 +15,9 @@ router.post('/register', async (req, res) => {
   const db = req.app.locals.db;
   try {
     const { username, password, role, structure } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
     const hashed = await bcrypt.hash(password, 10);
     const user = await createUser(db, { username, password: hashed, role, structure });
     const { password: _pw, ...userData } = user;
@@ -28,6 +31,9 @@ router.post('/login', async (req, res) => {
   const db = req.app.locals.db;
   try {
     const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
     const user = await findUserByUsername(db, username);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
