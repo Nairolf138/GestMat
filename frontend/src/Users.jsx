@@ -12,12 +12,12 @@ function Users() {
   }, []);
 
   return (
-    <div>
+    <div className="container">
       <NavBar />
       <h1>Utilisateurs</h1>
-      <ul>
+      <ul className="list-group">
         {users.map((u) => (
-          <li key={u._id}>
+          <li key={u._id} className="list-group-item">
             {u.username} - {u.role}
             {u.structure ? ` (${u.structure.name})` : ''}
           </li>

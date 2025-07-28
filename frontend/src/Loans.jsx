@@ -52,60 +52,80 @@ function Loans() {
   };
 
   return (
-    <div>
+    <div className="container">
       <NavBar />
       <h1>Prêts</h1>
-      <form onSubmit={createLoan} className="form">
+      <form onSubmit={createLoan} className="mt-3 row g-2">
         <h2>Nouvelle demande</h2>
-        <input
-          name="owner"
-          placeholder="Structure propriétaire"
-          value={form.owner}
-          onChange={handleChange}
-        />
-        <input
-          name="equipment"
-          placeholder="ID équipement"
-          value={form.equipment}
-          onChange={handleChange}
-          className="form-group"
-        />
-        <input
-          name="quantity"
-          type="number"
-          value={form.quantity}
-          onChange={handleChange}
-          className="form-group"
-        />
-        <input
-          name="startDate"
-          type="date"
-          value={form.startDate}
-          onChange={handleChange}
-          className="form-group"
-        />
-        <input
-          name="endDate"
-          type="date"
-          value={form.endDate}
-          onChange={handleChange}
-          className="form-group"
-        />
-        <button type="submit" className="btn">Envoyer</button>
+        <div className="col-md">
+          <input
+            name="owner"
+            placeholder="Structure propriétaire"
+            className="form-control"
+            value={form.owner}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="col-md">
+          <input
+            name="equipment"
+            placeholder="ID équipement"
+            className="form-control"
+            value={form.equipment}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="col-md">
+          <input
+            name="quantity"
+            type="number"
+            className="form-control"
+            value={form.quantity}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="col-md">
+          <input
+            name="startDate"
+            type="date"
+            className="form-control"
+            value={form.startDate}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="col-md">
+          <input
+            name="endDate"
+            type="date"
+            className="form-control"
+            value={form.endDate}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="col-auto">
+          <button type="submit" className="btn btn-primary">Envoyer</button>
+        </div>
       </form>
-      <ul>
+      <ul className="list-group mt-4">
         {loans.map((l) => (
-          <li key={l._id}>
+          <li key={l._id} className="list-group-item">
             {l.owner?.name} → {l.borrower?.name} :
             {l.items?.map((it) =>
               it.equipment ? ` ${it.equipment.name} x${it.quantity}` : ''
-            )}
-            {' '}
+            )}{' '}
             [{l.status}]
             {l.status === 'pending' && (
               <>
-                <button onClick={() => updateStatus(l._id, 'accepted')} className="btn">Accepter</button>
-                <button onClick={() => updateStatus(l._id, 'refused')} className="btn">
+                <button
+                  onClick={() => updateStatus(l._id, 'accepted')}
+                  className="btn btn-success btn-sm ms-2"
+                >
+                  Accepter
+                </button>
+                <button
+                  onClick={() => updateStatus(l._id, 'refused')}
+                  className="btn btn-danger btn-sm ms-2"
+                >
                   Refuser
                 </button>
               </>

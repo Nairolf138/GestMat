@@ -45,51 +45,78 @@ function AddEquipment({ onCreated }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="form">
+    <form onSubmit={handleSubmit} className="mt-4">
       <h2>Nouvel équipement</h2>
       {error && <p className="error">{error}</p>}
-      <div className="form-group">
-        <label>Nom</label>
-        <input name="name" value={form.name} onChange={handleChange} />
+      <div className="mb-3">
+        <label className="form-label">Nom</label>
+        <input
+          name="name"
+          className="form-control"
+          value={form.name}
+          onChange={handleChange}
+        />
       </div>
-      <div className="form-group">
-        <label>Type</label>
-        <input name="type" value={form.type} onChange={handleChange} />
+      <div className="mb-3">
+        <label className="form-label">Type</label>
+        <input
+          name="type"
+          className="form-control"
+          value={form.type}
+          onChange={handleChange}
+        />
       </div>
-      <div className="form-group">
-        <label>Quantité totale</label>
+      <div className="mb-3">
+        <label className="form-label">Quantité totale</label>
         <input
           name="totalQty"
           type="number"
+          className="form-control"
           value={form.totalQty}
           onChange={handleChange}
         />
       </div>
-      <div className="form-group">
-        <label>Quantité disponible</label>
+      <div className="mb-3">
+        <label className="form-label">Quantité disponible</label>
         <input
           name="availableQty"
           type="number"
+          className="form-control"
           value={form.availableQty}
           onChange={handleChange}
         />
       </div>
-      <div className="form-group">
-        <label>Emplacement</label>
-        <input name="location" value={form.location} onChange={handleChange} />
+      <div className="mb-3">
+        <label className="form-label">Emplacement</label>
+        <input
+          name="location"
+          className="form-control"
+          value={form.location}
+          onChange={handleChange}
+        />
       </div>
-      <div className="form-group">
-        <label>État</label>
-        <input name="condition" value={form.condition} onChange={handleChange} />
+      <div className="mb-3">
+        <label className="form-label">État</label>
+        <input
+          name="condition"
+          className="form-control"
+          value={form.condition}
+          onChange={handleChange}
+        />
       </div>
-      <div className="form-group">
-        <label>Disponibilité</label>
-        <select name="status" value={form.status} onChange={handleChange}>
+      <div className="mb-3">
+        <label className="form-label">Disponibilité</label>
+        <select
+          name="status"
+          className="form-select"
+          value={form.status}
+          onChange={handleChange}
+        >
           <option value="disponible">Disponible</option>
           <option value="indisponible">Indisponible</option>
         </select>
       </div>
-      <button type="submit" className="btn">Ajouter</button>
+      <button type="submit" className="btn btn-primary mt-2">Ajouter</button>
     </form>
   );
 }
