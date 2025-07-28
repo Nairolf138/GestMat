@@ -1,0 +1,22 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 1rem;
+}
+
+.form {
+  margin-top: 1rem;
+}
+
+.form-group {
+  margin-top: 0.5rem;
+}
+
+.btn {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.error {
+  color: red;
+}

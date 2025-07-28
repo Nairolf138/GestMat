@@ -23,19 +23,23 @@ function Login() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="form">
       <h1>Connexion</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <div>
+      {error && <p className="error">{error}</p>}
+      <div className="form-group">
         <label>Utilisateur</label>
         <input value={username} onChange={(e) => setUsername(e.target.value)} />
       </div>
-      <div>
+      <div className="form-group">
         <label>Mot de passe</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
       </div>
-      <button type="submit">Se connecter</button>
-      <p style={{ marginTop: '1em' }}>
+      <button type="submit" className="btn">Se connecter</button>
+      <p className="form-group">
         <Link to="/register">S'inscrire</Link>
       </p>
     </form>

@@ -35,30 +35,40 @@ function AddEquipment({ onCreated }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '1em' }}>
+    <form onSubmit={handleSubmit} className="form">
       <h2>Nouvel équipement</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <div>
+      {error && <p className="error">{error}</p>}
+      <div className="form-group">
         <label>Nom</label>
         <input name="name" value={form.name} onChange={handleChange} />
       </div>
-      <div>
+      <div className="form-group">
         <label>Type</label>
         <input name="type" value={form.type} onChange={handleChange} />
       </div>
-      <div>
+      <div className="form-group">
         <label>Quantité totale</label>
-        <input name="totalQty" type="number" value={form.totalQty} onChange={handleChange} />
+        <input
+          name="totalQty"
+          type="number"
+          value={form.totalQty}
+          onChange={handleChange}
+        />
       </div>
-      <div>
+      <div className="form-group">
         <label>Quantité disponible</label>
-        <input name="availableQty" type="number" value={form.availableQty} onChange={handleChange} />
+        <input
+          name="availableQty"
+          type="number"
+          value={form.availableQty}
+          onChange={handleChange}
+        />
       </div>
-      <div>
+      <div className="form-group">
         <label>Emplacement</label>
         <input name="location" value={form.location} onChange={handleChange} />
       </div>
-      <button type="submit">Ajouter</button>
+      <button type="submit" className="btn">Ajouter</button>
     </form>
   );
 }

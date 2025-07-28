@@ -28,7 +28,7 @@ function Equipments() {
     <div>
       <NavBar />
       <h1>Équipements</h1>
-      <div>
+      <div className="form">
         <input
           placeholder="Recherche"
           value={search}
@@ -38,21 +38,23 @@ function Equipments() {
           placeholder="Type"
           value={type}
           onChange={(e) => setType(e.target.value)}
-          style={{ marginLeft: '0.5em' }}
+          className="form-group"
         />
         <input
           placeholder="Emplacement"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          style={{ marginLeft: '0.5em' }}
+          className="form-group"
         />
-        <button onClick={fetchItems} style={{ marginLeft: '0.5em' }}>
+        <button onClick={fetchItems} className="btn">
           Rechercher
         </button>
       </div>
       <ul>
         {items.map((e) => (
-          <li key={e._id}>{e.name} ({e.location}) - {e.availableQty}/{e.totalQty}</li>
+          <li key={e._id} className="form-group">
+            {e.name} ({e.location}) - {e.availableQty}/{e.totalQty}
+          </li>
         ))}
       </ul>
       <AddEquipment onCreated={fetchItems} />
