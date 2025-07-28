@@ -12,6 +12,10 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!username || !password || !role) {
+      setError("Utilisateur, mot de passe et rôle sont requis");
+      return;
+    }
     const payload = { username, password, role };
     if (structure) payload.structure = structure;
     try {

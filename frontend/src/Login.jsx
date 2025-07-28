@@ -10,6 +10,10 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!username || !password) {
+      setError('Utilisateur et mot de passe requis');
+      return;
+    }
     try {
       const { token } = await api('/auth/login', {
         method: 'POST',
