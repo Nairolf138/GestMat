@@ -1,30 +1,38 @@
 const express = require('express');
-const Equipment = require('../models/Equipment');
+const {
+  findEquipments,
+  createEquipment,
+  updateEquipment,
+  deleteEquipment,
+} = require('../models/Equipment');
+const { findStructureById } = require('../models/Structure');
 const auth = require('../middleware/auth');
 const createEquipmentFilter = require('../utils/createEquipmentFilter');
 
 const router = express.Router();
 
 router.get('/', auth(), async (req, res) => {
+  const db = req.app.locals.db;
   const filter = createEquipmentFilter(req.query);
-  const equipments = await Equipment.find(filter)
-    .sort({ name: 1 })
-    .populate('structure');
+  const equipments = await findEquipments(db, filter);
+  for (const eq of equipments) {
+    if (eq.structure) {
+      eq.structure = await findStructureById(db, eq.structure);
+    }
+  }
   res.json(equipments);
 });
 
 router.post('/', auth(), async (req, res) => {
-  const equipment = await Equipment.create(req.body);
+  const db = req.app.locals.db;
+  const equipment = await createEquipment(db, req.body);
   res.json(equipment);
 });
 
 router.put('/:id', auth(), async (req, res) => {
   try {
-    const updated = await Equipment.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const db = req.app.locals.db;
+    const updated = await updateEquipment(db, req.params.id, req.body);
     if (!updated) return res.status(404).json({ message: 'Not found' });
     res.json(updated);
   } catch (err) {
@@ -34,7 +42,8 @@ router.put('/:id', auth(), async (req, res) => {
 
 router.delete('/:id', auth(), async (req, res) => {
   try {
-    const removed = await Equipment.findByIdAndDelete(req.params.id);
+    const db = req.app.locals.db;
+    const removed = await deleteEquipment(db, req.params.id);
     if (!removed) return res.status(404).json({ message: 'Not found' });
     res.json({ message: 'Equipment deleted' });
   } catch (err) {

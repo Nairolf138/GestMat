@@ -1,18 +1,59 @@
-const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb');
 
-const ItemSchema = new mongoose.Schema({
-  equipment: { type: mongoose.Schema.Types.ObjectId, ref: 'Equipment' },
-  quantity: Number,
-});
+function _populate(db, loan) {
+  return Promise.all([
+    loan.borrower ? db.collection('structures').findOne({ _id: loan.borrower }).then(s => { loan.borrower = s; }) : null,
+    loan.owner ? db.collection('structures').findOne({ _id: loan.owner }).then(s => { loan.owner = s; }) : null,
+    loan.items ? Promise.all(loan.items.map(async item => {
+      if (item.equipment) {
+        item.equipment = await db.collection('equipments').findOne({ _id: item.equipment });
+      }
+    })) : null
+  ]).then(() => loan);
+}
 
-const LoanRequestSchema = new mongoose.Schema({
-  items: [ItemSchema],
-  borrower: { type: mongoose.Schema.Types.ObjectId, ref: 'Structure' },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'Structure' },
-  startDate: Date,
-  endDate: Date,
-  status: { type: String, enum: ['pending', 'accepted', 'refused', 'closed'], default: 'pending' },
-  comment: String,
-});
+async function findLoans(db) {
+  const loans = await db.collection('loanrequests').find().toArray();
+  for (const loan of loans) {
+    await _populate(db, loan);
+  }
+  return loans;
+}
 
-module.exports = mongoose.model('LoanRequest', LoanRequestSchema);
+async function createLoan(db, data) {
+  if (data.borrower) data.borrower = new ObjectId(data.borrower);
+  if (data.owner) data.owner = new ObjectId(data.owner);
+  if (data.items) {
+    data.items = data.items.map(it => ({ ...it, equipment: new ObjectId(it.equipment) }));
+  }
+  const result = await db.collection('loanrequests').insertOne(data);
+  const loan = { _id: result.insertedId, ...data };
+  return _populate(db, loan);
+}
+
+async function updateLoan(db, id, data) {
+  if (data.borrower) data.borrower = new ObjectId(data.borrower);
+  if (data.owner) data.owner = new ObjectId(data.owner);
+  if (data.items) {
+    data.items = data.items.map(it => ({ ...it, equipment: new ObjectId(it.equipment) }));
+  }
+  const res = await db.collection('loanrequests').findOneAndUpdate(
+    { _id: new ObjectId(id) },
+    { $set: data },
+    { returnDocument: 'after' }
+  );
+  if (!res.value) return null;
+  return _populate(db, res.value);
+}
+
+async function deleteLoan(db, id) {
+  const res = await db.collection('loanrequests').deleteOne({ _id: new ObjectId(id) });
+  return res.deletedCount > 0;
+}
+
+module.exports = {
+  findLoans,
+  createLoan,
+  updateLoan,
+  deleteLoan,
+};

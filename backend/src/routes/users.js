@@ -1,20 +1,25 @@
 const express = require('express');
-const User = require('../models/User');
+const { findUsers, deleteUserById } = require('../models/User');
+const { findStructureById } = require('../models/Structure');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
 
 router.get('/', auth('admin'), async (req, res) => {
-  const users = await User.find().populate('structure');
-  const sanitized = users.map((u) => {
-    const { password: _pw, ...data } = u.toObject();
-    return data;
-  });
-  res.json(sanitized);
+  const db = req.app.locals.db;
+  const users = await findUsers(db);
+  for (const user of users) {
+    if (user.structure) {
+      user.structure = await findStructureById(db, user.structure);
+    }
+    delete user.password;
+  }
+  res.json(users);
 });
 
 router.delete('/:id', auth('admin'), async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
+  const db = req.app.locals.db;
+  await deleteUserById(db, req.params.id);
   res.json({ message: 'User deleted' });
 });
 

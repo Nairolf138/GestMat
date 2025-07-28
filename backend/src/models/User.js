@@ -1,10 +1,31 @@
-const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb');
 
-const UserSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'responsable', 'utilisateur'], default: 'utilisateur' },
-  structure: { type: mongoose.Schema.Types.ObjectId, ref: 'Structure' },
-});
+async function createUser(db, data) {
+  if (data.structure) data.structure = new ObjectId(data.structure);
+  const result = await db.collection('users').insertOne(data);
+  return { _id: result.insertedId, ...data };
+}
 
-module.exports = mongoose.model('User', UserSchema);
+function findUserByUsername(db, username) {
+  return db.collection('users').findOne({ username });
+}
+
+function findUsers(db) {
+  return db.collection('users').find().toArray();
+}
+
+function deleteUserById(db, id) {
+  return db.collection('users').deleteOne({ _id: new ObjectId(id) });
+}
+
+function findUserById(db, id) {
+  return db.collection('users').findOne({ _id: new ObjectId(id) });
+}
+
+module.exports = {
+  createUser,
+  findUserByUsername,
+  findUsers,
+  deleteUserById,
+  findUserById,
+};
