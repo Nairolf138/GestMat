@@ -6,6 +6,10 @@ This version includes an equipment management interface with search and creation
 forms to help stage managers organise their inventory. Equipments can now be
 filtered by name, type and location to quickly find the right items.
 
+Additional routes allow creating loan requests, accepting or refusing them and
+retrieving basic statistics. Email notifications can be sent if `SMTP_URL` is
+configured in the backend environment.
+
 ## Folders
 
 - `backend` – Express/MongoDB API

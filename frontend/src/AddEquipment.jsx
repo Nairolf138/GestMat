@@ -8,6 +8,8 @@ function AddEquipment({ onCreated }) {
     totalQty: 0,
     availableQty: 0,
     location: '',
+    condition: '',
+    status: 'disponible',
   });
   const [error, setError] = useState('');
 
@@ -26,7 +28,15 @@ function AddEquipment({ onCreated }) {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      setForm({ name: '', type: '', totalQty: 0, availableQty: 0, location: '' });
+      setForm({
+        name: '',
+        type: '',
+        totalQty: 0,
+        availableQty: 0,
+        location: '',
+        condition: '',
+        status: 'disponible',
+      });
       setError('');
       if (onCreated) onCreated();
     } catch (err) {
@@ -67,6 +77,17 @@ function AddEquipment({ onCreated }) {
       <div className="form-group">
         <label>Emplacement</label>
         <input name="location" value={form.location} onChange={handleChange} />
+      </div>
+      <div className="form-group">
+        <label>État</label>
+        <input name="condition" value={form.condition} onChange={handleChange} />
+      </div>
+      <div className="form-group">
+        <label>Disponibilité</label>
+        <select name="status" value={form.status} onChange={handleChange}>
+          <option value="disponible">Disponible</option>
+          <option value="indisponible">Indisponible</option>
+        </select>
       </div>
       <button type="submit" className="btn">Ajouter</button>
     </form>

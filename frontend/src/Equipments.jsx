@@ -8,12 +8,14 @@ function Equipments() {
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [location, setLocation] = useState('');
+  const [structure, setStructure] = useState('');
 
   const fetchItems = () => {
     const params = new URLSearchParams({
       search,
       type,
       location,
+      structure,
     });
     api(`/equipments?${params.toString()}`)
       .then(setItems)
@@ -22,7 +24,7 @@ function Equipments() {
 
   useEffect(() => {
     fetchItems();
-  }, [search, type, location]);
+  }, [search, type, location, structure]);
 
   return (
     <div>
@@ -44,6 +46,12 @@ function Equipments() {
           placeholder="Emplacement"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
+          className="form-group"
+        />
+        <input
+          placeholder="Structure"
+          value={structure}
+          onChange={(e) => setStructure(e.target.value)}
           className="form-group"
         />
         <button onClick={fetchItems} className="btn">

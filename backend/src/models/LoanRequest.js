@@ -26,6 +26,8 @@ async function createLoan(db, data) {
   if (data.items) {
     data.items = data.items.map(it => ({ ...it, equipment: new ObjectId(it.equipment) }));
   }
+  if (data.startDate) data.startDate = new Date(data.startDate);
+  if (data.endDate) data.endDate = new Date(data.endDate);
   const result = await db.collection('loanrequests').insertOne(data);
   const loan = { _id: result.insertedId, ...data };
   return _populate(db, loan);
@@ -37,6 +39,8 @@ async function updateLoan(db, id, data) {
   if (data.items) {
     data.items = data.items.map(it => ({ ...it, equipment: new ObjectId(it.equipment) }));
   }
+  if (data.startDate) data.startDate = new Date(data.startDate);
+  if (data.endDate) data.endDate = new Date(data.endDate);
   const res = await db.collection('loanrequests').findOneAndUpdate(
     { _id: new ObjectId(id) },
     { $set: data },

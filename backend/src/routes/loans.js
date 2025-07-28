@@ -6,6 +6,7 @@ const {
   deleteLoan,
 } = require('../models/LoanRequest');
 const auth = require('../middleware/auth');
+const { sendMail } = require('../utils/sendMail');
 
 const router = express.Router();
 
@@ -17,7 +18,16 @@ router.get('/', auth(), async (req, res) => {
 
 router.post('/', auth(), async (req, res) => {
   const db = req.app.locals.db;
-  const loan = await createLoan(db, req.body);
+  const loan = await createLoan(db, { ...req.body, status: 'pending' });
+  try {
+    await sendMail({
+      to: process.env.NOTIFY_EMAIL || 'admin@example.com',
+      subject: 'Nouvelle demande de prêt',
+      text: `Demande de prêt de ${loan.borrower?.name || ''} pour ${loan.owner?.name || ''}`,
+    });
+  } catch (err) {
+    console.error('mail error', err);
+  }
   res.json(loan);
 });
 
@@ -26,6 +36,17 @@ router.put('/:id', auth(), async (req, res) => {
     const db = req.app.locals.db;
     const updated = await updateLoan(db, req.params.id, req.body);
     if (!updated) return res.status(404).json({ message: 'Not found' });
+    if (req.body.status) {
+      try {
+        await sendMail({
+          to: process.env.NOTIFY_EMAIL || 'admin@example.com',
+          subject: `Demande ${req.body.status}`,
+          text: `La demande ${updated._id} est maintenant ${req.body.status}`,
+        });
+      } catch (err) {
+        console.error('mail error', err);
+      }
+    }
     res.json(updated);
   } catch (err) {
     res.status(400).json({ message: err.message });
