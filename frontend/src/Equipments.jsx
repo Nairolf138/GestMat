@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
+import NavBar from './NavBar';
 
 function Equipments() {
   const [items, setItems] = useState([]);
@@ -25,6 +26,7 @@ function Equipments() {
 
   return (
     <div>
+      <NavBar />
       <h1>Équipements</h1>
       <div>
         <input
@@ -44,7 +46,9 @@ function Equipments() {
           onChange={(e) => setLocation(e.target.value)}
           style={{ marginLeft: '0.5em' }}
         />
-        <button onClick={fetchItems} style={{ marginLeft: '0.5em' }}>Rechercher</button>
+        <button onClick={fetchItems} style={{ marginLeft: '0.5em' }}>
+          Rechercher
+        </button>
       </div>
       <ul>
         {items.map((e) => (
