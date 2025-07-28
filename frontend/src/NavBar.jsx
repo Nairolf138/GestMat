@@ -27,6 +27,9 @@ function NavBar() {
           <Link className="nav-link" to="/loans">
             Prêts
           </Link>
+          <Link className="nav-link" to="/profile">
+            Profil
+          </Link>
           <Link className="nav-link" to="/login">
             Connexion
           </Link>
