@@ -18,7 +18,7 @@ function Login() {
       localStorage.setItem('token', token);
       navigate('/');
     } catch (err) {
-      setError('Login failed');
+      setError(err.message || 'Login failed');
     }
   };
 
