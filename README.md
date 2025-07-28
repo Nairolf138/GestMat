@@ -79,7 +79,7 @@ cd backend
 npm test
 ```
 
-Frontend tests currently just display a placeholder message:
+Frontend tests run using Vitest:
 
 ```bash
 cd frontend
