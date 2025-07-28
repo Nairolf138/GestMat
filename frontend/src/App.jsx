@@ -6,6 +6,7 @@ import {
   Navigate,
 } from 'react-router-dom';
 import Login from './Login';
+import Register from './Register';
 import Equipments from './Equipments';
 
 const token = () => localStorage.getItem('token');
@@ -15,6 +16,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route
           path="/"
           element={token() ? <Equipments /> : <Navigate to="/login" replace />} />
