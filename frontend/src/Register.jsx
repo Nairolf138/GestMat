@@ -31,12 +31,18 @@ function Register() {
   const [role, setRole] = useState('');
   const [structure, setStructure] = useState('');
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !password || !role) {
-      setError("Utilisateur, mot de passe et rôle sont requis");
+    const fieldErrors = {};
+    if (!username) fieldErrors.username = 'Requis';
+    if (!password) fieldErrors.password = 'Requis';
+    if (!role) fieldErrors.role = 'Requis';
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) {
+      setError('Utilisateur, mot de passe et rôle sont requis');
       return;
     }
     const payload = { username, password, role };
@@ -51,6 +57,11 @@ function Register() {
       });
       navigate('/login');
     } catch (err) {
+      if (err.message.includes('Username already exists')) {
+        setErrors({ username: err.message });
+      } else if (err.message.includes('12 bytes') || err.message.includes('24 hex')) {
+        setErrors({ structure: 'Structure invalide' });
+      }
       setError(err.message || 'Registration failed');
     }
   };
@@ -62,10 +73,17 @@ function Register() {
       <div className="mb-3">
         <label className="form-label">Utilisateur</label>
         <input
-          className="form-control"
+          name="username"
+          className={`form-control${errors.username ? ' is-invalid' : ''}`}
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            if (errors.username) setErrors({ ...errors, username: undefined });
+          }}
         />
+        {errors.username && (
+          <div className="invalid-feedback">{errors.username}</div>
+        )}
       </div>
       <div className="mb-3">
         <label className="form-label">Prénom</label>
@@ -95,18 +113,29 @@ function Register() {
       <div className="mb-3">
         <label className="form-label">Mot de passe</label>
         <input
+          name="password"
           type="password"
-          className="form-control"
+          className={`form-control${errors.password ? ' is-invalid' : ''}`}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (errors.password) setErrors({ ...errors, password: undefined });
+          }}
         />
+        {errors.password && (
+          <div className="invalid-feedback">{errors.password}</div>
+        )}
       </div>
       <div className="mb-3">
         <label className="form-label">Rôle</label>
         <select
-          className="form-select"
+          name="role"
+          className={`form-select${errors.role ? ' is-invalid' : ''}`}
           value={role}
-          onChange={(e) => setRole(e.target.value)}
+          onChange={(e) => {
+            setRole(e.target.value);
+            if (errors.role) setErrors({ ...errors, role: undefined });
+          }}
         >
           <option value="">Choisir...</option>
           {ROLES.map((r) => (
@@ -115,13 +144,20 @@ function Register() {
             </option>
           ))}
         </select>
+        {errors.role && (
+          <div className="invalid-feedback">{errors.role}</div>
+        )}
       </div>
       <div className="mb-3">
         <label className="form-label">Structure</label>
         <select
-          className="form-select"
+          name="structure"
+          className={`form-select${errors.structure ? ' is-invalid' : ''}`}
           value={structure}
-          onChange={(e) => setStructure(e.target.value)}
+          onChange={(e) => {
+            setStructure(e.target.value);
+            if (errors.structure) setErrors({ ...errors, structure: undefined });
+          }}
         >
           <option value="">Choisir...</option>
           {STRUCTURES.map((s) => (
@@ -130,6 +166,9 @@ function Register() {
             </option>
           ))}
         </select>
+        {errors.structure && (
+          <div className="invalid-feedback">{errors.structure}</div>
+        )}
       </div>
       <button type="submit" className="btn btn-primary">S'inscrire</button>
     </form>
