@@ -19,11 +19,8 @@ function NavBar() {
           <Link className="nav-link" to="/catalog">
             Catalogue
           </Link>
-          <Link className="nav-link" to="/">
+          <Link className="nav-link" to="/inventory">
             Inventaire local
-          </Link>
-          <Link className="nav-link" to="/requests">
-            Demandes
           </Link>
           <Link className="nav-link" to="/loans">
             Prêts/Emprunts
