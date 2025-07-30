@@ -30,7 +30,11 @@ test('post validates ids and status', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const eqId = (await db.collection('equipments').insertOne({ name: 'E1' })).insertedId;
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, availableQty: 1 })
+  ).insertedId;
 
   const base = {
     owner: structId.toString(),
@@ -66,7 +70,11 @@ test('put validates status', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const eqId = (await db.collection('equipments').insertOne({ name: 'E1' })).insertedId;
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, availableQty: 1 })
+  ).insertedId;
 
   const payload = {
     owner: structId.toString(),

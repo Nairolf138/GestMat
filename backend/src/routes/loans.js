@@ -16,6 +16,7 @@ const validate = require('../middleware/validate');
 const checkId = require('../middleware/checkObjectId');
 const { createLoanValidator, updateLoanValidator } = require('../validators/loanValidator');
 const { ApiError, forbidden, notFound, badRequest } = require('../utils/errors');
+const { checkEquipmentAvailability } = require('../utils/checkAvailability');
 
 const router = express.Router();
 
@@ -39,8 +40,30 @@ router.get('/', auth(), async (req, res) => {
   res.json(loans);
 });
 
-router.post('/', auth(), createLoanValidator, validate, async (req, res) => {
+router.post('/', auth(), createLoanValidator, validate, async (req, res, next) => {
   const db = req.app.locals.db;
+  const start = req.body.startDate ? new Date(req.body.startDate) : null;
+  const end = req.body.endDate ? new Date(req.body.endDate) : null;
+  for (const item of req.body.items || []) {
+    const avail = await checkEquipmentAvailability(
+      db,
+      item.equipment,
+      start,
+      end,
+      item.quantity
+    );
+    if (!avail?.available) {
+      return next(badRequest('Quantity not available'));
+    }
+  }
+  for (const item of req.body.items || []) {
+    await db
+      .collection('equipments')
+      .updateOne(
+        { _id: new ObjectId(item.equipment) },
+        { $inc: { availableQty: -item.quantity } }
+      );
+  }
   const loan = await createLoan(db, { ...req.body, status: 'pending' });
   try {
     const recipients = await getLoanRecipients(db, loan.owner, loan.items || []);
@@ -71,6 +94,37 @@ router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req,
       return next(forbidden('Access denied'));
     }
 
+    if (req.body.status === 'refused' && loan.status !== 'refused') {
+      for (const item of loan.items || []) {
+        await db
+          .collection('equipments')
+          .updateOne({ _id: item.equipment }, { $inc: { availableQty: item.quantity } });
+      }
+    }
+    if (req.body.status === 'accepted' && loan.status === 'refused') {
+      const start = loan.startDate;
+      const end = loan.endDate;
+      for (const item of loan.items || []) {
+        const avail = await checkEquipmentAvailability(
+          db,
+          item.equipment,
+          start,
+          end,
+          item.quantity
+        );
+        if (!avail?.available) {
+          return next(badRequest('Quantity not available'));
+        }
+      }
+      for (const item of loan.items || []) {
+        await db
+          .collection('equipments')
+          .updateOne(
+            { _id: item.equipment },
+            { $inc: { availableQty: -item.quantity } }
+          );
+      }
+    }
     const updated = await updateLoan(db, req.params.id, req.body);
     if (req.body.status) {
       try {
@@ -113,6 +167,13 @@ router.delete('/:id', auth(), checkId(), async (req, res, next) => {
 
     const removed = await deleteLoan(db, req.params.id);
     if (!removed) return next(notFound('Loan request not found'));
+    if (loan.status !== 'refused') {
+      for (const item of loan.items || []) {
+        await db
+          .collection('equipments')
+          .updateOne({ _id: item.equipment }, { $inc: { availableQty: item.quantity } });
+      }
+    }
     res.json({ message: 'Loan request deleted' });
   } catch (err) {
     next(badRequest('Invalid request'));
