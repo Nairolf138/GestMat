@@ -17,7 +17,9 @@ function AddEquipment({ onCreated }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     const parsed = ['totalQty', 'availableQty'].includes(name)
-      ? Number(value)
+      ? value === ''
+        ? ''
+        : Number(value)
       : value;
     setForm({ ...form, [name]: parsed });
   };
@@ -25,9 +27,14 @@ function AddEquipment({ onCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...form,
+        totalQty: Number(form.totalQty) || 0,
+        availableQty: Number(form.availableQty) || 0,
+      };
       await api('/equipments', {
         method: 'POST',
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       setForm({
         name: '',
