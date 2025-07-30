@@ -11,7 +11,9 @@ const loginValidator = [
 ];
 
 const updateUserValidator = [
-  body('password').optional().notEmpty(),
+  body('firstName').optional().notEmpty(),
+  body('lastName').optional().notEmpty(),
   body('email').optional().isEmail(),
+  body('password').optional().notEmpty(),
 ];
 module.exports = { registerValidator, loginValidator, updateUserValidator };

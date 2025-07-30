@@ -89,6 +89,30 @@ test('PUT /api/users/me updates user and checks auth failures', async () => {
   await mongod.stop();
 });
 
+test('PUT /api/users/me ignores role and structure', async () => {
+  const { app, client, mongod, db } = await createApp();
+  const structure1 = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const structure2 = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
+  const id = (
+    await db
+      .collection('users')
+      .insertOne({ username: 'bob', password: 'pw', role: 'Autre', structure: structure1 })
+  ).insertedId;
+
+  await request(app)
+    .put('/api/users/me')
+    .set(auth(id.toString(), 'Autre'))
+    .send({ role: 'Administrateur', structure: structure2.toString(), email: 'new@example.com' })
+    .expect(200);
+
+  const user = await db.collection('users').findOne({ _id: id });
+  assert.strictEqual(user.role, 'Autre');
+  assert.strictEqual(user.structure.toString(), structure1.toString());
+  assert.strictEqual(user.email, 'new@example.com');
+  await client.close();
+  await mongod.stop();
+});
+
 test('DELETE /api/users/:id respects authorization', async () => {
   const { app, client, mongod, db } = await createApp();
   const id = (await db.collection('users').insertOne({ username: 'bob', password: 'pw' })).insertedId;
