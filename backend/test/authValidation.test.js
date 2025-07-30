@@ -17,6 +17,9 @@ async function createApp() {
   app.use(express.json());
   app.locals.db = db;
   app.use('/api/auth', authRoutes);
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500).json({ message: err.message || 'Server error' });
+  });
   return { app, client, mongod };
 }
 
@@ -25,7 +28,11 @@ test('register validates required fields and duplicate usernames', async () => {
   await request(app).post('/api/auth/register').send({ password: 'pw' }).expect(400);
   await request(app).post('/api/auth/register').send({ username: 'bob' }).expect(400);
   await request(app).post('/api/auth/register').send({ username: 'bob', password: 'pw' }).expect(200);
-  await request(app).post('/api/auth/register').send({ username: 'bob', password: 'pw' }).expect(400);
+  const dup = await request(app)
+    .post('/api/auth/register')
+    .send({ username: 'bob', password: 'pw' });
+  assert.strictEqual(dup.status, 409);
+  assert.strictEqual(dup.body.message, 'Username already exists');
   await client.close();
   await mongod.stop();
 });
