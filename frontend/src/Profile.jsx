@@ -1,28 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
-
-const ROLES = [
-  'Administrateur',
-  'Régisseur(se) Son',
-  'Régisseur(se) Lumière',
-  'Régisseur(se) Plateau',
-  'Regisseur(se) Général',
-  'Autre',
-];
-
-const STRUCTURES = [
-  "Théâtre de l'Olivier (Istres)",
-  'Théâtre La Colonne (Miramas)',
-  'Le Théâtre de Fos (Fos-sur-mer)',
-  "L'Usine (Istres)",
-  'Espace Gérard Philippe (Port-saint louis)',
-  'Espace Robert Hossein (Grans)',
-  "L'Oppidum (Cornillon Confoux)",
-];
+import { GlobalContext } from './GlobalContext.jsx';
 
 function Profile() {
+  const { roles, structures } = useContext(GlobalContext);
   const [form, setForm] = useState({
     username: '',
     firstName: '',
@@ -129,7 +112,7 @@ function Profile() {
             onChange={handleChange}
           >
             <option value="">Choisir...</option>
-            {ROLES.map((r) => (
+            {roles.map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
@@ -145,9 +128,9 @@ function Profile() {
             onChange={handleChange}
           >
             <option value="">Choisir...</option>
-            {STRUCTURES.map((s) => (
-              <option key={s} value={s}>
-                {s}
+            {structures.map((s) => (
+              <option key={s._id || s} value={s._id || s.name || s}>
+                {s.name || s}
               </option>
             ))}
           </select>
