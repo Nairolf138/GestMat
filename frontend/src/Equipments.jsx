@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
 import NavBar from './NavBar';
+import Alert from './Alert.jsx';
 
 function Equipments() {
+  const routerLocation = useLocation();
+  const [message] = useState(routerLocation.state?.message || '');
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
@@ -29,6 +33,7 @@ function Equipments() {
   return (
     <div className="container">
       <NavBar />
+      <Alert type="success" message={message} />
       <h1>Équipements</h1>
       <div className="row g-2 mb-3">
         <div className="col-md">

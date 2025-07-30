@@ -28,7 +28,7 @@ function Login() {
         body: JSON.stringify({ username, password }),
       });
       localStorage.setItem('token', token);
-      navigate('/');
+      navigate('/', { state: { message: 'Connexion réussie' } });
     } catch (err) {
       setError(err.message || 'Login failed');
     }
