@@ -58,7 +58,11 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res) =
       user.structure = await findStructureById(db, user.structure);
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET);
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
     const { password: _pw, ...userData } = user;
     res.json({ token, user: userData });
   } catch (err) {

@@ -24,7 +24,7 @@ async function createApp() {
 }
 
 function auth() {
-  const token = jwt.sign({ id: 'u1' }, 'test');
+  const token = jwt.sign({ id: 'u1' }, 'test', { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }
 
