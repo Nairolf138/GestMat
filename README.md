@@ -26,6 +26,7 @@ uses **Node 20** or newer before installing dependencies.
    **Make sure to set `JWT_SECRET`** or the API will refuse to start.
    Copy `frontend/.env.example` to `frontend/.env` as well.
    Set `SMTP_URL` and optionally `NOTIFY_EMAIL` if you want email notifications.
+   Use `CORS_ORIGIN` to specify one or more allowed origins separated by commas.
 2. Install dependencies and start the API:
 
    ```bash
