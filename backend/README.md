@@ -18,6 +18,11 @@ If `CORS_ORIGIN` is left unset, the API denies cross-origin requests.
 JWT tokens returned by the `/api/auth/login` endpoint now include an expiry
 time of one hour.
 
+To obtain a new token when the current one expires, send a `POST` request to
+`/api/auth/refresh`. The endpoint expects a secure refresh token (for example
+stored in an HTTP-only cookie) and responds with `{ token }` containing a fresh
+JWT.
+
 To enable email notifications, set `SMTP_URL` in `.env` with a valid SMTP
 connection string and optionally `NOTIFY_EMAIL` for the recipient address.
 
