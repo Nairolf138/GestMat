@@ -11,6 +11,7 @@ import Equipments from './Equipments';
 import Loans from './Loans';
 import Profile from './Profile';
 import Catalog from './Catalog';
+import Cart from './Cart';
 
 const token = () => localStorage.getItem('token');
 
@@ -35,6 +36,10 @@ function App() {
         <Route
           path="/loans"
           element={token() ? <Loans /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/cart"
+          element={token() ? <Cart /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/profile"
