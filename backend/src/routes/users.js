@@ -7,6 +7,7 @@ const { ADMIN_ROLE } = require('../config/roles');
 const validate = require('../middleware/validate');
 const checkId = require('../middleware/checkObjectId');
 const { updateUserValidator } = require('../validators/userValidator');
+const { notFound } = require('../utils/errors');
 
 const router = express.Router();
 
@@ -28,10 +29,10 @@ router.delete('/:id', auth(ADMIN_ROLE), checkId(), async (req, res) => {
   res.json({ message: 'User deleted' });
 });
 
-router.get('/me', auth(), async (req, res) => {
+router.get('/me', auth(), async (req, res, next) => {
   const db = req.app.locals.db;
   const user = await findUserById(db, req.user.id);
-  if (!user) return res.status(404).json({ message: 'Not found' });
+  if (!user) return next(notFound('User not found'));
   if (user.structure) {
     user.structure = await findStructureById(db, user.structure);
   }
@@ -39,14 +40,14 @@ router.get('/me', auth(), async (req, res) => {
   res.json(user);
 });
 
-router.put('/me', auth(), updateUserValidator, validate, async (req, res) => {
+router.put('/me', auth(), updateUserValidator, validate, async (req, res, next) => {
   const db = req.app.locals.db;
   const data = { ...req.body };
   if (data.password) {
     data.password = await bcrypt.hash(data.password, 10);
   }
   const updated = await updateUser(db, req.user.id, data);
-  if (!updated) return res.status(404).json({ message: 'Not found' });
+  if (!updated) return next(notFound('User not found'));
   if (updated.structure) {
     updated.structure = await findStructureById(db, updated.structure);
   }

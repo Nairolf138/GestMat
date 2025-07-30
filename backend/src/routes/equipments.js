@@ -18,6 +18,7 @@ const {
   createEquipmentValidator,
   updateEquipmentValidator,
 } = require('../validators/equipmentValidator');
+const { ApiError, forbidden, notFound, badRequest } = require('../utils/errors');
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.get('/', auth(), async (req, res) => {
   res.json(equipments);
 });
 
-router.post('/', auth(), createEquipmentValidator, validate, async (req, res) => {
+router.post('/', auth(), createEquipmentValidator, validate, async (req, res, next) => {
   const db = req.app.locals.db;
   let location = '';
   let structureId = null;
@@ -51,49 +52,49 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req, res) =>
     }
   }
   if (!canModify(req.user.role, req.body.type)) {
-    return res.status(403).json({ message: 'Access denied' });
+    return next(forbidden('Access denied'));
   }
   const equipment = await createEquipment(db, { ...req.body, location, structure: structureId });
   res.json(equipment);
 });
 
-router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async (req, res) => {
+router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async (req, res, next) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);
-    if (!current) return res.status(404).json({ message: 'Not found' });
+    if (!current) return next(notFound('Equipment not found'));
     const newType = req.body.type || current.type;
     if (!canModify(req.user.role, newType)) {
-      return res.status(403).json({ message: 'Access denied' });
+      return next(forbidden('Access denied'));
     }
     const updated = await updateEquipment(db, req.params.id, req.body);
-    if (!updated) return res.status(404).json({ message: 'Not found' });
+    if (!updated) return next(notFound('Equipment not found'));
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(badRequest('Invalid request'));
   }
 });
 
-router.delete('/:id', auth(), checkId(), async (req, res) => {
+router.delete('/:id', auth(), checkId(), async (req, res, next) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);
-    if (!current) return res.status(404).json({ message: 'Not found' });
+    if (!current) return next(notFound('Equipment not found'));
     if (!canModify(req.user.role, current.type)) {
-      return res.status(403).json({ message: 'Access denied' });
+      return next(forbidden('Access denied'));
     }
     const removed = await deleteEquipment(db, req.params.id);
-    if (!removed) return res.status(404).json({ message: 'Not found' });
+    if (!removed) return next(notFound('Equipment not found'));
     res.json({ message: 'Equipment deleted' });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(badRequest('Invalid request'));
   }
 });
 
-router.get('/:id/availability', auth(), checkId(), async (req, res) => {
+router.get('/:id/availability', auth(), checkId(), async (req, res, next) => {
   const db = req.app.locals.db;
   const eq = await findEquipmentById(db, req.params.id);
-  if (!eq) return res.status(404).json({ message: 'Not found' });
+  if (!eq) return next(notFound('Equipment not found'));
   const start = req.query.start ? new Date(req.query.start) : null;
   const end = req.query.end ? new Date(req.query.end) : null;
   const quantity = Number(req.query.quantity) || 1;
