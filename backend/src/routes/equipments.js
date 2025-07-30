@@ -20,6 +20,7 @@ const {
   updateEquipmentValidator,
 } = require('../validators/equipmentValidator');
 const { ApiError, forbidden, notFound, badRequest } = require('../utils/errors');
+const { checkEquipmentAvailability } = require('../utils/checkAvailability');
 
 const router = express.Router();
 
@@ -114,31 +115,18 @@ router.delete('/:id', auth(), checkId(), async (req, res, next) => {
 
 router.get('/:id/availability', auth(), checkId(), async (req, res, next) => {
   const db = req.app.locals.db;
-  const eq = await findEquipmentById(db, req.params.id);
-  if (!eq) return next(notFound('Equipment not found'));
   const start = req.query.start ? new Date(req.query.start) : null;
   const end = req.query.end ? new Date(req.query.end) : null;
   const quantity = Number(req.query.quantity) || 1;
-
-  let reserved = 0;
-  if (start && end && !Number.isNaN(start) && !Number.isNaN(end)) {
-    const agg = await db.collection('loanrequests').aggregate([
-      {
-        $match: {
-          status: { $ne: 'refused' },
-          startDate: { $lte: end },
-          endDate: { $gte: start },
-          items: { $elemMatch: { equipment: eq._id } },
-        },
-      },
-      { $unwind: '$items' },
-      { $match: { 'items.equipment': eq._id } },
-      { $group: { _id: null, qty: { $sum: '$items.quantity' } } },
-    ]).toArray();
-    reserved = agg[0]?.qty || 0;
-  }
-  const availQty = eq.totalQty - reserved;
-  res.json({ available: quantity <= availQty, availableQty: availQty });
+  const avail = await checkEquipmentAvailability(
+    db,
+    req.params.id,
+    start,
+    end,
+    quantity
+  );
+  if (!avail) return next(notFound('Equipment not found'));
+  res.json(avail);
 });
 
 module.exports = router;

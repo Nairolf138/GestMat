@@ -9,6 +9,7 @@ process.env.JWT_SECRET = 'test';
 
 const loanRoutes = require('../src/routes/loans');
 const mailer = require('../src/utils/sendMail');
+mailer.sendMail = async () => {};
 
 async function createApp() {
   const mongod = await MongoMemoryServer.create();
@@ -30,19 +31,24 @@ function auth() {
 }
 
 test('create, update and delete loan request', async () => {
-  mailer.sendMail = async () => {};
   const { app, client, mongod } = await createApp();
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const eqId = (await db.collection('equipments').insertOne({ name: 'E1' })).insertedId;
-  await db.collection('users').insertOne({ _id: new ObjectId(userId), structure: structId });
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, availableQty: 1 })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: structId });
 
   const payload = {
     owner: structId.toString(),
     borrower: structId.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
-    endDate: '2024-01-02'
+    endDate: '2024-01-02',
   };
 
   const res = await request(app)
@@ -51,6 +57,10 @@ test('create, update and delete loan request', async () => {
     .send(payload)
     .expect(200);
   assert.ok(res.body._id);
+  const eqAfterCreate = await db
+    .collection('equipments')
+    .findOne({ _id: eqId });
+  assert.strictEqual(eqAfterCreate.availableQty, 0);
 
   const list1 = await request(app).get('/api/loans').set(auth()).expect(200);
   assert.strictEqual(list1.body.length, 1);
@@ -64,8 +74,49 @@ test('create, update and delete loan request', async () => {
   assert.strictEqual(upd.body.status, 'accepted');
 
   await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
+  const eqAfterDelete = await db
+    .collection('equipments')
+    .findOne({ _id: eqId });
+  assert.strictEqual(eqAfterDelete.availableQty, 1);
   const list2 = await request(app).get('/api/loans').set(auth()).expect(200);
   assert.strictEqual(list2.body.length, 0);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('loan creation fails on quantity conflict', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, availableQty: 1 })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: structId });
+
+  const payload = {
+    owner: structId.toString(),
+    borrower: structId.toString(),
+    items: [{ equipment: eqId.toString(), quantity: 1 }],
+    startDate: '2024-01-01',
+    endDate: '2024-01-02',
+  };
+
+  await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send(payload)
+    .expect(200);
+
+  await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send(payload)
+    .expect(400);
 
   await client.close();
   await mongod.stop();
