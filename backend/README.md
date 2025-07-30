@@ -13,6 +13,9 @@ npm start
 
 Environment variables are defined in `.env.example`.
 
+JWT tokens returned by the `/api/auth/login` endpoint now include an expiry
+time of one hour.
+
 To enable email notifications, set `SMTP_URL` in `.env` with a valid SMTP
 connection string and optionally `NOTIFY_EMAIL` for the recipient address.
 
