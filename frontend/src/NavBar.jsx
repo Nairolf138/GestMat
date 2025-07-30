@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 function NavBar() {
   const navigate = useNavigate();
+  const loggedIn = Boolean(localStorage.getItem('token'));
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
@@ -30,15 +31,21 @@ function NavBar() {
           <Link className="nav-link" to="/profile">
             Profil
           </Link>
-          <Link className="nav-link" to="/login">
-            Connexion
-          </Link>
-          <Link className="nav-link" to="/register">
-            Inscription
-          </Link>
-          <button className="btn btn-outline-light ms-2" onClick={handleLogout}>
-            Se déconnecter
-          </button>
+          {!loggedIn && (
+            <>
+              <Link className="nav-link" to="/login">
+                Connexion
+              </Link>
+              <Link className="nav-link" to="/register">
+                Inscription
+              </Link>
+            </>
+          )}
+          {loggedIn && (
+            <button className="btn btn-outline-light ms-2" onClick={handleLogout}>
+              Se déconnecter
+            </button>
+          )}
         </div>
       </div>
     </nav>
