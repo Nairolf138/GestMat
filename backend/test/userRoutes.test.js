@@ -1,0 +1,120 @@
+const test = require('node:test');
+const assert = require('assert');
+const request = require('supertest');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoClient, ObjectId } = require('mongodb');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+
+process.env.JWT_SECRET = 'test';
+
+const userRoutes = require('../src/routes/users');
+
+async function createApp() {
+  const mongod = await MongoMemoryServer.create();
+  const uri = mongod.getUri();
+  const client = new MongoClient(uri);
+  await client.connect();
+  const db = client.db();
+  const app = express();
+  app.use(express.json());
+  app.locals.db = db;
+  app.use('/api/users', userRoutes);
+  return { app, client, mongod, db };
+}
+
+function token(id, role = 'Autre') {
+  return jwt.sign({ id, role }, 'test', { expiresIn: '1h' });
+}
+
+function auth(id, role) {
+  return { Authorization: `Bearer ${token(id, role)}` };
+}
+
+
+test('GET /api/users requires admin role', async () => {
+  const { app, client, mongod, db } = await createApp();
+  await db.collection('users').insertOne({ username: 'bob', password: 'pw' });
+
+  // no token
+  await request(app).get('/api/users').expect(401);
+
+  // non admin
+  await request(app)
+    .get('/api/users')
+    .set(auth('u1', 'Autre'))
+    .expect(403);
+
+  // admin
+  const res = await request(app)
+    .get('/api/users')
+    .set(auth('a1', 'Administrateur'))
+    .expect(200);
+  assert.strictEqual(Array.isArray(res.body), true);
+  await client.close();
+  await mongod.stop();
+});
+
+test('PUT /api/users/me updates user and checks auth failures', async () => {
+  const { app, client, mongod, db } = await createApp();
+  const id = new ObjectId();
+  await db.collection('users').insertOne({ _id: id, username: 'bob', password: 'pw' });
+
+  // success
+  const up = await request(app)
+    .put('/api/users/me')
+    .set(auth(id.toString(), 'Autre'))
+    .send({ email: 'bob@example.com' })
+    .expect(200);
+  assert.strictEqual(up.body.email, 'bob@example.com');
+
+  // not found
+  await request(app)
+    .put('/api/users/me')
+    .set(auth(new ObjectId().toString(), 'Autre'))
+    .send({ email: 'x@x.com' })
+    .expect(404);
+
+  // missing token
+  await request(app).put('/api/users/me').send({}).expect(401);
+
+  // invalid token
+  await request(app)
+    .put('/api/users/me')
+    .set({ Authorization: 'Bearer badtoken' })
+    .send({})
+    .expect(401);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('DELETE /api/users/:id respects authorization', async () => {
+  const { app, client, mongod, db } = await createApp();
+  const id = (await db.collection('users').insertOne({ username: 'bob', password: 'pw' })).insertedId;
+
+  // missing token
+  await request(app).delete(`/api/users/${id}`).expect(401);
+
+  // invalid token
+  await request(app)
+    .delete(`/api/users/${id}`)
+    .set({ Authorization: 'Bearer badtoken' })
+    .expect(401);
+
+  // non admin
+  await request(app)
+    .delete(`/api/users/${id}`)
+    .set(auth('u1', 'Autre'))
+    .expect(403);
+
+  // admin success
+  await request(app)
+    .delete(`/api/users/${id}`)
+    .set(auth('a1', 'Administrateur'))
+    .expect(200);
+
+  await client.close();
+  await mongod.stop();
+});
+
