@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
 const { MongoMemoryServer } = require('mongodb-memory-server');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
@@ -53,6 +53,54 @@ test('create, list, update and delete equipments', async () => {
   await request(app).delete(`/api/equipments/${id}`).set(auth()).expect(200);
   const list2 = await request(app).get('/api/equipments').set(auth()).expect(200);
   assert.strictEqual(list2.body.length, 0);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('deny updates and deletes when structures differ', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+
+  const struct1 = new ObjectId();
+  const struct2 = new ObjectId();
+  await db.collection('structures').insertMany([
+    { _id: struct1, name: 'Struct1' },
+    { _id: struct2, name: 'Struct2' },
+  ]);
+
+  const u1 = new ObjectId();
+  const u2 = new ObjectId();
+  await db.collection('users').insertMany([
+    { _id: u1, username: 'user1', role: 'Régisseur(se) Son', structure: struct1 },
+    { _id: u2, username: 'user2', role: 'Régisseur(se) Son', structure: struct2 },
+  ]);
+
+  const token1 = jwt.sign({ id: u1.toString(), role: 'Régisseur(se) Son' }, 'test', {
+    expiresIn: '1h',
+  });
+  const token2 = jwt.sign({ id: u2.toString(), role: 'Régisseur(se) Son' }, 'test', {
+    expiresIn: '1h',
+  });
+
+  const newEq = { name: 'Mic', type: 'Son', totalQty: 1, availableQty: 1 };
+  const created = await request(app)
+    .post('/api/equipments')
+    .set({ Authorization: `Bearer ${token1}` })
+    .send(newEq)
+    .expect(200);
+  const id = created.body._id;
+
+  await request(app)
+    .put(`/api/equipments/${id}`)
+    .set({ Authorization: `Bearer ${token2}` })
+    .send({ location: 'elsewhere' })
+    .expect(403);
+
+  await request(app)
+    .delete(`/api/equipments/${id}`)
+    .set({ Authorization: `Bearer ${token2}` })
+    .expect(403);
 
   await client.close();
   await mongod.stop();
