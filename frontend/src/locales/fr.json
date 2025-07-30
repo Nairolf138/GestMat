@@ -8,5 +8,67 @@
   "register": {
     "title": "Inscription",
     "submit": "S'inscrire"
+  },
+  "nav": {
+    "catalog": "Catalogue",
+    "inventory": "Inventaire local",
+    "loans": "Pr\u00eats/Emprunts",
+    "cart": "Panier",
+    "profile": "Profil",
+    "login": "Connexion",
+    "logout": "Se d\u00e9connecter"
+  },
+  "equipments": {
+    "title": "Inventaire local",
+    "search": "Recherche",
+    "type": "Type",
+    "location": "Emplacement",
+    "search_button": "Rechercher"
+  },
+  "home": {
+    "title": "Accueil",
+    "greeting": "Bonjour {{name}} !",
+    "recent_requests": "Demandes r\u00e9centes",
+    "no_requests": "Aucune demande",
+    "incoming_loans": "Emprunts \u00e0 venir",
+    "no_loans": "Aucun emprunt",
+    "shortcuts": "Raccourcis"
+  },
+  "catalog": {
+    "title": "Catalogue",
+    "search": "Recherche",
+    "type": "Type",
+    "all_structures": "Toutes structures",
+    "search_button": "Rechercher",
+    "add_to_cart": "Ajouter au panier",
+    "quantity_prompt": "Quantit\u00e9 ?",
+    "select_period": "Veuillez s\u00e9lectionner une p\u00e9riode",
+    "unavailable": "Quantit\u00e9 indisponible pour cette p\u00e9riode",
+    "added": "Ajout\u00e9 au panier"
+  },
+  "loans": {
+    "title": "Pr\u00eats",
+    "new_request": "Nouvelle demande",
+    "owner_structure": "Structure propri\u00e9taire",
+    "equipment_option": "\u00c9quipement",
+    "send": "Envoyer",
+    "accept": "Accepter",
+    "refuse": "Refuser",
+    "error_create": "Erreur lors de la cr\u00e9ation"
+  },
+  "profile": {
+    "title": "Profil",
+    "first_name": "Pr\u00e9nom",
+    "last_name": "Nom",
+    "email": "Adresse mail",
+    "password_placeholder": "(inchang\u00e9)",
+    "role": "R\u00f4le",
+    "structure": "Structure",
+    "save": "Enregistrer",
+    "load_error": "Erreur de chargement",
+    "success": "Modifi\u00e9"
+  },
+  "common": {
+    "choose": "Choisir..."
   }
 }

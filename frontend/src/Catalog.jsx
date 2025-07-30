@@ -3,8 +3,10 @@ import NavBar from './NavBar';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext';
 import Alert from './Alert.jsx';
+import { useTranslation } from 'react-i18next';
 
 function Catalog() {
+  const { t } = useTranslation();
   const { structures } = useContext(GlobalContext);
   const [items, setItems] = useState([]);
   const [filters, setFilters] = useState({
@@ -38,10 +40,10 @@ function Catalog() {
   };
 
   const addToCart = async (eq) => {
-    const qty = Number(prompt('Quantité ?'));
+    const qty = Number(prompt(t('catalog.quantity_prompt')));
     if (!qty) return;
     if (!filters.startDate || !filters.endDate) {
-      setError('Veuillez sélectionner une période');
+      setError(t('catalog.select_period'));
       return;
     }
     try {
@@ -49,14 +51,14 @@ function Catalog() {
         `/equipments/${eq._id}/availability?start=${filters.startDate}&end=${filters.endDate}&quantity=${qty}`
       );
       if (!res.available) {
-        setError('Quantité indisponible pour cette période');
+        setError(t('catalog.unavailable'));
         return;
       }
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       cart.push({ equipment: eq, quantity: qty, startDate: filters.startDate, endDate: filters.endDate });
       localStorage.setItem('cart', JSON.stringify(cart));
       setError('');
-      alert('Ajouté au panier');
+      alert(t('catalog.added'));
     } catch (err) {
       setError(err.message || 'Erreur');
     }
@@ -65,18 +67,18 @@ function Catalog() {
   return (
     <div className="container">
       <NavBar />
-      <h1>Catalogue</h1>
+      <h1>{t('catalog.title')}</h1>
       <Alert message={error} />
       <div className="row g-2 mb-3">
         <div className="col-md">
-          <input name="search" placeholder="Recherche" className="form-control" value={filters.search} onChange={handleChange} />
+          <input name="search" placeholder={t('catalog.search')} className="form-control" value={filters.search} onChange={handleChange} />
         </div>
         <div className="col-md">
-          <input name="type" placeholder="Type" className="form-control" value={filters.type} onChange={handleChange} />
+          <input name="type" placeholder={t('catalog.type')} className="form-control" value={filters.type} onChange={handleChange} />
         </div>
         <div className="col-md">
           <select name="structure" className="form-select" value={filters.structure} onChange={handleChange}>
-            <option value="">Toutes structures</option>
+            <option value="">{t('catalog.all_structures')}</option>
             {structures.map((s) => (
               <option key={s._id} value={s._id}>{s.name}</option>
             ))}
@@ -89,14 +91,14 @@ function Catalog() {
           <input name="endDate" type="date" className="form-control" value={filters.endDate} onChange={handleChange} />
         </div>
         <div className="col-auto">
-          <button onClick={fetchItems} className="btn btn-primary">Rechercher</button>
+          <button onClick={fetchItems} className="btn btn-primary">{t('catalog.search_button')}</button>
         </div>
       </div>
       <ul className="list-group">
         {items.map((it) => (
           <li key={it._id} className="list-group-item d-flex justify-content-between align-items-center">
             <span>{it.name} - {it.structure?.name}</span>
-            <button className="btn btn-success btn-sm" onClick={() => addToCart(it)}>Ajouter au panier</button>
+            <button className="btn btn-success btn-sm" onClick={() => addToCart(it)}>{t('catalog.add_to_cart')}</button>
           </li>
         ))}
       </ul>

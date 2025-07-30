@@ -3,8 +3,10 @@ import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { GlobalContext } from './GlobalContext.jsx';
+import { useTranslation } from 'react-i18next';
 
 function Loans() {
+  const { t } = useTranslation();
   const { structures } = useContext(GlobalContext);
   const [loans, setLoans] = useState([]);
   const [equipments, setEquipments] = useState([]);
@@ -48,7 +50,7 @@ function Loans() {
       setError('');
       api('/loans').then(setLoans);
     } catch (err) {
-      setError(err.message || 'Erreur lors de la création');
+      setError(err.message || t('loans.error_create'));
     }
   };
 
@@ -63,10 +65,10 @@ function Loans() {
   return (
     <div className="container">
       <NavBar />
-      <h1>Prêts</h1>
+      <h1>{t('loans.title')}</h1>
       <Alert message={error} />
       <form onSubmit={createLoan} className="mt-3 row g-2">
-        <h2>Nouvelle demande</h2>
+        <h2>{t('loans.new_request')}</h2>
         <div className="col-md">
           <select
             name="owner"
@@ -74,7 +76,7 @@ function Loans() {
             value={form.owner}
             onChange={handleChange}
           >
-            <option value="">Structure propriétaire</option>
+            <option value="">{t('loans.owner_structure')}</option>
             {structures.map((s) => (
               <option key={s._id} value={s._id}>
                 {s.name}
@@ -89,7 +91,7 @@ function Loans() {
             value={form.equipment}
             onChange={handleChange}
           >
-            <option value="">Équipement</option>
+            <option value="">{t('loans.equipment_option')}</option>
             {equipments.map((e) => (
               <option key={e._id} value={e._id}>
                 {e.name}
@@ -125,7 +127,7 @@ function Loans() {
           />
         </div>
         <div className="col-auto">
-          <button type="submit" className="btn btn-primary">Envoyer</button>
+          <button type="submit" className="btn btn-primary">{t('loans.send')}</button>
         </div>
       </form>
       <ul className="list-group mt-4">
@@ -142,13 +144,13 @@ function Loans() {
                   onClick={() => updateStatus(l._id, 'accepted')}
                   className="btn btn-success btn-sm ms-2"
                 >
-                  Accepter
+                  {t('loans.accept')}
                 </button>
                 <button
                   onClick={() => updateStatus(l._id, 'refused')}
                   className="btn btn-danger btn-sm ms-2"
                 >
-                  Refuser
+                  {t('loans.refuse')}
                 </button>
               </>
             )}
