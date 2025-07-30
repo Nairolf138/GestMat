@@ -8,7 +8,8 @@ filtered by name, type and location to quickly find the right items.
 
 Additional routes allow creating loan requests, accepting or refusing them and
 retrieving basic statistics. Email notifications can be sent if `SMTP_URL` is
-configured in the backend environment.
+configured in the backend environment; the recipient address can be overridden
+with `NOTIFY_EMAIL`.
 
 ## Folders
 
@@ -24,6 +25,7 @@ uses **Node 20** or newer before installing dependencies.
 1. Copy `backend/.env.example` to `backend/.env` and edit values if needed.
    **Make sure to set `JWT_SECRET`** or the API will refuse to start.
    Copy `frontend/.env.example` to `frontend/.env` as well.
+   Set `SMTP_URL` and optionally `NOTIFY_EMAIL` if you want email notifications.
 2. Install dependencies and start the API:
 
    ```bash
