@@ -17,6 +17,7 @@ function Catalog() {
     endDate: '',
   });
   const [error, setError] = useState('');
+  const [quantities, setQuantities] = useState({});
 
   const fetchItems = () => {
     const params = new URLSearchParams({
@@ -39,8 +40,12 @@ function Catalog() {
     setFilters({ ...filters, [name]: value });
   };
 
+  const handleQtyChange = (id, value) => {
+    setQuantities({ ...quantities, [id]: value });
+  };
+
   const addToCart = async (eq) => {
-    const qty = Number(prompt(t('catalog.quantity_prompt')));
+    const qty = Number(quantities[eq._id] || 1);
     if (!qty) return;
     if (!filters.startDate || !filters.endDate) {
       setError(t('catalog.select_period'));
@@ -96,9 +101,29 @@ function Catalog() {
       </div>
       <ul className="list-group">
         {items.map((it) => (
-          <li key={it._id} className="list-group-item d-flex justify-content-between align-items-center">
-            <span>{it.name} - {it.structure?.name}</span>
-            <button className="btn btn-success btn-sm" onClick={() => addToCart(it)}>{t('catalog.add_to_cart')}</button>
+          <li
+            key={it._id}
+            className="list-group-item d-flex justify-content-between align-items-center"
+          >
+            <span>
+              {it.name} - {it.structure?.name}
+            </span>
+            <div className="d-flex align-items-center">
+              <input
+                name={`quantity-${it._id}`}
+                type="number"
+                min="1"
+                className="form-control form-control-sm me-2"
+                value={quantities[it._id] || 1}
+                onChange={(e) => handleQtyChange(it._id, e.target.value)}
+              />
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => addToCart(it)}
+              >
+                {t('catalog.add_to_cart')}
+              </button>
+            </div>
           </li>
         ))}
       </ul>
