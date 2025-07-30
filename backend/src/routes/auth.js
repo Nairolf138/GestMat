@@ -71,4 +71,32 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res, n
   }
 });
 
+router.post('/refresh', async (req, res, next) => {
+  try {
+    const cookie = req.headers.cookie || '';
+    const tokenCookie = cookie
+      .split(';')
+      .map(c => c.trim())
+      .find(c => c.startsWith('refreshToken='));
+    const refreshToken = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : req.body?.refreshToken;
+    if (!refreshToken) return next(unauthorized('Refresh token required'));
+
+    let payload;
+    try {
+      payload = jwt.verify(refreshToken, JWT_SECRET);
+    } catch {
+      return next(unauthorized('Invalid refresh token'));
+    }
+
+    const token = jwt.sign(
+      { id: payload.id, role: payload.role },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    res.json({ token });
+  } catch (err) {
+    next(new ApiError(500, 'Server error'));
+  }
+});
+
 module.exports = router;
