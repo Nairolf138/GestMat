@@ -4,12 +4,14 @@ const {
   createEquipment,
   updateEquipment,
   deleteEquipment,
+  findEquipmentById,
 } = require('../models/Equipment');
 const { findStructureById } = require('../models/Structure');
 const { findUserById } = require('../models/User');
 const { ObjectId } = require('mongodb');
 const auth = require('../middleware/auth');
 const createEquipmentFilter = require('../utils/createEquipmentFilter');
+const { canModify } = require('../utils/roleAccess');
 const validate = require('../middleware/validate');
 const {
   createEquipmentValidator,
@@ -20,7 +22,12 @@ const router = express.Router();
 
 router.get('/', auth(), async (req, res) => {
   const db = req.app.locals.db;
-  const filter = createEquipmentFilter(req.query);
+  let userStructure = req.query.structure;
+  if (!userStructure && ObjectId.isValid(req.user.id)) {
+    const user = await findUserById(db, req.user.id);
+    if (user && user.structure) userStructure = user.structure.toString();
+  }
+  const filter = createEquipmentFilter({ ...req.query, structure: userStructure });
   const equipments = await findEquipments(db, filter);
   for (const eq of equipments) {
     if (eq.structure) {
@@ -33,20 +40,31 @@ router.get('/', auth(), async (req, res) => {
 router.post('/', auth(), createEquipmentValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
   let location = '';
+  let structureId = null;
   if (ObjectId.isValid(req.user.id)) {
     const user = await findUserById(db, req.user.id);
     if (user && user.structure) {
       const struct = await findStructureById(db, user.structure);
       location = struct?.name || '';
+      structureId = user.structure;
     }
   }
-  const equipment = await createEquipment(db, { ...req.body, location });
+  if (!canModify(req.user.role, req.body.type)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  const equipment = await createEquipment(db, { ...req.body, location, structure: structureId });
   res.json(equipment);
 });
 
 router.put('/:id', auth(), updateEquipmentValidator, validate, async (req, res) => {
   try {
     const db = req.app.locals.db;
+    const current = await findEquipmentById(db, req.params.id);
+    if (!current) return res.status(404).json({ message: 'Not found' });
+    const newType = req.body.type || current.type;
+    if (!canModify(req.user.role, newType)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
     const updated = await updateEquipment(db, req.params.id, req.body);
     if (!updated) return res.status(404).json({ message: 'Not found' });
     res.json(updated);
@@ -58,6 +76,11 @@ router.put('/:id', auth(), updateEquipmentValidator, validate, async (req, res) 
 router.delete('/:id', auth(), async (req, res) => {
   try {
     const db = req.app.locals.db;
+    const current = await findEquipmentById(db, req.params.id);
+    if (!current) return res.status(404).json({ message: 'Not found' });
+    if (!canModify(req.user.role, current.type)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
     const removed = await deleteEquipment(db, req.params.id);
     if (!removed) return res.status(404).json({ message: 'Not found' });
     res.json({ message: 'Equipment deleted' });

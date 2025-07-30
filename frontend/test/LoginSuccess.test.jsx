@@ -11,6 +11,7 @@ import * as api from '../src/api.js';
 describe('Login success', () => {
   it('displays success message after login', async () => {
     api.api.mockResolvedValueOnce({ token: 'abc' });
+    api.api.mockResolvedValueOnce({ structure: 's1' });
     api.api.mockResolvedValueOnce([]);
     localStorage.removeItem('token');
     render(
@@ -25,7 +26,7 @@ describe('Login success', () => {
     fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'pw' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Se connecter' }).closest('form'));
     await waitFor(() => expect(api.api).toHaveBeenCalled());
-    expect(await screen.findByRole('heading', { name: 'Équipements' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Inventaire local' })).toBeTruthy();
     expect(screen.getByText('Connexion réussie')).toBeTruthy();
   });
 });
