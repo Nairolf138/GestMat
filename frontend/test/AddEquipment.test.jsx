@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import AddEquipment from '../src/AddEquipment.jsx';
-import * as api from '../src/api.js';
-
+import '../src/i18n.js';
 vi.mock('../src/api.js');
+import * as api from '../src/api.js';
 
 describe('AddEquipment', () => {
   it('submits form data', async () => {

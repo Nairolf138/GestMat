@@ -92,3 +92,14 @@ To verify number fields work correctly, start both backend and frontend,
 open the Equipments page and create a new item. The `Quantité totale` and
 `Quantité disponible` inputs should accept numbers only and after
 submission the form resets with 0 in those fields.
+
+## Monitoring
+
+The backend exposes Prometheus metrics at `/metrics`. You can scrape this
+endpoint from Prometheus and visualise data in Grafana. Default Node.js metrics
+are enabled using `prom-client`.
+
+## Internationalisation
+
+The React frontend now uses `react-i18next`. Translations are provided for
+French and English and additional languages can be added in `frontend/src/locales`.

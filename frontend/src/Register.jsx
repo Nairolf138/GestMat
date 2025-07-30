@@ -1,28 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from './api';
 import Alert from './Alert.jsx';
-
-const ROLES = [
-  'Administrateur',
-  'Régisseur(se) Son',
-  'Régisseur(se) Lumière',
-  'Régisseur(se) Plateau',
-  'Regisseur(se) Général',
-  'Autre',
-];
-
-const STRUCTURES = [
-  'Théâtre de l\'Olivier (Istres)',
-  'Théâtre La Colonne (Miramas)',
-  'Le Théâtre de Fos (Fos-sur-mer)',
-  "L'Usine (Istres)",
-  'Espace Gérard Philippe (Port-saint louis)',
-  'Espace Robert Hossein (Grans)',
-  "L'Oppidum (Cornillon Confoux)",
-];
+import { GlobalContext } from './GlobalContext.jsx';
+import { useTranslation } from 'react-i18next';
 
 function Register() {
+  const { roles, structures } = useContext(GlobalContext);
+  const { t } = useTranslation();
+  const userRef = useRef(null);
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -33,6 +19,10 @@ function Register() {
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+
+  useEffect(() => {
+    userRef.current?.focus();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,55 +57,66 @@ function Register() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="container mt-4">
-      <h1>Inscription</h1>
+    <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="register-title">
+      <h1 id="register-title">{t('register.title')}</h1>
       <Alert message={error} />
       <div className="mb-3">
-        <label className="form-label">Utilisateur</label>
+        <label className="form-label" htmlFor="reg-username">{t('login.username')}</label>
         <input
+          id="reg-username"
           name="username"
           className={`form-control${errors.username ? ' is-invalid' : ''}`}
+          aria-label={t('login.username')}
           value={username}
           onChange={(e) => {
             setUsername(e.target.value);
             if (errors.username) setErrors({ ...errors, username: undefined });
           }}
+          ref={userRef}
         />
         {errors.username && (
           <div className="invalid-feedback">{errors.username}</div>
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label">Prénom</label>
+        <label className="form-label" htmlFor="firstName">Prénom</label>
         <input
+          id="firstName"
           className="form-control"
+          aria-label="Prénom"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Nom</label>
+        <label className="form-label" htmlFor="lastName">Nom</label>
         <input
+          id="lastName"
           className="form-control"
+          aria-label="Nom"
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Adresse mail</label>
+        <label className="form-label" htmlFor="email">Adresse mail</label>
         <input
+          id="email"
           type="email"
           className="form-control"
+          aria-label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Mot de passe</label>
+        <label className="form-label" htmlFor="password">{t('login.password')}</label>
         <input
+          id="password"
           name="password"
           type="password"
           className={`form-control${errors.password ? ' is-invalid' : ''}`}
+          aria-label={t('login.password')}
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
@@ -127,8 +128,9 @@ function Register() {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label">Rôle</label>
+        <label className="form-label" htmlFor="role">Rôle</label>
         <select
+          id="role"
           name="role"
           className={`form-select${errors.role ? ' is-invalid' : ''}`}
           value={role}
@@ -138,7 +140,7 @@ function Register() {
           }}
         >
           <option value="">Choisir...</option>
-          {ROLES.map((r) => (
+          {roles.map((r) => (
             <option key={r} value={r}>
               {r}
             </option>
@@ -149,8 +151,9 @@ function Register() {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label">Structure</label>
+        <label className="form-label" htmlFor="structure">Structure</label>
         <select
+          id="structure"
           name="structure"
           className={`form-select${errors.structure ? ' is-invalid' : ''}`}
           value={structure}
@@ -160,9 +163,9 @@ function Register() {
           }}
         >
           <option value="">Choisir...</option>
-          {STRUCTURES.map((s) => (
-            <option key={s} value={s}>
-              {s}
+          {structures.map((s) => (
+            <option key={s._id || s} value={s._id || s.name || s}>
+              {s.name || s}
             </option>
           ))}
         </select>
@@ -170,7 +173,7 @@ function Register() {
           <div className="invalid-feedback">{errors.structure}</div>
         )}
       </div>
-      <button type="submit" className="btn btn-primary">S'inscrire</button>
+      <button type="submit" className="btn btn-primary">{t('register.submit')}</button>
     </form>
   );
 }

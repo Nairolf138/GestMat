@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from './api';
 import Alert from './Alert.jsx';
+import { useTranslation } from 'react-i18next';
 
 function Login() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const userRef = useRef(null);
+
+  useEffect(() => {
+    userRef.current?.focus();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,29 +35,34 @@ function Login() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="container mt-4">
-      <h1>Connexion</h1>
+    <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="login-title">
+      <h1 id="login-title">{t('login.title')}</h1>
       <Alert message={error} />
       <div className="mb-3">
-        <label className="form-label">Utilisateur</label>
+        <label className="form-label" htmlFor="username">{t('login.username')}</label>
         <input
+          id="username"
           className="form-control"
+          aria-label={t('login.username')}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          ref={userRef}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Mot de passe</label>
+        <label className="form-label" htmlFor="password">{t('login.password')}</label>
         <input
+          id="password"
           type="password"
           className="form-control"
+          aria-label={t('login.password')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <button type="submit" className="btn btn-primary">Se connecter</button>
+      <button type="submit" className="btn btn-primary">{t('login.submit')}</button>
       <p className="mt-3">
-        <Link to="/register">S'inscrire</Link>
+        <Link to="/register">{t('register.submit')}</Link>
       </p>
     </form>
   );

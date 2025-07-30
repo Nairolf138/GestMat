@@ -46,70 +46,84 @@ function AddEquipment({ onCreated }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      <h2>Nouvel équipement</h2>
+    <form onSubmit={handleSubmit} className="mt-4" aria-labelledby="add-equip-title">
+      <h2 id="add-equip-title">Nouvel équipement</h2>
       <Alert message={error} />
       <div className="mb-3">
-        <label className="form-label">Nom</label>
+        <label className="form-label" htmlFor="eq-name">Nom</label>
         <input
+          id="eq-name"
           name="name"
           className="form-control"
+          aria-label="Nom"
           value={form.name}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Type</label>
+        <label className="form-label" htmlFor="eq-type">Type</label>
         <input
+          id="eq-type"
           name="type"
           className="form-control"
+          aria-label="Type"
           value={form.type}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Quantité totale</label>
+        <label className="form-label" htmlFor="eq-total">Quantité totale</label>
         <input
+          id="eq-total"
           name="totalQty"
           type="number"
           className="form-control"
+          aria-label="Quantité totale"
           value={form.totalQty}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Quantité disponible</label>
+        <label className="form-label" htmlFor="eq-available">Quantité disponible</label>
         <input
+          id="eq-available"
           name="availableQty"
           type="number"
           className="form-control"
+          aria-label="Quantité disponible"
           value={form.availableQty}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Emplacement</label>
+        <label className="form-label" htmlFor="eq-location">Emplacement</label>
         <input
+          id="eq-location"
           name="location"
           className="form-control"
+          aria-label="Emplacement"
           value={form.location}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">État</label>
+        <label className="form-label" htmlFor="eq-condition">État</label>
         <input
+          id="eq-condition"
           name="condition"
           className="form-control"
+          aria-label="État"
           value={form.condition}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label">Disponibilité</label>
+        <label className="form-label" htmlFor="eq-status">Disponibilité</label>
         <select
+          id="eq-status"
           name="status"
           className="form-select"
+          aria-label="Disponibilité"
           value={form.status}
           onChange={handleChange}
         >
