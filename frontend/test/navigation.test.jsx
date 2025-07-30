@@ -35,4 +35,16 @@ describe("Navigation", () => {
       screen.getAllByRole("link", { name: "Inscription" })[0],
     ).toBeTruthy();
   });
+
+  it("links to inventory and omits requests", () => {
+    localStorage.setItem("token", "abc");
+    render(
+      <MemoryRouter>
+        <NavBar />
+      </MemoryRouter>,
+    );
+    const links = screen.getAllByRole("link", { name: "Inventaire local" });
+    expect(links.some((l) => l.getAttribute("href") === "/inventory")).toBe(true);
+    expect(screen.queryByRole("link", { name: "Demandes" })).toBeNull();
+  });
 });
