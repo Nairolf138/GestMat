@@ -74,6 +74,9 @@ cluster:
 
 ## Testing
 
+Before running tests, make sure you have installed dependencies in both the
+`backend` and `frontend` folders using `npm install`.
+
 Run backend tests using Node's built-in test runner:
 
 ```bash
