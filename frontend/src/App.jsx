@@ -10,6 +10,7 @@ import Register from './Register';
 import Equipments from './Equipments';
 import Loans from './Loans';
 import Profile from './Profile';
+import Catalog from './Catalog';
 
 const token = () => localStorage.getItem('token');
 
@@ -22,6 +23,14 @@ function App() {
         <Route
           path="/"
           element={token() ? <Equipments /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/inventory"
+          element={token() ? <Equipments /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/catalog"
+          element={token() ? <Catalog /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/loans"

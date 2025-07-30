@@ -55,3 +55,30 @@ test('create, list, update and delete equipments', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('check availability endpoint', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const eqId = (await db.collection('equipments').insertOne({ name: 'Mic', type: 'Son', totalQty: 5 })).insertedId;
+  await db.collection('loanrequests').insertOne({
+    items: [{ equipment: eqId, quantity: 3 }],
+    startDate: new Date('2024-01-01'),
+    endDate: new Date('2024-01-10'),
+    status: 'accepted',
+  });
+
+  const res = await request(app)
+    .get(`/api/equipments/${eqId}/availability?start=2024-01-05&end=2024-01-06&quantity=3`)
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(res.body.available, false);
+
+  const res2 = await request(app)
+    .get(`/api/equipments/${eqId}/availability?start=2024-02-01&end=2024-02-02&quantity=3`)
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(res2.body.available, true);
+
+  await client.close();
+  await mongod.stop();
+});

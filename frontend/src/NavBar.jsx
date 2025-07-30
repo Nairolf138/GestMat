@@ -16,10 +16,10 @@ function NavBar() {
           GestMat
         </Link>
         <div className="navbar-nav">
-          <Link className="nav-link" to="/">
+          <Link className="nav-link" to="/catalog">
             Catalogue
           </Link>
-          <Link className="nav-link" to="/inventory">
+          <Link className="nav-link" to="/">
             Inventaire local
           </Link>
           <Link className="nav-link" to="/requests">
