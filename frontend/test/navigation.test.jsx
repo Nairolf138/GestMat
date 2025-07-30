@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/react';
 import App from '../src/App.jsx';
-import * as api from '../src/api.js';
-
+import '../src/i18n.js';
 vi.mock('../src/api.js');
+import * as api from '../src/api.js';
 
 describe('Navigation', () => {
   it('navigates to users page', async () => {

@@ -1,0 +1,12 @@
+{
+  "login": {
+    "title": "Login",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in"
+  },
+  "register": {
+    "title": "Register",
+    "submit": "Sign up"
+  }
+}

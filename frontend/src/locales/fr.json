@@ -1,0 +1,12 @@
+{
+  "login": {
+    "title": "Connexion",
+    "username": "Utilisateur",
+    "password": "Mot de passe",
+    "submit": "Se connecter"
+  },
+  "register": {
+    "title": "Inscription",
+    "submit": "S'inscrire"
+  }
+}
