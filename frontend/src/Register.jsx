@@ -17,6 +17,7 @@ function Register() {
   const [role, setRole] = useState('');
   const [structure, setStructure] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
@@ -45,7 +46,16 @@ function Register() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      navigate('/login');
+      setSuccess('Inscription réussie');
+      setError('');
+      setUsername('');
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPassword('');
+      setRole('');
+      setStructure('');
+      userRef.current?.focus();
     } catch (err) {
       if (err.message.includes('Username already exists')) {
         setErrors({ username: err.message });
@@ -60,6 +70,7 @@ function Register() {
     <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="register-title">
       <h1 id="register-title">{t('register.title')}</h1>
       <Alert message={error} />
+      <Alert type="success" message={success} />
       <div className="mb-3">
         <label className="form-label" htmlFor="reg-username">{t('login.username')}</label>
         <input

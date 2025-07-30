@@ -11,7 +11,9 @@ const { structureValidator } = require('../validators/structureValidator');
 
 const router = express.Router();
 
-router.get('/', auth(), async (req, res) => {
+// Expose structures list without authentication so new users can select a
+// structure during registration. Other routes remain protected.
+router.get('/', async (req, res) => {
   const db = req.app.locals.db;
   const structures = await getStructures(db);
   res.json(structures);
