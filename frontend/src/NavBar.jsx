@@ -17,16 +17,19 @@ function NavBar() {
         </Link>
         <div className="navbar-nav">
           <Link className="nav-link" to="/">
-            Équipements
+            Catalogue
           </Link>
-          <Link className="nav-link" to="/structures">
-            Structures
+          <Link className="nav-link" to="/inventory">
+            Inventaire local
           </Link>
-          <Link className="nav-link" to="/users">
-            Utilisateurs
+          <Link className="nav-link" to="/requests">
+            Demandes
           </Link>
           <Link className="nav-link" to="/loans">
-            Prêts
+            Prêts/Emprunts
+          </Link>
+          <Link className="nav-link" to="/cart">
+            Panier
           </Link>
           <Link className="nav-link" to="/profile">
             Profil
