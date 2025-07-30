@@ -1,19 +1,20 @@
-import React from 'react';
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-} from 'react-router-dom';
-import Login from './Login';
-import Register from './Register';
-import Equipments from './Equipments';
-import Loans from './Loans';
-import Profile from './Profile';
-import Catalog from './Catalog';
-import Cart from './Cart';
+} from "react-router-dom";
+import Login from "./Login";
+import Register from "./Register";
+import Equipments from "./Equipments";
+import Home from "./Home";
+import Loans from "./Loans";
+import Profile from "./Profile";
+import Catalog from "./Catalog";
+import Cart from "./Cart";
 
-const token = () => localStorage.getItem('token');
+const token = () => localStorage.getItem("token");
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route
           path="/"
-          element={token() ? <Equipments /> : <Navigate to="/login" replace />}
+          element={token() ? <Home /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/inventory"
