@@ -13,6 +13,7 @@ const { findUserById } = require('../models/User');
 const { ObjectId } = require('mongodb');
 const { ADMIN_ROLE } = require('../config/roles');
 const validate = require('../middleware/validate');
+const checkId = require('../middleware/checkObjectId');
 const { createLoanValidator, updateLoanValidator } = require('../validators/loanValidator');
 
 const router = express.Router();
@@ -55,7 +56,7 @@ router.post('/', auth(), createLoanValidator, validate, async (req, res) => {
   res.json(loan);
 });
 
-router.put('/:id', auth(), updateLoanValidator, validate, async (req, res) => {
+router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req, res) => {
   try {
     const db = req.app.locals.db;
     const loan = await db.collection('loanrequests').findOne({ _id: new ObjectId(req.params.id) });
@@ -90,7 +91,7 @@ router.put('/:id', auth(), updateLoanValidator, validate, async (req, res) => {
   }
 });
 
-router.delete('/:id', auth(), async (req, res) => {
+router.delete('/:id', auth(), checkId(), async (req, res) => {
   try {
     const db = req.app.locals.db;
     const removed = await deleteLoan(db, req.params.id);
