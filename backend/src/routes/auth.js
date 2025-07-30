@@ -64,8 +64,23 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res, n
       JWT_SECRET,
       { expiresIn: '1h' }
     );
+    const refreshToken = jwt.sign(
+      { id: user._id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    };
+    res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
+    res.cookie('refreshToken', refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     const { password: _pw, ...userData } = user;
-    res.json({ token, user: userData });
+    res.json({ user: userData });
   } catch (err) {
     next(new ApiError(500, 'Server error'));
   }
@@ -93,10 +108,27 @@ router.post('/refresh', async (req, res, next) => {
       JWT_SECRET,
       { expiresIn: '1h' }
     );
-    res.json({ token });
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    };
+    res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
+    res.json({});
   } catch (err) {
     next(new ApiError(500, 'Server error'));
   }
+});
+
+router.post('/logout', (req, res) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  };
+  res.clearCookie('token', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
+  res.sendStatus(204);
 });
 
 module.exports = router;

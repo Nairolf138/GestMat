@@ -3,7 +3,6 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
 } from "react-router-dom";
 import Login from "./Login";
 import Register from "./Register";
@@ -14,38 +13,18 @@ import Profile from "./Profile";
 import Catalog from "./Catalog";
 import Cart from "./Cart";
 
-const token = () => localStorage.getItem("token");
-
 function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/"
-          element={token() ? <Home /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/inventory"
-          element={token() ? <Equipments /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/catalog"
-          element={token() ? <Catalog /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/loans"
-          element={token() ? <Loans /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/cart"
-          element={token() ? <Cart /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/profile"
-          element={token() ? <Profile /> : <Navigate to="/login" replace />}
-        />
+        <Route path="/" element={<Home />} />
+        <Route path="/inventory" element={<Equipments />} />
+        <Route path="/catalog" element={<Catalog />} />
+        <Route path="/loans" element={<Loans />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );
