@@ -1,14 +1,17 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { api } from './api';
 
 function NavBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const loggedIn = Boolean(localStorage.getItem('token'));
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await api('/auth/logout', { method: 'POST' });
+    } finally {
+      navigate('/login');
+    }
   };
 
   return (
@@ -33,21 +36,15 @@ function NavBar() {
           <Link className="nav-link" to="/profile">
             {t('nav.profile')}
           </Link>
-          {!loggedIn && (
-            <>
-              <Link className="nav-link" to="/login">
-                {t('nav.login')}
-              </Link>
-              <Link className="nav-link" to="/register">
-                {t('register.title')}
-              </Link>
-            </>
-          )}
-          {loggedIn && (
-            <button className="btn btn-outline-light ms-2" onClick={handleLogout}>
-              {t('nav.logout')}
-            </button>
-          )}
+          <Link className="nav-link" to="/login">
+            {t('nav.login')}
+          </Link>
+          <Link className="nav-link" to="/register">
+            {t('register.title')}
+          </Link>
+          <button className="btn btn-outline-light ms-2" onClick={handleLogout}>
+            {t('nav.logout')}
+          </button>
         </div>
       </div>
     </nav>
