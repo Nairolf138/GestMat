@@ -6,6 +6,8 @@ const {
   deleteEquipment,
 } = require('../models/Equipment');
 const { findStructureById } = require('../models/Structure');
+const { findUserById } = require('../models/User');
+const { ObjectId } = require('mongodb');
 const auth = require('../middleware/auth');
 const createEquipmentFilter = require('../utils/createEquipmentFilter');
 const validate = require('../middleware/validate');
@@ -30,7 +32,15 @@ router.get('/', auth(), async (req, res) => {
 
 router.post('/', auth(), createEquipmentValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
-  const equipment = await createEquipment(db, req.body);
+  let location = '';
+  if (ObjectId.isValid(req.user.id)) {
+    const user = await findUserById(db, req.user.id);
+    if (user && user.structure) {
+      const struct = await findStructureById(db, user.structure);
+      location = struct?.name || '';
+    }
+  }
+  const equipment = await createEquipment(db, { ...req.body, location });
   res.json(equipment);
 });
 

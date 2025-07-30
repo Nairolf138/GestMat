@@ -8,9 +8,7 @@ function AddEquipment({ onCreated }) {
     type: '',
     totalQty: 0,
     availableQty: 0,
-    location: '',
     condition: '',
-    status: 'disponible',
   });
   const [error, setError] = useState('');
 
@@ -41,9 +39,7 @@ function AddEquipment({ onCreated }) {
         type: '',
         totalQty: 0,
         availableQty: 0,
-        location: '',
         condition: '',
-        status: 'disponible',
       });
       setError('');
       if (onCreated) onCreated();
@@ -69,14 +65,21 @@ function AddEquipment({ onCreated }) {
       </div>
       <div className="mb-3">
         <label className="form-label" htmlFor="eq-type">Type</label>
-        <input
+        <select
           id="eq-type"
           name="type"
-          className="form-control"
+          className="form-select"
           aria-label="Type"
           value={form.type}
           onChange={handleChange}
-        />
+        >
+          <option value="">--</option>
+          <option value="Son">Son</option>
+          <option value="Lumi\u00e8re">Lumi\u00e8re</option>
+          <option value="Plateau">Plateau</option>
+          <option value="Vid\u00e9o">Vid\u00e9o</option>
+          <option value="Autre">Autre</option>
+        </select>
       </div>
       <div className="mb-3">
         <label className="form-label" htmlFor="eq-total">Quantité totale</label>
@@ -103,39 +106,20 @@ function AddEquipment({ onCreated }) {
         />
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-location">Emplacement</label>
-        <input
-          id="eq-location"
-          name="location"
-          className="form-control"
-          aria-label="Emplacement"
-          value={form.location}
-          onChange={handleChange}
-        />
-      </div>
-      <div className="mb-3">
         <label className="form-label" htmlFor="eq-condition">État</label>
-        <input
+        <select
           id="eq-condition"
           name="condition"
-          className="form-control"
+          className="form-select"
           aria-label="État"
           value={form.condition}
           onChange={handleChange}
-        />
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="eq-status">Disponibilité</label>
-        <select
-          id="eq-status"
-          name="status"
-          className="form-select"
-          aria-label="Disponibilité"
-          value={form.status}
-          onChange={handleChange}
         >
-          <option value="disponible">Disponible</option>
-          <option value="indisponible">Indisponible</option>
+          <option value="">--</option>
+          <option value="Neuf">Neuf</option>
+          <option value="L\u00e9g\u00e8rement us\u00e9">Légèrement usé</option>
+          <option value="Us\u00e9">Usé</option>
+          <option value="Tr\u00e8s us\u00e9">Très usé</option>
         </select>
       </div>
       <button type="submit" className="btn btn-primary mt-2">Ajouter</button>
