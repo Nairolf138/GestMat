@@ -8,6 +8,7 @@ const {
 const auth = require('../middleware/auth');
 const { ADMIN_ROLE } = require('../config/roles');
 const validate = require('../middleware/validate');
+const checkId = require('../middleware/checkObjectId');
 const { structureValidator } = require('../validators/structureValidator');
 
 const router = express.Router();
@@ -26,7 +27,7 @@ router.post('/', auth(ADMIN_ROLE), structureValidator, validate, async (req, res
   res.json(structure);
 });
 
-router.put('/:id', auth(ADMIN_ROLE), structureValidator, validate, async (req, res) => {
+router.put('/:id', auth(ADMIN_ROLE), checkId(), structureValidator, validate, async (req, res) => {
   try {
     const db = req.app.locals.db;
     const updated = await updateStructure(db, req.params.id, { name: req.body.name });
@@ -37,7 +38,7 @@ router.put('/:id', auth(ADMIN_ROLE), structureValidator, validate, async (req, r
   }
 });
 
-router.delete('/:id', auth(ADMIN_ROLE), async (req, res) => {
+router.delete('/:id', auth(ADMIN_ROLE), checkId(), async (req, res) => {
   try {
     const db = req.app.locals.db;
     const removed = await deleteStructure(db, req.params.id);

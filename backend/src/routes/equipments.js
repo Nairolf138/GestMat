@@ -13,6 +13,7 @@ const auth = require('../middleware/auth');
 const createEquipmentFilter = require('../utils/createEquipmentFilter');
 const { canModify } = require('../utils/roleAccess');
 const validate = require('../middleware/validate');
+const checkId = require('../middleware/checkObjectId');
 const {
   createEquipmentValidator,
   updateEquipmentValidator,
@@ -56,7 +57,7 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req, res) =>
   res.json(equipment);
 });
 
-router.put('/:id', auth(), updateEquipmentValidator, validate, async (req, res) => {
+router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async (req, res) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);
@@ -73,7 +74,7 @@ router.put('/:id', auth(), updateEquipmentValidator, validate, async (req, res) 
   }
 });
 
-router.delete('/:id', auth(), async (req, res) => {
+router.delete('/:id', auth(), checkId(), async (req, res) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);
@@ -89,7 +90,7 @@ router.delete('/:id', auth(), async (req, res) => {
   }
 });
 
-router.get('/:id/availability', auth(), async (req, res) => {
+router.get('/:id/availability', auth(), checkId(), async (req, res) => {
   const db = req.app.locals.db;
   const eq = await findEquipmentById(db, req.params.id);
   if (!eq) return res.status(404).json({ message: 'Not found' });
