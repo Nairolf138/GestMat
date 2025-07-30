@@ -9,7 +9,13 @@ import * as api from "../src/api.js";
 
 describe("Login success", () => {
   it("displays success message after login", async () => {
-    api.api.mockResolvedValueOnce({ token: "abc" });
+    const makeToken = (exp) => {
+      const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+      const payload = btoa(JSON.stringify({ exp }));
+      return `${header}.${payload}.sig`;
+    };
+    const token = makeToken(Math.floor(Date.now() / 1000) + 3600);
+    api.api.mockResolvedValueOnce({ token });
     api.api.mockResolvedValueOnce({ structure: "s1" });
     api.api.mockResolvedValueOnce([]);
     localStorage.removeItem("token");
@@ -31,6 +37,7 @@ describe("Login success", () => {
       screen.getByRole("button", { name: "Se connecter" }).closest("form"),
     );
     await waitFor(() => expect(api.api).toHaveBeenCalled());
+    expect(localStorage.getItem("tokenExp")).toBeTruthy();
     expect(
       await screen.findByRole("heading", { name: "Accueil" }),
     ).toBeTruthy();

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from './api';
+import jwtDecode from 'jwt-decode';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 
@@ -27,7 +28,9 @@ function Login() {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       });
+      const { exp } = jwtDecode(token);
       localStorage.setItem('token', token);
+      localStorage.setItem('tokenExp', exp);
       navigate('/', { state: { message: 'Connexion réussie' } });
     } catch (err) {
       setError(err.message || 'Login failed');
