@@ -3,6 +3,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 
+const validate = require('../middleware/validate');
+const {
+  registerValidator,
+  loginValidator,
+} = require('../validators/userValidator');
+
 const { JWT_SECRET } = process.env;
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
@@ -17,13 +23,10 @@ const loginLimiter = rateLimit({
   message: 'Too many login attempts, please try again later.'
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
   try {
     const { username, password, role, structure, firstName, lastName, email } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
-    }
     const hashed = await bcrypt.hash(password, 10);
     const user = await createUser(db, {
       username,
@@ -41,13 +44,10 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, loginValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
-    }
     const user = await findUserByUsername(db, username);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 

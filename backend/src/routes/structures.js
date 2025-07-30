@@ -6,6 +6,8 @@ const {
   deleteStructure,
 } = require('../models/Structure');
 const auth = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { structureValidator } = require('../validators/structureValidator');
 
 const router = express.Router();
 
@@ -15,13 +17,13 @@ router.get('/', auth(), async (req, res) => {
   res.json(structures);
 });
 
-router.post('/', auth('admin'), async (req, res) => {
+router.post('/', auth('admin'), structureValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
   const structure = await createStructure(db, { name: req.body.name });
   res.json(structure);
 });
 
-router.put('/:id', auth('admin'), async (req, res) => {
+router.put('/:id', auth('admin'), structureValidator, validate, async (req, res) => {
   try {
     const db = req.app.locals.db;
     const updated = await updateStructure(db, req.params.id, { name: req.body.name });
