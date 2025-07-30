@@ -15,6 +15,7 @@ if (!JWT_SECRET) {
 }
 const { createUser, findUserByUsername } = require('../models/User');
 const { findStructureById } = require('../models/Structure');
+const { unauthorized, badRequest, ApiError } = require('../utils/errors');
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -23,7 +24,7 @@ const loginLimiter = rateLimit({
   message: 'Too many login attempts, please try again later.'
 });
 
-router.post('/register', registerValidator, validate, async (req, res) => {
+router.post('/register', registerValidator, validate, async (req, res, next) => {
   const db = req.app.locals.db;
   try {
     const { username, password, role, structure, firstName, lastName, email } = req.body;
@@ -40,19 +41,19 @@ router.post('/register', registerValidator, validate, async (req, res) => {
     const { password: _pw, ...userData } = user;
     res.json(userData);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(badRequest('Registration failed'));
   }
 });
 
-router.post('/login', loginLimiter, loginValidator, validate, async (req, res) => {
+router.post('/login', loginLimiter, loginValidator, validate, async (req, res, next) => {
   const db = req.app.locals.db;
   try {
     const { username, password } = req.body;
     const user = await findUserByUsername(db, username);
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!user) return next(unauthorized('Invalid credentials'));
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!valid) return next(unauthorized('Invalid credentials'));
 
     if (user.structure) {
       user.structure = await findStructureById(db, user.structure);
@@ -66,7 +67,7 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res) =
     const { password: _pw, ...userData } = user;
     res.json({ token, user: userData });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(new ApiError(500, 'Server error'));
   }
 });
 

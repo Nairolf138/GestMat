@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const client = require('prom-client');
 const { connectDB } = require('./config/db');
+const { ApiError } = require('./utils/errors');
 
 dotenv.config();
 
@@ -59,7 +60,11 @@ async function start(connect = connectDB) {
 
   app.use((err, req, res, next) => {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    if (err instanceof ApiError) {
+      res.status(err.status).json({ message: err.message });
+    } else {
+      res.status(500).json({ message: 'Server error' });
+    }
   });
 
   const server = app.listen(PORT, () => {

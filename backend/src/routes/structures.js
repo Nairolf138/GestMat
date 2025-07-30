@@ -10,6 +10,7 @@ const { ADMIN_ROLE } = require('../config/roles');
 const validate = require('../middleware/validate');
 const checkId = require('../middleware/checkObjectId');
 const { structureValidator } = require('../validators/structureValidator');
+const { ApiError, badRequest, notFound } = require('../utils/errors');
 
 const router = express.Router();
 
@@ -27,25 +28,25 @@ router.post('/', auth(ADMIN_ROLE), structureValidator, validate, async (req, res
   res.json(structure);
 });
 
-router.put('/:id', auth(ADMIN_ROLE), checkId(), structureValidator, validate, async (req, res) => {
+router.put('/:id', auth(ADMIN_ROLE), checkId(), structureValidator, validate, async (req, res, next) => {
   try {
     const db = req.app.locals.db;
     const updated = await updateStructure(db, req.params.id, { name: req.body.name });
-    if (!updated) return res.status(404).json({ message: 'Not found' });
+    if (!updated) return next(notFound('Structure not found'));
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(badRequest('Invalid request'));
   }
 });
 
-router.delete('/:id', auth(ADMIN_ROLE), checkId(), async (req, res) => {
+router.delete('/:id', auth(ADMIN_ROLE), checkId(), async (req, res, next) => {
   try {
     const db = req.app.locals.db;
     const removed = await deleteStructure(db, req.params.id);
-    if (!removed) return res.status(404).json({ message: 'Not found' });
+    if (!removed) return next(notFound('Structure not found'));
     res.json({ message: 'Structure deleted' });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(badRequest('Invalid request'));
   }
 });
 

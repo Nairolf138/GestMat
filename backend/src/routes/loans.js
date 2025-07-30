@@ -15,6 +15,7 @@ const { ADMIN_ROLE } = require('../config/roles');
 const validate = require('../middleware/validate');
 const checkId = require('../middleware/checkObjectId');
 const { createLoanValidator, updateLoanValidator } = require('../validators/loanValidator');
+const { ApiError, forbidden, notFound, badRequest } = require('../utils/errors');
 
 const router = express.Router();
 
@@ -56,18 +57,18 @@ router.post('/', auth(), createLoanValidator, validate, async (req, res) => {
   res.json(loan);
 });
 
-router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req, res) => {
+router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req, res, next) => {
   try {
     const db = req.app.locals.db;
     const loan = await db.collection('loanrequests').findOne({ _id: new ObjectId(req.params.id) });
-    if (!loan) return res.status(404).json({ message: 'Not found' });
+    if (!loan) return next(notFound('Loan request not found'));
 
     const user = await findUserById(db, req.user.id);
     if (
       req.user.role !== ADMIN_ROLE &&
       user?.structure?.toString() !== loan.owner.toString()
     ) {
-      return res.status(403).json({ message: 'Access denied' });
+      return next(forbidden('Access denied'));
     }
 
     const updated = await updateLoan(db, req.params.id, req.body);
@@ -87,18 +88,18 @@ router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req,
     }
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(badRequest('Invalid request'));
   }
 });
 
-router.delete('/:id', auth(), checkId(), async (req, res) => {
+router.delete('/:id', auth(), checkId(), async (req, res, next) => {
   try {
     const db = req.app.locals.db;
     const removed = await deleteLoan(db, req.params.id);
-    if (!removed) return res.status(404).json({ message: 'Not found' });
+    if (!removed) return next(notFound('Loan request not found'));
     res.json({ message: 'Loan request deleted' });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(badRequest('Invalid request'));
   }
 });
 
