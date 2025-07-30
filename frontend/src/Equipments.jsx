@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
 import NavBar from './NavBar';
 import Alert from './Alert.jsx';
 
 function Equipments() {
+  const { t } = useTranslation();
   const routerLocation = useLocation();
   const [message] = useState(routerLocation.state?.message || '');
   const [items, setItems] = useState([]);
@@ -43,11 +45,11 @@ function Equipments() {
     <div className="container">
       <NavBar />
       <Alert type="success" message={message} />
-      <h1>Inventaire local</h1>
+      <h1>{t('equipments.title')}</h1>
       <div className="row g-2 mb-3">
         <div className="col-md">
           <input
-            placeholder="Recherche"
+            placeholder={t('equipments.search')}
             className="form-control"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -55,7 +57,7 @@ function Equipments() {
         </div>
         <div className="col-md">
           <input
-            placeholder="Type"
+            placeholder={t('equipments.type')}
             className="form-control"
             value={type}
             onChange={(e) => setType(e.target.value)}
@@ -63,7 +65,7 @@ function Equipments() {
         </div>
         <div className="col-md">
           <input
-            placeholder="Emplacement"
+            placeholder={t('equipments.location')}
             className="form-control"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -71,7 +73,7 @@ function Equipments() {
         </div>
         <div className="col-auto">
           <button onClick={fetchItems} className="btn btn-primary">
-            Rechercher
+            {t('equipments.search_button')}
           </button>
         </div>
       </div>

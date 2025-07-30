@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Loans from '../src/Loans.jsx';
+import '../src/i18n.js';
 import { GlobalContext } from '../src/GlobalContext.jsx';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';

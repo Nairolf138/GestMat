@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 function NavBar() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const loggedIn = Boolean(localStorage.getItem('token'));
   const handleLogout = () => {
@@ -17,33 +19,33 @@ function NavBar() {
         </Link>
         <div className="navbar-nav">
           <Link className="nav-link" to="/catalog">
-            Catalogue
+            {t('nav.catalog')}
           </Link>
           <Link className="nav-link" to="/inventory">
-            Inventaire local
+            {t('nav.inventory')}
           </Link>
           <Link className="nav-link" to="/loans">
-            Prêts/Emprunts
+            {t('nav.loans')}
           </Link>
           <Link className="nav-link" to="/cart">
-            Panier
+            {t('nav.cart')}
           </Link>
           <Link className="nav-link" to="/profile">
-            Profil
+            {t('nav.profile')}
           </Link>
           {!loggedIn && (
             <>
               <Link className="nav-link" to="/login">
-                Connexion
+                {t('nav.login')}
               </Link>
               <Link className="nav-link" to="/register">
-                Inscription
+                {t('register.title')}
               </Link>
             </>
           )}
           {loggedIn && (
             <button className="btn btn-outline-light ms-2" onClick={handleLogout}>
-              Se déconnecter
+              {t('nav.logout')}
             </button>
           )}
         </div>

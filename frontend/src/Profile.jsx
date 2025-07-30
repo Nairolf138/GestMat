@@ -3,8 +3,10 @@ import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { GlobalContext } from './GlobalContext.jsx';
+import { useTranslation } from 'react-i18next';
 
 function Profile() {
+  const { t } = useTranslation();
   const { roles, structures } = useContext(GlobalContext);
   const [form, setForm] = useState({
     username: '',
@@ -21,7 +23,7 @@ function Profile() {
   useEffect(() => {
     api('/users/me')
       .then((u) => setForm({ ...form, ...u, password: '' }))
-      .catch(() => setError('Erreur de chargement'));
+      .catch(() => setError(t('profile.load_error')));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -40,7 +42,7 @@ function Profile() {
         body: JSON.stringify(payload),
       });
       setForm({ ...form, ...u, password: '' });
-      setSuccess('Modifié');
+      setSuccess(t('profile.success'));
       setError('');
     } catch (err) {
       setError(err.message || 'Erreur');
@@ -51,12 +53,12 @@ function Profile() {
   return (
     <div className="container">
       <NavBar />
-      <h1>Profil</h1>
+      <h1>{t('profile.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={success} />
       <form onSubmit={handleSubmit} className="mt-3">
         <div className="mb-3">
-          <label className="form-label">Utilisateur</label>
+          <label className="form-label">{t('login.username')}</label>
           <input
             name="username"
             className="form-control"
@@ -65,7 +67,7 @@ function Profile() {
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">Prénom</label>
+          <label className="form-label">{t('profile.first_name')}</label>
           <input
             name="firstName"
             className="form-control"
@@ -74,7 +76,7 @@ function Profile() {
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">Nom</label>
+          <label className="form-label">{t('profile.last_name')}</label>
           <input
             name="lastName"
             className="form-control"
@@ -83,7 +85,7 @@ function Profile() {
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">Adresse mail</label>
+          <label className="form-label">{t('profile.email')}</label>
           <input
             type="email"
             name="email"
@@ -93,25 +95,25 @@ function Profile() {
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">Mot de passe</label>
+          <label className="form-label">{t('login.password')}</label>
           <input
             type="password"
             name="password"
             className="form-control"
             value={form.password}
             onChange={handleChange}
-            placeholder="(inchangé)"
+            placeholder={t('profile.password_placeholder')}
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">Rôle</label>
+          <label className="form-label">{t('profile.role')}</label>
           <select
             name="role"
             className="form-select"
             value={form.role}
             onChange={handleChange}
           >
-            <option value="">Choisir...</option>
+            <option value="">{t('common.choose')}</option>
             {roles.map((r) => (
               <option key={r} value={r}>
                 {r}
@@ -120,14 +122,14 @@ function Profile() {
           </select>
         </div>
         <div className="mb-3">
-          <label className="form-label">Structure</label>
+          <label className="form-label">{t('profile.structure')}</label>
           <select
             name="structure"
             className="form-select"
             value={form.structure}
             onChange={handleChange}
           >
-            <option value="">Choisir...</option>
+            <option value="">{t('common.choose')}</option>
             {structures.map((s) => (
               <option key={s._id || s} value={s._id || s.name || s}>
                 {s.name || s}
@@ -136,7 +138,7 @@ function Profile() {
           </select>
         </div>
         <button type="submit" className="btn btn-primary">
-          Enregistrer
+          {t('profile.save')}
         </button>
       </form>
     </div>

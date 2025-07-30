@@ -8,5 +8,67 @@
   "register": {
     "title": "Register",
     "submit": "Sign up"
+  },
+  "nav": {
+    "catalog": "Catalog",
+    "inventory": "Local inventory",
+    "loans": "Loans",
+    "cart": "Cart",
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "equipments": {
+    "title": "Local inventory",
+    "search": "Search",
+    "type": "Type",
+    "location": "Location",
+    "search_button": "Search"
+  },
+  "home": {
+    "title": "Home",
+    "greeting": "Hello {{name}} !",
+    "recent_requests": "Recent requests",
+    "no_requests": "No request",
+    "incoming_loans": "Upcoming loans",
+    "no_loans": "No loan",
+    "shortcuts": "Shortcuts"
+  },
+  "catalog": {
+    "title": "Catalog",
+    "search": "Search",
+    "type": "Type",
+    "all_structures": "All structures",
+    "search_button": "Search",
+    "add_to_cart": "Add to cart",
+    "quantity_prompt": "Quantity?",
+    "select_period": "Please select a period",
+    "unavailable": "Quantity unavailable for this period",
+    "added": "Added to cart"
+  },
+  "loans": {
+    "title": "Loans",
+    "new_request": "New request",
+    "owner_structure": "Owner structure",
+    "equipment_option": "Equipment",
+    "send": "Send",
+    "accept": "Accept",
+    "refuse": "Refuse",
+    "error_create": "Error during creation"
+  },
+  "profile": {
+    "title": "Profile",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "email": "Email address",
+    "password_placeholder": "(unchanged)",
+    "role": "Role",
+    "structure": "Structure",
+    "save": "Save",
+    "load_error": "Loading error",
+    "success": "Updated"
+  },
+  "common": {
+    "choose": "Choose..."
   }
 }
