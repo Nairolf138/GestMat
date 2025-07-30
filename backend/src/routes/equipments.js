@@ -22,12 +22,12 @@ const router = express.Router();
 
 router.get('/', auth(), async (req, res) => {
   const db = req.app.locals.db;
-  let userStructure = req.query.structure;
-  if (!userStructure && ObjectId.isValid(req.user.id)) {
+  let structure = req.query.structure;
+  if (!req.query.all && !structure && ObjectId.isValid(req.user.id)) {
     const user = await findUserById(db, req.user.id);
-    if (user && user.structure) userStructure = user.structure.toString();
+    if (user && user.structure) structure = user.structure.toString();
   }
-  const filter = createEquipmentFilter({ ...req.query, structure: userStructure });
+  const filter = createEquipmentFilter({ ...req.query, structure });
   const equipments = await findEquipments(db, filter);
   for (const eq of equipments) {
     if (eq.structure) {
@@ -87,6 +87,35 @@ router.delete('/:id', auth(), async (req, res) => {
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
+});
+
+router.get('/:id/availability', auth(), async (req, res) => {
+  const db = req.app.locals.db;
+  const eq = await findEquipmentById(db, req.params.id);
+  if (!eq) return res.status(404).json({ message: 'Not found' });
+  const start = req.query.start ? new Date(req.query.start) : null;
+  const end = req.query.end ? new Date(req.query.end) : null;
+  const quantity = Number(req.query.quantity) || 1;
+
+  let reserved = 0;
+  if (start && end && !Number.isNaN(start) && !Number.isNaN(end)) {
+    const agg = await db.collection('loanrequests').aggregate([
+      {
+        $match: {
+          status: { $ne: 'refused' },
+          startDate: { $lte: end },
+          endDate: { $gte: start },
+          items: { $elemMatch: { equipment: eq._id } },
+        },
+      },
+      { $unwind: '$items' },
+      { $match: { 'items.equipment': eq._id } },
+      { $group: { _id: null, qty: { $sum: '$items.quantity' } } },
+    ]).toArray();
+    reserved = agg[0]?.qty || 0;
+  }
+  const availQty = eq.totalQty - reserved;
+  res.json({ available: quantity <= availQty, availableQty: availQty });
 });
 
 module.exports = router;
