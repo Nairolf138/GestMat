@@ -8,8 +8,6 @@ import {
 import Login from './Login';
 import Register from './Register';
 import Equipments from './Equipments';
-import Structures from './Structures';
-import Users from './Users';
 import Loans from './Loans';
 import Profile from './Profile';
 
@@ -24,14 +22,6 @@ function App() {
         <Route
           path="/"
           element={token() ? <Equipments /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/structures"
-          element={token() ? <Structures /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/users"
-          element={token() ? <Users /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/loans"
