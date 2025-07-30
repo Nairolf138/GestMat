@@ -13,6 +13,8 @@ npm start
 
 Environment variables are defined in `.env.example`.
 
+If `CORS_ORIGIN` is left unset, the API denies cross-origin requests.
+
 JWT tokens returned by the `/api/auth/login` endpoint now include an expiry
 time of one hour.
 
