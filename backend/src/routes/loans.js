@@ -12,6 +12,8 @@ const { getStructureEmails } = require('../utils/getStructureEmails');
 const { findUserById } = require('../models/User');
 const { ObjectId } = require('mongodb');
 const { ADMIN_ROLE } = require('../config/roles');
+const validate = require('../middleware/validate');
+const { createLoanValidator, updateLoanValidator } = require('../validators/loanValidator');
 
 const router = express.Router();
 
@@ -26,13 +28,16 @@ router.get('/', auth(), async (req, res) => {
     const all = await findLoans(db);
     loans = all.filter(
       (l) =>
-        l.owner?.toString() === structId || l.borrower?.toString() === structId
+        l.owner?._id?.toString() === structId ||
+        l.owner?.toString() === structId ||
+        l.borrower?._id?.toString() === structId ||
+        l.borrower?.toString() === structId
     );
   }
   res.json(loans);
 });
 
-router.post('/', auth(), async (req, res) => {
+router.post('/', auth(), createLoanValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
   const loan = await createLoan(db, { ...req.body, status: 'pending' });
   try {
@@ -50,7 +55,7 @@ router.post('/', auth(), async (req, res) => {
   res.json(loan);
 });
 
-router.put('/:id', auth(), async (req, res) => {
+router.put('/:id', auth(), updateLoanValidator, validate, async (req, res) => {
   try {
     const db = req.app.locals.db;
     const loan = await db.collection('loanrequests').findOne({ _id: new ObjectId(req.params.id) });
