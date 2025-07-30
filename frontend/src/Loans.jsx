@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
+import { GlobalContext } from './GlobalContext.jsx';
 
 function Loans() {
+  const { structures } = useContext(GlobalContext);
   const [loans, setLoans] = useState([]);
+  const [equipments, setEquipments] = useState([]);
   const [form, setForm] = useState({
     owner: '',
     equipment: '',
@@ -18,6 +21,9 @@ function Loans() {
     api('/loans')
       .then(setLoans)
       .catch(() => setLoans([]));
+    api('/equipments?all=true')
+      .then(setEquipments)
+      .catch(() => setEquipments([]));
   }, []);
 
   const handleChange = (e) => {
@@ -62,22 +68,34 @@ function Loans() {
       <form onSubmit={createLoan} className="mt-3 row g-2">
         <h2>Nouvelle demande</h2>
         <div className="col-md">
-          <input
+          <select
             name="owner"
-            placeholder="Structure propriétaire"
-            className="form-control"
+            className="form-select"
             value={form.owner}
             onChange={handleChange}
-          />
+          >
+            <option value="">Structure propriétaire</option>
+            {structures.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-md">
-          <input
+          <select
             name="equipment"
-            placeholder="ID équipement"
-            className="form-control"
+            className="form-select"
             value={form.equipment}
             onChange={handleChange}
-          />
+          >
+            <option value="">Équipement</option>
+            {equipments.map((e) => (
+              <option key={e._id} value={e._id}>
+                {e.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-md">
           <input
