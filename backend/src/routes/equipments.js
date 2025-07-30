@@ -8,6 +8,11 @@ const {
 const { findStructureById } = require('../models/Structure');
 const auth = require('../middleware/auth');
 const createEquipmentFilter = require('../utils/createEquipmentFilter');
+const validate = require('../middleware/validate');
+const {
+  createEquipmentValidator,
+  updateEquipmentValidator,
+} = require('../validators/equipmentValidator');
 
 const router = express.Router();
 
@@ -23,13 +28,13 @@ router.get('/', auth(), async (req, res) => {
   res.json(equipments);
 });
 
-router.post('/', auth(), async (req, res) => {
+router.post('/', auth(), createEquipmentValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
   const equipment = await createEquipment(db, req.body);
   res.json(equipment);
 });
 
-router.put('/:id', auth(), async (req, res) => {
+router.put('/:id', auth(), updateEquipmentValidator, validate, async (req, res) => {
   try {
     const db = req.app.locals.db;
     const updated = await updateEquipment(db, req.params.id, req.body);

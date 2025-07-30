@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { connectDB } = require('./config/db');
+const logger = require('./utils/logger');
+const errorHandler = require('./middleware/errorHandler');
 
 dotenv.config();
 
@@ -29,7 +31,7 @@ async function start(connect = connectDB) {
     db = await connect();
     app.locals.db = db;
   } catch (err) {
-    console.error('Failed to start server:', err);
+    logger.error('Failed to start server:', err);
     process.exit(1);
     return;
   }
@@ -45,13 +47,10 @@ async function start(connect = connectDB) {
     res.status(404).json({ message: 'Not found' });
   });
 
-  app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  });
+  app.use(errorHandler);
 
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    logger.info(`Server running on port ${PORT}`);
   });
 }
 

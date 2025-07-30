@@ -19,11 +19,13 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.0.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^5.9.2",
     "nodemailer": "^6.9.11",
-    "helmet": "^7.0.0",
-    "express-rate-limit": "^7.0.0"
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "mongodb-memory-server": "^10.1.4",

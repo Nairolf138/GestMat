@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const { findUsers, deleteUserById, findUserById, updateUser } = require('../models/User');
 const { findStructureById } = require('../models/Structure');
 const auth = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { updateUserValidator } = require('../validators/userValidator');
 
 const router = express.Router();
 
@@ -35,7 +37,7 @@ router.get('/me', auth(), async (req, res) => {
   res.json(user);
 });
 
-router.put('/me', auth(), async (req, res) => {
+router.put('/me', auth(), updateUserValidator, validate, async (req, res) => {
   const db = req.app.locals.db;
   const data = { ...req.body };
   if (data.password) {
