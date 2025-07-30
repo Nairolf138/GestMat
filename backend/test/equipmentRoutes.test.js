@@ -23,13 +23,13 @@ async function createApp() {
 }
 
 function auth() {
-  const token = jwt.sign({ id: 'u1' }, 'test');
+  const token = jwt.sign({ id: 'u1', role: 'Administrateur' }, 'test');
   return { Authorization: `Bearer ${token}` };
 }
 
 test('create, list, update and delete equipments', async () => {
   const { app, client, mongod } = await createApp();
-  const newEq = { name: 'Mic', type: 'audio', totalQty: 2, availableQty: 1 };
+  const newEq = { name: 'Mic', type: 'Son', totalQty: 2, availableQty: 1 };
   const res = await request(app)
     .post('/api/equipments')
     .set(auth())

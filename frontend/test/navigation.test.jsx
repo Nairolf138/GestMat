@@ -9,12 +9,13 @@ import * as api from '../src/api.js';
 
 describe('Navigation', () => {
   it('navigates to profile page', async () => {
-    api.api.mockResolvedValue([]);
+    api.api.mockResolvedValueOnce({ structure: 's1' });
+    api.api.mockResolvedValueOnce([]);
     localStorage.setItem('token', 'abc');
     window.history.pushState({}, '', '/');
     render(<App />);
     // starts on equipments page
-    expect(screen.getByRole('heading', { name: 'Équipements' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Inventaire local' })).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Connexion' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Inscription' })).toBeNull();
     fireEvent.click(screen.getByText('Profil'));

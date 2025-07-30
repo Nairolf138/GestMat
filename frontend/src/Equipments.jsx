@@ -12,14 +12,14 @@ function Equipments() {
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [location, setLocation] = useState('');
-  const [structure, setStructure] = useState('');
+  const [userStructure, setUserStructure] = useState('');
 
   const fetchItems = () => {
     const params = new URLSearchParams({
       search,
       type,
       location,
-      structure,
+      structure: userStructure,
     });
     api(`/equipments?${params.toString()}`)
       .then(setItems)
@@ -27,14 +27,23 @@ function Equipments() {
   };
 
   useEffect(() => {
-    fetchItems();
-  }, [search, type, location, structure]);
+    api('/users/me').then((u) => {
+      const id = u.structure?._id || u.structure;
+      setUserStructure(id || '');
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (userStructure !== '') {
+      fetchItems();
+    }
+  }, [search, type, location, userStructure]);
 
   return (
     <div className="container">
       <NavBar />
       <Alert type="success" message={message} />
-      <h1>Équipements</h1>
+      <h1>Inventaire local</h1>
       <div className="row g-2 mb-3">
         <div className="col-md">
           <input
@@ -58,14 +67,6 @@ function Equipments() {
             className="form-control"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-          />
-        </div>
-        <div className="col-md">
-          <input
-            placeholder="Structure"
-            className="form-control"
-            value={structure}
-            onChange={(e) => setStructure(e.target.value)}
           />
         </div>
         <div className="col-auto">
