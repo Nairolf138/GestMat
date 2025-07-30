@@ -95,6 +95,22 @@ router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req,
 router.delete('/:id', auth(), checkId(), async (req, res, next) => {
   try {
     const db = req.app.locals.db;
+    const loan = await db
+      .collection('loanrequests')
+      .findOne({ _id: new ObjectId(req.params.id) });
+    if (!loan) return next(notFound('Loan request not found'));
+
+    if (req.user.role !== ADMIN_ROLE) {
+      const user = await findUserById(db, req.user.id);
+      const structId = user?.structure?.toString();
+      if (
+        loan.owner?.toString() !== structId &&
+        loan.borrower?.toString() !== structId
+      ) {
+        return next(forbidden('Access denied'));
+      }
+    }
+
     const removed = await deleteLoan(db, req.params.id);
     if (!removed) return next(notFound('Loan request not found'));
     res.json({ message: 'Loan request deleted' });
