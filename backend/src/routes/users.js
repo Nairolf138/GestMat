@@ -42,7 +42,11 @@ router.get('/me', auth(), async (req, res, next) => {
 
 router.put('/me', auth(), updateUserValidator, validate, async (req, res, next) => {
   const db = req.app.locals.db;
-  const data = { ...req.body };
+  const allowed = ['firstName', 'lastName', 'email', 'password'];
+  const data = {};
+  for (const key of allowed) {
+    if (req.body[key] !== undefined) data[key] = req.body[key];
+  }
   if (data.password) {
     data.password = await bcrypt.hash(data.password, 10);
   }
