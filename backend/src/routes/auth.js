@@ -15,7 +15,7 @@ if (!JWT_SECRET) {
 }
 const { createUser, findUserByUsername } = require('../models/User');
 const { findStructureById } = require('../models/Structure');
-const { unauthorized, badRequest, ApiError } = require('../utils/errors');
+const { unauthorized, ApiError } = require('../utils/errors');
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -41,7 +41,11 @@ router.post('/register', registerValidator, validate, async (req, res, next) => 
     const { password: _pw, ...userData } = user;
     res.json(userData);
   } catch (err) {
-    next(badRequest('Registration failed'));
+    if (err.message === 'Username already exists') {
+      next(new ApiError(409, err.message));
+    } else {
+      next(new ApiError(400, err.message || 'Registration failed'));
+    }
   }
 });
 

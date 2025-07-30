@@ -57,10 +57,12 @@ function Register() {
       setStructure('');
       userRef.current?.focus();
     } catch (err) {
-      if (err.message.includes('Username already exists')) {
+      if (err.message === 'Username already exists') {
         setErrors({ username: err.message });
       } else if (err.message.includes('12 bytes') || err.message.includes('24 hex')) {
         setErrors({ structure: 'Structure invalide' });
+      } else {
+        setErrors({});
       }
       setError(err.message || 'Registration failed');
     }
