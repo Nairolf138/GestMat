@@ -3,12 +3,13 @@ const bcrypt = require('bcryptjs');
 const { findUsers, deleteUserById, findUserById, updateUser } = require('../models/User');
 const { findStructureById } = require('../models/Structure');
 const auth = require('../middleware/auth');
+const { ADMIN_ROLE } = require('../config/roles');
 const validate = require('../middleware/validate');
 const { updateUserValidator } = require('../validators/userValidator');
 
 const router = express.Router();
 
-router.get('/', auth('admin'), async (req, res) => {
+router.get('/', auth(ADMIN_ROLE), async (req, res) => {
   const db = req.app.locals.db;
   const users = await findUsers(db);
   for (const user of users) {
@@ -20,7 +21,7 @@ router.get('/', auth('admin'), async (req, res) => {
   res.json(users);
 });
 
-router.delete('/:id', auth('admin'), async (req, res) => {
+router.delete('/:id', auth(ADMIN_ROLE), async (req, res) => {
   const db = req.app.locals.db;
   await deleteUserById(db, req.params.id);
   res.json({ message: 'User deleted' });
