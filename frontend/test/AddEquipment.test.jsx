@@ -10,6 +10,8 @@ describe('AddEquipment', () => {
     api.api.mockResolvedValue({});
     const { container, getByText } = render(<AddEquipment />);
     fireEvent.change(container.querySelector('input[name="name"]'), { target: { value: 'Lamp' } });
+    fireEvent.change(container.querySelector('select[name="type"]'), { target: { value: 'Son' } });
+    fireEvent.change(container.querySelector('select[name="condition"]'), { target: { value: 'Neuf' } });
     fireEvent.change(container.querySelector('input[name="totalQty"]'), { target: { value: '2' } });
     fireEvent.change(container.querySelector('input[name="availableQty"]'), { target: { value: '2' } });
     fireEvent.submit(getByText('Ajouter').closest('form'));

@@ -29,7 +29,7 @@ function auth() {
 
 test('create, list, update and delete equipments', async () => {
   const { app, client, mongod } = await createApp();
-  const newEq = { name: 'Mic', type: 'audio', totalQty: 2, availableQty: 1, location: 'main' };
+  const newEq = { name: 'Mic', type: 'audio', totalQty: 2, availableQty: 1 };
   const res = await request(app)
     .post('/api/equipments')
     .set(auth())
