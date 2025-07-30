@@ -16,7 +16,10 @@ const statsRoutes = require('./routes/stats');
 
 const app = express();
 app.use(helmet());
-app.use(cors());
+const corsOptions = process.env.CORS_ORIGIN
+  ? { origin: process.env.CORS_ORIGIN.split(',') }
+  : {};
+app.use(cors(corsOptions));
 app.use(express.json());
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use(limiter);
