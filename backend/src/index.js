@@ -62,9 +62,10 @@ async function start(connect = connectDB) {
     res.status(500).json({ message: 'Server error' });
   });
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+  return server;
 }
 
 if (require.main === module) {

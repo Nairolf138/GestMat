@@ -8,7 +8,8 @@ test('start exits process if db connection fails', async () => {
   const originalExit = process.exit;
   process.exit = (code) => { exitCode = code; };
   try {
-    await start(() => Promise.reject(new Error('db fail')));
+    const server = await start(() => Promise.reject(new Error('db fail')));
+    if (server) server.close();
   } finally {
     process.exit = originalExit;
     delete require.cache[require.resolve('../src/index')];
