@@ -62,6 +62,16 @@ npm run create-structures -- <name1> [name2 ...]
 
 Each provided name is inserted into the `structures` collection.
 
+## Initial roles
+
+Insert the predefined roles before the first user registration:
+
+```bash
+npm run create-roles
+```
+
+The script seeds the `roles` collection with the built-in roles.
+
 ### MongoDB Atlas
 
 To connect the API to MongoDB Atlas instead of a local server:
