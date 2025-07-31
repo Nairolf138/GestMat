@@ -9,7 +9,7 @@ describe('PrivateRoute', () => {
   it('redirects to login when unauthenticated', () => {
     render(
       <AuthContext.Provider value={{ user: null }}>
-        <MemoryRouter initialEntries={['/secret']}>
+        <MemoryRouter initialEntries={['/secret']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path='/secret' element={<PrivateRoute><h1>Secret</h1></PrivateRoute>} />
             <Route path='/login' element={<h1>Connexion</h1>} />
@@ -23,7 +23,7 @@ describe('PrivateRoute', () => {
   it('renders child when authenticated', () => {
     render(
       <AuthContext.Provider value={{ user: { id: 'u1' } }}>
-        <MemoryRouter initialEntries={['/secret']}>
+        <MemoryRouter initialEntries={['/secret']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path='/secret' element={<PrivateRoute><h1>Secret</h1></PrivateRoute>} />
           </Routes>

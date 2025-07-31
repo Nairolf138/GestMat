@@ -11,7 +11,7 @@ describe('Register', () => {
   it('marks username invalid on server error', async () => {
     api.api.mockRejectedValue(new Error('Username already exists'));
     const { container, getByText } = render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <GlobalContext.Provider value={{ roles: ['Administrateur'], structures: [] }}>
           <Register />
         </GlobalContext.Provider>

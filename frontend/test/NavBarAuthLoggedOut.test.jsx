@@ -8,7 +8,7 @@ import '../src/i18n.js';
 describe('NavBar when logged out', () => {
   it('shows login and register links', () => {
     const { getAllByRole, queryByRole } = render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthContext.Provider value={{ user: null, setUser: () => {} }}>
           <NavBar />
         </AuthContext.Provider>

@@ -13,7 +13,7 @@ describe('Login success', () => {
     api.api.mockResolvedValueOnce({ structure: 's1' });
     api.api.mockResolvedValueOnce([]);
     render(
-      <MemoryRouter initialEntries={['/login']}>
+      <MemoryRouter initialEntries={['/login']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path='/login' element={<Login />} />
           <Route path='/' element={<Home />} />

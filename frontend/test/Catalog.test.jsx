@@ -24,7 +24,7 @@ describe('Catalog', () => {
       .mockResolvedValueOnce({ available: true });
 
     const { container } = render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <GlobalContext.Provider value={{ structures: [{ _id: 's1', name: 'S1' }] }}>
           <Catalog />
         </GlobalContext.Provider>
@@ -66,7 +66,7 @@ describe('Catalog', () => {
       .mockResolvedValue({ available: true });
 
     const { container } = render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <GlobalContext.Provider value={{ structures: [{ _id: 's1', name: 'S1' }] }}>
           <Catalog />
         </GlobalContext.Provider>
