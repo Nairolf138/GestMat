@@ -11,16 +11,16 @@ Les deux services communiquent via HTTP ; par défaut l’API écoute sur le po
 
 ## Rôles
 
-L’accès aux équipements est limité selon le rôle attribué à l’utilisateur :
+Tous les rôles peuvent consulter l'ensemble du catalogue. En revanche, l'ajout ou la modification d'équipements est limitée selon le rôle :
 
-| Rôle | Types d’équipement accessibles |
+| Rôle | Types d’équipement modifiables |
 | --- | --- |
 | Administrateur | tous |
 | Régisseur(se) Général | tous |
-| Régisseur(se) Son | Son |
+| Régisseur(se) Son | Son, Vidéo, Autre |
 | Régisseur(se) Lumière | Lumière, Vidéo, Autre |
-| Régisseur(se) Plateau | Plateau |
-| Autre | Autre |
+| Régisseur(se) Plateau | Plateau, Vidéo, Autre |
+| Autre | tous |
 
 ## Processus de prêt
 
