@@ -1,5 +1,6 @@
 const { ObjectId } = require('mongodb');
 
+// Availability is computed dynamically from total quantity and overlapping loan requests.
 async function checkEquipmentAvailability(db, equipmentId, start, end, quantity) {
   const eq = await db
     .collection('equipments')
@@ -8,7 +9,7 @@ async function checkEquipmentAvailability(db, equipmentId, start, end, quantity)
     return null;
   }
   let reserved = 0;
-  if (start && end && !Number.isNaN(start) && !Number.isNaN(end)) {
+  if (start && end) {
     const agg = await db
       .collection('loanrequests')
       .aggregate([

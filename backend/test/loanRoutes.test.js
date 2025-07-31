@@ -10,6 +10,7 @@ process.env.JWT_SECRET = 'test';
 const loanRoutes = require('../src/routes/loans');
 const mailer = require('../src/utils/sendMail');
 mailer.sendMail = async () => {};
+const { checkEquipmentAvailability } = require('../src/utils/checkAvailability');
 
 async function createApp() {
   const mongod = await MongoMemoryServer.create();
@@ -35,9 +36,7 @@ test('create, update and delete loan request', async () => {
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
   const eqId = (
-    await db
-      .collection('equipments')
-      .insertOne({ name: 'E1', totalQty: 1, availableQty: 1 })
+    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
   ).insertedId;
   await db
     .collection('users')
@@ -57,10 +56,16 @@ test('create, update and delete loan request', async () => {
     .send(payload)
     .expect(200);
   assert.ok(res.body._id);
-  const eqAfterCreate = await db
-    .collection('equipments')
-    .findOne({ _id: eqId });
-  assert.strictEqual(eqAfterCreate.availableQty, 0);
+  const start = new Date('2024-01-01');
+  const end = new Date('2024-01-02');
+  const availAfterCreate = await checkEquipmentAvailability(
+    db,
+    eqId.toString(),
+    start,
+    end,
+    1
+  );
+  assert.strictEqual(availAfterCreate.availableQty, 0);
 
   const list1 = await request(app).get('/api/loans').set(auth()).expect(200);
   assert.strictEqual(list1.body.length, 1);
@@ -74,12 +79,24 @@ test('create, update and delete loan request', async () => {
   assert.strictEqual(upd.body.status, 'accepted');
 
   await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
-  const eqAfterDelete = await db
-    .collection('equipments')
-    .findOne({ _id: eqId });
-  assert.strictEqual(eqAfterDelete.availableQty, 1);
+  const availAfterDelete = await checkEquipmentAvailability(
+    db,
+    eqId.toString(),
+    start,
+    end,
+    1
+  );
+  assert.strictEqual(availAfterDelete.availableQty, 1);
   const list2 = await request(app).get('/api/loans').set(auth()).expect(200);
   assert.strictEqual(list2.body.length, 0);
+
+  // loan can be created again after deletion (return scenario)
+  const res2 = await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send(payload)
+    .expect(200);
+  assert.ok(res2.body._id);
 
   await client.close();
   await mongod.stop();
@@ -90,9 +107,7 @@ test('loan creation fails on quantity conflict', async () => {
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
   const eqId = (
-    await db
-      .collection('equipments')
-      .insertOne({ name: 'E1', totalQty: 1, availableQty: 1 })
+    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
   ).insertedId;
   await db
     .collection('users')

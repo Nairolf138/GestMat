@@ -44,17 +44,6 @@ async function createLoanRequest(db, data) {
     })
   );
 
-  await Promise.all(
-    items.map((item) =>
-      db
-        .collection('equipments')
-        .updateOne(
-          { _id: new ObjectId(item.equipment) },
-          { $inc: { availableQty: -item.quantity } }
-        )
-    )
-  );
-
   const loan = await createLoan(db, { ...data, status: 'pending' });
   try {
     const recipients = await getLoanRecipients(db, loan.owner, loan.items || []);
@@ -81,13 +70,7 @@ async function updateLoanRequest(db, user, id, data) {
   }
 
   if (data.status === 'refused' && loan.status !== 'refused') {
-    await Promise.all(
-      (loan.items || []).map((item) =>
-        db
-          .collection('equipments')
-          .updateOne({ _id: item.equipment }, { $inc: { availableQty: item.quantity } })
-      )
-    );
+    // No inventory update needed as availability is calculated dynamically
   }
   if (data.status === 'accepted' && loan.status === 'refused') {
     const start = loan.startDate;
@@ -105,16 +88,6 @@ async function updateLoanRequest(db, user, id, data) {
           throw badRequest('Quantity not available');
         }
       })
-    );
-    await Promise.all(
-      (loan.items || []).map((item) =>
-        db
-          .collection('equipments')
-          .updateOne(
-            { _id: item.equipment },
-            { $inc: { availableQty: -item.quantity } }
-          )
-      )
     );
   }
   const updated = await updateLoan(db, id, data);
@@ -154,15 +127,6 @@ async function deleteLoanRequest(db, user, id) {
 
   const removed = await deleteLoan(db, id);
   if (!removed) throw notFound('Loan request not found');
-  if (loan.status !== 'refused') {
-    await Promise.all(
-      (loan.items || []).map((item) =>
-        db
-          .collection('equipments')
-          .updateOne({ _id: item.equipment }, { $inc: { availableQty: item.quantity } })
-      )
-    );
-  }
   return { message: 'Loan request deleted' };
 }
 
