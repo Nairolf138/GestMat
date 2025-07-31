@@ -6,7 +6,6 @@ const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 process.env.JWT_SECRET = 'test';
 const authRoutes = require('../src/routes/auth');
-const ROLES = require('../src/config/roles');
 
 async function createApp() {
   const mongod = await MongoMemoryServer.create();
@@ -24,46 +23,48 @@ async function createApp() {
   return { app, client, mongod };
 }
 
-test('register validates fields and duplicate usernames', async () => {
+test('register validates fields, defaults role and prevents duplicates', async () => {
   const { app, client, mongod } = await createApp();
+  await request(app).post('/api/auth/register').send({ password: 'pw' }).expect(400);
+  await request(app).post('/api/auth/register').send({ username: 'bob' }).expect(400);
   await request(app)
     .post('/api/auth/register')
-    .send({ password: 'pw', role: ROLES[0] })
+    .send({ username: 'bob', password: 'pw', email: 'not-an-email' })
     .expect(400);
   await request(app)
     .post('/api/auth/register')
-    .send({ username: 'bob', role: ROLES[0] })
-    .expect(400);
-  await request(app)
-    .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw' })
-    .expect(400);
-  await request(app)
-    .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw', role: 'invalid' })
-    .expect(400);
-  await request(app)
-    .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw', role: ROLES[0], email: 'not-an-email' })
-    .expect(400);
-  await request(app)
-    .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw', role: ROLES[0], structure: '123' })
+    .send({ username: 'bob', password: 'pw', structure: '123' })
     .expect(400);
   const missingStruct = await request(app)
     .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw', role: ROLES[0], structure: new ObjectId().toString() });
+    .send({ username: 'bob', password: 'pw', structure: new ObjectId().toString() });
   assert.strictEqual(missingStruct.status, 400);
   assert.strictEqual(missingStruct.body.message, 'Structure not found');
-  await request(app)
+
+  const defaultRole = await request(app)
     .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw', role: ROLES[0] })
-    .expect(200);
+    .send({ username: 'bob', password: 'pw' });
+  assert.strictEqual(defaultRole.status, 200);
+  assert.strictEqual(defaultRole.body.role, 'Autre');
+
   const dup = await request(app)
     .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw', role: ROLES[0] });
+    .send({ username: 'bob', password: 'pw' });
   assert.strictEqual(dup.status, 409);
   assert.strictEqual(dup.body.message, 'Username already exists');
+
+  const invalidRole = await request(app)
+    .post('/api/auth/register')
+    .send({ username: 'alice', password: 'pw', role: 'invalid' });
+  assert.strictEqual(invalidRole.status, 200);
+  assert.strictEqual(invalidRole.body.role, 'Autre');
+
+  const adminRole = await request(app)
+    .post('/api/auth/register')
+    .send({ username: 'eve', password: 'pw', role: 'Administrateur' });
+  assert.strictEqual(adminRole.status, 200);
+  assert.strictEqual(adminRole.body.role, 'Autre');
+
   await client.close();
   await mongod.stop();
 });

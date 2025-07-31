@@ -8,6 +8,11 @@ const {
   registerValidator,
   loginValidator,
 } = require('../validators/userValidator');
+const ROLES = require('../config/roles');
+const { ADMIN_ROLE } = ROLES;
+
+const DEFAULT_ROLE = 'Autre';
+const ALLOWED_ROLES = ROLES.filter(r => r !== ADMIN_ROLE);
 
 const { JWT_SECRET } = process.env;
 if (!JWT_SECRET) {
@@ -27,7 +32,10 @@ const loginLimiter = rateLimit({
 router.post('/register', registerValidator, validate, async (req, res, next) => {
   const db = req.app.locals.db;
   try {
-    const { username, password, role, structure, firstName, lastName, email } = req.body;
+    let { username, password, role, structure, firstName, lastName, email } = req.body;
+    if (!ALLOWED_ROLES.includes(role)) {
+      role = DEFAULT_ROLE;
+    }
     if (structure) {
       const exists = await findStructureById(db, structure);
       if (!exists) {
