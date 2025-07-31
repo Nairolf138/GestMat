@@ -8,6 +8,16 @@ const createLoanValidator = [
   body('items').isArray().withMessage('items must be an array'),
   body('items.*.equipment').isMongoId().withMessage('equipment must be a valid id'),
   body('items.*.quantity').isInt({ min: 1 }).withMessage('quantity must be >= 1'),
+  body('startDate').isISO8601().withMessage('startDate must be a valid ISO8601 date'),
+  body('endDate')
+    .isISO8601()
+    .withMessage('endDate must be a valid ISO8601 date')
+    .custom((value, { req }) => {
+      if (new Date(req.body.startDate) > new Date(value)) {
+        throw new Error('startDate must be before or equal to endDate');
+      }
+      return true;
+    }),
   body('status').optional().isIn(statusValues),
 ];
 
@@ -17,6 +27,16 @@ const updateLoanValidator = [
   body('items').optional().isArray(),
   body('items.*.equipment').optional().isMongoId(),
   body('items.*.quantity').optional().isInt({ min: 1 }),
+  body('startDate').optional().isISO8601(),
+  body('endDate')
+    .optional()
+    .isISO8601()
+    .custom((value, { req }) => {
+      if (req.body.startDate && new Date(req.body.startDate) > new Date(value)) {
+        throw new Error('startDate must be before or equal to endDate');
+      }
+      return true;
+    }),
   body('status').optional().isIn(statusValues),
 ];
 
