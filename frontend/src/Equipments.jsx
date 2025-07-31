@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
 import NavBar from './NavBar';
 import Alert from './Alert.jsx';
+import { AuthContext } from './AuthContext.jsx';
 
 function Equipments() {
   const { t } = useTranslation();
   const routerLocation = useLocation();
+  const { user } = useContext(AuthContext);
   const [message] = useState(routerLocation.state?.message || '');
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState('');
@@ -29,11 +31,11 @@ function Equipments() {
   };
 
   useEffect(() => {
-    api('/users/me').then((u) => {
-      const id = u.structure?._id || u.structure;
+    if (user) {
+      const id = user.structure?._id || user.structure;
       setUserStructure(id || '');
-    }).catch(() => {});
-  }, []);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (userStructure !== '') {

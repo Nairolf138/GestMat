@@ -1,24 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import NavBar from "./NavBar";
 import { api } from "./api";
 import Alert from "./Alert.jsx";
+import { AuthContext } from "./AuthContext.jsx";
 
 function Home() {
   const { t } = useTranslation();
-  const [user, setUser] = useState(null);
+  const { user } = useContext(AuthContext);
   const [loans, setLoans] = useState([]);
   const [error, setError] = useState("");
   const location = useLocation();
   const [message] = useState(location.state?.message || "");
 
   useEffect(() => {
-    api("/users/me")
-      .then(setUser)
-      .catch(() => {});
     api("/loans")
-      .then(setLoans)
+      .then((data) => {
+        if (Array.isArray(data)) setLoans(data);
+        else setLoans([]);
+      })
       .catch(() => setLoans([]));
   }, []);
 

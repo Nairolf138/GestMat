@@ -3,11 +3,13 @@ import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { GlobalContext } from './GlobalContext.jsx';
+import { AuthContext } from './AuthContext.jsx';
 import { useTranslation } from 'react-i18next';
 
 function Profile() {
   const { t } = useTranslation();
   const { roles, structures } = useContext(GlobalContext);
+  const { user, setUser } = useContext(AuthContext);
   const [form, setForm] = useState({
     username: '',
     firstName: '',
@@ -21,11 +23,13 @@ function Profile() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    api('/users/me')
-      .then((u) => setForm({ ...form, ...u, password: '' }))
-      .catch(() => setError(t('profile.load_error')));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (user) {
+      setForm((f) => ({ ...f, ...user, password: '' }));
+      setError('');
+    } else {
+      setError(t('profile.load_error'));
+    }
+  }, [user, t]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,13 +46,14 @@ function Profile() {
         body: JSON.stringify(payload),
       });
       setForm({ ...form, ...u, password: '' });
+      setUser(u);
       setSuccess(t('profile.success'));
       setError('');
-      } catch (err) {
-        setError(err.message || t('common.error'));
-        setSuccess('');
-      }
-    };
+    } catch (err) {
+      setError(err.message || t('common.error'));
+      setSuccess('');
+    }
+  };
 
   return (
     <div className="container">
