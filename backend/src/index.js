@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const client = require('prom-client');
-const { connectDB } = require('./config/db');
+const { connectDB, closeDB } = require('./config/db');
 const { ApiError } = require('./utils/errors');
 
 dotenv.config();
@@ -70,6 +70,17 @@ async function start(connect = connectDB) {
   const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+
+  const shutdown = () => {
+    server.close(async () => {
+      await closeDB();
+      process.exit(0);
+    });
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+  server.on('close', closeDB);
+
   return server;
 }
 
