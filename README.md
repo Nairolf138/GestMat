@@ -16,6 +16,10 @@ with `NOTIFY_EMAIL`.
 - `backend` – Express/MongoDB API
 - `frontend` – React/Vite application
 
+## Documentation
+
+Des informations sur l’architecture, les rôles et le processus de prêt sont disponibles dans [docs/README.md](docs/README.md). Le planning des évolutions figure dans [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Getting Started
 
 This project requires a recent Node.js version because Vite relies on the
