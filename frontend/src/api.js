@@ -1,10 +1,17 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+function getCsrfToken() {
+  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 async function refreshToken() {
   try {
+    const token = getCsrfToken();
     const res = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
+      headers: token ? { 'CSRF-Token': token } : {},
     });
     if (!res.ok) throw new Error('Refresh error');
     return true;
@@ -18,6 +25,11 @@ export async function api(path, options = {}, retry = true) {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
+  const method = (options.method || 'GET').toUpperCase();
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    const token = getCsrfToken();
+    if (token) headers['CSRF-Token'] = token;
+  }
   try {
     const res = await fetch(`${API_URL}${path}`, {
       ...options,

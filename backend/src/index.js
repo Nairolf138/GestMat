@@ -7,6 +7,7 @@ const client = require('prom-client');
 const { connectDB, closeDB } = require('./config/db');
 const { ApiError } = require('./utils/errors');
 const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
 
 dotenv.config();
 
@@ -26,6 +27,14 @@ const corsOptions = process.env.CORS_ORIGIN
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+if (process.env.NODE_ENV !== 'test') {
+  const csrfProtection = csrf({ cookie: true });
+  app.use(csrfProtection);
+  app.use((req, res, next) => {
+    res.cookie('XSRF-TOKEN', req.csrfToken());
+    next();
+  });
+}
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use(limiter);
 
@@ -63,7 +72,9 @@ async function start(connect = connectDB) {
 
   app.use((err, req, res, next) => {
     console.error(err);
-    if (err instanceof ApiError) {
+    if (err.code === 'EBADCSRFTOKEN') {
+      res.status(403).json({ message: 'Invalid CSRF token' });
+    } else if (err instanceof ApiError) {
       res.status(err.status).json({ message: err.message });
     } else {
       res.status(500).json({ message: 'Server error' });
