@@ -112,12 +112,7 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res, n
 router.post('/refresh', async (req, res, next) => {
   try {
     const db = req.app.locals.db;
-    const cookie = req.headers.cookie || '';
-    const tokenCookie = cookie
-      .split(';')
-      .map(c => c.trim())
-      .find(c => c.startsWith('refreshToken='));
-    const refreshToken = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : null;
+    const { refreshToken } = req.cookies;
     if (!refreshToken) return next(unauthorized('Refresh token required'));
 
     let payload;
@@ -160,12 +155,7 @@ router.post('/refresh', async (req, res, next) => {
 
 router.post('/logout', async (req, res) => {
   const db = req.app.locals.db;
-  const cookie = req.headers.cookie || '';
-  const tokenCookie = cookie
-    .split(';')
-    .map(c => c.trim())
-    .find(c => c.startsWith('refreshToken='));
-  const refreshToken = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : null;
+  const { refreshToken } = req.cookies;
   if (refreshToken) {
     await deleteSessionByToken(db, refreshToken).catch(() => {});
   }
