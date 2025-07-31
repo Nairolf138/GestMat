@@ -7,6 +7,7 @@ const { connectDB, closeDB } = require('./config/db');
 const { ApiError } = require('./utils/errors');
 const cookieParser = require('cookie-parser');
 const csrf = require('csurf');
+const logger = require('./utils/logger');
 
 const { PORT, CORS_ORIGIN, NODE_ENV } = require('./config');
 
@@ -26,6 +27,21 @@ const corsOptions = CORS_ORIGIN.length
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    const { method, originalUrl } = req;
+    const { statusCode } = res;
+    const message = `${method} ${originalUrl} ${statusCode}`;
+    if (statusCode >= 500) {
+      logger.error(message);
+    } else if (statusCode >= 400) {
+      logger.warn(message);
+    } else {
+      logger.info(message);
+    }
+  });
+  next();
+});
 if (NODE_ENV !== 'test') {
   const csrfProtection = csrf({ cookie: true });
   app.use(csrfProtection);
@@ -46,7 +62,7 @@ async function start(connect = connectDB) {
     app.locals.db = db;
     await db.collection('users').createIndex({ username: 1 }, { unique: true });
   } catch (err) {
-    console.error('Failed to start server:', err);
+    logger.error('Failed to start server: %o', err);
     process.exit(1);
     return;
   }
@@ -69,7 +85,7 @@ async function start(connect = connectDB) {
   });
 
   app.use((err, req, res, next) => {
-    console.error(err);
+    logger.error(err);
     if (err.code === 'EBADCSRFTOKEN') {
       res.status(403).json({ message: 'Invalid CSRF token' });
     } else if (err instanceof ApiError) {
@@ -80,7 +96,7 @@ async function start(connect = connectDB) {
   });
 
   const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    logger.info(`Server running on port ${PORT}`);
   });
 
   const shutdown = () => {
