@@ -86,9 +86,19 @@ function Register() {
             if (errors.username) setErrors({ ...errors, username: undefined });
           }}
           ref={userRef}
+          required
+          aria-invalid={errors.username ? 'true' : undefined}
+          aria-describedby={errors.username ? 'reg-username-error' : undefined}
         />
         {errors.username && (
-          <div className="invalid-feedback">{errors.username}</div>
+          <div
+            className="invalid-feedback"
+            id="reg-username-error"
+            role="alert"
+            aria-live="polite"
+          >
+            {errors.username}
+          </div>
         )}
       </div>
       <div className="mb-3">
@@ -135,9 +145,19 @@ function Register() {
             setPassword(e.target.value);
             if (errors.password) setErrors({ ...errors, password: undefined });
           }}
+          required
+          aria-invalid={errors.password ? 'true' : undefined}
+          aria-describedby={errors.password ? 'password-error' : undefined}
         />
         {errors.password && (
-          <div className="invalid-feedback">{errors.password}</div>
+          <div
+            className="invalid-feedback"
+            id="password-error"
+            role="alert"
+            aria-live="polite"
+          >
+            {errors.password}
+          </div>
         )}
       </div>
       <div className="mb-3">
@@ -151,6 +171,9 @@ function Register() {
             setRole(e.target.value);
             if (errors.role) setErrors({ ...errors, role: undefined });
           }}
+          required
+          aria-invalid={errors.role ? 'true' : undefined}
+          aria-describedby={errors.role ? 'role-error' : undefined}
         >
           <option value="">{t('common.choose')}</option>
           {roles.map((r) => (
@@ -160,7 +183,14 @@ function Register() {
           ))}
         </select>
         {errors.role && (
-          <div className="invalid-feedback">{errors.role}</div>
+          <div
+            className="invalid-feedback"
+            id="role-error"
+            role="alert"
+            aria-live="polite"
+          >
+            {errors.role}
+          </div>
         )}
       </div>
       <div className="mb-3">
@@ -174,6 +204,8 @@ function Register() {
             setStructure(e.target.value);
             if (errors.structure) setErrors({ ...errors, structure: undefined });
           }}
+          aria-invalid={errors.structure ? 'true' : undefined}
+          aria-describedby={errors.structure ? 'structure-error' : undefined}
         >
           <option value="">{t('common.choose')}</option>
           {structures.map((s) => (
@@ -183,7 +215,14 @@ function Register() {
           ))}
         </select>
         {errors.structure && (
-          <div className="invalid-feedback">{errors.structure}</div>
+          <div
+            className="invalid-feedback"
+            id="structure-error"
+            role="alert"
+            aria-live="polite"
+          >
+            {errors.structure}
+          </div>
         )}
       </div>
       <button type="submit" className="btn btn-primary">{t('register.submit')}</button>
