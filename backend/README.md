@@ -54,3 +54,18 @@ Verify the connection before starting the server:
 ```bash
 mongosh "mongodb+srv://<user>:<password>@cluster0.example.mongodb.net/gestmat"
 ```
+
+## Roles and equipment access
+
+The API restricts equipment management based on the user's role:
+
+| Role | Equipment types |
+| --- | --- |
+| Administrateur | all types |
+| Regisseur(se) Général | all types |
+| Régisseur(se) Son | Son |
+| Régisseur(se) Lumière | Lumière, Vidéo, Autre |
+| Régisseur(se) Plateau | Plateau |
+| Autre | Autre |
+
+Users created without an explicit role are assigned to `Autre`.

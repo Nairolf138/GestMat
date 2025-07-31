@@ -6,6 +6,7 @@ const roleMap = {
   'Régisseur(se) Son': ['Son'],
   'Régisseur(se) Lumière': ['Lumière', 'Vidéo', 'Autre'],
   'Régisseur(se) Plateau': ['Plateau'],
+  'Autre': ['Autre'],
 };
 
 function canModify(role, type) {
