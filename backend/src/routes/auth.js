@@ -28,6 +28,12 @@ router.post('/register', registerValidator, validate, async (req, res, next) => 
   const db = req.app.locals.db;
   try {
     const { username, password, role, structure, firstName, lastName, email } = req.body;
+    if (structure) {
+      const exists = await findStructureById(db, structure);
+      if (!exists) {
+        return next(new ApiError(400, 'Structure not found'));
+      }
+    }
     const hashed = await bcrypt.hash(password, 10);
     const user = await createUser(db, {
       username,
