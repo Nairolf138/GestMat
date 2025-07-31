@@ -3,11 +3,19 @@
     "title": "Login",
     "username": "Username",
     "password": "Password",
-    "submit": "Sign in"
+    "submit": "Sign in",
+    "missing_credentials": "Username and password required",
+    "success": "Login successful",
+    "failed": "Login failed"
   },
   "register": {
     "title": "Register",
-    "submit": "Sign up"
+    "submit": "Sign up",
+    "fields_required": "Username, password and role are required",
+    "success": "Registration successful",
+    "invalid_structure": "Invalid structure",
+    "failed": "Registration failed",
+    "user_exists": "Username already exists"
   },
   "nav": {
     "catalog": "Catalog",
@@ -23,7 +31,30 @@
     "search": "Search",
     "type": "Type",
     "location": "Location",
-    "search_button": "Search"
+    "search_button": "Search",
+    "add": {
+      "title": "New equipment",
+      "name": "Name",
+      "type": "Type",
+      "total_quantity": "Total quantity",
+      "available_quantity": "Available quantity",
+      "condition": "Condition",
+      "submit": "Add",
+      "error_create": "Error during creation",
+      "types": {
+        "sound": "Sound",
+        "light": "Light",
+        "stage": "Stage",
+        "video": "Video",
+        "other": "Other"
+      },
+      "conditions": {
+        "new": "New",
+        "used_lightly": "Slightly used",
+        "used": "Used",
+        "very_used": "Very used"
+      }
+    }
   },
   "home": {
     "title": "Home",
@@ -44,7 +75,8 @@
     "quantity_prompt": "Quantity?",
     "select_period": "Please select a period",
     "unavailable": "Quantity unavailable for this period",
-    "added": "Added to cart"
+    "added": "Added to cart",
+    "error": "Error"
   },
   "loans": {
     "title": "Loans",
@@ -68,7 +100,15 @@
     "load_error": "Loading error",
     "success": "Updated"
   },
+  "cart": {
+    "title": "Cart",
+    "remove": "Remove",
+    "send_requests": "Submit loan request",
+    "requests_sent": "Requests sent"
+  },
   "common": {
-    "choose": "Choose..."
+    "choose": "Choose...",
+    "required": "Required",
+    "error": "Error"
   }
 }

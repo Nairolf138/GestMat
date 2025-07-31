@@ -19,7 +19,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !password) {
-      setError('Utilisateur et mot de passe requis');
+      setError(t('login.missing_credentials'));
       return;
     }
     try {
@@ -27,9 +27,9 @@ function Login() {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       });
-      navigate('/', { state: { message: 'Connexion réussie' } });
+      navigate('/', { state: { message: t('login.success') } });
     } catch (err) {
-      setError(err.message || 'Login failed');
+      setError(err.message || t('login.failed'));
     }
   };
 

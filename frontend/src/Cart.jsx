@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
+import { useTranslation } from 'react-i18next';
 
 function Cart() {
+  const { t } = useTranslation();
   const [cart, setCart] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -48,38 +50,38 @@ function Cart() {
           })
         )
       );
-      setCart([]);
-      localStorage.removeItem('cart');
-      setSuccess('Demandes envoyées');
-      setError('');
-    } catch (err) {
-      setError(err.message || 'Erreur');
-      setSuccess('');
-    }
-  };
+        setCart([]);
+        localStorage.removeItem('cart');
+        setSuccess(t('cart.requests_sent'));
+        setError('');
+      } catch (err) {
+        setError(err.message || t('common.error'));
+        setSuccess('');
+      }
+    };
 
   return (
-    <div className="container">
-      <NavBar />
-      <h1>Panier</h1>
-      <Alert message={error} />
-      <Alert type="success" message={success} />
+      <div className="container">
+        <NavBar />
+        <h1>{t('cart.title')}</h1>
+        <Alert message={error} />
+        <Alert type="success" message={success} />
       <ul className="list-group mb-3">
         {cart.map((it, idx) => (
           <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
             <span>
               {it.equipment.name} - {it.quantity}x ({it.startDate} → {it.endDate})
             </span>
-            <button className="btn btn-outline-danger btn-sm" onClick={() => removeItem(idx)}>
-              Supprimer
-            </button>
+              <button className="btn btn-outline-danger btn-sm" onClick={() => removeItem(idx)}>
+                {t('cart.remove')}
+              </button>
           </li>
         ))}
       </ul>
-      <button disabled={!cart.length} onClick={validate} className="btn btn-primary">
-        Valider la demande de prêt
-      </button>
-    </div>
+        <button disabled={!cart.length} onClick={validate} className="btn btn-primary">
+          {t('cart.send_requests')}
+        </button>
+      </div>
   );
 }
 

@@ -3,11 +3,19 @@
     "title": "Connexion",
     "username": "Utilisateur",
     "password": "Mot de passe",
-    "submit": "Se connecter"
+    "submit": "Se connecter",
+    "missing_credentials": "Utilisateur et mot de passe requis",
+    "success": "Connexion réussie",
+    "failed": "Échec de la connexion"
   },
   "register": {
     "title": "Inscription",
-    "submit": "S'inscrire"
+    "submit": "S'inscrire",
+    "fields_required": "Utilisateur, mot de passe et rôle sont requis",
+    "success": "Inscription réussie",
+    "invalid_structure": "Structure invalide",
+    "failed": "Inscription échouée",
+    "user_exists": "L'utilisateur existe déjà"
   },
   "nav": {
     "catalog": "Catalogue",
@@ -23,7 +31,30 @@
     "search": "Recherche",
     "type": "Type",
     "location": "Emplacement",
-    "search_button": "Rechercher"
+    "search_button": "Rechercher",
+    "add": {
+      "title": "Nouvel équipement",
+      "name": "Nom",
+      "type": "Type",
+      "total_quantity": "Quantité totale",
+      "available_quantity": "Quantité disponible",
+      "condition": "État",
+      "submit": "Ajouter",
+      "error_create": "Erreur lors de la création",
+      "types": {
+        "sound": "Son",
+        "light": "Lumière",
+        "stage": "Plateau",
+        "video": "Vidéo",
+        "other": "Autre"
+      },
+      "conditions": {
+        "new": "Neuf",
+        "used_lightly": "Légèrement usé",
+        "used": "Usé",
+        "very_used": "Très usé"
+      }
+    }
   },
   "home": {
     "title": "Accueil",
@@ -41,34 +72,43 @@
     "all_structures": "Toutes structures",
     "search_button": "Rechercher",
     "add_to_cart": "Ajouter au panier",
-    "quantity_prompt": "Quantit\u00e9 ?",
-    "select_period": "Veuillez s\u00e9lectionner une p\u00e9riode",
-    "unavailable": "Quantit\u00e9 indisponible pour cette p\u00e9riode",
-    "added": "Ajout\u00e9 au panier"
+    "quantity_prompt": "Quantité ?",
+    "select_period": "Veuillez sélectionner une période",
+    "unavailable": "Quantité indisponible pour cette période",
+    "added": "Ajouté au panier",
+    "error": "Erreur"
   },
   "loans": {
     "title": "Pr\u00eats",
     "new_request": "Nouvelle demande",
-    "owner_structure": "Structure propri\u00e9taire",
-    "equipment_option": "\u00c9quipement",
+    "owner_structure": "Structure propriétaire",
+    "equipment_option": "Équipement",
     "send": "Envoyer",
     "accept": "Accepter",
     "refuse": "Refuser",
-    "error_create": "Erreur lors de la cr\u00e9ation"
+    "error_create": "Erreur lors de la création"
   },
   "profile": {
     "title": "Profil",
-    "first_name": "Pr\u00e9nom",
+    "first_name": "Prénom",
     "last_name": "Nom",
     "email": "Adresse mail",
-    "password_placeholder": "(inchang\u00e9)",
-    "role": "R\u00f4le",
+    "password_placeholder": "(inchangé)",
+    "role": "Rôle",
     "structure": "Structure",
     "save": "Enregistrer",
     "load_error": "Erreur de chargement",
-    "success": "Modifi\u00e9"
+    "success": "Modifié"
+  },
+  "cart": {
+    "title": "Panier",
+    "remove": "Supprimer",
+    "send_requests": "Valider la demande de prêt",
+    "requests_sent": "Demandes envoyées"
   },
   "common": {
-    "choose": "Choisir..."
+    "choose": "Choisir...",
+    "required": "Requis",
+    "error": "Erreur"
   }
 }
