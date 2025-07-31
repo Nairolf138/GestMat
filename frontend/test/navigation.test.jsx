@@ -9,4 +9,10 @@ describe('Navigation', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeTruthy();
   });
+
+  it('redirects to login when accessing catalog without auth', async () => {
+    window.history.pushState({}, '', '/catalog');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeTruthy();
+  });
 });
