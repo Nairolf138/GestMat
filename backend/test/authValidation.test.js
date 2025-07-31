@@ -16,6 +16,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
+  await db.collection('users').createIndex({ username: 1 }, { unique: true });
   app.use('/api/auth', authRoutes);
   app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ message: err.message || 'Server error' });
