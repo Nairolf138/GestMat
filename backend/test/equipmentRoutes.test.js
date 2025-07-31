@@ -132,3 +132,44 @@ test('check availability endpoint', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('reject update on equipment from another structure', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+
+  const struct1 = new ObjectId();
+  const struct2 = new ObjectId();
+  await db.collection('structures').insertMany([
+    { _id: struct1, name: 'S1' },
+    { _id: struct2, name: 'S2' }
+  ]);
+
+  const u1 = new ObjectId();
+  const u2 = new ObjectId();
+  await db.collection('users').insertMany([
+    { _id: u1, username: 'u1', role: 'Régisseur(se) Son', structure: struct1 },
+    { _id: u2, username: 'u2', role: 'Régisseur(se) Son', structure: struct2 }
+  ]);
+
+  const token1 = jwt.sign({ id: u1.toString(), role: 'Régisseur(se) Son' }, 'test', { expiresIn: '1h' });
+  const token2 = jwt.sign({ id: u2.toString(), role: 'Régisseur(se) Son' }, 'test', { expiresIn: '1h' });
+
+  const created = await request(app)
+    .post('/api/equipments')
+    .set({ Authorization: `Bearer ${token1}` })
+    .send({ name: 'Mic', type: 'Son', totalQty: 1, availableQty: 1 })
+    .expect(200);
+  const eqId = created.body._id;
+
+  await request(app)
+    .put(`/api/equipments/${eqId}`)
+    .set({ Authorization: `Bearer ${token2}` })
+    .send({ location: 'elsewhere' })
+    .expect(403);
+
+  const eq = await db.collection('equipments').findOne({ _id: new ObjectId(eqId) });
+  assert.strictEqual(eq.location, 'S1');
+
+  await client.close();
+  await mongod.stop();
+});
