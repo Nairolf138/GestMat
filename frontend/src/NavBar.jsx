@@ -15,7 +15,7 @@ function NavBar() {
   };
 
   return (
-    <nav className="navbar navbar-expand bg-dark navbar-dark mb-3">
+    <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm">
       <div className="container-fluid">
         <Link className="navbar-brand" to="/">
           GestMat
@@ -42,7 +42,7 @@ function NavBar() {
           <Link className="nav-link" to="/register">
             {t('register.title')}
           </Link>
-          <button className="btn btn-outline-light ms-2" onClick={handleLogout}>
+          <button className="btn btn-outline-primary ms-2" onClick={handleLogout}>
             {t('nav.logout')}
           </button>
         </div>
