@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const client = require('prom-client');
@@ -9,7 +8,7 @@ const { ApiError } = require('./utils/errors');
 const cookieParser = require('cookie-parser');
 const csrf = require('csurf');
 
-dotenv.config();
+const { PORT, CORS_ORIGIN, NODE_ENV } = require('./config');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -21,13 +20,13 @@ const rolesRoutes = require('./routes/roles');
 
 const app = express();
 app.use(helmet());
-const corsOptions = process.env.CORS_ORIGIN
-  ? { origin: process.env.CORS_ORIGIN.split(',') }
+const corsOptions = CORS_ORIGIN.length
+  ? { origin: CORS_ORIGIN }
   : { origin: false };
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-if (process.env.NODE_ENV !== 'test') {
+if (NODE_ENV !== 'test') {
   const csrfProtection = csrf({ cookie: true });
   app.use(csrfProtection);
   app.use((req, res, next) => {
@@ -38,7 +37,6 @@ if (process.env.NODE_ENV !== 'test') {
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use(limiter);
 
-const PORT = process.env.PORT || 5000;
 client.collectDefaultMetrics();
 
 async function start(connect = connectDB) {

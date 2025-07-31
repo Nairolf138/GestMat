@@ -1,7 +1,9 @@
 const { MongoClient } = require('mongodb');
+const { MONGODB_URI } = require('.');
+
 let client;
 async function connectDB() {
-    client = new MongoClient(process.env.MONGODB_URI || 'mongodb://localhost/gestmat');
+    client = new MongoClient(MONGODB_URI);
     await client.connect();
     const db = client.db();
     await db.collection('loanrequests').createIndex({ status: 1 });

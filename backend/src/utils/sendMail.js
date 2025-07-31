@@ -1,11 +1,12 @@
 const nodemailer = require('nodemailer');
+const { SMTP_URL } = require('../config');
 
 let transporter;
 
 function getTransporter() {
   if (!transporter) {
-    if (process.env.SMTP_URL) {
-      transporter = nodemailer.createTransport(process.env.SMTP_URL);
+    if (SMTP_URL) {
+      transporter = nodemailer.createTransport(SMTP_URL);
     } else {
       transporter = {
         sendMail: async (opts) => {

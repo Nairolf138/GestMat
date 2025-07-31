@@ -1,9 +1,5 @@
 const jwt = require('jsonwebtoken');
-
-const { JWT_SECRET } = process.env;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
+const { JWT_SECRET } = require('../config');
 
 function auth(allowedRoles = []) {
   return (req, res, next) => {

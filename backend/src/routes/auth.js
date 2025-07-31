@@ -14,10 +14,7 @@ const { ADMIN_ROLE } = ROLES;
 const DEFAULT_ROLE = 'Autre';
 const ALLOWED_ROLES = ROLES.filter(r => r !== ADMIN_ROLE);
 
-const { JWT_SECRET } = process.env;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
+const { JWT_SECRET, NODE_ENV } = require('../config');
 const { createUser, findUserByUsername } = require('../models/User');
 const { findStructureById } = require('../models/Structure');
 const {
@@ -97,7 +94,7 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res, n
     await createSession(db, { token: refreshToken, userId: user._id });
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: NODE_ENV === 'production',
       sameSite: 'strict',
     };
     res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
@@ -147,7 +144,7 @@ router.post('/refresh', async (req, res, next) => {
     await deleteSessionByToken(db, refreshToken);
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: NODE_ENV === 'production',
       sameSite: 'strict',
     };
     res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
@@ -174,7 +171,7 @@ router.post('/logout', async (req, res) => {
   }
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+      secure: NODE_ENV === 'production',
     sameSite: 'strict',
   };
   res.clearCookie('token', cookieOptions);
