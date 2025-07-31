@@ -16,6 +16,17 @@ async function refreshToken() {
     if (!res.ok) throw new Error('Refresh error');
     return true;
   } catch {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {}
+    try {
+      if (typeof navigator === 'undefined' || !navigator.userAgent.includes('jsdom')) {
+        window.location.href = '/login';
+      }
+    } catch {}
     return false;
   }
 }
