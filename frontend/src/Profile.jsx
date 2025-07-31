@@ -58,12 +58,12 @@ function Profile() {
       <Alert type="success" message={success} />
       <form onSubmit={handleSubmit} className="mt-3">
         <div className="mb-3">
-          <label className="form-label">{t('login.username')}</label>
+          <label className="form-label">{t('profile.username')}</label>
           <input
             name="username"
             className="form-control"
             value={form.username}
-            onChange={handleChange}
+            disabled
           />
         </div>
         <div className="mb-3">
@@ -95,7 +95,7 @@ function Profile() {
           />
         </div>
         <div className="mb-3">
-          <label className="form-label">{t('login.password')}</label>
+          <label className="form-label">{t('profile.password')}</label>
           <input
             type="password"
             name="password"
@@ -111,7 +111,7 @@ function Profile() {
             name="role"
             className="form-select"
             value={form.role}
-            onChange={handleChange}
+            disabled
           >
             <option value="">{t('common.choose')}</option>
             {roles.map((r) => (
@@ -127,7 +127,7 @@ function Profile() {
             name="structure"
             className="form-select"
             value={form.structure}
-            onChange={handleChange}
+            disabled
           >
             <option value="">{t('common.choose')}</option>
             {structures.map((s) => (
