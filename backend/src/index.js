@@ -37,6 +37,7 @@ async function start(connect = connectDB) {
   try {
     db = await connect();
     app.locals.db = db;
+    await db.collection('users').createIndex({ username: 1 }, { unique: true });
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);
