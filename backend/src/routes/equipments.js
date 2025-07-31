@@ -33,11 +33,13 @@ router.get('/', auth(), async (req, res) => {
   }
   const filter = createEquipmentFilter({ ...req.query, structure });
   const equipments = await findEquipments(db, filter);
-  for (const eq of equipments) {
-    if (eq.structure) {
-      eq.structure = await findStructureById(db, eq.structure);
-    }
-  }
+  await Promise.all(
+    equipments.map(async (eq) => {
+      if (eq.structure) {
+        eq.structure = await findStructureById(db, eq.structure);
+      }
+    })
+  );
   res.json(equipments);
 });
 

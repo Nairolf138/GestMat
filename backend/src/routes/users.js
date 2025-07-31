@@ -14,12 +14,14 @@ const router = express.Router();
 router.get('/', auth(ADMIN_ROLE), async (req, res) => {
   const db = req.app.locals.db;
   const users = await findUsers(db);
-  for (const user of users) {
-    if (user.structure) {
-      user.structure = await findStructureById(db, user.structure);
-    }
-    delete user.password;
-  }
+  await Promise.all(
+    users.map(async (user) => {
+      if (user.structure) {
+        user.structure = await findStructureById(db, user.structure);
+      }
+      delete user.password;
+    })
+  );
   res.json(users);
 });
 
