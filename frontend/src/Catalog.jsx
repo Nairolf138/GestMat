@@ -4,6 +4,7 @@ import { api } from './api';
 import { GlobalContext } from './GlobalContext';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
+import { addToCart as addCartItem } from './Cart.jsx';
 
 function Catalog() {
   const { t } = useTranslation();
@@ -62,9 +63,12 @@ function Catalog() {
         setSuccess('');
         return;
       }
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      cart.push({ equipment: eq, quantity: qty, startDate: filters.startDate, endDate: filters.endDate });
-      localStorage.setItem('cart', JSON.stringify(cart));
+      addCartItem({
+        equipment: eq,
+        quantity: qty,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      });
       setError('');
       setSuccess(t('catalog.added'));
     } catch (err) {
