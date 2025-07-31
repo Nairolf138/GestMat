@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
+import { AuthContext } from './AuthContext.jsx';
 
 function Cart() {
   const { t } = useTranslation();
@@ -10,14 +11,16 @@ function Cart() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [borrower, setBorrower] = useState('');
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('cart') || '[]');
     setCart(stored);
-    api('/users/me')
-      .then((u) => setBorrower(u.structure?._id || u.structure || ''))
-      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    setBorrower(user?.structure?._id || user?.structure || '');
+  }, [user]);
 
   const removeItem = (idx) => {
     const newCart = cart.filter((_, i) => i !== idx);
