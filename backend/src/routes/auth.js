@@ -20,6 +20,12 @@ if (!JWT_SECRET) {
 }
 const { createUser, findUserByUsername } = require('../models/User');
 const { findStructureById } = require('../models/Structure');
+const {
+  createSession,
+  findSessionByToken,
+  deleteSessionByToken,
+  deleteSessionsByUser,
+} = require('../models/Session');
 const { unauthorized, ApiError } = require('../utils/errors');
 
 const router = express.Router();
@@ -87,6 +93,8 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res, n
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+    await deleteSessionsByUser(db, user._id);
+    await createSession(db, { token: refreshToken, userId: user._id });
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -106,12 +114,13 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res, n
 
 router.post('/refresh', async (req, res, next) => {
   try {
+    const db = req.app.locals.db;
     const cookie = req.headers.cookie || '';
     const tokenCookie = cookie
       .split(';')
       .map(c => c.trim())
       .find(c => c.startsWith('refreshToken='));
-    const refreshToken = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : req.body?.refreshToken;
+    const refreshToken = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : null;
     if (!refreshToken) return next(unauthorized('Refresh token required'));
 
     let payload;
@@ -121,24 +130,48 @@ router.post('/refresh', async (req, res, next) => {
       return next(unauthorized('Invalid refresh token'));
     }
 
+    const session = await findSessionByToken(db, refreshToken);
+    if (!session) return next(unauthorized('Invalid refresh token'));
+
     const token = jwt.sign(
       { id: payload.id, role: payload.role },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
+    const newRefreshToken = jwt.sign(
+      { id: payload.id, role: payload.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    await createSession(db, { token: newRefreshToken, userId: payload.id });
+    await deleteSessionByToken(db, refreshToken);
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     };
     res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
+    res.cookie('refreshToken', newRefreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     res.json({});
   } catch (err) {
     next(new ApiError(500, 'Server error'));
   }
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+  const db = req.app.locals.db;
+  const cookie = req.headers.cookie || '';
+  const tokenCookie = cookie
+    .split(';')
+    .map(c => c.trim())
+    .find(c => c.startsWith('refreshToken='));
+  const refreshToken = tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : null;
+  if (refreshToken) {
+    await deleteSessionByToken(db, refreshToken).catch(() => {});
+  }
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
