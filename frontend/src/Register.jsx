@@ -28,12 +28,12 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const fieldErrors = {};
-    if (!username) fieldErrors.username = 'Requis';
-    if (!password) fieldErrors.password = 'Requis';
-    if (!role) fieldErrors.role = 'Requis';
+    if (!username) fieldErrors.username = t('common.required');
+    if (!password) fieldErrors.password = t('common.required');
+    if (!role) fieldErrors.role = t('common.required');
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) {
-      setError('Utilisateur, mot de passe et rôle sont requis');
+      setError(t('register.fields_required'));
       return;
     }
     const payload = { username, password, role };
@@ -46,7 +46,7 @@ function Register() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      setSuccess('Inscription réussie');
+      setSuccess(t('register.success'));
       setError('');
       setUsername('');
       setFirstName('');
@@ -58,13 +58,13 @@ function Register() {
       userRef.current?.focus();
     } catch (err) {
       if (err.message === 'Username already exists') {
-        setErrors({ username: err.message });
+        setErrors({ username: t('register.user_exists') });
       } else if (err.message.includes('12 bytes') || err.message.includes('24 hex')) {
-        setErrors({ structure: 'Structure invalide' });
+        setErrors({ structure: t('register.invalid_structure') });
       } else {
         setErrors({});
       }
-      setError(err.message || 'Registration failed');
+      setError(err.message || t('register.failed'));
     }
   };
 
@@ -92,32 +92,32 @@ function Register() {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="firstName">Prénom</label>
+        <label className="form-label" htmlFor="firstName">{t('profile.first_name')}</label>
         <input
           id="firstName"
           className="form-control"
-          aria-label="Prénom"
+          aria-label={t('profile.first_name')}
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="lastName">Nom</label>
+        <label className="form-label" htmlFor="lastName">{t('profile.last_name')}</label>
         <input
           id="lastName"
           className="form-control"
-          aria-label="Nom"
+          aria-label={t('profile.last_name')}
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="email">Adresse mail</label>
+        <label className="form-label" htmlFor="email">{t('profile.email')}</label>
         <input
           id="email"
           type="email"
           className="form-control"
-          aria-label="Email"
+          aria-label={t('profile.email')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -141,7 +141,7 @@ function Register() {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="role">Rôle</label>
+        <label className="form-label" htmlFor="role">{t('profile.role')}</label>
         <select
           id="role"
           name="role"
@@ -152,7 +152,7 @@ function Register() {
             if (errors.role) setErrors({ ...errors, role: undefined });
           }}
         >
-          <option value="">Choisir...</option>
+          <option value="">{t('common.choose')}</option>
           {roles.map((r) => (
             <option key={r} value={r}>
               {r}
@@ -164,7 +164,7 @@ function Register() {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="structure">Structure</label>
+        <label className="form-label" htmlFor="structure">{t('profile.structure')}</label>
         <select
           id="structure"
           name="structure"
@@ -175,7 +175,7 @@ function Register() {
             if (errors.structure) setErrors({ ...errors, structure: undefined });
           }}
         >
-          <option value="">Choisir...</option>
+          <option value="">{t('common.choose')}</option>
           {structures.map((s) => (
             <option key={s._id || s} value={s._id || s.name || s}>
               {s.name || s}

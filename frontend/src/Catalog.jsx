@@ -17,6 +17,7 @@ function Catalog() {
     endDate: '',
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [quantities, setQuantities] = useState({});
 
   const fetchItems = () => {
@@ -49,6 +50,7 @@ function Catalog() {
     if (!qty) return;
     if (!filters.startDate || !filters.endDate) {
       setError(t('catalog.select_period'));
+      setSuccess('');
       return;
     }
     try {
@@ -57,15 +59,17 @@ function Catalog() {
       );
       if (!res.available) {
         setError(t('catalog.unavailable'));
+        setSuccess('');
         return;
       }
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       cart.push({ equipment: eq, quantity: qty, startDate: filters.startDate, endDate: filters.endDate });
       localStorage.setItem('cart', JSON.stringify(cart));
       setError('');
-      alert(t('catalog.added'));
+      setSuccess(t('catalog.added'));
     } catch (err) {
-      setError(err.message || 'Erreur');
+      setError(err.message || t('catalog.error'));
+      setSuccess('');
     }
   };
 
@@ -74,6 +78,7 @@ function Catalog() {
       <NavBar />
       <h1>{t('catalog.title')}</h1>
       <Alert message={error} />
+      <Alert type="success" message={success} />
       <div className="row g-2 mb-3">
         <div className="col-md">
           <input name="search" placeholder={t('catalog.search')} className="form-control" value={filters.search} onChange={handleChange} />

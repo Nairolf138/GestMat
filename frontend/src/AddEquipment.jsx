@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { api } from './api';
 import Alert from './Alert.jsx';
+import { useTranslation } from 'react-i18next';
 
 function AddEquipment({ onCreated }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '',
     type: '',
@@ -44,85 +46,85 @@ function AddEquipment({ onCreated }) {
       setError('');
       if (onCreated) onCreated();
     } catch (err) {
-      setError(err.message || 'Erreur lors de la création');
+      setError(err.message || t('equipments.add.error_create'));
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="mt-4" aria-labelledby="add-equip-title">
-      <h2 id="add-equip-title">Nouvel équipement</h2>
+      <h2 id="add-equip-title">{t('equipments.add.title')}</h2>
       <Alert message={error} />
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-name">Nom</label>
+        <label className="form-label" htmlFor="eq-name">{t('equipments.add.name')}</label>
         <input
           id="eq-name"
           name="name"
           className="form-control"
-          aria-label="Nom"
+          aria-label={t('equipments.add.name')}
           value={form.name}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-type">Type</label>
+        <label className="form-label" htmlFor="eq-type">{t('equipments.add.type')}</label>
         <select
           id="eq-type"
           name="type"
           className="form-select"
-          aria-label="Type"
+          aria-label={t('equipments.add.type')}
           value={form.type}
           onChange={handleChange}
         >
-          <option value="">--</option>
-          <option value="Son">Son</option>
-          <option value="Lumi\u00e8re">Lumi\u00e8re</option>
-          <option value="Plateau">Plateau</option>
-          <option value="Vid\u00e9o">Vid\u00e9o</option>
-          <option value="Autre">Autre</option>
+          <option value="">{t('common.choose')}</option>
+          <option value="Son">{t('equipments.add.types.sound')}</option>
+          <option value="Lumi\u00e8re">{t('equipments.add.types.light')}</option>
+          <option value="Plateau">{t('equipments.add.types.stage')}</option>
+          <option value="Vid\u00e9o">{t('equipments.add.types.video')}</option>
+          <option value="Autre">{t('equipments.add.types.other')}</option>
         </select>
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-total">Quantité totale</label>
+        <label className="form-label" htmlFor="eq-total">{t('equipments.add.total_quantity')}</label>
         <input
           id="eq-total"
           name="totalQty"
           type="number"
           className="form-control"
-          aria-label="Quantité totale"
+          aria-label={t('equipments.add.total_quantity')}
           value={form.totalQty}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-available">Quantité disponible</label>
+        <label className="form-label" htmlFor="eq-available">{t('equipments.add.available_quantity')}</label>
         <input
           id="eq-available"
           name="availableQty"
           type="number"
           className="form-control"
-          aria-label="Quantité disponible"
+          aria-label={t('equipments.add.available_quantity')}
           value={form.availableQty}
           onChange={handleChange}
         />
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-condition">État</label>
+        <label className="form-label" htmlFor="eq-condition">{t('equipments.add.condition')}</label>
         <select
           id="eq-condition"
           name="condition"
           className="form-select"
-          aria-label="État"
+          aria-label={t('equipments.add.condition')}
           value={form.condition}
           onChange={handleChange}
         >
-          <option value="">--</option>
-          <option value="Neuf">Neuf</option>
-          <option value="L\u00e9g\u00e8rement us\u00e9">Légèrement usé</option>
-          <option value="Us\u00e9">Usé</option>
-          <option value="Tr\u00e8s us\u00e9">Très usé</option>
+          <option value="">{t('common.choose')}</option>
+          <option value="Neuf">{t('equipments.add.conditions.new')}</option>
+          <option value="L\u00e9g\u00e8rement us\u00e9">{t('equipments.add.conditions.used_lightly')}</option>
+          <option value="Us\u00e9">{t('equipments.add.conditions.used')}</option>
+          <option value="Tr\u00e8s us\u00e9">{t('equipments.add.conditions.very_used')}</option>
         </select>
       </div>
-      <button type="submit" className="btn btn-primary mt-2">Ajouter</button>
+      <button type="submit" className="btn btn-primary mt-2">{t('equipments.add.submit')}</button>
     </form>
   );
 }

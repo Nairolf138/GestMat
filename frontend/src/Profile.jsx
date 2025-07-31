@@ -44,11 +44,11 @@ function Profile() {
       setForm({ ...form, ...u, password: '' });
       setSuccess(t('profile.success'));
       setError('');
-    } catch (err) {
-      setError(err.message || 'Erreur');
-      setSuccess('');
-    }
-  };
+      } catch (err) {
+        setError(err.message || t('common.error'));
+        setSuccess('');
+      }
+    };
 
   return (
     <div className="container">
