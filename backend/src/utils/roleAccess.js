@@ -3,10 +3,10 @@ const ALL_TYPES = ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'];
 const roleMap = {
   'Administrateur': ALL_TYPES,
   'Regisseur(se) Général': ALL_TYPES,
-  'Régisseur(se) Son': ['Son'],
+  'Régisseur(se) Son': ['Son', 'Vidéo', 'Autre'],
   'Régisseur(se) Lumière': ['Lumière', 'Vidéo', 'Autre'],
-  'Régisseur(se) Plateau': ['Plateau'],
-  'Autre': ['Autre'],
+  'Régisseur(se) Plateau': ['Plateau', 'Vidéo', 'Autre'],
+  'Autre': ALL_TYPES,
 };
 
 function canModify(role, type) {
