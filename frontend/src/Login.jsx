@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
+import { AuthContext } from './AuthContext.jsx';
 
 function Login() {
   const { t } = useTranslation();
@@ -11,6 +12,7 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const userRef = useRef(null);
+  const { setUser } = useContext(AuthContext);
 
   useEffect(() => {
     userRef.current?.focus();
@@ -23,10 +25,11 @@ function Login() {
       return;
     }
     try {
-      await api('/auth/login', {
+      const data = await api('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       });
+      setUser(data.user);
       navigate('/', { state: { message: t('login.success') } });
     } catch (err) {
       setError(err.message || t('login.failed'));
