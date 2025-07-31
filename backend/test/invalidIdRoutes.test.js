@@ -1,6 +1,6 @@
 const test = require('node:test');
 const request = require('supertest');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient } = require('mongodb');
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -17,7 +17,7 @@ function auth(role = 'Administrateur') {
 }
 
 async function createApp(route, path) {
-  const mongod = await MongoMemoryServer.create();
+  const mongod = await MongoMemoryReplSet.create();
   const uri = mongod.getUri();
   const client = new MongoClient(uri);
   await client.connect();

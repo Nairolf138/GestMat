@@ -1,14 +1,14 @@
 const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 process.env.JWT_SECRET = 'test';
 const authRoutes = require('../src/routes/auth');
 
 async function createApp() {
-  const mongod = await MongoMemoryServer.create();
+  const mongod = await MongoMemoryReplSet.create();
   const uri = mongod.getUri();
   const client = new MongoClient(uri);
   await client.connect();

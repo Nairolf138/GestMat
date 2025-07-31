@@ -1,10 +1,10 @@
 const { ObjectId } = require('mongodb');
 
 // Availability is computed dynamically from total quantity and overlapping loan requests.
-async function checkEquipmentAvailability(db, equipmentId, start, end, quantity) {
+async function checkEquipmentAvailability(db, equipmentId, start, end, quantity, session) {
   const eq = await db
     .collection('equipments')
-    .findOne({ _id: new ObjectId(equipmentId) });
+    .findOne({ _id: new ObjectId(equipmentId) }, { session });
   if (!eq) {
     return null;
   }
@@ -12,19 +12,22 @@ async function checkEquipmentAvailability(db, equipmentId, start, end, quantity)
   if (start && end) {
     const agg = await db
       .collection('loanrequests')
-      .aggregate([
-        {
-          $match: {
-            status: { $ne: 'refused' },
-            startDate: { $lte: end },
-            endDate: { $gte: start },
-            items: { $elemMatch: { equipment: eq._id } },
+      .aggregate(
+        [
+          {
+            $match: {
+              status: { $ne: 'refused' },
+              startDate: { $lte: end },
+              endDate: { $gte: start },
+              items: { $elemMatch: { equipment: eq._id } },
+            },
           },
-        },
-        { $unwind: '$items' },
-        { $match: { 'items.equipment': eq._id } },
-        { $group: { _id: null, qty: { $sum: '$items.quantity' } } },
-      ])
+          { $unwind: '$items' },
+          { $match: { 'items.equipment': eq._id } },
+          { $group: { _id: null, qty: { $sum: '$items.quantity' } } },
+        ],
+        { session }
+      )
       .toArray();
     reserved = agg[0]?.qty || 0;
   }
