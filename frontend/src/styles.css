@@ -1,7 +1,9 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 1rem;
-  background-color: #f8f9fa;
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 1rem;
+  background-color: #f4f6f9;
+  color: #212529;
 }
 
 .form {
@@ -14,13 +16,19 @@ body {
 
 .btn {
   margin-top: 0.5rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   margin-right: 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
 }
 
 
 /* override Bootstrap spacing */
 .navbar-brand {
   font-weight: bold;
+}
+
+.navbar {
+  background-color: #ffffff;
 }
