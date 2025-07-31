@@ -38,6 +38,15 @@ router.get('/', auth(), async (req, res) => {
       if (eq.structure) {
         eq.structure = await findStructureById(db, eq.structure);
       }
+      const avail = await checkEquipmentAvailability(
+        db,
+        eq._id,
+        new Date(),
+        new Date(),
+        1
+      );
+      eq.availability = `${avail?.availableQty ?? 0}/${eq.totalQty || 0}`;
+      delete eq.availableQty;
     })
   );
   res.json(equipments);

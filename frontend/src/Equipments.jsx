@@ -82,7 +82,7 @@ function Equipments() {
       <ul className="list-group mb-4">
         {items.map((e) => (
           <li key={e._id} className="list-group-item">
-            {e.name} ({e.location}) - {e.availableQty}/{e.totalQty}
+            {e.name} ({e.location}) - {e.availability}
           </li>
         ))}
       </ul>
