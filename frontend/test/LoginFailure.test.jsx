@@ -7,7 +7,7 @@ import '../src/i18n.js';
 describe('Login form validation', () => {
   it('shows error when missing credentials', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Login />
       </MemoryRouter>
     );

@@ -16,7 +16,7 @@ describe('Loans', () => {
       .mockResolvedValueOnce([]); // refresh loans
 
     const { container, getByText } = render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <GlobalContext.Provider value={{ roles: [], structures: [{ _id: 's1', name: 'S1' }] }}>
           <Loans />
         </GlobalContext.Provider>

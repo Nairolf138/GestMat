@@ -9,7 +9,7 @@ describe('NavBar navigation', () => {
   it('navigates to catalog when link is clicked', async () => {
     render(
       <AuthContext.Provider value={{ user: null, setUser: () => {} }}>
-        <MemoryRouter initialEntries={['/']}>
+        <MemoryRouter initialEntries={['/']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path='/' element={<NavBar />} />
             <Route path='/catalog' element={<h1>Catalogue page</h1>} />
