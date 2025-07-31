@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const client = require('prom-client');
 const { connectDB, closeDB } = require('./config/db');
 const { ApiError } = require('./utils/errors');
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ const corsOptions = process.env.CORS_ORIGIN
   : { origin: false };
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use(limiter);
 

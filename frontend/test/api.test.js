@@ -1,26 +1,24 @@
 import { it, expect, vi } from 'vitest';
 import { api } from '../src/api.js';
 
-const makeToken = (exp) => {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = btoa(JSON.stringify({ exp }));
-  return `${header}.${payload}.sig`;
-};
-
-it('adds Authorization header when token exists', async () => {
+it('uses JSON headers without Authorization', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
     ok: true,
-    json: () => Promise.resolve({})
+    json: () => Promise.resolve({}),
   }));
-  const token = makeToken(Math.floor(Date.now() / 1000) + 3600);
-  localStorage.setItem('token', token);
-  localStorage.setItem('tokenExp', String(Math.floor(Date.now() / 1000) + 3600));
   await api('/test');
   expect(fetch).toHaveBeenCalledWith(
     expect.stringContaining('/test'),
     expect.objectContaining({
-      headers: expect.objectContaining({ Authorization: `Bearer ${token}` })
-    })
+      headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
+    }),
   );
-  localStorage.clear();
+  expect(fetch).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({
+      headers: expect.not.objectContaining({ Authorization: expect.anything() }),
+    }),
+  );
+  vi.unstubAllGlobals();
 });
