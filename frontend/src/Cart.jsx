@@ -5,6 +5,23 @@ import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from './AuthContext.jsx';
 
+export function addToCart(newItem) {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const existing = cart.find(
+    (it) =>
+      it.equipment._id === newItem.equipment._id &&
+      it.startDate === newItem.startDate &&
+      it.endDate === newItem.endDate
+  );
+  if (existing) {
+    existing.quantity += newItem.quantity;
+  } else {
+    cart.push(newItem);
+  }
+  localStorage.setItem('cart', JSON.stringify(cart));
+  return cart;
+}
+
 function Cart() {
   const { t } = useTranslation();
   const [cart, setCart] = useState([]);
@@ -71,13 +88,24 @@ function Cart() {
         <Alert type="success" message={success} />
       <ul className="list-group mb-3">
         {cart.map((it, idx) => (
-          <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
+          <li
+            key={idx}
+            className="list-group-item d-flex justify-content-between align-items-center"
+          >
             <span>
-              {it.equipment.name} - {it.quantity}x ({it.startDate} → {it.endDate})
+              {it.equipment.name} ({it.startDate} → {it.endDate})
             </span>
-              <button className="btn btn-outline-danger btn-sm" onClick={() => removeItem(idx)}>
+            <div className="d-flex align-items-center">
+              <span className="badge bg-primary rounded-pill me-3">
+                {it.quantity}
+              </span>
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => removeItem(idx)}
+              >
                 {t('cart.remove')}
               </button>
+            </div>
           </li>
         ))}
       </ul>
