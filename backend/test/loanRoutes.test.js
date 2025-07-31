@@ -135,3 +135,22 @@ test('delete loan request unauthorized returns 403', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('unauthorized delete does not remove loan', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
+  await db.collection('users').insertOne({ _id: new ObjectId(userId), structure: struct1 });
+  const loanId = (
+    await db.collection('loanrequests').insertOne({ owner: struct2, borrower: struct2 })
+  ).insertedId;
+
+  await request(app).delete(`/api/loans/${loanId}`).set(auth()).expect(403);
+
+  const loan = await db.collection('loanrequests').findOne({ _id: loanId });
+  assert.ok(loan);
+
+  await client.close();
+  await mongod.stop();
+});

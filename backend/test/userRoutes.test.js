@@ -142,3 +142,23 @@ test('DELETE /api/users/:id respects authorization', async () => {
   await mongod.stop();
 });
 
+test('cannot change role via /api/users/me', async () => {
+  const { app, client, mongod, db } = await createApp();
+  const id = (
+    await db.collection('users').insertOne({ username: 'alice', password: 'pw', role: 'Autre' })
+  ).insertedId;
+
+  const res = await request(app)
+    .put('/api/users/me')
+    .set(auth(id.toString(), 'Autre'))
+    .send({ role: 'Administrateur' })
+    .expect(200);
+  assert.strictEqual(res.body.role, 'Autre');
+
+  const user = await db.collection('users').findOne({ _id: id });
+  assert.strictEqual(user.role, 'Autre');
+
+  await client.close();
+  await mongod.stop();
+});
+
