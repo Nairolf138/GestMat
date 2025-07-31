@@ -51,6 +51,17 @@ npm run create-admin -- <username> <password>
 The script connects to the configured MongoDB instance and inserts an
 `Administrateur` account.
 
+## Initial structures
+
+Insert one or more structures before registering the first user so they can
+select their structure during sign-up:
+
+```bash
+npm run create-structures -- <name1> [name2 ...]
+```
+
+Each provided name is inserted into the `structures` collection.
+
 ### MongoDB Atlas
 
 To connect the API to MongoDB Atlas instead of a local server:

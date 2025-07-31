@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "NODE_ENV=test node --test",
-    "create-admin": "node scripts/createAdmin.js"
+    "create-admin": "node scripts/createAdmin.js",
+    "create-structures": "node scripts/createStructures.js"
   },
   "keywords": [],
   "author": "",
