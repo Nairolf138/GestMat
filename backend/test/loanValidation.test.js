@@ -26,7 +26,7 @@ function auth() {
   return { Authorization: `Bearer ${token}` };
 }
 
-test('post validates ids and status', async () => {
+test('post validates ids, status and dates', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
@@ -60,11 +60,29 @@ test('post validates ids and status', async () => {
     .send({ ...base, status: 'wrong' })
     .expect(400);
 
+  await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send({ ...base, startDate: 'bad-date' })
+    .expect(400);
+
+  await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send({ ...base, endDate: 'bad-date' })
+    .expect(400);
+
+  await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send({ ...base, startDate: '2024-01-03', endDate: '2024-01-02' })
+    .expect(400);
+
   await client.close();
   await mongod.stop();
 });
 
-test('put validates status', async () => {
+test('put validates status and dates', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
@@ -85,6 +103,24 @@ test('put validates status', async () => {
     .set(auth())
     .send(payload)
     .expect(200);
+
+  await request(app)
+    .put(`/api/loans/${res.body._id}`)
+    .set(auth())
+    .send({ startDate: 'bad-date' })
+    .expect(400);
+
+  await request(app)
+    .put(`/api/loans/${res.body._id}`)
+    .set(auth())
+    .send({ endDate: 'bad-date' })
+    .expect(400);
+
+  await request(app)
+    .put(`/api/loans/${res.body._id}`)
+    .set(auth())
+    .send({ startDate: '2024-02-03', endDate: '2024-02-01' })
+    .expect(400);
 
   await request(app)
     .put(`/api/loans/${res.body._id}`)
