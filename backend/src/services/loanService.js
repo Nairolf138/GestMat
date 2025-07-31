@@ -7,6 +7,7 @@ const { ObjectId } = require('mongodb');
 const { ADMIN_ROLE } = require('../config/roles');
 const { forbidden, notFound, badRequest } = require('../utils/errors');
 const { checkEquipmentAvailability } = require('../utils/checkAvailability');
+const logger = require('../utils/logger');
 
 async function listLoans(db, user) {
   if (user.role === ADMIN_ROLE) {
@@ -67,7 +68,7 @@ async function createLoanRequest(db, data) {
           });
         }
       } catch (err) {
-        console.error('mail error', err);
+        logger.error('mail error %o', err);
       }
       return loan;
     } catch (err) {
@@ -148,7 +149,7 @@ async function updateLoanRequest(db, user, id, data) {
           });
         }
       } catch (err) {
-        console.error('mail error', err);
+        logger.error('mail error %o', err);
       }
     }
     session.endSession();

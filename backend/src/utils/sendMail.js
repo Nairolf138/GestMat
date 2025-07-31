@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const { SMTP_URL } = require('../config');
+const logger = require('./logger');
 
 let transporter;
 
@@ -10,7 +11,7 @@ function getTransporter() {
     } else {
       transporter = {
         sendMail: async (opts) => {
-          console.log('Email disabled. Would send:', opts);
+          logger.info('Email disabled. Would send: %o', opts);
         },
       };
     }
