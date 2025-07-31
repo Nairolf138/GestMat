@@ -28,106 +28,178 @@ async function createLoanRequest(db, data) {
   const start = data.startDate ? new Date(data.startDate) : null;
   const end = data.endDate ? new Date(data.endDate) : null;
   const items = data.items || [];
-
-  await Promise.all(
-    items.map(async (item) => {
-      const avail = await checkEquipmentAvailability(
-        db,
-        item.equipment,
-        start,
-        end,
-        item.quantity
-      );
-      if (!avail?.available) {
-        throw badRequest('Quantity not available');
-      }
-    })
-  );
-
-  const loan = await createLoan(db, { ...data, status: 'pending' });
-  try {
-    const recipients = await getLoanRecipients(db, loan.owner, loan.items || []);
-    if (recipients.length) {
-      await sendMail({
-        to: recipients.join(','),
-        subject: 'Nouvelle demande de prêt',
-        text: `Demande de prêt de ${loan.borrower?.name || ''} pour ${loan.owner?.name || ''}`,
-      });
-    }
-  } catch (err) {
-    console.error('mail error', err);
-  }
-  return loan;
-}
-
-async function updateLoanRequest(db, user, id, data) {
-  const loan = await db.collection('loanrequests').findOne({ _id: new ObjectId(id) });
-  if (!loan) throw notFound('Loan request not found');
-
-  const u = await findUserById(db, user.id);
-  if (user.role !== ADMIN_ROLE && u?.structure?.toString() !== loan.owner.toString()) {
-    throw forbidden('Access denied');
-  }
-
-  if (data.status === 'refused' && loan.status !== 'refused') {
-    // No inventory update needed as availability is calculated dynamically
-  }
-  if (data.status === 'accepted' && loan.status === 'refused') {
-    const start = loan.startDate;
-    const end = loan.endDate;
-    await Promise.all(
-      (loan.items || []).map(async (item) => {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const session = db.client.startSession();
+    try {
+      session.startTransaction();
+      for (const item of items) {
         const avail = await checkEquipmentAvailability(
           db,
           item.equipment,
           start,
           end,
-          item.quantity
+          item.quantity,
+          session
         );
         if (!avail?.available) {
           throw badRequest('Quantity not available');
         }
-      })
-    );
-  }
-  const updated = await updateLoan(db, id, data);
-  if (data.status) {
-    try {
-      const emails = await getStructureEmails(db, loan.borrower);
-      if (emails.length) {
-        await sendMail({
-          to: emails.join(','),
-          subject: `Demande ${data.status}`,
-          text: `La demande ${updated._id} est maintenant ${data.status}`,
-        });
+        await db
+          .collection('equipments')
+          .updateOne(
+            { _id: new ObjectId(item.equipment) },
+            { $currentDate: { updatedAt: true } },
+            { session }
+          );
       }
+
+      const loan = await createLoan(db, { ...data, status: 'pending' }, session);
+      await session.commitTransaction();
+      session.endSession();
+
+      try {
+        const recipients = await getLoanRecipients(db, loan.owner, loan.items || []);
+        if (recipients.length) {
+          await sendMail({
+            to: recipients.join(','),
+            subject: 'Nouvelle demande de prêt',
+            text: `Demande de prêt de ${loan.borrower?.name || ''} pour ${loan.owner?.name || ''}`,
+          });
+        }
+      } catch (err) {
+        console.error('mail error', err);
+      }
+      return loan;
     } catch (err) {
-      console.error('mail error', err);
+      await session.abortTransaction();
+      session.endSession();
+      if (err.code && attempt < 4) {
+        continue; // retry once on write conflict
+      }
+      if (err.code) {
+        throw badRequest('Quantity not available');
+      }
+      throw err;
     }
   }
-  return updated;
+}
+
+async function updateLoanRequest(db, user, id, data) {
+  const session = db.client.startSession();
+  session.startTransaction();
+  let updated;
+  try {
+    const loan = await db
+      .collection('loanrequests')
+      .findOne({ _id: new ObjectId(id) }, { session });
+    if (!loan) throw notFound('Loan request not found');
+
+    const u = await findUserById(db, user.id);
+    if (user.role !== ADMIN_ROLE && u?.structure?.toString() !== loan.owner.toString()) {
+      throw forbidden('Access denied');
+    }
+
+    if (data.status === 'refused' && loan.status !== 'refused') {
+      for (const item of loan.items || []) {
+        await db
+          .collection('equipments')
+          .updateOne(
+            { _id: item.equipment },
+            { $currentDate: { updatedAt: true } },
+            { session }
+          );
+      }
+    }
+    if (data.status !== 'refused' && loan.status === 'refused') {
+      const start = loan.startDate;
+      const end = loan.endDate;
+      for (const item of loan.items || []) {
+        const avail = await checkEquipmentAvailability(
+          db,
+          item.equipment,
+          start,
+          end,
+          item.quantity,
+          session
+        );
+        if (!avail?.available) {
+          throw badRequest('Quantity not available');
+        }
+        await db
+          .collection('equipments')
+          .updateOne(
+            { _id: item.equipment },
+            { $currentDate: { updatedAt: true } },
+            { session }
+          );
+      }
+    }
+    updated = await updateLoan(db, id, data, session);
+    await session.commitTransaction();
+
+    if (data.status) {
+      try {
+        const emails = await getStructureEmails(db, loan.borrower);
+        if (emails.length) {
+          await sendMail({
+            to: emails.join(','),
+            subject: `Demande ${data.status}`,
+            text: `La demande ${updated._id} est maintenant ${data.status}`,
+          });
+        }
+      } catch (err) {
+        console.error('mail error', err);
+      }
+    }
+    session.endSession();
+    return updated;
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
+  }
 }
 
 async function deleteLoanRequest(db, user, id) {
-  const loan = await db
-    .collection('loanrequests')
-    .findOne({ _id: new ObjectId(id) });
-  if (!loan) throw notFound('Loan request not found');
+  const session = db.client.startSession();
+  session.startTransaction();
+  try {
+    const loan = await db
+      .collection('loanrequests')
+      .findOne({ _id: new ObjectId(id) }, { session });
+    if (!loan) throw notFound('Loan request not found');
 
-  if (user.role !== ADMIN_ROLE) {
-    const u = await findUserById(db, user.id);
-    const structId = u?.structure?.toString();
-    if (
-      loan.owner?.toString() !== structId &&
-      loan.borrower?.toString() !== structId
-    ) {
-      throw forbidden('Access denied');
+    if (user.role !== ADMIN_ROLE) {
+      const u = await findUserById(db, user.id);
+      const structId = u?.structure?.toString();
+      if (
+        loan.owner?.toString() !== structId &&
+        loan.borrower?.toString() !== structId
+      ) {
+        throw forbidden('Access denied');
+      }
     }
-  }
 
-  const removed = await deleteLoan(db, id);
-  if (!removed) throw notFound('Loan request not found');
-  return { message: 'Loan request deleted' };
+    for (const item of loan.items || []) {
+      await db
+        .collection('equipments')
+        .updateOne(
+          { _id: item.equipment },
+          { $currentDate: { updatedAt: true } },
+          { session }
+        );
+    }
+
+    const removed = await deleteLoan(db, id, session);
+    if (!removed) throw notFound('Loan request not found');
+    await session.commitTransaction();
+    session.endSession();
+    return { message: 'Loan request deleted' };
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
+  }
 }
 
 module.exports = {

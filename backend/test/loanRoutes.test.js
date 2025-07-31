@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -13,7 +13,7 @@ mailer.sendMail = async () => {};
 const { checkEquipmentAvailability } = require('../src/utils/checkAvailability');
 
 async function createApp() {
-  const mongod = await MongoMemoryServer.create();
+  const mongod = await MongoMemoryReplSet.create();
   const uri = mongod.getUri();
   const client = new MongoClient(uri);
   await client.connect();

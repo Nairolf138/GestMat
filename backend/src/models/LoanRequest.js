@@ -1,14 +1,34 @@
 const { ObjectId } = require('mongodb');
 
-function _populate(db, loan) {
+function _populate(db, loan, session) {
   return Promise.all([
-    loan.borrower ? db.collection('structures').findOne({ _id: loan.borrower }).then(s => { loan.borrower = s; }) : null,
-    loan.owner ? db.collection('structures').findOne({ _id: loan.owner }).then(s => { loan.owner = s; }) : null,
-    loan.items ? Promise.all(loan.items.map(async item => {
-      if (item.equipment) {
-        item.equipment = await db.collection('equipments').findOne({ _id: item.equipment });
-      }
-    })) : null
+    loan.borrower
+      ? db
+          .collection('structures')
+          .findOne({ _id: loan.borrower }, { session })
+          .then((s) => {
+            loan.borrower = s;
+          })
+      : null,
+    loan.owner
+      ? db
+          .collection('structures')
+          .findOne({ _id: loan.owner }, { session })
+          .then((s) => {
+            loan.owner = s;
+          })
+      : null,
+    loan.items
+      ? Promise.all(
+          loan.items.map(async (item) => {
+            if (item.equipment) {
+              item.equipment = await db
+                .collection('equipments')
+                .findOne({ _id: item.equipment }, { session });
+            }
+          })
+        )
+      : null,
   ]).then(() => loan);
 }
 
@@ -18,7 +38,7 @@ async function findLoans(db) {
   return loans;
 }
 
-async function createLoan(db, data) {
+async function createLoan(db, data, session) {
   if (data.borrower) data.borrower = new ObjectId(data.borrower);
   if (data.owner) data.owner = new ObjectId(data.owner);
   if (data.items) {
@@ -26,12 +46,14 @@ async function createLoan(db, data) {
   }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
-  const result = await db.collection('loanrequests').insertOne(data);
+  const result = await db
+    .collection('loanrequests')
+    .insertOne(data, { session });
   const loan = { _id: result.insertedId, ...data };
-  return _populate(db, loan);
+  return _populate(db, loan, session);
 }
 
-async function updateLoan(db, id, data) {
+async function updateLoan(db, id, data, session) {
   if (data.borrower) data.borrower = new ObjectId(data.borrower);
   if (data.owner) data.owner = new ObjectId(data.owner);
   if (data.items) {
@@ -42,14 +64,16 @@ async function updateLoan(db, id, data) {
   const res = await db.collection('loanrequests').findOneAndUpdate(
     { _id: new ObjectId(id) },
     { $set: data },
-    { returnDocument: 'after' }
+    { returnDocument: 'after', session }
   );
   if (!res.value) return null;
-  return _populate(db, res.value);
+  return _populate(db, res.value, session);
 }
 
-async function deleteLoan(db, id) {
-  const res = await db.collection('loanrequests').deleteOne({ _id: new ObjectId(id) });
+async function deleteLoan(db, id, session) {
+  const res = await db
+    .collection('loanrequests')
+    .deleteOne({ _id: new ObjectId(id) }, { session });
   return res.deletedCount > 0;
 }
 
