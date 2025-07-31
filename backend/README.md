@@ -13,6 +13,20 @@ npm start
 
 Environment variables are defined in `.env.example`.
 
+## Environment variables
+
+The API reads its configuration from the following variables:
+
+| Variable | Description |
+| --- | --- |
+| `MONGODB_URI` | MongoDB connection string. Defaults to `mongodb://localhost/gestmat`. |
+| `JWT_SECRET` | **Required.** Secret key used to sign JSON Web Tokens. |
+| `PORT` | Port for the HTTP server. Defaults to `5000`. |
+| `CORS_ORIGIN` | Comma-separated list of allowed origins for CORS. If unset, cross-origin requests are denied. |
+| `API_URL` | Public base URL of the API. Defaults to `http://localhost:<PORT>/api`. |
+| `SMTP_URL` | SMTP connection string to enable email notifications. |
+| `NOTIFY_EMAIL` | Optional recipient address for notification emails. |
+
 If `CORS_ORIGIN` is left unset, the API denies cross-origin requests.
 
 JWT tokens returned by the `/api/auth/login` endpoint now include an expiry
