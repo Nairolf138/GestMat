@@ -12,6 +12,7 @@ import Loans from "./Loans";
 import Profile from "./Profile";
 import Catalog from "./Catalog";
 import Cart from "./Cart";
+import PrivateRoute from "./PrivateRoute";
 
 function App() {
   return (
@@ -20,11 +21,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Home />} />
-        <Route path="/inventory" element={<Equipments />} />
+        <Route path="/inventory" element={<PrivateRoute><Equipments /></PrivateRoute>} />
         <Route path="/catalog" element={<Catalog />} />
-        <Route path="/loans" element={<Loans />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/loans" element={<PrivateRoute><Loans /></PrivateRoute>} />
+        <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
+        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
       </Routes>
     </Router>
   );

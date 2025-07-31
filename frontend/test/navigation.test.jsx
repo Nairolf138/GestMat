@@ -4,19 +4,14 @@ import App from '../src/App.jsx';
 import NavBar from '../src/NavBar.jsx';
 import { MemoryRouter } from 'react-router-dom';
 import '../src/i18n.js';
-vi.mock('../src/api.js');
-import * as api from '../src/api.js';
 
 describe('Navigation', () => {
-  it('navigates to profile page', async () => {
-    api.api.mockResolvedValueOnce({ structure: 's1', firstName: 'Bob' });
-    api.api.mockResolvedValueOnce([]);
-    api.api.mockResolvedValueOnce({});
+  it('redirects to login when navigating to profile without auth', async () => {
     window.history.pushState({}, '', '/');
     render(<App />);
     expect(screen.getByRole('heading', { name: 'Accueil' })).toBeTruthy();
     fireEvent.click(screen.getAllByRole('link', { name: 'Profil' })[0]);
-    expect(await screen.findByRole('heading', { name: 'Profil' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeTruthy();
   });
 
   it('shows login and register links', () => {
