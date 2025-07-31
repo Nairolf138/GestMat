@@ -1,14 +1,10 @@
 const { body } = require('express-validator');
-const ROLES = require('../config/roles');
 
 const registerValidator = [
   body('username').notEmpty().withMessage('Username is required'),
   body('password').notEmpty().withMessage('Password is required'),
   body('email').optional().isEmail().withMessage('Invalid email'),
-  body('role')
-    .notEmpty().withMessage('Role is required')
-    .bail()
-    .isIn(ROLES).withMessage('Invalid role'),
+  body('role').optional().isString().withMessage('Invalid role'),
   body('structure').optional().isMongoId().withMessage('Invalid structure'),
 ];
 
