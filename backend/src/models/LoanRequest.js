@@ -14,9 +14,7 @@ function _populate(db, loan) {
 
 async function findLoans(db) {
   const loans = await db.collection('loanrequests').find().toArray();
-  for (const loan of loans) {
-    await _populate(db, loan);
-  }
+  await Promise.all(loans.map((loan) => _populate(db, loan)));
   return loans;
 }
 
