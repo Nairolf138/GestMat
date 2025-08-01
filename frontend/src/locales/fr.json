@@ -86,7 +86,12 @@
     "send": "Envoyer",
     "accept": "Accepter",
     "refuse": "Refuser",
-    "error_create": "Erreur lors de la création"
+    "error_create": "Erreur lors de la création",
+    "as_owner": "Pr\u00eats",
+    "as_borrower": "Emprunts",
+    "finished": "Terminés",
+    "ongoing": "En cours",
+    "upcoming": "À venir"
   },
   "profile": {
     "title": "Profil",
