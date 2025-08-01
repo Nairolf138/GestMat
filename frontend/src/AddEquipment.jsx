@@ -9,7 +9,6 @@ function AddEquipment({ onCreated }) {
     name: '',
     type: '',
     totalQty: 0,
-    availableQty: 0,
     condition: '',
   });
   const [error, setError] = useState('');
@@ -17,7 +16,7 @@ function AddEquipment({ onCreated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const parsed = ['totalQty', 'availableQty'].includes(name)
+    const parsed = name === 'totalQty'
       ? value === ''
         ? ''
         : Number(value)
@@ -32,7 +31,6 @@ function AddEquipment({ onCreated }) {
     if (!form.name.trim()) fieldErrors.name = t('common.required');
     if (!form.type) fieldErrors.type = t('common.required');
     if (!form.totalQty) fieldErrors.totalQty = t('common.required');
-    if (!form.availableQty) fieldErrors.availableQty = t('common.required');
     if (!form.condition) fieldErrors.condition = t('common.required');
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
@@ -41,7 +39,6 @@ function AddEquipment({ onCreated }) {
       const payload = {
         ...form,
         totalQty: Number(form.totalQty) || 0,
-        availableQty: Number(form.availableQty) || 0,
       };
       await api('/equipments', {
         method: 'POST',
@@ -51,7 +48,6 @@ function AddEquipment({ onCreated }) {
         name: '',
         type: '',
         totalQty: 0,
-        availableQty: 0,
         condition: '',
       });
       setError('');
@@ -145,32 +141,6 @@ function AddEquipment({ onCreated }) {
             aria-live="polite"
           >
             {errors.totalQty}
-          </div>
-        )}
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="eq-available">{t('equipments.add.available_quantity')}</label>
-        <input
-          id="eq-available"
-          name="availableQty"
-          type="number"
-          className={`form-control${errors.availableQty ? ' is-invalid' : ''}`}
-          aria-label={t('equipments.add.available_quantity')}
-          value={form.availableQty}
-          onChange={handleChange}
-          required
-          min="0"
-          aria-invalid={errors.availableQty ? 'true' : undefined}
-          aria-describedby={errors.availableQty ? 'eq-available-error' : undefined}
-        />
-        {errors.availableQty && (
-          <div
-            className="invalid-feedback"
-            id="eq-available-error"
-            role="alert"
-            aria-live="polite"
-          >
-            {errors.availableQty}
           </div>
         )}
       </div>

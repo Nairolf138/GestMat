@@ -37,7 +37,6 @@
       "name": "Name",
       "type": "Type",
       "total_quantity": "Total quantity",
-      "available_quantity": "Available quantity",
       "condition": "Condition",
       "submit": "Add",
       "error_create": "Error during creation",
