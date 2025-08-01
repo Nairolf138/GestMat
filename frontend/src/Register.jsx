@@ -17,7 +17,6 @@ function Register() {
   const [role, setRole] = useState('');
   const [structure, setStructure] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
@@ -46,7 +45,6 @@ function Register() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      setSuccess(t('register.success'));
       setError('');
       setUsername('');
       setFirstName('');
@@ -57,6 +55,7 @@ function Register() {
       setStructure('');
       userRef.current?.focus();
       setErrors({});
+      navigate('/login', { state: { message: t('register.success') } });
     } catch (err) {
       if (err.fieldErrors) {
         setErrors(err.fieldErrors);
@@ -75,7 +74,6 @@ function Register() {
     <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="register-title">
       <h1 id="register-title">{t('register.title')}</h1>
       <Alert message={error} />
-      <Alert type="success" message={success} />
       <div className="mb-3">
         <label className="form-label" htmlFor="reg-username">{t('login.username')}</label>
         <input

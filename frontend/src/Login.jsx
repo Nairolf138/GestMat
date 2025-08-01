@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ function Login() {
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const location = useLocation();
   const userRef = useRef(null);
   const { setUser } = useContext(AuthContext);
 
@@ -45,6 +46,7 @@ function Login() {
   return (
     <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="login-title">
       <h1 id="login-title">{t('login.title')}</h1>
+      <Alert type="success" message={location.state?.message} />
       <Alert message={error} />
       <div className="mb-3">
         <label className="form-label" htmlFor="username">{t('login.username')}</label>
