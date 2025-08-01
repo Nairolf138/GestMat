@@ -8,8 +8,8 @@ export function GlobalProvider({ children }) {
   const [structures, setStructures] = useState([]);
 
   useEffect(() => {
-    api('/roles').then(setRoles).catch(() => setRoles([]));
-    api('/structures').then(setStructures).catch(() => setStructures([]));
+    api('/roles', {}, false).then(setRoles).catch(() => setRoles([]));
+    api('/structures', {}, false).then(setStructures).catch(() => setStructures([]));
   }, []);
 
   return (

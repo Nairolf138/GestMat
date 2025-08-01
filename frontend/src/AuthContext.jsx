@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    api('/users/me')
+    api('/users/me', {}, false)
       .then(setUser)
       .catch(() => setUser(null));
   }, []);
