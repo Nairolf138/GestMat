@@ -179,7 +179,7 @@ function Register() {
           aria-describedby={errors.role ? 'role-error' : undefined}
         >
           <option value="">{t('common.choose')}</option>
-          {roles.map((r) => (
+          {(Array.isArray(roles) ? roles : []).map((r) => (
             <option key={r} value={r}>
               {r}
             </option>
@@ -211,7 +211,7 @@ function Register() {
           aria-describedby={errors.structure ? 'structure-error' : undefined}
         >
           <option value="">{t('common.choose')}</option>
-          {structures.map((s) => (
+          {(Array.isArray(structures) ? structures : []).map((s) => (
             <option key={s._id || s} value={s._id || s.name || s}>
               {s.name || s}
             </option>
