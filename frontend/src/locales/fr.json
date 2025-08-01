@@ -60,6 +60,7 @@
     "greeting": "Bonjour {{name}} !",
     "recent_requests": "Demandes r\u00e9centes",
     "no_requests": "Aucune demande",
+    "current_loans": "Emprunts en cours",
     "incoming_loans": "Emprunts \u00e0 venir",
     "no_loans": "Aucun emprunt",
     "shortcuts": "Raccourcis"
