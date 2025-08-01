@@ -30,7 +30,7 @@ function auth() {
 
 test('availableQty cannot exceed totalQty on create and update', async () => {
   const { app, client, mongod } = await createApp();
-  const payload = { name: 'Mic', type: 'Son', totalQty: 2, availableQty: 3 };
+  const payload = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 2, availableQty: 3 };
   const res1 = await request(app)
     .post('/api/equipments')
     .set(auth())
@@ -43,7 +43,7 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
   const valid = await request(app)
     .post('/api/equipments')
     .set(auth())
-    .send({ name: 'Mic', type: 'Son', totalQty: 2, availableQty: 1 })
+    .send({ name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 2, availableQty: 1 })
     .expect(200);
 
   await request(app)
