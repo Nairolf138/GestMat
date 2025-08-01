@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL ?? '/api';
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
 
 function getCsrfToken() {
   const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
