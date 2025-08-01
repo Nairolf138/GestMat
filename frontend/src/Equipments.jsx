@@ -17,6 +17,7 @@ function Equipments() {
   const [type, setType] = useState('');
   const [location, setLocation] = useState('');
   const [userStructure, setUserStructure] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   const fetchItems = () => {
     const params = new URLSearchParams({
@@ -86,7 +87,21 @@ function Equipments() {
           </li>
         ))}
       </ul>
-      <AddEquipment onCreated={fetchItems} />
+      <button
+        onClick={() => setShowForm(!showForm)}
+        className="btn btn-secondary mb-3"
+        type="button"
+      >
+        {t('equipments.add.title')}
+      </button>
+      {showForm && (
+        <AddEquipment
+          onCreated={() => {
+            fetchItems();
+            setShowForm(false);
+          }}
+        />
+      )}
     </div>
   );
 }
