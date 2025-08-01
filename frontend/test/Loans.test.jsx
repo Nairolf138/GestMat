@@ -3,56 +3,43 @@ import { render, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Loans from '../src/Loans.jsx';
 import '../src/i18n.js';
-import { GlobalContext } from '../src/GlobalContext.jsx';
+import { AuthContext } from '../src/AuthContext.jsx';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
 
 describe('Loans', () => {
-  it('submits new loan with selected IDs', async () => {
+  it('updates loan status', async () => {
     api.api
-      .mockResolvedValueOnce([]) // initial /loans
-      .mockResolvedValueOnce([{ _id: 'eq1', name: 'Eq1' }]) // equipments
-      .mockResolvedValueOnce({}) // post
-      .mockResolvedValueOnce([]); // refresh loans
+      .mockResolvedValueOnce([
+        {
+          _id: 'l1',
+          owner: { _id: 's1', name: 'S1' },
+          borrower: { _id: 's2', name: 'S2' },
+          items: [{ equipment: { name: 'Eq1' }, quantity: 1 }],
+          status: 'pending',
+        },
+      ])
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce([]);
 
-    const { container, getByText } = render(
+    const { getByText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <GlobalContext.Provider value={{ roles: [], structures: [{ _id: 's1', name: 'S1' }] }}>
+        <AuthContext.Provider value={{ user: { structure: { _id: 's1' } } }}>
           <Loans />
-        </GlobalContext.Provider>
+        </AuthContext.Provider>
       </MemoryRouter>
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
-    fireEvent.change(container.querySelector('select[name="owner"]'), {
-      target: { value: 's1' },
-    });
-    fireEvent.change(container.querySelector('select[name="equipment"]'), {
-      target: { value: 'eq1' },
-    });
-    fireEvent.change(container.querySelector('input[name="quantity"]'), {
-      target: { value: '2' },
-    });
-    fireEvent.change(container.querySelector('input[name="startDate"]'), {
-      target: { value: '2024-01-01' },
-    });
-    fireEvent.change(container.querySelector('input[name="endDate"]'), {
-      target: { value: '2024-01-03' },
-    });
-    fireEvent.submit(getByText('Envoyer').closest('form'));
-    await waitFor(() => expect(api.api).toHaveBeenCalledTimes(4));
-    expect(api.api).toHaveBeenNthCalledWith(
-      3,
-      '/loans',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          owner: 's1',
-          items: [{ equipment: 'eq1', quantity: 2 }],
-          startDate: '2024-01-01',
-          endDate: '2024-01-03',
-        }),
-      })
+    fireEvent.click(getByText('Accepter'));
+    await waitFor(() =>
+      expect(api.api).toHaveBeenCalledWith(
+        '/loans/l1',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ status: 'accepted' }),
+        })
+      )
     );
   });
 });
