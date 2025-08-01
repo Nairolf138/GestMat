@@ -22,7 +22,7 @@ const rolesRoutes = require('./routes/roles');
 const app = express();
 app.use(helmet());
 const corsOptions = CORS_ORIGIN.length
-  ? { origin: CORS_ORIGIN }
+  ? { origin: CORS_ORIGIN, credentials: true }
   : { origin: false };
 app.use(cors(corsOptions));
 app.use(express.json());
