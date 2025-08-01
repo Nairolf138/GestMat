@@ -54,10 +54,25 @@ export async function api(path, options = {}, retry = true) {
       }
     }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || 'API error');
+    if (!res.ok) {
+      const error = new Error(data.message || 'API error');
+      if (data.errors) {
+        const fieldErrors = Array.isArray(data.errors)
+          ? data.errors.reduce((acc, curr) => {
+              if (curr.param) acc[curr.param] = curr.msg;
+              return acc;
+            }, {})
+          : data.errors;
+        error.fieldErrors = fieldErrors;
+      }
+      throw error;
+    }
     return data;
   } catch (err) {
-    throw new Error(err.message || 'Network error');
+    if (!(err instanceof Error)) {
+      throw new Error('Network error');
+    }
+    throw err;
   }
 }
 

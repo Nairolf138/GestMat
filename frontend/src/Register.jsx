@@ -56,8 +56,11 @@ function Register() {
       setRole('');
       setStructure('');
       userRef.current?.focus();
+      setErrors({});
     } catch (err) {
-      if (err.message === 'Username already exists') {
+      if (err.fieldErrors) {
+        setErrors(err.fieldErrors);
+      } else if (err.message === 'Username already exists') {
         setErrors({ username: t('register.user_exists') });
       } else if (err.message.includes('12 bytes') || err.message.includes('24 hex')) {
         setErrors({ structure: t('register.invalid_structure') });

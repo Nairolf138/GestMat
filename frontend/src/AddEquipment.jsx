@@ -55,8 +55,10 @@ function AddEquipment({ onCreated }) {
         condition: '',
       });
       setError('');
+      setErrors({});
       if (onCreated) onCreated();
     } catch (err) {
+      setErrors(err.fieldErrors || {});
       setError(err.message || t('equipments.add.error_create'));
     }
   };

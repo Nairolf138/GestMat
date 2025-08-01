@@ -21,6 +21,7 @@ function Profile() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (user) {
@@ -34,6 +35,7 @@ function Profile() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+    if (errors[name]) setErrors({ ...errors, [name]: undefined });
   };
 
   const handleSubmit = async (e) => {
@@ -49,7 +51,9 @@ function Profile() {
       setUser(u);
       setSuccess(t('profile.success'));
       setError('');
+      setErrors({});
     } catch (err) {
+      setErrors(err.fieldErrors || {});
       setError(err.message || t('common.error'));
       setSuccess('');
     }
@@ -75,40 +79,88 @@ function Profile() {
           <label className="form-label">{t('profile.first_name')}</label>
           <input
             name="firstName"
-            className="form-control"
+            className={`form-control${errors.firstName ? ' is-invalid' : ''}`}
             value={form.firstName}
             onChange={handleChange}
+            aria-invalid={errors.firstName ? 'true' : undefined}
+            aria-describedby={errors.firstName ? 'firstName-error' : undefined}
           />
+          {errors.firstName && (
+            <div
+              className="invalid-feedback"
+              id="firstName-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.firstName}
+            </div>
+          )}
         </div>
         <div className="mb-3">
           <label className="form-label">{t('profile.last_name')}</label>
           <input
             name="lastName"
-            className="form-control"
+            className={`form-control${errors.lastName ? ' is-invalid' : ''}`}
             value={form.lastName}
             onChange={handleChange}
+            aria-invalid={errors.lastName ? 'true' : undefined}
+            aria-describedby={errors.lastName ? 'lastName-error' : undefined}
           />
+          {errors.lastName && (
+            <div
+              className="invalid-feedback"
+              id="lastName-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.lastName}
+            </div>
+          )}
         </div>
         <div className="mb-3">
           <label className="form-label">{t('profile.email')}</label>
           <input
             type="email"
             name="email"
-            className="form-control"
+            className={`form-control${errors.email ? ' is-invalid' : ''}`}
             value={form.email}
             onChange={handleChange}
+            aria-invalid={errors.email ? 'true' : undefined}
+            aria-describedby={errors.email ? 'email-error' : undefined}
           />
+          {errors.email && (
+            <div
+              className="invalid-feedback"
+              id="email-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.email}
+            </div>
+          )}
         </div>
         <div className="mb-3">
           <label className="form-label">{t('profile.password')}</label>
           <input
             type="password"
             name="password"
-            className="form-control"
+            className={`form-control${errors.password ? ' is-invalid' : ''}`}
             value={form.password}
             onChange={handleChange}
             placeholder={t('profile.password_placeholder')}
+            aria-invalid={errors.password ? 'true' : undefined}
+            aria-describedby={errors.password ? 'password-error' : undefined}
           />
+          {errors.password && (
+            <div
+              className="invalid-feedback"
+              id="password-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.password}
+            </div>
+          )}
         </div>
         <div className="mb-3">
           <label className="form-label">{t('profile.role')}</label>
