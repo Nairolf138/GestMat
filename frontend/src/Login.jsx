@@ -10,6 +10,7 @@ function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const userRef = useRef(null);
   const { setUser } = useContext(AuthContext);
@@ -20,7 +21,11 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !password) {
+    const fieldErrors = {};
+    if (!username) fieldErrors.username = t('common.required');
+    if (!password) fieldErrors.password = t('common.required');
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) {
       setError(t('login.missing_credentials'));
       return;
     }
@@ -32,6 +37,7 @@ function Login() {
       setUser(data.user);
       navigate('/', { state: { message: t('login.success') } });
     } catch (err) {
+      setErrors(err.fieldErrors || {});
       setError(err.message || t('login.failed'));
     }
   };
@@ -44,23 +50,53 @@ function Login() {
         <label className="form-label" htmlFor="username">{t('login.username')}</label>
         <input
           id="username"
-          className="form-control"
+          className={`form-control${errors.username ? ' is-invalid' : ''}`}
           aria-label={t('login.username')}
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            if (errors.username) setErrors({ ...errors, username: undefined });
+          }}
           ref={userRef}
+          aria-invalid={errors.username ? 'true' : undefined}
+          aria-describedby={errors.username ? 'username-error' : undefined}
         />
+        {errors.username && (
+          <div
+            className="invalid-feedback"
+            id="username-error"
+            role="alert"
+            aria-live="polite"
+          >
+            {errors.username}
+          </div>
+        )}
       </div>
       <div className="mb-3">
         <label className="form-label" htmlFor="password">{t('login.password')}</label>
         <input
           id="password"
           type="password"
-          className="form-control"
+          className={`form-control${errors.password ? ' is-invalid' : ''}`}
           aria-label={t('login.password')}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (errors.password) setErrors({ ...errors, password: undefined });
+          }}
+          aria-invalid={errors.password ? 'true' : undefined}
+          aria-describedby={errors.password ? 'password-error' : undefined}
         />
+        {errors.password && (
+          <div
+            className="invalid-feedback"
+            id="password-error"
+            role="alert"
+            aria-live="polite"
+          >
+            {errors.password}
+          </div>
+        )}
       </div>
       <button type="submit" className="btn btn-primary">{t('login.submit')}</button>
       <p className="mt-3">
