@@ -31,7 +31,7 @@ function auth() {
 
 test('create, list, update and delete equipments', async () => {
   const { app, client, mongod } = await createApp();
-  const newEq = { name: 'Mic', type: 'Son', totalQty: 2, availableQty: 1 };
+  const newEq = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 2, availableQty: 1 };
   const res = await request(app)
     .post('/api/equipments')
     .set(auth())
@@ -83,7 +83,7 @@ test('deny updates and deletes when structures differ', async () => {
     expiresIn: '1h',
   });
 
-  const newEq = { name: 'Mic', type: 'Son', totalQty: 1, availableQty: 1 };
+  const newEq = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1, availableQty: 1 };
   const created = await request(app)
     .post('/api/equipments')
     .set({ Authorization: `Bearer ${token1}` })
@@ -157,7 +157,7 @@ test('reject update on equipment from another structure', async () => {
   const created = await request(app)
     .post('/api/equipments')
     .set({ Authorization: `Bearer ${token1}` })
-    .send({ name: 'Mic', type: 'Son', totalQty: 1, availableQty: 1 })
+    .send({ name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1, availableQty: 1 })
     .expect(200);
   const eqId = created.body._id;
 

@@ -34,7 +34,7 @@ test('concurrent equipment creation enforces unique name', async () => {
   const db = client.db();
   await db.collection('equipments').createIndex({ name: 1 }, { unique: true });
 
-  const payload = { name: 'Mic', type: 'Son', totalQty: 1 };
+  const payload = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1 };
   const results = await Promise.allSettled([
     request(app).post('/api/equipments').set(auth()).send(payload),
     request(app).post('/api/equipments').set(auth()).send(payload),
