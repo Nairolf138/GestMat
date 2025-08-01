@@ -60,6 +60,7 @@
     "greeting": "Hello {{name}} !",
     "recent_requests": "Recent requests",
     "no_requests": "No request",
+    "current_loans": "Current loans",
     "incoming_loans": "Upcoming loans",
     "no_loans": "No loan",
     "shortcuts": "Shortcuts"

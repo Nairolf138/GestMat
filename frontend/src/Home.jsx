@@ -25,14 +25,20 @@ function Home() {
 
   const pending = loans.filter((l) => l.status === "pending");
   const now = new Date();
-  const incoming = loans.filter((l) => {
+
+  const currentLoans = loans.filter((l) => {
     if (l.borrower?._id !== (user?.structure?._id || user?.structure))
       return false;
     const start = l.startDate ? new Date(l.startDate) : null;
     const end = l.endDate ? new Date(l.endDate) : null;
-    return (
-      (start && start >= now) || (start && end && start <= now && end >= now)
-    );
+    return start && end && start <= now && end >= now;
+  });
+
+  const upcomingLoans = loans.filter((l) => {
+    if (l.borrower?._id !== (user?.structure?._id || user?.structure))
+      return false;
+    const start = l.startDate ? new Date(l.startDate) : null;
+    return start && start > now;
   });
 
   return (
@@ -51,15 +57,29 @@ function Home() {
         ))}
         {!pending.length && <li className="list-group-item">{t('home.no_requests')}</li>}
       </ul>
-      <h2>{t('home.incoming_loans')}</h2>
+      <h2>{t('home.current_loans')}</h2>
       <ul className="list-group mb-3">
-        {incoming.slice(0, 5).map((l) => (
+        {currentLoans.slice(0, 5).map((l) => (
           <li key={l._id} className="list-group-item">
             {l.owner?.name} ({l.startDate?.slice(0, 10)} →{" "}
             {l.endDate?.slice(0, 10)})
           </li>
         ))}
-        {!incoming.length && <li className="list-group-item">{t('home.no_loans')}</li>}
+        {!currentLoans.length && (
+          <li className="list-group-item">{t('home.no_loans')}</li>
+        )}
+      </ul>
+      <h2>{t('home.incoming_loans')}</h2>
+      <ul className="list-group mb-3">
+        {upcomingLoans.slice(0, 5).map((l) => (
+          <li key={l._id} className="list-group-item">
+            {l.owner?.name} ({l.startDate?.slice(0, 10)} →{" "}
+            {l.endDate?.slice(0, 10)})
+          </li>
+        ))}
+        {!upcomingLoans.length && (
+          <li className="list-group-item">{t('home.no_loans')}</li>
+        )}
       </ul>
       <h2>{t('home.shortcuts')}</h2>
       <div className="d-flex flex-wrap gap-2 mb-4">
