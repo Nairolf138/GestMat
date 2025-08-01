@@ -1,11 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, fireEvent, waitFor, screen } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Register from '../src/Register.jsx';
+import Login from '../src/Login.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
 import { GlobalContext } from '../src/GlobalContext.jsx';
+import { AuthContext } from '../src/AuthContext.jsx';
 
 describe('Register', () => {
   it('marks username invalid on server error', async () => {
@@ -23,5 +25,34 @@ describe('Register', () => {
     fireEvent.submit(getByText("S'inscrire").closest('form'));
     await waitFor(() => expect(api.api).toHaveBeenCalled());
     expect(container.querySelector('input[name="username"]').className).toMatch('is-invalid');
+  });
+
+  it('redirects to login on successful registration', async () => {
+    api.api.mockReset();
+    api.api.mockResolvedValueOnce({});
+    render(
+      <MemoryRouter initialEntries={['/register']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <GlobalContext.Provider value={{ roles: ['Administrateur'], structures: [] }}>
+          <Routes>
+            <Route path='/register' element={<Register />} />
+            <Route
+              path='/login'
+              element={
+                <AuthContext.Provider value={{ setUser: () => {} }}>
+                  <Login />
+                </AuthContext.Provider>
+              }
+            />
+          </Routes>
+        </GlobalContext.Provider>
+      </MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText('Utilisateur'), { target: { value: 'bob' } });
+    fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'pw' } });
+    fireEvent.change(screen.getByLabelText('Rôle'), { target: { value: 'Administrateur' } });
+    fireEvent.submit(screen.getByRole('button', { name: "S'inscrire" }).closest('form'));
+    await waitFor(() => expect(api.api).toHaveBeenCalled());
+    expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeTruthy();
+    expect(await screen.findByText('Inscription réussie')).toBeTruthy();
   });
 });
