@@ -25,7 +25,8 @@ function Profile() {
 
   useEffect(() => {
     if (user) {
-      setForm((f) => ({ ...f, ...user, password: '' }));
+      const structureId = user.structure?._id || user.structure || '';
+      setForm((f) => ({ ...f, ...user, structure: structureId, password: '' }));
       setError('');
     } else {
       setError(t('profile.load_error'));

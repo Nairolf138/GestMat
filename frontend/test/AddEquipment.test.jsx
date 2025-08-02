@@ -6,7 +6,7 @@ vi.mock('../src/api.js');
 import * as api from '../src/api.js';
 
 describe('AddEquipment', () => {
-  it('submits form data', async () => {
+  it('submits form data with availableQty derived from totalQty', async () => {
     api.api.mockResolvedValue({});
     const { container, getByText } = render(<AddEquipment />);
     fireEvent.change(container.querySelector('input[name="name"]'), { target: { value: 'Lamp' } });
@@ -15,5 +15,7 @@ describe('AddEquipment', () => {
     fireEvent.change(container.querySelector('input[name="totalQty"]'), { target: { value: '2' } });
     fireEvent.submit(getByText('Ajouter').closest('form'));
     await waitFor(() => expect(api.api).toHaveBeenCalled());
+    const payload = JSON.parse(api.api.mock.calls[0][1].body);
+    expect(payload.availableQty).toBe(2);
   });
 });
