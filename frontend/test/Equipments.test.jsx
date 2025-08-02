@@ -5,6 +5,7 @@ import {
   fireEvent,
   waitFor,
   cleanup,
+  within,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Equipments from '../src/Equipments.jsx';
@@ -40,7 +41,37 @@ describe('Equipments', () => {
     ).toBeTruthy();
     expect(screen.getByText('Eq1 (Loc) - Available')).toBeTruthy();
 
+    // ensure search fields do not trigger browser autocomplete
+    expect(
+      screen.getByPlaceholderText('Recherche').getAttribute('autocomplete'),
+    ).toBe('off');
+    expect(
+      screen
+        .getByPlaceholderText('Type')
+        .getAttribute('autocomplete'),
+    ).toBe('off');
+    expect(
+      screen
+        .getByPlaceholderText('Emplacement')
+        .getAttribute('autocomplete'),
+    ).toBe('off');
+
     fireEvent.click(screen.getByRole('button', { name: 'Nouvel équipement' }));
+    const addForm = await screen.findByRole('form', {
+      name: 'Nouvel équipement',
+    });
+    expect(addForm.getAttribute('autocomplete')).toBe('off');
+    const formWithin = within(addForm);
+    expect(formWithin.getByLabelText('Nom').getAttribute('autocomplete')).toBe('off');
+    expect(formWithin.getByLabelText('Type').getAttribute('autocomplete')).toBe('off');
+    expect(
+      formWithin
+        .getByLabelText('Quantité totale')
+        .getAttribute('autocomplete'),
+    ).toBe('off');
+    expect(
+      formWithin.getByLabelText('État').getAttribute('autocomplete'),
+    ).toBe('off');
     expect(
       screen.getByRole('heading', { name: 'Nouvel équipement' }),
     ).toBeTruthy();

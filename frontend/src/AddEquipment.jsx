@@ -62,7 +62,12 @@ function AddEquipment({ onCreated }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4" aria-labelledby="add-equip-title">
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4"
+      autoComplete="off"
+      aria-labelledby="add-equip-title"
+    >
       <h2 id="add-equip-title">{t('equipments.add.title')}</h2>
       <Alert message={error} />
       <div className="mb-3">
