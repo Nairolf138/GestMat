@@ -26,13 +26,18 @@ describe('Equipments', () => {
 
     render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AuthContext.Provider value={{ user: { structure: { _id: 's1' } } }}>
+        <AuthContext.Provider value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}>
           <Equipments />
         </AuthContext.Provider>
       </MemoryRouter>,
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
+    expect(
+      screen.getByRole('heading', {
+        name: 'Inventaire local - Structure 1',
+      })
+    ).toBeTruthy();
     expect(screen.getByText('Eq1 (Loc) - Available')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Nouvel équipement' }));
