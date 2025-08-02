@@ -49,37 +49,61 @@ function Equipments() {
       <NavBar />
       <Alert type="success" message={message} />
       <h1>{t('equipments.title')}</h1>
-      <div className="row g-2 mb-3">
+      <form
+        className="row g-2 mb-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          fetchItems();
+        }}
+      >
         <div className="col-md">
+          <label htmlFor="equip-search" className="visually-hidden">
+            {t('equipments.search')}
+          </label>
           <input
+            id="equip-search"
+            name="search"
             placeholder={t('equipments.search')}
             className="form-control"
             value={search}
+            autoComplete="off"
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="col-md">
+          <label htmlFor="equip-type" className="visually-hidden">
+            {t('equipments.type')}
+          </label>
           <input
+            id="equip-type"
+            name="type"
             placeholder={t('equipments.type')}
             className="form-control"
             value={type}
+            autoComplete="off"
             onChange={(e) => setType(e.target.value)}
           />
         </div>
         <div className="col-md">
+          <label htmlFor="equip-location" className="visually-hidden">
+            {t('equipments.location')}
+          </label>
           <input
+            id="equip-location"
+            name="location"
             placeholder={t('equipments.location')}
             className="form-control"
             value={location}
+            autoComplete="off"
             onChange={(e) => setLocation(e.target.value)}
           />
         </div>
         <div className="col-auto">
-          <button onClick={fetchItems} className="btn btn-primary">
+          <button type="submit" className="btn btn-primary">
             {t('equipments.search_button')}
           </button>
         </div>
-      </div>
+      </form>
       <ul className="list-group mb-4">
         {items.map((e) => (
           <li key={e._id} className="list-group-item">
