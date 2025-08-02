@@ -16,11 +16,12 @@ function AddEquipment({ onCreated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const parsed = name === 'totalQty'
-      ? value === ''
-        ? ''
-        : Number(value)
-      : value;
+    const parsed =
+      name === 'totalQty'
+        ? value === ''
+          ? ''
+          : Number(value)
+        : value;
     setForm({ ...form, [name]: parsed });
     if (errors[name]) setErrors({ ...errors, [name]: undefined });
   };
@@ -39,6 +40,7 @@ function AddEquipment({ onCreated }) {
       const payload = {
         ...form,
         totalQty: Number(form.totalQty) || 0,
+        availableQty: Number(form.totalQty) || 0,
       };
       await api('/equipments', {
         method: 'POST',
