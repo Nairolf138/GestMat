@@ -75,6 +75,7 @@ function AddEquipment({ onCreated }) {
           value={form.name}
           onChange={handleChange}
           required
+          autoComplete="off"
           aria-invalid={errors.name ? 'true' : undefined}
           aria-describedby={errors.name ? 'eq-name-error' : undefined}
         />
@@ -99,6 +100,7 @@ function AddEquipment({ onCreated }) {
           value={form.type}
           onChange={handleChange}
           required
+          autoComplete="off"
           aria-invalid={errors.type ? 'true' : undefined}
           aria-describedby={errors.type ? 'eq-type-error' : undefined}
         >
@@ -132,6 +134,7 @@ function AddEquipment({ onCreated }) {
           onChange={handleChange}
           required
           min="1"
+          autoComplete="off"
           aria-invalid={errors.totalQty ? 'true' : undefined}
           aria-describedby={errors.totalQty ? 'eq-total-error' : undefined}
         />
@@ -156,6 +159,7 @@ function AddEquipment({ onCreated }) {
           value={form.condition}
           onChange={handleChange}
            required
+           autoComplete="off"
            aria-invalid={errors.condition ? 'true' : undefined}
            aria-describedby={errors.condition ? 'eq-condition-error' : undefined}
         >
