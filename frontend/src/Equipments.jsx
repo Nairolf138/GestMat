@@ -19,6 +19,11 @@ function Equipments() {
   const [userStructure, setUserStructure] = useState('');
   const [showForm, setShowForm] = useState(false);
 
+  const structureName =
+    user?.structure && typeof user.structure === 'object'
+      ? user.structure.name
+      : '';
+
   const fetchItems = () => {
     const params = new URLSearchParams({
       search,
@@ -48,7 +53,10 @@ function Equipments() {
     <div className="container">
       <NavBar />
       <Alert type="success" message={message} />
-      <h1>{t('equipments.title')}</h1>
+      <h1>
+        {t('equipments.title')}
+        {structureName && ` - ${structureName}`}
+      </h1>
       <form
         className="row g-2 mb-3"
         onSubmit={(e) => {
