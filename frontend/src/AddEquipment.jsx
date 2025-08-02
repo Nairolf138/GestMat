@@ -62,7 +62,12 @@ function AddEquipment({ onCreated }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4" aria-labelledby="add-equip-title">
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4"
+      aria-labelledby="add-equip-title"
+      autoComplete="off"
+    >
       <h2 id="add-equip-title">{t('equipments.add.title')}</h2>
       <Alert message={error} />
       <div className="mb-3">
@@ -75,6 +80,7 @@ function AddEquipment({ onCreated }) {
           value={form.name}
           onChange={handleChange}
           required
+          autoComplete="off"
           aria-invalid={errors.name ? 'true' : undefined}
           aria-describedby={errors.name ? 'eq-name-error' : undefined}
         />
@@ -99,6 +105,7 @@ function AddEquipment({ onCreated }) {
           value={form.type}
           onChange={handleChange}
           required
+          autoComplete="off"
           aria-invalid={errors.type ? 'true' : undefined}
           aria-describedby={errors.type ? 'eq-type-error' : undefined}
         >
@@ -132,6 +139,7 @@ function AddEquipment({ onCreated }) {
           onChange={handleChange}
           required
           min="1"
+          autoComplete="off"
           aria-invalid={errors.totalQty ? 'true' : undefined}
           aria-describedby={errors.totalQty ? 'eq-total-error' : undefined}
         />
@@ -155,9 +163,10 @@ function AddEquipment({ onCreated }) {
           aria-label={t('equipments.add.condition')}
           value={form.condition}
           onChange={handleChange}
-           required
-           aria-invalid={errors.condition ? 'true' : undefined}
-           aria-describedby={errors.condition ? 'eq-condition-error' : undefined}
+          required
+          autoComplete="off"
+          aria-invalid={errors.condition ? 'true' : undefined}
+          aria-describedby={errors.condition ? 'eq-condition-error' : undefined}
         >
           <option value="">{t('common.choose')}</option>
           <option value="Neuf">{t('equipments.add.conditions.new')}</option>
