@@ -59,6 +59,7 @@ function Equipments() {
       </h1>
       <form
         className="row g-2 mb-3"
+        autoComplete="off"
         onSubmit={(e) => {
           e.preventDefault();
           fetchItems();

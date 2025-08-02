@@ -40,7 +40,24 @@ describe('Equipments', () => {
     ).toBeTruthy();
     expect(screen.getByText('Eq1 (Loc) - Available')).toBeTruthy();
 
+    // ensure search fields do not trigger browser autocomplete
+    expect(
+      screen.getByPlaceholderText('Recherche').getAttribute('autocomplete'),
+    ).toBe('off');
+    expect(
+      screen
+        .getByPlaceholderText('Type')
+        .getAttribute('autocomplete'),
+    ).toBe('off');
+    expect(
+      screen
+        .getByPlaceholderText('Emplacement')
+        .getAttribute('autocomplete'),
+    ).toBe('off');
+
     fireEvent.click(screen.getByRole('button', { name: 'Nouvel équipement' }));
+    const addForm = screen.getByRole('form', { name: 'Nouvel équipement' });
+    expect(addForm.getAttribute('autocomplete')).toBe('off');
     expect(
       screen.getByRole('heading', { name: 'Nouvel équipement' }),
     ).toBeTruthy();
