@@ -16,7 +16,7 @@ Tous les rôles peuvent consulter l'ensemble du catalogue. En revanche, l'ajout 
 | Rôle | Types d’équipement modifiables |
 | --- | --- |
 | Administrateur | tous |
-| Régisseur(se) Général | tous |
+| Régisseur(se) Général(e) | tous |
 | Régisseur(se) Son | Son, Vidéo, Autre |
 | Régisseur(se) Lumière | Lumière, Vidéo, Autre |
 | Régisseur(se) Plateau | Plateau, Vidéo, Autre |

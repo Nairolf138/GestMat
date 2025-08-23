@@ -5,7 +5,7 @@ const ROLES = [
   'Régisseur(se) Son',
   'Régisseur(se) Lumière',
   'Régisseur(se) Plateau',
-  'Régisseur(se) Général',
+  'Régisseur(se) Général(e)',
   'Autre'
 ];
 
