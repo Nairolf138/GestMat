@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
 const equipmentRoutes = require('../src/routes/equipments');
+const { roleMap } = require('../src/utils/roleAccess');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -170,6 +171,23 @@ test('reject update on equipment from another structure', async () => {
   const eq = await db.collection('equipments').findOne({ _id: new ObjectId(eqId) });
   assert.strictEqual(eq.location, 'S1');
 
+  await client.close();
+  await mongod.stop();
+});
+
+test('each role can create allowed equipment types', async () => {
+  const { app, client, mongod } = await createApp();
+  for (const [role, types] of Object.entries(roleMap)) {
+    for (const type of types) {
+      const token = jwt.sign({ id: 'u', role }, 'test', { expiresIn: '1h' });
+      const newEq = { name: `${role}-${type}`, type, condition: 'Neuf', totalQty: 1, availableQty: 1 };
+      await request(app)
+        .post('/api/equipments')
+        .set({ Authorization: `Bearer ${token}` })
+        .send(newEq)
+        .expect(200);
+    }
+  }
   await client.close();
   await mongod.stop();
 });
