@@ -1,7 +1,9 @@
 const { ObjectId } = require('mongodb');
+const { normalizeRole } = require('../utils/roleAccess');
 
 async function createUser(db, data) {
   if (data.structure) data.structure = new ObjectId(data.structure);
+  if (data.role) data.role = normalizeRole(data.role);
   const users = db.collection('users');
   try {
     const result = await users.insertOne(data);
@@ -32,6 +34,7 @@ function findUserById(db, id) {
 
 async function updateUser(db, id, data) {
   if (data.structure) data.structure = new ObjectId(data.structure);
+  if (data.role) data.role = normalizeRole(data.role);
   const res = await db.collection('users').findOneAndUpdate(
     { _id: new ObjectId(id) },
     { $set: data },
