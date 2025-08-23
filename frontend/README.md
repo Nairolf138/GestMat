@@ -23,3 +23,7 @@ Application React propulsée par Vite.
    ```
 
 Node.js 20 ou plus récent est requis.
+
+## Compatibilité
+
+Les scripts `npm run dev` et `npm run build` chargent `scripts/crypto-hash-polyfill.js` via `NODE_OPTIONS` afin d'ajouter `crypto.hash` lorsque cette fonction n'est pas disponible.

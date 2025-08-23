@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "NODE_OPTIONS=--require ./scripts/crypto-hash-polyfill.js vite",
+    "build": "NODE_OPTIONS=--require ./scripts/crypto-hash-polyfill.js vite build",
     "test": "vitest run",
     "csp-check": "node scripts/check-no-eval.js"
   },
