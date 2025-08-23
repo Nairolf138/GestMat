@@ -22,4 +22,4 @@ Application React propulsée par Vite.
    npm test
    ```
 
-Node.js 20 ou plus récent est requis.
+Node.js 22 ou plus récent est requis.

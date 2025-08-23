@@ -31,6 +31,8 @@ Tous les rôles peuvent consulter l'ensemble du catalogue. En revanche, l'ajout 
 
 ## Installation et lancement
 
+Assurez-vous d’utiliser Node.js 22 ou plus récent pour exécuter le backend et le frontend.
+
 Les instructions détaillées se trouvent dans les fichiers README de chaque sous-projet :
 
 - [backend/README.md](../backend/README.md)
