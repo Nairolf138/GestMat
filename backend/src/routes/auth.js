@@ -24,6 +24,7 @@ const {
   deleteSessionsByUser,
 } = require('../models/Session');
 const { unauthorized, ApiError } = require('../utils/errors');
+const { normalizeRole } = require('../utils/roleAccess');
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -36,6 +37,7 @@ router.post('/register', registerValidator, validate, async (req, res, next) => 
   const db = req.app.locals.db;
   try {
     let { username, password, role, structure, firstName, lastName, email } = req.body;
+    role = normalizeRole(role);
     if (!ALLOWED_ROLES.includes(role)) {
       role = DEFAULT_ROLE;
     }

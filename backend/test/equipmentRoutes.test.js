@@ -73,14 +73,14 @@ test('deny updates and deletes when structures differ', async () => {
   const u1 = new ObjectId();
   const u2 = new ObjectId();
   await db.collection('users').insertMany([
-    { _id: u1, username: 'user1', role: 'Régisseur(se) Son', structure: struct1 },
-    { _id: u2, username: 'user2', role: 'Régisseur(se) Son', structure: struct2 },
+    { _id: u1, username: 'user1', role: 'Regisseur Son', structure: struct1 },
+    { _id: u2, username: 'user2', role: 'Regisseur Son', structure: struct2 },
   ]);
 
-  const token1 = jwt.sign({ id: u1.toString(), role: 'Régisseur(se) Son' }, 'test', {
+  const token1 = jwt.sign({ id: u1.toString(), role: 'Regisseur Son' }, 'test', {
     expiresIn: '1h',
   });
-  const token2 = jwt.sign({ id: u2.toString(), role: 'Régisseur(se) Son' }, 'test', {
+  const token2 = jwt.sign({ id: u2.toString(), role: 'Regisseur Son' }, 'test', {
     expiresIn: '1h',
   });
 
@@ -148,12 +148,12 @@ test('reject update on equipment from another structure', async () => {
   const u1 = new ObjectId();
   const u2 = new ObjectId();
   await db.collection('users').insertMany([
-    { _id: u1, username: 'u1', role: 'Régisseur(se) Son', structure: struct1 },
-    { _id: u2, username: 'u2', role: 'Régisseur(se) Son', structure: struct2 }
+    { _id: u1, username: 'u1', role: 'Regisseur Son', structure: struct1 },
+    { _id: u2, username: 'u2', role: 'Regisseur Son', structure: struct2 }
   ]);
 
-  const token1 = jwt.sign({ id: u1.toString(), role: 'Régisseur(se) Son' }, 'test', { expiresIn: '1h' });
-  const token2 = jwt.sign({ id: u2.toString(), role: 'Régisseur(se) Son' }, 'test', { expiresIn: '1h' });
+  const token1 = jwt.sign({ id: u1.toString(), role: 'Regisseur Son' }, 'test', { expiresIn: '1h' });
+  const token2 = jwt.sign({ id: u2.toString(), role: 'Regisseur Son' }, 'test', { expiresIn: '1h' });
 
   const created = await request(app)
     .post('/api/equipments')
