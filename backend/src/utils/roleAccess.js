@@ -2,7 +2,7 @@ const ALL_TYPES = ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'];
 
 const roleMap = {
   'Administrateur': ALL_TYPES,
-  'Regisseur(se) Général': ALL_TYPES,
+  'Régisseur(se) Général': ALL_TYPES,
   'Régisseur(se) Son': ['Son', 'Vidéo', 'Autre'],
   'Régisseur(se) Lumière': ['Lumière', 'Vidéo', 'Autre'],
   'Régisseur(se) Plateau': ['Plateau', 'Vidéo', 'Autre'],

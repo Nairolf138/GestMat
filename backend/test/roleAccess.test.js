@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('assert');
-const { canModify } = require('../src/utils/roleAccess');
+const { canModify, ALL_TYPES } = require('../src/utils/roleAccess');
 
 test('Autre role permissions allow all types', () => {
   assert.strictEqual(canModify('Autre', 'Son'), true);
@@ -16,4 +16,10 @@ test('Régisseur(se) Son permissions', () => {
 test('Régisseur(se) Plateau permissions', () => {
   assert.strictEqual(canModify('Régisseur(se) Plateau', 'Autre'), true);
   assert.strictEqual(canModify('Régisseur(se) Plateau', 'Son'), false);
+});
+
+test('Régisseur(se) Général permissions cover all types', () => {
+  for (const type of ALL_TYPES) {
+    assert.strictEqual(canModify('Régisseur(se) Général', type), true);
+  }
 });

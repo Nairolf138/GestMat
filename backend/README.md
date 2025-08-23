@@ -97,7 +97,7 @@ All roles can view every equipment type in the catalogue. Creation and updates, 
 | Role | Equipment types |
 | --- | --- |
 | Administrateur | all types |
-| Regisseur(se) Général | all types |
+| Régisseur(se) Général | all types |
 | Régisseur(se) Son | Son, Vidéo, Autre |
 | Régisseur(se) Lumière | Lumière, Vidéo, Autre |
 | Régisseur(se) Plateau | Plateau, Vidéo, Autre |
