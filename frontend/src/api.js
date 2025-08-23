@@ -7,6 +7,17 @@ function getCsrfToken() {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
+function getAuthToken() {
+  const match = document.cookie.match(/token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+function setAuthToken(token) {
+  if (token) {
+    document.cookie = `token=${encodeURIComponent(token)}; path=/`;
+  }
+}
+
 async function refreshToken() {
   try {
     const token = getCsrfToken();
@@ -16,6 +27,8 @@ async function refreshToken() {
       headers: token ? { 'CSRF-Token': token } : {},
     });
     if (!res.ok) throw new Error('Refresh error');
+    const data = await res.json().catch(() => ({}));
+    if (data.token) setAuthToken(data.token);
     return true;
   } catch {
     try {
@@ -43,6 +56,8 @@ export async function api(path, options = {}, retry = true) {
     const token = getCsrfToken();
     if (token) headers['CSRF-Token'] = token;
   }
+  const authToken = getAuthToken();
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
   try {
     const res = await fetch(`${API_URL}${path}`, {
       ...options,
@@ -56,6 +71,9 @@ export async function api(path, options = {}, retry = true) {
       }
     }
     const data = await res.json().catch(() => ({}));
+    if ((path === '/auth/login' || path === '/auth/refresh') && data.token) {
+      setAuthToken(data.token);
+    }
     if (!res.ok) {
       const error = new Error(data.message || 'API error');
       if (data.errors) {
