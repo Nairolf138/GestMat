@@ -77,7 +77,8 @@
     "current_loans": "Current loans",
     "incoming_loans": "Upcoming loans",
     "no_loans": "No loan",
-    "shortcuts": "Shortcuts"
+    "shortcuts": "Shortcuts",
+    "error_fetch": "Error fetching loans"
   },
   "catalog": {
     "title": "Catalog",

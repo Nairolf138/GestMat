@@ -77,7 +77,8 @@
     "current_loans": "Emprunts en cours",
     "incoming_loans": "Emprunts \u00e0 venir",
     "no_loans": "Aucun emprunt",
-    "shortcuts": "Raccourcis"
+    "shortcuts": "Raccourcis",
+    "error_fetch": "Erreur lors du chargement des pr\u00eats"
   },
   "catalog": {
     "title": "Catalogue",
