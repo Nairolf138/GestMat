@@ -1,37 +1,42 @@
-const express = require('express');
-const {
+import express, { Request, Response, NextFunction } from 'express';
+import {
   findEquipments,
   createEquipment,
   updateEquipment,
   deleteEquipment,
   findEquipmentById,
-} = require('../models/Equipment');
-const { findStructureById } = require('../models/Structure');
-const { findUserById } = require('../models/User');
-const { ObjectId } = require('mongodb');
-const auth = require('../middleware/auth');
-const createEquipmentFilter = require('../utils/createEquipmentFilter');
-const { canModify, normalizeType } = require('../utils/roleAccess');
-const { ADMIN_ROLE } = require('../config/roles');
-const validate = require('../middleware/validate');
-const checkId = require('../middleware/checkObjectId');
-const {
+} from '../models/Equipment';
+import { findStructureById } from '../models/Structure';
+import { findUserById } from '../models/User';
+import { ObjectId } from 'mongodb';
+import auth from '../middleware/auth';
+import createEquipmentFilter from '../utils/createEquipmentFilter';
+import { canModify, normalizeType } from '../utils/roleAccess';
+import { ADMIN_ROLE } from '../config/roles';
+import validate from '../middleware/validate';
+import checkId from '../middleware/checkObjectId';
+import {
   createEquipmentValidator,
   updateEquipmentValidator,
-} = require('../validators/equipmentValidator');
-const { ApiError, forbidden, notFound, badRequest } = require('../utils/errors');
-const { checkEquipmentAvailability } = require('../utils/checkAvailability');
+} from '../validators/equipmentValidator';
+import { forbidden, notFound, badRequest } from '../utils/errors';
+import { checkEquipmentAvailability } from '../utils/checkAvailability';
+
+interface AuthRequest extends Request {
+  user: any;
+}
 
 const router = express.Router();
 
-router.get('/', auth(), async (req, res) => {
+router.get('/', auth(), async (req: AuthRequest, res: Response) => {
   const db = req.app.locals.db;
-  let structure = req.query.structure;
-  if (!req.query.all && !structure && ObjectId.isValid(req.user.id)) {
+  const query = req.query as any;
+  let structure = query.structure;
+  if (!query.all && !structure && ObjectId.isValid(req.user.id)) {
     const user = await findUserById(db, req.user.id);
     if (user && user.structure) structure = user.structure.toString();
   }
-  const filter = createEquipmentFilter({ ...req.query, structure });
+  const filter = createEquipmentFilter({ ...query, structure });
   const equipments = await findEquipments(db, filter);
   await Promise.all(
     equipments.map(async (eq) => {
@@ -52,7 +57,7 @@ router.get('/', auth(), async (req, res) => {
   res.json(equipments);
 });
 
-router.post('/', auth(), createEquipmentValidator, validate, async (req, res, next) => {
+router.post('/', auth(), createEquipmentValidator, validate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   let location = '';
   let structureId = null;
@@ -79,7 +84,7 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req, res, ne
   res.json(equipment);
 });
 
-router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async (req, res, next) => {
+router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);
@@ -107,7 +112,7 @@ router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async 
   }
 });
 
-router.delete('/:id', auth(), checkId(), async (req, res, next) => {
+router.delete('/:id', auth(), checkId(), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);
@@ -134,10 +139,10 @@ router.delete('/:id', auth(), checkId(), async (req, res, next) => {
   }
 });
 
-router.get('/:id/availability', auth(), checkId(), async (req, res, next) => {
+router.get('/:id/availability', auth(), checkId(), async (req: AuthRequest, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
-  const start = req.query.start ? new Date(req.query.start) : null;
-  const end = req.query.end ? new Date(req.query.end) : null;
+  const start = req.query.start ? new Date(req.query.start as string) : null;
+  const end = req.query.end ? new Date(req.query.end as string) : null;
   const quantity = Number(req.query.quantity) || 1;
   const avail = await checkEquipmentAvailability(
     db,
@@ -150,4 +155,4 @@ router.get('/:id/availability', auth(), checkId(), async (req, res, next) => {
   res.json(avail);
 });
 
-module.exports = router;
+export default router;

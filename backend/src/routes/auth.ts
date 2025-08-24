@@ -1,30 +1,31 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const rateLimit = require('express-rate-limit');
+import express, { Request, Response, NextFunction } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 
-const validate = require('../middleware/validate');
-const {
-  registerValidator,
-  loginValidator,
-} = require('../validators/userValidator');
-const ROLES = require('../config/roles');
-const { ADMIN_ROLE } = ROLES;
+import validate from '../middleware/validate';
+import { registerValidator, loginValidator } from '../validators/userValidator';
+import ROLES, { ADMIN_ROLE } from '../config/roles';
 
 const DEFAULT_ROLE = 'Autre';
-const ALLOWED_ROLES = ROLES.filter(r => r !== ADMIN_ROLE);
+const ALLOWED_ROLES = ROLES.filter((r) => r !== ADMIN_ROLE);
 
-const { JWT_SECRET, NODE_ENV } = require('../config');
-const { createUser, findUserByUsername } = require('../models/User');
-const { findStructureById } = require('../models/Structure');
-const {
+import { JWT_SECRET, NODE_ENV } from '../config';
+import { createUser, findUserByUsername } from '../models/User';
+import { findStructureById } from '../models/Structure';
+import {
   createSession,
   findSessionByToken,
   deleteSessionByToken,
   deleteSessionsByUser,
-} = require('../models/Session');
-const { unauthorized, ApiError } = require('../utils/errors');
-const { normalizeRole } = require('../utils/roleAccess');
+} from '../models/Session';
+import { unauthorized, ApiError } from '../utils/errors';
+import { normalizeRole } from '../utils/roleAccess';
+
+interface AuthRequest extends Request {
+  user?: any;
+  cookies?: Record<string, string>;
+}
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -33,7 +34,7 @@ const loginLimiter = rateLimit({
   message: 'Too many login attempts, please try again later.'
 });
 
-router.post('/register', registerValidator, validate, async (req, res, next) => {
+router.post('/register', registerValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     let { username, password, role, structure, firstName, lastName, email } = req.body;
@@ -68,7 +69,7 @@ router.post('/register', registerValidator, validate, async (req, res, next) => 
   }
 });
 
-router.post('/login', loginLimiter, loginValidator, validate, async (req, res, next) => {
+router.post('/login', loginLimiter, loginValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     const { username, password } = req.body;
@@ -111,10 +112,10 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req, res, n
   }
 });
 
-router.post('/refresh', async (req, res, next) => {
+router.post('/refresh', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const db = req.app.locals.db;
-    const { refreshToken } = req.cookies;
+    const { refreshToken } = req.cookies || {};
     if (!refreshToken) return next(unauthorized('Refresh token required'));
 
     let payload;
@@ -155,9 +156,9 @@ router.post('/refresh', async (req, res, next) => {
   }
 });
 
-router.post('/logout', async (req, res) => {
+router.post('/logout', async (req: AuthRequest, res: Response) => {
   const db = req.app.locals.db;
-  const { refreshToken } = req.cookies;
+  const { refreshToken } = req.cookies || {};
   if (refreshToken) {
     await deleteSessionByToken(db, refreshToken).catch(() => {});
   }
@@ -171,4 +172,4 @@ router.post('/logout', async (req, res) => {
   res.sendStatus(204);
 });
 
-module.exports = router;
+export default router;
