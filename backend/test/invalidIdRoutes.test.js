@@ -6,10 +6,10 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
-const equipmentRoutes = require('../src/routes/equipments');
-const loanRoutes = require('../src/routes/loans');
-const structureRoutes = require('../src/routes/structures');
-const userRoutes = require('../src/routes/users');
+const equipmentRoutes = require('../src/routes/equipments').default;
+const loanRoutes = require('../src/routes/loans').default;
+const structureRoutes = require('../src/routes/structures').default;
+const userRoutes = require('../src/routes/users').default;
 
 function auth(role = 'Administrateur') {
   const token = jwt.sign({ id: 'u1', role }, 'test', { expiresIn: '1h' });

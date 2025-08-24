@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 
 process.env.JWT_SECRET = 'test';
 
-const userRoutes = require('../src/routes/users');
+const userRoutes = require('../src/routes/users').default;
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();

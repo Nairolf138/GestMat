@@ -6,7 +6,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
-const loanRoutes = require('../src/routes/loans');
+const loanRoutes = require('../src/routes/loans').default;
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
