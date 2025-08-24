@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,8 +14,15 @@ import Catalog from "./Catalog";
 import Cart from "./Cart";
 import PrivateRoute from "./PrivateRoute";
 import ErrorBoundary from "./ErrorBoundary";
+import i18n from "./i18n";
 
 function App() {
+  useEffect(() => {
+    const savedLang = localStorage.getItem('language');
+    if (savedLang) {
+      i18n.changeLanguage(savedLang);
+    }
+  }, []);
   return (
     <ErrorBoundary>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
