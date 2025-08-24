@@ -70,6 +70,12 @@ export async function start(connect: () => Promise<Db> = connectDB): Promise<Ser
     db = await connect();
     app.locals.db = db;
     await db.collection('users').createIndex({ username: 1 }, { unique: true });
+    await db.collection('equipments').createIndex({
+      name: 1,
+      type: 1,
+      location: 1,
+      structure: 1,
+    });
   } catch (err) {
     logger.error('Failed to start server: %o', err as Error);
     process.exit(1);
