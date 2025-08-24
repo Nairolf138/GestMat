@@ -89,10 +89,7 @@ export async function api(path, options = {}, retry = true) {
     }
     return data;
   } catch (err) {
-    if (!(err instanceof Error)) {
-      throw new Error('Network error');
-    }
-    throw err;
+    throw new Error(err?.message || 'Network error');
   }
 }
 
