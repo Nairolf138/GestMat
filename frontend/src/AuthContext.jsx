@@ -1,16 +1,25 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 
 export const AuthContext = createContext({ user: null, setUser: () => {} });
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      try {
+        return await api('/users/me', {}, false);
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    initialData: null,
+  });
 
-  useEffect(() => {
-    api('/users/me', {}, false)
-      .then(setUser)
-      .catch(() => setUser(null));
-  }, []);
+  const setUser = (newUser) => queryClient.setQueryData(['currentUser'], newUser);
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
