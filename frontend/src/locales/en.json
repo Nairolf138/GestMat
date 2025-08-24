@@ -24,7 +24,8 @@
     "cart": "Cart",
     "profile": "Profile",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "toggle_theme": "Dark mode"
   },
   "equipments": {
     "title": "Local inventory",

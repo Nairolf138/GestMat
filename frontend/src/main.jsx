@@ -10,6 +10,14 @@ import { AuthProvider } from './AuthContext.jsx';
 
 const queryClient = new QueryClient();
 
+// Apply saved theme preference
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.body.classList.add('dark-theme');
+} else {
+  document.body.classList.remove('dark-theme');
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
