@@ -1,28 +1,55 @@
+/* CSS variable system */
+:root {
+  --color-bg: #f4f6f9;
+  --color-text: #212529;
+  --color-navbar-bg: #ffffff;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+
+  --radius-sm: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #212529;
+    --color-text: #f4f6f9;
+    --color-navbar-bg: #343a40;
+  }
+}
+
+.dark-theme {
+  --color-bg: #212529;
+  --color-text: #f4f6f9;
+  --color-navbar-bg: #343a40;
+}
+
 body {
   font-family: 'Roboto', sans-serif;
   margin: 0;
-  padding: 1rem;
-  background-color: #f4f6f9;
-  color: #212529;
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 .form {
-  margin-top: 1rem;
+  margin-top: var(--spacing-md);
 }
 
 .form-group {
-  margin-top: 0.5rem;
+  margin-top: var(--spacing-sm);
 }
 
 .btn {
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   cursor: pointer;
-  margin-right: 0.5rem;
-  border-radius: 0.25rem;
+  margin-right: var(--spacing-sm);
+  border-radius: var(--radius-sm);
   font-weight: 500;
 }
-
 
 /* override Bootstrap spacing */
 .navbar-brand {
@@ -30,5 +57,17 @@ body {
 }
 
 .navbar {
-  background-color: #ffffff;
+  background-color: var(--color-navbar-bg);
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: var(--spacing-sm);
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+  body {
+    padding: var(--spacing-md);
+  }
 }
