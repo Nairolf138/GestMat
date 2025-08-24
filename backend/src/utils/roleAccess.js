@@ -9,6 +9,20 @@ function normalizeRole(role = '') {
     .trim();
 }
 
+function normalizeType(type = '') {
+  const norm = type
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
+  return ALL_TYPES.find(
+    (t) =>
+      t
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase() === norm
+  );
+}
+
 const roleMap = {
   Administrateur: ALL_TYPES,
   'Regisseur General': ALL_TYPES,
@@ -25,4 +39,4 @@ function canModify(role, type) {
   return allowed.includes(type);
 }
 
-module.exports = { roleMap, canModify, ALL_TYPES, normalizeRole };
+module.exports = { roleMap, canModify, ALL_TYPES, normalizeRole, normalizeType };
