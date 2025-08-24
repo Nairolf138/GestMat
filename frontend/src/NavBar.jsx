@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
@@ -8,6 +8,7 @@ function NavBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, setUser } = useContext(AuthContext);
+  const [isOpen, setIsOpen] = useState(false);
   const handleLogout = async () => {
     try {
       await api('/auth/logout', { method: 'POST' });
@@ -23,7 +24,21 @@ function NavBar() {
         <Link className="navbar-brand" to="/">
           GestMat
         </Link>
-        <div className="navbar-nav">
+        <button
+          className="navbar-toggler"
+          type="button"
+          aria-controls="navbarNav"
+          aria-expanded={isOpen}
+          aria-label="Toggle navigation"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        <div
+          className={`collapse navbar-collapse${isOpen ? ' show' : ''}`}
+          id="navbarNav"
+        >
+          <div className="navbar-nav">
           <Link className="nav-link" to="/catalog">
             {t('nav.catalog')}
           </Link>
@@ -56,6 +71,7 @@ function NavBar() {
               </Link>
             </>
           )}
+          </div>
         </div>
       </div>
     </nav>
