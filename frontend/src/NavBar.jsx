@@ -23,6 +23,13 @@ function NavBar() {
     }
   };
 
+  const handleThemeToggle = () => {
+    const body = document.body;
+    body.classList.toggle('dark-theme');
+    const newTheme = body.classList.contains('dark-theme') ? 'dark' : 'light';
+    localStorage.setItem('theme', newTheme);
+  };
+
   return (
     <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm">
       <div className="container-fluid">
@@ -77,14 +84,22 @@ function NavBar() {
             </>
           )}
           </div>
-          <select
-            className="form-select ms-auto"
-            value={i18n.language}
-            onChange={handleLanguageChange}
-          >
-            <option value="fr">fr</option>
-            <option value="en">en</option>
-          </select>
+          <div className="d-flex ms-auto align-items-center">
+            <button
+              className="btn btn-outline-secondary me-2"
+              onClick={handleThemeToggle}
+            >
+              {t('nav.toggle_theme')}
+            </button>
+            <select
+              className="form-select"
+              value={i18n.language}
+              onChange={handleLanguageChange}
+            >
+              <option value="fr">fr</option>
+              <option value="en">en</option>
+            </select>
+          </div>
         </div>
       </div>
     </nav>

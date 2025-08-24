@@ -24,7 +24,8 @@
     "cart": "Panier",
     "profile": "Profil",
     "login": "Connexion",
-    "logout": "Se d\u00e9connecter"
+    "logout": "Se d\u00e9connecter",
+    "toggle_theme": "Mode sombre"
   },
   "equipments": {
     "title": "Inventaire local",
