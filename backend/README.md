@@ -110,3 +110,11 @@ All roles can view every equipment type in the catalogue. Creation and updates, 
 | Autre | all types |
 
 Users created without an explicit role are assigned to `Autre`.
+
+## Indexes
+
+On startup the API creates a compound index on the `equipments` collection:
+`{ name: 1, type: 1, location: 1, structure: 1 }`. This index accelerates
+queries that filter or sort by these fields, which reduces response times for
+equipment searches. The trade-off is additional overhead when inserting or
+updating equipment documents as MongoDB must maintain the index entries.
