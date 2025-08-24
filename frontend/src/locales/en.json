@@ -45,6 +45,7 @@
       "total_quantity": "Total quantity",
       "condition": "Condition",
       "submit": "Add",
+      "success": "Equipment added",
       "error_create": "Error during creation",
       "types": {
         "sound": "Sound",
@@ -65,6 +66,7 @@
       "submit": "Save",
       "cancel": "Cancel",
       "button": "Edit",
+      "success": "Equipment updated",
       "error_update": "Error while updating"
     },
     "delete": {

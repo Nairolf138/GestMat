@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
+import { GlobalContext } from './GlobalContext.jsx';
 
 function EditEquipment({ equipment, onUpdated, onCancel }) {
   const { t } = useTranslation();
+  const { notify } = useContext(GlobalContext);
   const [form, setForm] = useState({
     name: '',
     type: '',
@@ -56,6 +58,7 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
+      notify(t('equipments.edit.success'), 'success');
       setError('');
       setErrors({});
       if (onUpdated) onUpdated();

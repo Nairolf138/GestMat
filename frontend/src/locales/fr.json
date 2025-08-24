@@ -45,6 +45,7 @@
       "total_quantity": "Quantité totale",
       "condition": "État",
       "submit": "Ajouter",
+      "success": "Équipement ajouté",
       "error_create": "Erreur lors de la création",
       "types": {
         "sound": "Son",
@@ -65,6 +66,7 @@
       "submit": "Enregistrer",
       "cancel": "Annuler",
       "button": "Éditer",
+      "success": "Équipement modifié",
       "error_update": "Erreur lors de la modification"
     },
     "delete": {

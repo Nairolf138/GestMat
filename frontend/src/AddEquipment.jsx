@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
+import { GlobalContext } from './GlobalContext.jsx';
 
 function AddEquipment({ onCreated }) {
   const { t } = useTranslation();
+  const { notify } = useContext(GlobalContext);
   const [form, setForm] = useState({
     name: '',
     type: '',
@@ -46,6 +48,7 @@ function AddEquipment({ onCreated }) {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+      notify(t('equipments.add.success'), 'success');
       setForm({
         name: '',
         type: '',
