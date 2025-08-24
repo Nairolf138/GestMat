@@ -111,9 +111,9 @@ function AddEquipment({ onCreated }) {
         >
           <option value="">{t('common.choose')}</option>
           <option value="Son">{t('equipments.add.types.sound')}</option>
-          <option value="Lumi\u00e8re">{t('equipments.add.types.light')}</option>
+          <option value="Lumière">{t('equipments.add.types.light')}</option>
           <option value="Plateau">{t('equipments.add.types.stage')}</option>
-          <option value="Vid\u00e9o">{t('equipments.add.types.video')}</option>
+          <option value="Vidéo">{t('equipments.add.types.video')}</option>
           <option value="Autre">{t('equipments.add.types.other')}</option>
         </select>
         {errors.type && (
