@@ -75,22 +75,31 @@ export async function api(path, options = {}, retry = true) {
       setAuthToken(data.token);
     }
     if (!res.ok) {
-      const error = new Error(data.message || 'API error');
+      let fields;
       if (data.errors) {
-        const fieldErrors = Array.isArray(data.errors)
+        fields = Array.isArray(data.errors)
           ? data.errors.reduce((acc, curr) => {
               if (curr.path) acc[curr.path] = curr.msg;
               return acc;
             }, {})
           : data.errors;
-        error.fieldErrors = fieldErrors;
       }
-      throw error;
+      throw { code: res.status, message: data.message || 'API error', fields };
     }
     return data;
   } catch (err) {
-    err.message = err?.message || 'Network error';
-    throw err;
+    const error = {
+      code: err.code || 'NETWORK_ERROR',
+      message: err.message || 'Network error',
+      fields: err.fields || err.fieldErrors,
+    };
+    errorHandler(error);
+    throw error;
   }
+}
+
+let errorHandler = () => {};
+export function setErrorHandler(handler) {
+  errorHandler = typeof handler === 'function' ? handler : () => {};
 }
 
