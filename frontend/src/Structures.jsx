@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
+import { useTranslation } from 'react-i18next';
 
 function Structures() {
+  const { t } = useTranslation();
   const [structures, setStructures] = useState([]);
 
   useEffect(() => {
@@ -14,7 +16,7 @@ function Structures() {
   return (
     <div className="container">
       <NavBar />
-      <h1>Structures</h1>
+      <h1>{t('structures.title')}</h1>
       <ul className="list-group">
         {structures.map((s) => (
           <li key={s._id} className="list-group-item">

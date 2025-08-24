@@ -135,6 +135,12 @@
     "send_requests": "Valider la demande de prêt",
     "requests_sent": "Demandes envoyées"
   },
+  "users": {
+    "title": "Utilisateurs"
+  },
+  "structures": {
+    "title": "Structures"
+  },
   "common": {
     "choose": "Choisir...",
     "required": "Requis",

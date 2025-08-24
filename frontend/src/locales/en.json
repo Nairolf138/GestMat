@@ -135,6 +135,12 @@
     "send_requests": "Submit loan request",
     "requests_sent": "Requests sent"
   },
+  "users": {
+    "title": "Users"
+  },
+  "structures": {
+    "title": "Structures"
+  },
   "common": {
     "choose": "Choose...",
     "required": "Required",
