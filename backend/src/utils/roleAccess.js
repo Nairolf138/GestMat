@@ -13,7 +13,8 @@ function normalizeType(type = '') {
   const norm = type
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase();
+    .toLowerCase()
+    .trim();
   return ALL_TYPES.find(
     (t) =>
       t
