@@ -38,7 +38,9 @@ describe('Equipments', () => {
         name: 'Inventaire local - Structure 1',
       })
     ).toBeTruthy();
-    expect(screen.getByText('Eq1 (Loc) - Available')).toBeTruthy();
+    expect(screen.getByText('Eq1')).toBeTruthy();
+    expect(screen.getByText('Loc')).toBeTruthy();
+    expect(screen.getByText('Available')).toBeTruthy();
 
     // ensure search fields do not trigger browser autocomplete
     expect(

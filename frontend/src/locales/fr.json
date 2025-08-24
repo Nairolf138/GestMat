@@ -29,8 +29,11 @@
   "equipments": {
     "title": "Inventaire local",
     "search": "Recherche",
+    "name": "Nom",
     "type": "Type",
     "location": "Emplacement",
+    "availability": "Disponibilité",
+    "actions": "Actions",
     "search_button": "Rechercher",
     "add": {
       "title": "Nouvel équipement",
@@ -53,6 +56,17 @@
         "used": "Usé",
         "very_used": "Très usé"
       }
+    },
+    "edit": {
+      "title": "Modifier l'équipement",
+      "submit": "Enregistrer",
+      "cancel": "Annuler",
+      "button": "Éditer",
+      "error_update": "Erreur lors de la modification"
+    },
+    "delete": {
+      "button": "Supprimer",
+      "confirm": "Supprimer cet équipement ?"
     }
   },
   "home": {

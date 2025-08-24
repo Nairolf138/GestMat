@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
+import EditEquipment from './EditEquipment';
 import NavBar from './NavBar';
 import Alert from './Alert.jsx';
 import { AuthContext } from './AuthContext.jsx';
@@ -18,6 +19,7 @@ function Equipments() {
   const [location, setLocation] = useState('');
   const [userStructure, setUserStructure] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   const structureName =
     user?.structure && typeof user.structure === 'object'
@@ -48,6 +50,16 @@ function Equipments() {
       fetchItems();
     }
   }, [search, type, location, userStructure]);
+
+  const deleteEquipment = async (id) => {
+    if (!window.confirm(t('equipments.delete.confirm'))) return;
+    try {
+      await api(`/equipments/${id}`, { method: 'DELETE' });
+      fetchItems();
+    } catch {
+      // ignore errors
+    }
+  };
 
   return (
     <div className="container">
@@ -113,13 +125,43 @@ function Equipments() {
           </button>
         </div>
       </form>
-      <ul className="list-group mb-4">
-        {items.map((e) => (
-          <li key={e._id} className="list-group-item">
-            {e.name} ({e.location}) - {e.availability}
-          </li>
-        ))}
-      </ul>
+      <table className="table mb-4">
+        <thead>
+          <tr>
+            <th>{t('equipments.name')}</th>
+            <th>{t('equipments.type')}</th>
+            <th>{t('equipments.location')}</th>
+            <th>{t('equipments.availability')}</th>
+            <th>{t('equipments.actions')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((e) => (
+            <tr key={e._id}>
+              <td>{e.name}</td>
+              <td>{e.type}</td>
+              <td>{e.location}</td>
+              <td>{e.availability}</td>
+              <td>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary me-2"
+                  onClick={() => setEditing(e)}
+                >
+                  {t('equipments.edit.button')}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={() => deleteEquipment(e._id)}
+                >
+                  {t('equipments.delete.button')}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       <button
         onClick={() => setShowForm(!showForm)}
         className="btn btn-secondary mb-3"
@@ -133,6 +175,16 @@ function Equipments() {
             fetchItems();
             setShowForm(false);
           }}
+        />
+      )}
+      {editing && (
+        <EditEquipment
+          equipment={editing}
+          onUpdated={() => {
+            fetchItems();
+            setEditing(null);
+          }}
+          onCancel={() => setEditing(null)}
         />
       )}
     </div>
