@@ -78,7 +78,9 @@
     "incoming_loans": "Upcoming loans",
     "no_loans": "No loan",
     "shortcuts": "Shortcuts",
-    "error_fetch": "Error fetching loans"
+    "error_fetch": "Error fetching loans",
+    "view_all": "View all",
+    "counter": "{{shown}} of {{total}} {{category}}"
   },
   "catalog": {
     "title": "Catalog",
