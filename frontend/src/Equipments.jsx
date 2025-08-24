@@ -17,6 +17,7 @@ function Equipments() {
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [location, setLocation] = useState('');
+  const [sort, setSort] = useState('');
   const [userStructure, setUserStructure] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -36,6 +37,7 @@ function Equipments() {
       type,
       location,
       structure: userStructure,
+      sort,
     });
     api(`/equipments?${params.toString()}`)
       .then(setItems)
@@ -57,7 +59,7 @@ function Equipments() {
     if (userStructure !== '') {
       fetchItems();
     }
-  }, [search, type, location, userStructure]);
+  }, [search, type, location, sort, userStructure]);
 
   const deleteEquipment = async (id) => {
     if (!window.confirm(t('equipments.delete.confirm'))) return;
@@ -128,9 +130,38 @@ function Equipments() {
             onChange={(e) => setLocation(e.target.value)}
           />
         </div>
+        <div className="col-md">
+          <label htmlFor="equip-sort" className="visually-hidden">
+            {t('equipments.sort')}
+          </label>
+          <select
+            id="equip-sort"
+            name="sort"
+            className="form-select"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="">{t('equipments.sort')}</option>
+            <option value="name">{t('equipments.name')}</option>
+            <option value="type">{t('equipments.type')}</option>
+          </select>
+        </div>
         <div className="col-auto">
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary me-2">
             {t('equipments.search_button')}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setSearch('');
+              setType('');
+              setLocation('');
+              setSort('');
+              setTimeout(fetchItems, 0);
+            }}
+          >
+            {t('equipments.reset')}
           </button>
         </div>
       </form>
