@@ -1,12 +1,13 @@
 import React, { createContext } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
+import Loading from './Loading.jsx';
 
 export const AuthContext = createContext({ user: null, setUser: () => {} });
 
 export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
-  const { data: user } = useQuery({
+  const { data: user, isFetching } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
@@ -20,6 +21,8 @@ export function AuthProvider({ children }) {
   });
 
   const setUser = (newUser) => queryClient.setQueryData(['currentUser'], newUser);
+
+  if (isFetching) return <Loading />;
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
