@@ -20,6 +20,7 @@ function Catalog() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [quantities, setQuantities] = useState({});
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
 
   const fetchItems = () => {
     const params = new URLSearchParams({
@@ -36,6 +37,12 @@ function Catalog() {
   useEffect(() => {
     fetchItems();
   }, [filters.search, filters.type, filters.structure]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -120,44 +127,79 @@ function Catalog() {
           <button onClick={fetchItems} className="btn btn-primary">{t('catalog.search_button')}</button>
         </div>
       </div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>{t('catalog.equipment')}</th>
-            <th>{t('catalog.structure')}</th>
-            <th>{t('catalog.available_total')}</th>
-            <th>{t('catalog.quantity')}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
+      {isMobile ? (
+        <div className="card-grid">
           {items.map((it) => (
-            <tr key={it._id}>
-              <td>{it.name}</td>
-              <td>{it.structure?.name}</td>
-              <td>{it.availability}</td>
-              <td>
-                <input
-                  name={`quantity-${it._id}`}
-                  type="number"
-                  min="1"
-                  className="form-control form-control-sm"
-                  value={quantities[it._id] || 1}
-                  onChange={(e) => handleQtyChange(it._id, e.target.value)}
-                />
-              </td>
-              <td>
-                <button
-                  className="btn btn-success btn-sm"
-                  onClick={() => addToCart(it)}
-                >
-                  {t('catalog.add_to_cart')}
-                </button>
-              </td>
-            </tr>
+            <div className="card" key={it._id}>
+              <div className="card-body">
+                <h5 className="card-title">{it.name}</h5>
+                <p className="card-text">
+                  <strong>{t('catalog.structure')}:</strong> {it.structure?.name}
+                  <br />
+                  <strong>{t('catalog.available_total')}:</strong> {it.availability}
+                </p>
+                <div className="card-actions">
+                  <input
+                    name={`quantity-${it._id}`}
+                    type="number"
+                    min="1"
+                    className="form-control form-control-sm me-2"
+                    value={quantities[it._id] || 1}
+                    onChange={(e) => handleQtyChange(it._id, e.target.value)}
+                  />
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => addToCart(it)}
+                  >
+                    {t('catalog.add_to_cart')}
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      ) : (
+        <div className="table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t('catalog.equipment')}</th>
+                <th>{t('catalog.structure')}</th>
+                <th>{t('catalog.available_total')}</th>
+                <th>{t('catalog.quantity')}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => (
+                <tr key={it._id}>
+                  <td>{it.name}</td>
+                  <td>{it.structure?.name}</td>
+                  <td>{it.availability}</td>
+                  <td>
+                    <input
+                      name={`quantity-${it._id}`}
+                      type="number"
+                      min="1"
+                      className="form-control form-control-sm"
+                      value={quantities[it._id] || 1}
+                      onChange={(e) => handleQtyChange(it._id, e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-success btn-sm"
+                      onClick={() => addToCart(it)}
+                    >
+                      {t('catalog.add_to_cart')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

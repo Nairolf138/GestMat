@@ -71,3 +71,19 @@ body {
     padding: var(--spacing-md);
   }
 }
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.card-grid {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.card-actions {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
