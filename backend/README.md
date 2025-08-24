@@ -4,11 +4,17 @@ This is the backend API for GestMat S&C built with Express and MongoDB.
 
 ## Development
 
-Install dependencies and start the server:
+Install dependencies and start the server (TypeScript is run with ts-node):
 
 ```bash
 npm install
 npm start
+```
+
+Build the project:
+
+```bash
+npm run build
 ```
 
 Environment variables are defined in `.env.example`.

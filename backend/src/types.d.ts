@@ -1,0 +1,11 @@
+declare module './config';
+declare module './config/db';
+declare module './utils/errors';
+declare module './utils/logger';
+declare module './routes/auth';
+declare module './routes/users';
+declare module './routes/structures';
+declare module './routes/equipments';
+declare module './routes/loans';
+declare module './routes/stats';
+declare module './routes/roles';

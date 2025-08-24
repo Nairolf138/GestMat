@@ -1,23 +1,23 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const client = require('prom-client');
-const { connectDB, closeDB } = require('./config/db');
-const { ApiError } = require('./utils/errors');
-const cookieParser = require('cookie-parser');
-const csrf = require('csurf');
-const logger = require('./utils/logger');
-
-const { PORT, CORS_ORIGIN, NODE_ENV } = require('./config');
-
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const structureRoutes = require('./routes/structures');
-const equipmentRoutes = require('./routes/equipments');
-const loanRoutes = require('./routes/loans');
-const statsRoutes = require('./routes/stats');
-const rolesRoutes = require('./routes/roles');
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import client from 'prom-client';
+import cookieParser from 'cookie-parser';
+import csrf from 'csurf';
+import { connectDB, closeDB } from './config/db';
+import { ApiError } from './utils/errors';
+import logger from './utils/logger';
+import { PORT, CORS_ORIGIN, NODE_ENV } from './config';
+import authRoutes from './routes/auth';
+import userRoutes from './routes/users';
+import structureRoutes from './routes/structures';
+import equipmentRoutes from './routes/equipments';
+import loanRoutes from './routes/loans';
+import statsRoutes from './routes/stats';
+import rolesRoutes from './routes/roles';
+import { Db } from 'mongodb';
+import { Server } from 'http';
 
 const app = express();
 app.use(
@@ -36,7 +36,7 @@ const corsOptions = CORS_ORIGIN.length
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.on('finish', () => {
     const { method, originalUrl } = req;
     const { statusCode } = res;
@@ -52,9 +52,9 @@ app.use((req, res, next) => {
   next();
 });
 if (NODE_ENV !== 'test') {
-  const csrfProtection = csrf({ cookie: true });
+  const csrfProtection = csrf({ cookie: true }) as express.RequestHandler;
   app.use(csrfProtection);
-  app.use((req, res, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     res.cookie('XSRF-TOKEN', req.csrfToken());
     next();
   });
@@ -64,16 +64,15 @@ app.use(limiter);
 
 client.collectDefaultMetrics();
 
-async function start(connect = connectDB) {
-  let db;
+export async function start(connect: () => Promise<Db> = connectDB): Promise<Server> {
+  let db: Db;
   try {
     db = await connect();
     app.locals.db = db;
     await db.collection('users').createIndex({ username: 1 }, { unique: true });
   } catch (err) {
-    logger.error('Failed to start server: %o', err);
+    logger.error('Failed to start server: %o', err as Error);
     process.exit(1);
-    return;
   }
 
   app.use('/api/auth', authRoutes);
@@ -84,18 +83,20 @@ async function start(connect = connectDB) {
   app.use('/api/stats', statsRoutes);
   app.use('/api/roles', rolesRoutes);
 
-  app.get('/metrics', async (req, res) => {
+  app.get('/metrics', async (req: Request, res: Response) => {
     res.set('Content-Type', client.register.contentType);
     res.end(await client.register.metrics());
   });
 
-  app.use((req, res) => {
+  app.use((req: Request, res: Response) => {
     res.status(404).json({ message: 'Not found' });
   });
 
-  app.use((err, req, res, next) => {
-    logger.error(err);
-    if (err.code === 'EBADCSRFTOKEN') {
+  app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+    logger.error(err as Error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyErr = err as any;
+    if (anyErr.code === 'EBADCSRFTOKEN') {
       res.status(403).json({ message: 'Invalid CSRF token' });
     } else if (err instanceof ApiError) {
       res.status(err.status).json({ message: err.message });
@@ -125,4 +126,4 @@ if (require.main === module) {
   start();
 }
 
-module.exports = { app, start };
+export { app };

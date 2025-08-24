@@ -30,13 +30,19 @@ features like `crypto.hash`, so older runtimes are not supported.
    Copy `frontend/.env.example` to `frontend/.env` as well.
    Set `SMTP_URL` and optionally `NOTIFY_EMAIL` if you want email notifications.
    Use `CORS_ORIGIN` to specify one or more allowed origins separated by commas.
-2. Install dependencies and start the API:
+2. Install dependencies and start the API (TypeScript runs via ts-node):
 
-   ```bash
-   cd backend
-   npm install
-   npm start
-   ```
+```bash
+cd backend
+npm install
+npm start
+```
+
+To build the API:
+
+```bash
+npm run build
+```
 
 3. In another terminal, start the frontend for development:
 
