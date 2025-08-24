@@ -5,7 +5,7 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 process.env.JWT_SECRET = 'test';
-const authRoutes = require('../src/routes/auth');
+const authRoutes = require('../src/routes/auth').default;
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();

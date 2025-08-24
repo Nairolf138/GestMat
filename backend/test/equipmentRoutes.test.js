@@ -7,7 +7,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
-const equipmentRoutes = require('../src/routes/equipments');
+const equipmentRoutes = require('../src/routes/equipments').default;
 const { roleMap } = require('../src/utils/roleAccess');
 
 async function createApp() {

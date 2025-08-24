@@ -6,7 +6,7 @@ const { MongoClient } = require('mongodb');
 const express = require('express');
 
 process.env.JWT_SECRET = 'test';
-const structureRoutes = require('../src/routes/structures');
+const structureRoutes = require('../src/routes/structures').default;
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
