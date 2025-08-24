@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
+import { useTranslation } from 'react-i18next';
 
 function Users() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
@@ -14,7 +16,7 @@ function Users() {
   return (
     <div className="container">
       <NavBar />
-      <h1>Utilisateurs</h1>
+      <h1>{t('users.title')}</h1>
       <ul className="list-group">
         {users.map((u) => (
           <li key={u._id} className="list-group-item">
