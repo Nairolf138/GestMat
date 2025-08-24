@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 
 import validate from '../middleware/validate';
@@ -21,11 +21,6 @@ import {
 } from '../models/Session';
 import { unauthorized, ApiError } from '../utils/errors';
 import { normalizeRole } from '../utils/roleAccess';
-
-interface AuthRequest extends Request {
-  user?: any;
-  cookies?: Record<string, string>;
-}
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -60,14 +55,14 @@ router.post('/register', registerValidator, validate, async (req: Request, res: 
     });
     const { password: _pw, ...userData } = user;
     res.json(userData);
-  } catch (err) {
-    if (err.message === 'Username already exists') {
-      next(new ApiError(409, err.message));
-    } else {
-      next(new ApiError(400, err.message || 'Registration failed'));
+    } catch (err: any) {
+      if (err.message === 'Username already exists') {
+        next(new ApiError(409, err.message));
+      } else {
+        next(new ApiError(400, err.message || 'Registration failed'));
+      }
     }
-  }
-});
+  });
 
 router.post('/login', loginLimiter, loginValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
@@ -76,12 +71,13 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
     const user = await findUserByUsername(db, username);
     if (!user) return next(unauthorized('Invalid credentials'));
 
-    const valid = await bcrypt.compare(password, user.password);
+      const valid = await bcrypt.compare(password, user.password!);
     if (!valid) return next(unauthorized('Invalid credentials'));
 
-    if (user.structure) {
-      user.structure = await findStructureById(db, user.structure);
-    }
+      if (user.structure) {
+        const struct = await findStructureById(db, user.structure.toString());
+        if (struct) user.structure = struct;
+      }
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -93,34 +89,34 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-    await deleteSessionsByUser(db, user._id);
-    await createSession(db, { token: refreshToken, userId: user._id });
-    const cookieOptions = {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-    };
-    res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
-    res.cookie('refreshToken', refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+      await deleteSessionsByUser(db, user._id!.toString());
+      await createSession(db, { token: refreshToken, userId: user._id!.toString() });
+      const cookieOptions = {
+        httpOnly: true,
+        secure: NODE_ENV === 'production',
+        sameSite: 'strict' as const,
+      };
+      res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
+      res.cookie('refreshToken', refreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
     const { password: _pw, ...userData } = user;
     res.json({ user: userData });
-  } catch (err) {
-    next(new ApiError(500, 'Server error'));
-  }
-});
+    } catch (err: any) {
+      next(new ApiError(500, 'Server error'));
+    }
+  });
 
-router.post('/refresh', async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
+  router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
+    try {
     const db = req.app.locals.db;
     const { refreshToken } = req.cookies || {};
     if (!refreshToken) return next(unauthorized('Refresh token required'));
 
-    let payload;
+    let payload: JwtPayload;
     try {
-      payload = jwt.verify(refreshToken, JWT_SECRET);
+      payload = jwt.verify(refreshToken, JWT_SECRET) as JwtPayload;
     } catch {
       return next(unauthorized('Invalid refresh token'));
     }
@@ -138,25 +134,25 @@ router.post('/refresh', async (req: AuthRequest, res: Response, next: NextFuncti
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-    await createSession(db, { token: newRefreshToken, userId: payload.id });
-    await deleteSessionByToken(db, refreshToken);
-    const cookieOptions = {
-      httpOnly: true,
-      secure: NODE_ENV === 'production',
-      sameSite: 'strict',
-    };
+    await createSession(db, { token: newRefreshToken, userId: String(payload.id) });
+      await deleteSessionByToken(db, refreshToken);
+      const cookieOptions = {
+        httpOnly: true,
+        secure: NODE_ENV === 'production',
+        sameSite: 'strict' as const,
+      };
     res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
     res.cookie('refreshToken', newRefreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     res.json({});
-  } catch (err) {
-    next(new ApiError(500, 'Server error'));
-  }
-});
+    } catch (err: any) {
+      next(new ApiError(500, 'Server error'));
+    }
+  });
 
-router.post('/logout', async (req: AuthRequest, res: Response) => {
+router.post('/logout', async (req: Request, res: Response) => {
   const db = req.app.locals.db;
   const { refreshToken } = req.cookies || {};
   if (refreshToken) {
@@ -164,8 +160,8 @@ router.post('/logout', async (req: AuthRequest, res: Response) => {
   }
   const cookieOptions = {
     httpOnly: true,
-      secure: NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: NODE_ENV === 'production',
+    sameSite: 'strict' as const,
   };
   res.clearCookie('token', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);

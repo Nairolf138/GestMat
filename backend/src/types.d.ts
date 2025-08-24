@@ -9,3 +9,13 @@ declare module './routes/equipments';
 declare module './routes/loans';
 declare module './routes/stats';
 declare module './routes/roles';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
+
+export {};

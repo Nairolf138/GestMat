@@ -1,17 +1,18 @@
 import { Db, ObjectId, WithId, DeleteResult } from 'mongodb';
 import { normalizeRole } from '../utils/roleAccess';
+import type { Structure } from './Structure';
 
 export interface User {
   _id?: ObjectId;
   username: string;
-  password: string;
-  structure?: ObjectId;
+  password?: string;
+  structure?: ObjectId | Structure;
   role?: string;
   [key: string]: unknown;
 }
 
 export async function createUser(db: Db, data: User): Promise<WithId<User>> {
-  if (data.structure) data.structure = new ObjectId(data.structure);
+  if (data.structure) data.structure = new ObjectId((data.structure as any));
   if (data.role) data.role = normalizeRole(data.role);
   const users = db.collection<User>('users');
   try {
@@ -46,7 +47,7 @@ export async function updateUser(
   id: string,
   data: Partial<User>
 ): Promise<User | null> {
-  if (data.structure) data.structure = new ObjectId(data.structure);
+  if (data.structure) data.structure = new ObjectId((data.structure as any));
   if (data.role) data.role = normalizeRole(data.role);
   const res = await db.collection<User>('users').findOneAndUpdate(
     { _id: new ObjectId(id) },
