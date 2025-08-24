@@ -22,6 +22,7 @@ function Equipments() {
   const [userStructure, setUserStructure] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
   const {
     data: items = [],
     isFetching,
@@ -54,6 +55,12 @@ function Equipments() {
       setUserStructure(id || '');
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const deleteEquipment = async (id) => {
     if (!window.confirm(t('equipments.delete.confirm'))) return;
@@ -159,51 +166,92 @@ function Equipments() {
           </button>
         </div>
       </form>
-      <table className="table mb-4">
-        <thead>
-          <tr>
-            <th>{t('equipments.name')}</th>
-            <th>{t('equipments.type')}</th>
-            <th>{t('equipments.location')}</th>
-            <th>{t('equipments.availability')}</th>
-            <th>{t('equipments.actions')}</th>
-          </tr>
-        </thead>
-        <tbody>
+      {isMobile ? (
+        <div className="card-grid mb-4">
           {isFetching ? (
-            <tr>
-              <td colSpan="5">
-                <Loading />
-              </td>
-            </tr>
+            <Loading />
           ) : (
             items.map((e) => (
-              <tr key={e._id}>
-                <td>{e.name}</td>
-                <td>{e.type}</td>
-                <td>{e.location}</td>
-                <td>{e.availability}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-secondary me-2"
-                    onClick={() => setEditing(e)}
-                  >
-                    {t('equipments.edit.button')}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger"
-                    onClick={() => deleteEquipment(e._id)}
-                  >
-                    {t('equipments.delete.button')}
-                  </button>
-                </td>
-              </tr>
+              <div className="card" key={e._id}>
+                <div className="card-body">
+                  <h5 className="card-title">{e.name}</h5>
+                  <p className="card-text">
+                    <strong>{t('equipments.type')}:</strong> {e.type}
+                    <br />
+                    <strong>{t('equipments.location')}:</strong> {e.location}
+                    <br />
+                    <strong>{t('equipments.availability')}:</strong> {e.availability}
+                  </p>
+                  <div className="card-actions">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary me-2"
+                      onClick={() => setEditing(e)}
+                    >
+                      {t('equipments.edit.button')}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger"
+                      onClick={() => deleteEquipment(e._id)}
+                    >
+                      {t('equipments.delete.button')}
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))
           )}
-        </tbody>
-      </table>
+        </div>
+      ) : (
+        <div className="table-responsive mb-4">
+          <table className="table mb-0">
+            <thead>
+              <tr>
+                <th>{t('equipments.name')}</th>
+                <th>{t('equipments.type')}</th>
+                <th>{t('equipments.location')}</th>
+                <th>{t('equipments.availability')}</th>
+                <th>{t('equipments.actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isFetching ? (
+                <tr>
+                  <td colSpan="5">
+                    <Loading />
+                  </td>
+                </tr>
+              ) : (
+                items.map((e) => (
+                  <tr key={e._id}>
+                    <td>{e.name}</td>
+                    <td>{e.type}</td>
+                    <td>{e.location}</td>
+                    <td>{e.availability}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary me-2"
+                        onClick={() => setEditing(e)}
+                      >
+                        {t('equipments.edit.button')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        onClick={() => deleteEquipment(e._id)}
+                      >
+                        {t('equipments.delete.button')}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
       <button
         onClick={() => setShowForm(!showForm)}
         className="btn btn-secondary mb-3"
