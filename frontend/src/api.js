@@ -79,7 +79,7 @@ export async function api(path, options = {}, retry = true) {
       if (data.errors) {
         const fieldErrors = Array.isArray(data.errors)
           ? data.errors.reduce((acc, curr) => {
-              if (curr.param) acc[curr.param] = curr.msg;
+              if (curr.path) acc[curr.path] = curr.msg;
               return acc;
             }, {})
           : data.errors;
