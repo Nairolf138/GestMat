@@ -38,3 +38,4 @@ Les instructions détaillées se trouvent dans les fichiers README de chaque sou
 
 - [backend/README.md](../backend/README.md)
 - [frontend/README.md](../frontend/README.md)
+- [STYLE_GUIDE.md](STYLE_GUIDE.md)
