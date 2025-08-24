@@ -88,7 +88,19 @@ function Catalog() {
           <input name="search" placeholder={t('catalog.search')} className="form-control" value={filters.search} onChange={handleChange} />
         </div>
         <div className="col-md">
-          <input name="type" placeholder={t('catalog.type')} className="form-control" value={filters.type} onChange={handleChange} />
+          <select
+            name="type"
+            className="form-select"
+            value={filters.type}
+            onChange={handleChange}
+          >
+            <option value="">{t('catalog.all_types')}</option>
+            <option value="Son">{t('equipments.add.types.sound')}</option>
+            <option value="Lumière">{t('equipments.add.types.light')}</option>
+            <option value="Plateau">{t('equipments.add.types.stage')}</option>
+            <option value="Vidéo">{t('equipments.add.types.video')}</option>
+            <option value="Autre">{t('equipments.add.types.other')}</option>
+          </select>
         </div>
         <div className="col-md">
           <select name="structure" className="form-select" value={filters.structure} onChange={handleChange}>
