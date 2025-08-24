@@ -35,6 +35,8 @@
     "availability": "Disponibilité",
     "actions": "Actions",
     "search_button": "Rechercher",
+    "sort": "Tri",
+    "reset": "Réinitialiser",
     "add": {
       "title": "Nouvel équipement",
       "name": "Nom",

@@ -19,8 +19,8 @@ describe('Equipments', () => {
     vi.clearAllMocks();
   });
 
-  it('lists inventory and opens add form', async () => {
-    api.api.mockResolvedValueOnce([
+  it('lists inventory, sorts and resets filters, and opens add form', async () => {
+    api.api.mockResolvedValue([
       { _id: 'eq1', name: 'Eq1', location: 'Loc', availability: 'Available' },
     ]);
 
@@ -33,6 +33,9 @@ describe('Equipments', () => {
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
+    expect(api.api).toHaveBeenLastCalledWith(
+      expect.stringContaining('sort='),
+    );
     expect(
       screen.getByRole('heading', {
         name: 'Inventaire local - Structure 1',
@@ -47,15 +50,38 @@ describe('Equipments', () => {
       screen.getByPlaceholderText('Recherche').getAttribute('autocomplete'),
     ).toBe('off');
     expect(
-      screen
-        .getByPlaceholderText('Type')
-        .getAttribute('autocomplete'),
+      screen.getByPlaceholderText('Type').getAttribute('autocomplete'),
     ).toBe('off');
     expect(
-      screen
-        .getByPlaceholderText('Emplacement')
-        .getAttribute('autocomplete'),
+      screen.getByPlaceholderText('Emplacement').getAttribute('autocomplete'),
     ).toBe('off');
+    const sortSelect = screen.getByLabelText('Tri');
+    fireEvent.change(sortSelect, { target: { value: 'name' } });
+    await waitFor(() =>
+      expect(api.api).toHaveBeenLastCalledWith(
+        expect.stringContaining('sort=name'),
+      ),
+    );
+    fireEvent.change(screen.getByPlaceholderText('Recherche'), {
+      target: { value: 'foo' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Type'), {
+      target: { value: 'bar' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Emplacement'), {
+      target: { value: 'baz' },
+    });
+    fireEvent.change(sortSelect, { target: { value: 'type' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser' }));
+    expect(screen.getByPlaceholderText('Recherche').value).toBe('');
+    expect(screen.getByPlaceholderText('Type').value).toBe('');
+    expect(screen.getByPlaceholderText('Emplacement').value).toBe('');
+    expect(sortSelect.value).toBe('');
+    await waitFor(() =>
+      expect(api.api).toHaveBeenLastCalledWith(
+        expect.stringContaining('sort='),
+      ),
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Nouvel équipement' }));
     const addForm = screen.getByRole('form', { name: 'Nouvel équipement' });

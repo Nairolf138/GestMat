@@ -35,6 +35,8 @@
     "availability": "Availability",
     "actions": "Actions",
     "search_button": "Search",
+    "sort": "Sort",
+    "reset": "Reset",
     "add": {
       "title": "New equipment",
       "name": "Name",
