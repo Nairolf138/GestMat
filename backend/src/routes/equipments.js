@@ -68,7 +68,14 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req, res, ne
   if (!type || !canModify(req.user.role, type)) {
     return next(forbidden('Access denied'));
   }
-  const equipment = await createEquipment(db, { ...req.body, type, location, structure: structureId });
+  const availableQty = req.body.availableQty ?? req.body.totalQty;
+  const equipment = await createEquipment(db, {
+    ...req.body,
+    type,
+    location,
+    structure: structureId,
+    availableQty,
+  });
   res.json(equipment);
 });
 

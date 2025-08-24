@@ -59,6 +59,22 @@ test('create, list, update and delete equipments', async () => {
   await mongod.stop();
 });
 
+test('default availableQty to totalQty when missing', async () => {
+  const { app, client, mongod } = await createApp();
+  const newEq = { name: 'Cam', type: 'Lumière', condition: 'Neuf', totalQty: 3 };
+  const res = await request(app)
+    .post('/api/equipments')
+    .set(auth())
+    .send(newEq)
+    .expect(200);
+  assert.strictEqual(res.body.availableQty, 3);
+  const db = client.db();
+  const fromDb = await db.collection('equipments').findOne({ _id: new ObjectId(res.body._id) });
+  assert.strictEqual(fromDb.availableQty, 3);
+  await client.close();
+  await mongod.stop();
+});
+
 test('deny updates and deletes when structures differ', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
