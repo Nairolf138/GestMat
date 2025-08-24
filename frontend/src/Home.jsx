@@ -21,7 +21,10 @@ function Home() {
         if (Array.isArray(data)) setLoans(data);
         else setLoans([]);
       })
-      .catch(() => setLoans([]))
+      .catch(() => {
+        setError(t('home.error_fetch'));
+        setLoans([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
