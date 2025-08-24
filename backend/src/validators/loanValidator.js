@@ -27,7 +27,16 @@ const updateLoanValidator = [
   body('items').optional().isArray(),
   body('items.*.equipment').optional().isMongoId(),
   body('items.*.quantity').optional().isInt({ min: 1 }),
-  body('startDate').optional().isISO8601(),
+  body('startDate')
+    .optional()
+    .isISO8601()
+    .withMessage('startDate must be a valid ISO8601 date')
+    .custom((value) => {
+      if (new Date(value) <= new Date()) {
+        throw new Error('startDate must be in the future');
+      }
+      return true;
+    }),
   body('endDate')
     .optional()
     .isISO8601()

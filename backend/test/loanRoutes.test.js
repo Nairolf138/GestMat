@@ -169,3 +169,93 @@ test('unauthorized delete does not remove loan', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('borrower can update and delete future loan', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const owner = (await db.collection('structures').insertOne({ name: 'O' })).insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'B' })).insertedId;
+  const eqId = (
+    await db.collection('equipments').insertOne({ name: 'E', totalQty: 1 })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: borrower });
+
+  const payload = {
+    owner: owner.toString(),
+    borrower: borrower.toString(),
+    items: [{ equipment: eqId.toString(), quantity: 1 }],
+    startDate: '2099-01-01',
+    endDate: '2099-01-02',
+  };
+
+  const res = await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send(payload)
+    .expect(200);
+  const id = res.body._id;
+
+  await request(app)
+    .put(`/api/loans/${id}`)
+    .set(auth())
+    .send({ startDate: '2099-01-05' })
+    .expect(200);
+
+  await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('borrower cannot update or delete past accepted loan', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const owner = (await db.collection('structures').insertOne({ name: 'O' })).insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'B' })).insertedId;
+  const eqId = (
+    await db.collection('equipments').insertOne({ name: 'E', totalQty: 1 })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: borrower });
+
+  const pastPayload = {
+    owner: owner.toString(),
+    borrower: borrower.toString(),
+    items: [{ equipment: eqId.toString(), quantity: 1 }],
+    startDate: '2000-01-01',
+    endDate: '2000-01-02',
+  };
+
+  const past = await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send(pastPayload)
+    .expect(200);
+  const pastId = past.body._id;
+
+  await request(app)
+    .put(`/api/loans/${pastId}`)
+    .set(auth())
+    .send({ status: 'accepted' })
+    .expect(403);
+
+  const delId = (
+    await db.collection('loanrequests').insertOne({
+      owner,
+      borrower,
+      startDate: new Date('2000-01-01'),
+      endDate: new Date('2000-01-02'),
+      status: 'accepted',
+    })
+  ).insertedId;
+
+  await request(app).delete(`/api/loans/${delId}`).set(auth()).expect(403);
+  const loan = await db.collection('loanrequests').findOne({ _id: delId });
+  assert.ok(loan);
+
+  await client.close();
+  await mongod.stop();
+});

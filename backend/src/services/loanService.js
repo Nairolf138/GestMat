@@ -96,7 +96,15 @@ async function updateLoanRequest(db, user, id, data) {
     if (!loan) throw notFound('Loan request not found');
 
     const u = await findUserById(db, user.id);
-    if (user.role !== ADMIN_ROLE && u?.structure?.toString() !== loan.owner.toString()) {
+    const structId = u?.structure?.toString();
+    const isOwner = loan.owner?.toString() === structId;
+    const isBorrower = loan.borrower?.toString() === structId;
+    const now = new Date();
+    if (
+      user.role !== ADMIN_ROLE &&
+      !isOwner &&
+      !(isBorrower && new Date(loan.startDate) > now)
+    ) {
       throw forbidden('Access denied');
     }
 
@@ -173,11 +181,16 @@ async function deleteLoanRequest(db, user, id) {
     if (user.role !== ADMIN_ROLE) {
       const u = await findUserById(db, user.id);
       const structId = u?.structure?.toString();
-      if (
-        loan.owner?.toString() !== structId &&
-        loan.borrower?.toString() !== structId
-      ) {
+      const isOwner = loan.owner?.toString() === structId;
+      const isBorrower = loan.borrower?.toString() === structId;
+      if (!isOwner && !isBorrower) {
         throw forbidden('Access denied');
+      }
+      if (isBorrower && !isOwner) {
+        const start = new Date(loan.startDate);
+        if (loan.status !== 'pending' && start <= new Date()) {
+          throw forbidden('Access denied');
+        }
       }
     }
 
