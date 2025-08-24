@@ -40,6 +40,7 @@ function Home() {
 
   const pending = loans.filter((l) => l.status === "pending");
   const now = new Date();
+  const previewCount = 5;
 
   const currentLoans = loans.filter((l) => {
     if (l.borrower?._id !== (user?.structure?._id || user?.structure))
@@ -65,7 +66,7 @@ function Home() {
       {user && <p>{t('home.greeting', { name: user.firstName || user.username })}</p>}
       <h2>{t('home.recent_requests')}</h2>
       <ul className="list-group mb-3">
-        {pending.slice(0, 5).map((l) => (
+        {pending.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
             {l.borrower?.name} → {l.owner?.name} (
             {l.startDate
@@ -76,15 +77,27 @@ function Home() {
         ))}
         {!pending.length && <li className="list-group-item">{t('home.no_requests')}</li>}
       </ul>
+      <p>
+        {pending.length > previewCount && (
+          <span>
+            {t('home.counter', {
+              shown: previewCount,
+              total: pending.length,
+              category: t('home.recent_requests').toLowerCase(),
+            })}{' '}
+          </span>
+        )}
+        <Link to="/loans">{t('home.view_all')}</Link>
+      </p>
       <h2>{t('home.current_loans')}</h2>
       <ul className="list-group mb-3">
-        {currentLoans.slice(0, 5).map((l) => (
+        {currentLoans.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
             {l.owner?.name} (
             {l.startDate
               ? new Date(l.startDate).toLocaleDateString(i18n.language)
               : ""}
-            →{" "}
+            →{' '}
             {l.endDate
               ? new Date(l.endDate).toLocaleDateString(i18n.language)
               : ""}
@@ -95,15 +108,27 @@ function Home() {
           <li className="list-group-item">{t('home.no_loans')}</li>
         )}
       </ul>
+      <p>
+        {currentLoans.length > previewCount && (
+          <span>
+            {t('home.counter', {
+              shown: previewCount,
+              total: currentLoans.length,
+              category: t('home.current_loans').toLowerCase(),
+            })}{' '}
+          </span>
+        )}
+        <Link to="/loans">{t('home.view_all')}</Link>
+      </p>
       <h2>{t('home.incoming_loans')}</h2>
       <ul className="list-group mb-3">
-        {upcomingLoans.slice(0, 5).map((l) => (
+        {upcomingLoans.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
             {l.owner?.name} (
             {l.startDate
               ? new Date(l.startDate).toLocaleDateString(i18n.language)
               : ""}
-            →{" "}
+            →{' '}
             {l.endDate
               ? new Date(l.endDate).toLocaleDateString(i18n.language)
               : ""}
@@ -114,6 +139,18 @@ function Home() {
           <li className="list-group-item">{t('home.no_loans')}</li>
         )}
       </ul>
+      <p>
+        {upcomingLoans.length > previewCount && (
+          <span>
+            {t('home.counter', {
+              shown: previewCount,
+              total: upcomingLoans.length,
+              category: t('home.incoming_loans').toLowerCase(),
+            })}{' '}
+          </span>
+        )}
+        <Link to="/loans">{t('home.view_all')}</Link>
+      </p>
       <h2>{t('home.shortcuts')}</h2>
       <div className="d-flex flex-wrap gap-2 mb-4">
         <Link className="btn btn-primary" to="/inventory">
