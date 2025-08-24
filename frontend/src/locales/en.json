@@ -29,8 +29,11 @@
   "equipments": {
     "title": "Local inventory",
     "search": "Search",
+    "name": "Name",
     "type": "Type",
     "location": "Location",
+    "availability": "Availability",
+    "actions": "Actions",
     "search_button": "Search",
     "add": {
       "title": "New equipment",
@@ -53,6 +56,17 @@
         "used": "Used",
         "very_used": "Very used"
       }
+    },
+    "edit": {
+      "title": "Edit equipment",
+      "submit": "Save",
+      "cancel": "Cancel",
+      "button": "Edit",
+      "error_update": "Error while updating"
+    },
+    "delete": {
+      "button": "Delete",
+      "confirm": "Delete this equipment?"
     }
   },
   "home": {
