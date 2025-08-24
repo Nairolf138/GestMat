@@ -108,34 +108,44 @@ function Catalog() {
           <button onClick={fetchItems} className="btn btn-primary">{t('catalog.search_button')}</button>
         </div>
       </div>
-      <ul className="list-group">
-        {items.map((it) => (
-          <li
-            key={it._id}
-            className="list-group-item d-flex justify-content-between align-items-center"
-          >
-            <span>
-              {it.name} - {it.structure?.name}
-            </span>
-            <div className="d-flex align-items-center">
-              <input
-                name={`quantity-${it._id}`}
-                type="number"
-                min="1"
-                className="form-control form-control-sm me-2"
-                value={quantities[it._id] || 1}
-                onChange={(e) => handleQtyChange(it._id, e.target.value)}
-              />
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => addToCart(it)}
-              >
-                {t('catalog.add_to_cart')}
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>{t('catalog.equipment')}</th>
+            <th>{t('catalog.structure')}</th>
+            <th>{t('catalog.available_total')}</th>
+            <th>{t('catalog.quantity')}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((it) => (
+            <tr key={it._id}>
+              <td>{it.name}</td>
+              <td>{it.structure?.name}</td>
+              <td>{it.availability}</td>
+              <td>
+                <input
+                  name={`quantity-${it._id}`}
+                  type="number"
+                  min="1"
+                  className="form-control form-control-sm"
+                  value={quantities[it._id] || 1}
+                  onChange={(e) => handleQtyChange(it._id, e.target.value)}
+                />
+              </td>
+              <td>
+                <button
+                  className="btn btn-success btn-sm"
+                  onClick={() => addToCart(it)}
+                >
+                  {t('catalog.add_to_cart')}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
