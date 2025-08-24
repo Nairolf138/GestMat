@@ -20,6 +20,8 @@ function Equipments() {
   const [userStructure, setUserStructure] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const structureName =
     user?.structure && typeof user.structure === 'object'
@@ -27,6 +29,8 @@ function Equipments() {
       : '';
 
   const fetchItems = () => {
+    setLoading(true);
+    setError('');
     const params = new URLSearchParams({
       search,
       type,
@@ -35,7 +39,11 @@ function Equipments() {
     });
     api(`/equipments?${params.toString()}`)
       .then(setItems)
-      .catch(() => setItems([]));
+      .catch((err) => {
+        setError(err.message || String(err));
+        setItems([]);
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -64,6 +72,7 @@ function Equipments() {
   return (
     <div className="container">
       <NavBar />
+      <Alert message={error} />
       <Alert type="success" message={message} />
       <h1>
         {t('equipments.title')}
@@ -136,30 +145,40 @@ function Equipments() {
           </tr>
         </thead>
         <tbody>
-          {items.map((e) => (
-            <tr key={e._id}>
-              <td>{e.name}</td>
-              <td>{e.type}</td>
-              <td>{e.location}</td>
-              <td>{e.availability}</td>
-              <td>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary me-2"
-                  onClick={() => setEditing(e)}
-                >
-                  {t('equipments.edit.button')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-danger"
-                  onClick={() => deleteEquipment(e._id)}
-                >
-                  {t('equipments.delete.button')}
-                </button>
+          {loading ? (
+            <tr>
+              <td colSpan="5" className="text-center">
+                <div className="spinner-border" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
               </td>
             </tr>
-          ))}
+          ) : (
+            items.map((e) => (
+              <tr key={e._id}>
+                <td>{e.name}</td>
+                <td>{e.type}</td>
+                <td>{e.location}</td>
+                <td>{e.availability}</td>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary me-2"
+                    onClick={() => setEditing(e)}
+                  >
+                    {t('equipments.edit.button')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger"
+                    onClick={() => deleteEquipment(e._id)}
+                  >
+                    {t('equipments.delete.button')}
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
       <button
