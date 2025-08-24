@@ -3,6 +3,7 @@ import NavBar from './NavBar';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import { useTranslation } from 'react-i18next';
+import LoanItem from './LoanItem.jsx';
 
 function Loans() {
   const { t } = useTranslation();
@@ -10,19 +11,15 @@ function Loans() {
   const [loans, setLoans] = useState([]);
   const [tab, setTab] = useState('owner');
 
-  useEffect(() => {
+  const refresh = () => {
     api('/loans')
       .then(setLoans)
       .catch(() => setLoans([]));
-  }, []);
-
-  const updateStatus = async (id, status) => {
-    await api(`/loans/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-    api('/loans').then(setLoans);
   };
+
+  useEffect(() => {
+    refresh();
+  }, []);
 
   const categorize = (list) => {
     const now = new Date();
@@ -51,32 +48,10 @@ function Loans() {
     loans.filter((l) => l.borrower?._id === structureId || l.borrower === structureId)
   );
 
-  const renderList = (list, isOwner) => (
+  const renderSection = (list, isOwner) => (
     <ul className="list-group mb-3">
       {list.map((l) => (
-        <li key={l._id} className="list-group-item">
-          {l.owner?.name} → {l.borrower?.name} :
-          {l.items?.map((it) =>
-            it.equipment ? ` ${it.equipment.name} x${it.quantity}` : ''
-          )}{' '}
-          [{l.status}]
-          {isOwner && l.status === 'pending' && (
-            <>
-              <button
-                onClick={() => updateStatus(l._id, 'accepted')}
-                className="btn btn-success btn-sm ms-2"
-              >
-                {t('loans.accept')}
-              </button>
-              <button
-                onClick={() => updateStatus(l._id, 'refused')}
-                className="btn btn-danger btn-sm ms-2"
-              >
-                {t('loans.refuse')}
-              </button>
-            </>
-          )}
-        </li>
+        <LoanItem key={l._id} loan={l} isOwner={isOwner} refresh={refresh} />
       ))}
       {!list.length && (
         <li className="list-group-item">{t('home.no_loans')}</li>
@@ -108,11 +83,20 @@ function Loans() {
       </ul>
       <div className="mt-3">
         <h2>{t('loans.finished')}</h2>
-        {renderList(tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished, tab === 'owner')}
+        {renderSection(
+          tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished,
+          tab === 'owner'
+        )}
         <h2>{t('loans.ongoing')}</h2>
-        {renderList(tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing, tab === 'owner')}
+        {renderSection(
+          tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
+          tab === 'owner'
+        )}
         <h2>{t('loans.upcoming')}</h2>
-        {renderList(tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming, tab === 'owner')}
+        {renderSection(
+          tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
+          tab === 'owner'
+        )}
       </div>
     </div>
   );

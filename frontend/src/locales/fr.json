@@ -86,6 +86,8 @@
     "send": "Envoyer",
     "accept": "Accepter",
     "refuse": "Refuser",
+    "modify": "Modifier",
+    "cancel": "Annuler",
     "error_create": "Erreur lors de la création",
     "as_owner": "Pr\u00eats",
     "as_borrower": "Emprunts",
