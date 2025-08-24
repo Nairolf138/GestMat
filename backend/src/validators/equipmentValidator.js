@@ -6,6 +6,7 @@ const conditionValues = ['Neuf', 'L\u00e9g\u00e8rement us\u00e9', 'Us\u00e9', 'T
 const createEquipmentValidator = [
   body('name').notEmpty().withMessage('Name is required'),
   body('type')
+    .trim()
     .notEmpty()
     .withMessage('Type is required')
     .bail()
@@ -36,6 +37,7 @@ const updateEquipmentValidator = [
   body('name').optional().notEmpty(),
   body('type')
     .optional()
+    .trim()
     .notEmpty()
     .bail()
     .custom((value, { req }) => {
