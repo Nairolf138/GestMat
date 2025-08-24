@@ -5,6 +5,7 @@ import NavBar from "./NavBar";
 import { api } from "./api";
 import Alert from "./Alert.jsx";
 import { AuthContext } from "./AuthContext.jsx";
+import i18n from "./i18n";
 
 function Home() {
   const { t } = useTranslation();
@@ -66,7 +67,11 @@ function Home() {
       <ul className="list-group mb-3">
         {pending.slice(0, 5).map((l) => (
           <li key={l._id} className="list-group-item">
-            {l.borrower?.name} → {l.owner?.name} ({l.startDate?.slice(0, 10)})
+            {l.borrower?.name} → {l.owner?.name} (
+            {l.startDate
+              ? new Date(l.startDate).toLocaleDateString(i18n.language)
+              : ""}
+            )
           </li>
         ))}
         {!pending.length && <li className="list-group-item">{t('home.no_requests')}</li>}
@@ -75,8 +80,15 @@ function Home() {
       <ul className="list-group mb-3">
         {currentLoans.slice(0, 5).map((l) => (
           <li key={l._id} className="list-group-item">
-            {l.owner?.name} ({l.startDate?.slice(0, 10)} →{" "}
-            {l.endDate?.slice(0, 10)})
+            {l.owner?.name} (
+            {l.startDate
+              ? new Date(l.startDate).toLocaleDateString(i18n.language)
+              : ""}
+            →{" "}
+            {l.endDate
+              ? new Date(l.endDate).toLocaleDateString(i18n.language)
+              : ""}
+            )
           </li>
         ))}
         {!currentLoans.length && (
@@ -87,8 +99,15 @@ function Home() {
       <ul className="list-group mb-3">
         {upcomingLoans.slice(0, 5).map((l) => (
           <li key={l._id} className="list-group-item">
-            {l.owner?.name} ({l.startDate?.slice(0, 10)} →{" "}
-            {l.endDate?.slice(0, 10)})
+            {l.owner?.name} (
+            {l.startDate
+              ? new Date(l.startDate).toLocaleDateString(i18n.language)
+              : ""}
+            →{" "}
+            {l.endDate
+              ? new Date(l.endDate).toLocaleDateString(i18n.language)
+              : ""}
+            )
           </li>
         ))}
         {!upcomingLoans.length && (
