@@ -11,6 +11,7 @@ function Home() {
   const { user } = useContext(AuthContext);
   const [loans, setLoans] = useState([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
   const [message] = useState(location.state?.message || "");
 
@@ -20,8 +21,18 @@ function Home() {
         if (Array.isArray(data)) setLoans(data);
         else setLoans([]);
       })
-      .catch(() => setLoans([]));
+      .catch(() => setLoans([]))
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="container">
+        <NavBar />
+        <p>Chargement...</p>
+      </div>
+    );
+  }
 
   const pending = loans.filter((l) => l.status === "pending");
   const now = new Date();
