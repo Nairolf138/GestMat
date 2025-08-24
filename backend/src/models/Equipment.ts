@@ -1,17 +1,21 @@
 import { Db, ObjectId, WithId } from 'mongodb';
+import type { Structure } from './Structure';
 
 export interface Equipment {
   _id?: ObjectId;
-  structure?: ObjectId;
+  structure?: ObjectId | Structure;
+  type?: string;
+  totalQty?: number;
+  availableQty?: number;
   [key: string]: unknown;
 }
 
-export function findEquipments(db: Db, filter: Partial<Equipment>): Promise<Equipment[]> {
+export function findEquipments(db: Db, filter: any): Promise<Equipment[]> {
   return db.collection<Equipment>('equipments').find(filter).sort({ name: 1 }).toArray();
 }
 
 export async function createEquipment(db: Db, data: Equipment): Promise<WithId<Equipment>> {
-  if (data.structure) data.structure = new ObjectId(data.structure);
+  if (data.structure) data.structure = new ObjectId((data.structure as any));
   const result = await db.collection<Equipment>('equipments').insertOne(data);
   return { _id: result.insertedId, ...data };
 }
@@ -21,7 +25,7 @@ export async function updateEquipment(
   id: string,
   data: Partial<Equipment>
 ): Promise<Equipment | null> {
-  if (data.structure) data.structure = new ObjectId(data.structure);
+  if (data.structure) data.structure = new ObjectId((data.structure as any));
   const res = await db.collection<Equipment>('equipments').findOneAndUpdate(
     { _id: new ObjectId(id) },
     { $set: data },

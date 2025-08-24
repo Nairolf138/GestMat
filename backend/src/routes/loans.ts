@@ -10,13 +10,9 @@ import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import { createLoanValidator, updateLoanValidator } from '../validators/loanValidator';
 
-interface AuthRequest extends Request {
-  user: any;
-}
-
 const router = express.Router();
 
-router.get('/', auth(), async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.get('/', auth(), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const db = req.app.locals.db;
     const loans = await listLoans(db, req.user);
@@ -26,7 +22,7 @@ router.get('/', auth(), async (req: AuthRequest, res: Response, next: NextFuncti
   }
 });
 
-router.post('/', auth(), createLoanValidator, validate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.post('/', auth(), createLoanValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     const loan = await createLoanRequest(db, req.body);
@@ -36,7 +32,7 @@ router.post('/', auth(), createLoanValidator, validate, async (req: AuthRequest,
   }
 });
 
-router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     const updated = await updateLoanRequest(db, req.user, req.params.id, req.body);
@@ -46,7 +42,7 @@ router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req:
   }
 });
 
-router.delete('/:id', auth(), checkId(), async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.delete('/:id', auth(), checkId(), async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     const result = await deleteLoanRequest(db, req.user, req.params.id);
