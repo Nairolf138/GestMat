@@ -7,6 +7,7 @@ import AddEquipment from './AddEquipment';
 import EditEquipment from './EditEquipment';
 import NavBar from './NavBar';
 import Alert from './Alert.jsx';
+import Loading from './Loading.jsx';
 import { AuthContext } from './AuthContext.jsx';
 
 function Equipments() {
@@ -23,7 +24,7 @@ function Equipments() {
   const [editing, setEditing] = useState(null);
   const {
     data: items = [],
-    isFetching: loading,
+    isFetching,
     error,
     refetch,
   } = useQuery({
@@ -169,12 +170,10 @@ function Equipments() {
           </tr>
         </thead>
         <tbody>
-          {loading ? (
+          {isFetching ? (
             <tr>
-              <td colSpan="5" className="text-center">
-                <div className="spinner-border" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
+              <td colSpan="5">
+                <Loading />
               </td>
             </tr>
           ) : (
