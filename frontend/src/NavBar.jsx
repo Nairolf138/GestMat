@@ -5,10 +5,15 @@ import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 
 function NavBar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, setUser } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
+  const handleLanguageChange = (event) => {
+    const newLang = event.target.value;
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);
+  };
   const handleLogout = async () => {
     try {
       await api('/auth/logout', { method: 'POST' });
@@ -72,6 +77,14 @@ function NavBar() {
             </>
           )}
           </div>
+          <select
+            className="form-select ms-auto"
+            value={i18n.language}
+            onChange={handleLanguageChange}
+          >
+            <option value="fr">fr</option>
+            <option value="en">en</option>
+          </select>
         </div>
       </div>
     </nav>
