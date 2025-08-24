@@ -170,9 +170,9 @@ function AddEquipment({ onCreated }) {
         >
           <option value="">{t('common.choose')}</option>
           <option value="Neuf">{t('equipments.add.conditions.new')}</option>
-          <option value="L\u00e9g\u00e8rement us\u00e9">{t('equipments.add.conditions.used_lightly')}</option>
-          <option value="Us\u00e9">{t('equipments.add.conditions.used')}</option>
-          <option value="Tr\u00e8s us\u00e9">{t('equipments.add.conditions.very_used')}</option>
+          <option value="Légèrement usé">{t('equipments.add.conditions.used_lightly')}</option>
+          <option value="Usé">{t('equipments.add.conditions.used')}</option>
+          <option value="Très usé">{t('equipments.add.conditions.very_used')}</option>
         </select>
         {errors.condition && (
           <div
