@@ -11,7 +11,7 @@ const { findUserById } = require('../models/User');
 const { ObjectId } = require('mongodb');
 const auth = require('../middleware/auth');
 const createEquipmentFilter = require('../utils/createEquipmentFilter');
-const { canModify } = require('../utils/roleAccess');
+const { canModify, normalizeType } = require('../utils/roleAccess');
 const { ADMIN_ROLE } = require('../config/roles');
 const validate = require('../middleware/validate');
 const checkId = require('../middleware/checkObjectId');
@@ -64,10 +64,11 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req, res, ne
       structureId = user.structure;
     }
   }
-  if (!canModify(req.user.role, req.body.type)) {
+  const type = normalizeType(req.body.type);
+  if (!type || !canModify(req.user.role, type)) {
     return next(forbidden('Access denied'));
   }
-  const equipment = await createEquipment(db, { ...req.body, location, structure: structureId });
+  const equipment = await createEquipment(db, { ...req.body, type, location, structure: structureId });
   res.json(equipment);
 });
 
@@ -86,11 +87,12 @@ router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async 
     ) {
       return next(forbidden('Access denied'));
     }
-    const newType = req.body.type || current.type;
-    if (!canModify(req.user.role, newType)) {
+    const newType = req.body.type ? normalizeType(req.body.type) : current.type;
+    if (!newType || !canModify(req.user.role, newType)) {
       return next(forbidden('Access denied'));
     }
-    const updated = await updateEquipment(db, req.params.id, req.body);
+    const updateData = req.body.type ? { ...req.body, type: newType } : req.body;
+    const updated = await updateEquipment(db, req.params.id, updateData);
     if (!updated) return next(notFound('Equipment not found'));
     res.json(updated);
   } catch (err) {
@@ -113,7 +115,8 @@ router.delete('/:id', auth(), checkId(), async (req, res, next) => {
     ) {
       return next(forbidden('Access denied'));
     }
-    if (!canModify(req.user.role, current.type)) {
+    const type = normalizeType(current.type);
+    if (!canModify(req.user.role, type)) {
       return next(forbidden('Access denied'));
     }
     const removed = await deleteEquipment(db, req.params.id);

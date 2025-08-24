@@ -1,4 +1,5 @@
 const test = require('node:test');
+const assert = require('assert');
 const request = require('supertest');
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient } = require('mongodb');
@@ -51,6 +52,48 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
     .set(auth())
     .send({ totalQty: 2, availableQty: 3 })
     .expect(400);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('reject invalid type values and normalize case/accents', async () => {
+  const { app, client, mongod } = await createApp();
+
+  // invalid type on create
+  const res1 = await request(app)
+    .post('/api/equipments')
+    .set(auth())
+    .send({ name: 'Mic', type: 'Unknown', condition: 'Neuf', totalQty: 1 })
+    .expect(400);
+  if (!res1.body.errors?.some((e) => e.msg.includes('Type'))) {
+    throw new Error('Expected validation error for type');
+  }
+
+  // valid type variation on create
+  const res2 = await request(app)
+    .post('/api/equipments')
+    .set(auth())
+    .send({ name: 'Light', type: 'lumiere', condition: 'Neuf', totalQty: 1, availableQty: 1 })
+    .expect(200);
+  assert.strictEqual(res2.body.type, 'Lumière');
+
+  const id = res2.body._id;
+
+  // invalid type on update
+  await request(app)
+    .put(`/api/equipments/${id}`)
+    .set(auth())
+    .send({ type: 'bad' })
+    .expect(400);
+
+  // valid type variation on update
+  const res3 = await request(app)
+    .put(`/api/equipments/${id}`)
+    .set(auth())
+    .send({ type: 'son' })
+    .expect(200);
+  assert.strictEqual(res3.body.type, 'Son');
 
   await client.close();
   await mongod.stop();
