@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
 import EditEquipment from './EditEquipment';
@@ -13,7 +14,6 @@ function Equipments() {
   const routerLocation = useLocation();
   const { user } = useContext(AuthContext);
   const [message] = useState(routerLocation.state?.message || '');
-  const [items, setItems] = useState([]);
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [location, setLocation] = useState('');
@@ -21,32 +21,31 @@ function Equipments() {
   const [userStructure, setUserStructure] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const {
+    data: items = [],
+    isFetching: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['equipments', { search, type, location, sort, userStructure }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        search,
+        type,
+        location,
+        structure: userStructure,
+        sort,
+      });
+      return await api(`/equipments?${params.toString()}`);
+    },
+    enabled: userStructure !== '',
+    staleTime: 5 * 60 * 1000,
+  });
 
   const structureName =
     user?.structure && typeof user.structure === 'object'
       ? user.structure.name
       : '';
-
-  const fetchItems = () => {
-    setLoading(true);
-    setError('');
-    const params = new URLSearchParams({
-      search,
-      type,
-      location,
-      structure: userStructure,
-      sort,
-    });
-    api(`/equipments?${params.toString()}`)
-      .then(setItems)
-      .catch((err) => {
-        setError(err.message || String(err));
-        setItems([]);
-      })
-      .finally(() => setLoading(false));
-  };
 
   useEffect(() => {
     if (user) {
@@ -55,17 +54,11 @@ function Equipments() {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (userStructure !== '') {
-      fetchItems();
-    }
-  }, [search, type, location, sort, userStructure]);
-
   const deleteEquipment = async (id) => {
     if (!window.confirm(t('equipments.delete.confirm'))) return;
     try {
       await api(`/equipments/${id}`, { method: 'DELETE' });
-      fetchItems();
+      refetch();
     } catch {
       // ignore errors
     }
@@ -74,7 +67,7 @@ function Equipments() {
   return (
     <div className="container">
       <NavBar />
-      <Alert message={error} />
+      <Alert message={error?.message} />
       <Alert type="success" message={message} />
       <h1>
         {t('equipments.title')}
@@ -85,7 +78,7 @@ function Equipments() {
         autoComplete="off"
         onSubmit={(e) => {
           e.preventDefault();
-          fetchItems();
+          refetch();
         }}
       >
         <div className="col-md">
@@ -158,7 +151,7 @@ function Equipments() {
               setType('');
               setLocation('');
               setSort('');
-              setTimeout(fetchItems, 0);
+              setTimeout(() => refetch(), 0);
             }}
           >
             {t('equipments.reset')}
@@ -222,7 +215,7 @@ function Equipments() {
       {showForm && (
         <AddEquipment
           onCreated={() => {
-            fetchItems();
+            refetch();
             setShowForm(false);
           }}
         />
@@ -231,7 +224,7 @@ function Equipments() {
         <EditEquipment
           equipment={editing}
           onUpdated={() => {
-            fetchItems();
+            refetch();
             setEditing(null);
           }}
           onCancel={() => setEditing(null)}
