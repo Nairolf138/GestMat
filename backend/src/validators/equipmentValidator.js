@@ -1,7 +1,7 @@
 const { body } = require('express-validator');
 const { ALL_TYPES, normalizeType } = require('../utils/roleAccess');
 
-const conditionValues = ['Neuf', 'L\u00e9g\u00e8rement us\u00e9', 'Us\u00e9', 'Tr\u00e8s us\u00e9'];
+const conditionValues = ['Neuf', 'Légèrement usé', 'Usé', 'Très usé'];
 
 const createEquipmentValidator = [
   body('name').notEmpty().withMessage('Name is required'),
