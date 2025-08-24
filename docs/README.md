@@ -25,9 +25,10 @@ Tous les rôles peuvent consulter l'ensemble du catalogue. En revanche, l'ajout 
 ## Processus de prêt
 
 1. Un·e régisseur·se sélectionne des équipements et soumet une demande de prêt à une autre structure.
-2. La structure propriétaire (ou un administrateur) accepte ou refuse la demande.
-3. Lorsqu’une demande est acceptée, les quantités disponibles sont ajustées. Un refus rétablit les quantités initiales.
-4. Des notifications e‑mail peuvent être envoyées si `SMTP_URL` et `NOTIFY_EMAIL` sont configurés.
+2. L’emprunteur peut modifier ou annuler sa demande tant que la date de début n’est pas passée. Les demandes en attente ou programmées peuvent également être supprimées par l’emprunteur.
+3. La structure propriétaire (ou un administrateur) accepte ou refuse la demande.
+4. Lorsqu’une demande est acceptée, les quantités disponibles sont ajustées. Un refus rétablit les quantités initiales.
+5. Des notifications e‑mail peuvent être envoyées si `SMTP_URL` et `NOTIFY_EMAIL` sont configurés.
 
 ## Installation et lancement
 
