@@ -9,10 +9,19 @@ function LoanItem({ loan, isOwner, refresh }) {
   const now = new Date();
   const isFuture = start && start > now;
 
-  const statusColors = {
-    pending: 'bg-warning',
-    accepted: 'bg-success',
-    refused: 'bg-danger',
+  const statusStyles = {
+    pending: {
+      backgroundColor: 'var(--color-secondary)',
+      color: '#fff',
+    },
+    accepted: {
+      backgroundColor: 'var(--color-success)',
+      color: '#fff',
+    },
+    refused: {
+      backgroundColor: 'var(--color-danger)',
+      color: '#fff',
+    },
   };
 
   const period = start && end
@@ -58,7 +67,11 @@ function LoanItem({ loan, isOwner, refresh }) {
           </div>
         </div>
         <span
-          className={`badge ${statusColors[loan.status] || 'bg-secondary'} rounded-pill`}
+          className="badge rounded-pill"
+          style={statusStyles[loan.status] || {
+            backgroundColor: 'var(--color-secondary)',
+            color: '#fff',
+          }}
         >
           {t(`loans.status.${loan.status}`)}
         </span>
@@ -67,27 +80,61 @@ function LoanItem({ loan, isOwner, refresh }) {
         <div className="mt-2">
           <button
             onClick={() => changeStatus('accepted')}
-            className="btn btn-success btn-sm me-2"
+            className="btn btn-sm me-2"
+            style={{
+              backgroundColor: 'var(--color-success)',
+              borderColor: 'var(--color-success)',
+              color: '#fff',
+            }}
           >
             {t('loans.accept')}
           </button>
           <button
             onClick={() => changeStatus('refused')}
-            className="btn btn-danger btn-sm me-2"
+            className="btn btn-sm me-2"
+            style={{
+              backgroundColor: 'var(--color-danger)',
+              borderColor: 'var(--color-danger)',
+              color: '#fff',
+            }}
           >
             {t('loans.refuse')}
           </button>
-          <button onClick={cancelLoan} className="btn btn-secondary btn-sm">
+          <button
+            onClick={cancelLoan}
+            className="btn btn-sm"
+            style={{
+              backgroundColor: 'var(--color-secondary)',
+              borderColor: 'var(--color-secondary)',
+              color: '#fff',
+            }}
+          >
             {t('loans.cancel')}
           </button>
         </div>
       )}
       {!isOwner && (loan.status === 'pending' || isFuture) && (
         <div className="mt-2">
-          <button onClick={modifyLoan} className="btn btn-primary btn-sm me-2">
+          <button
+            onClick={modifyLoan}
+            className="btn btn-sm me-2"
+            style={{
+              backgroundColor: 'var(--color-primary)',
+              borderColor: 'var(--color-primary)',
+              color: '#fff',
+            }}
+          >
             {t('loans.modify')}
           </button>
-          <button onClick={cancelLoan} className="btn btn-danger btn-sm">
+          <button
+            onClick={cancelLoan}
+            className="btn btn-sm"
+            style={{
+              backgroundColor: 'var(--color-danger)',
+              borderColor: 'var(--color-danger)',
+              color: '#fff',
+            }}
+          >
             {t('loans.cancel')}
           </button>
         </div>

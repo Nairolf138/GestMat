@@ -100,7 +100,17 @@ function Login() {
           </div>
         )}
       </div>
-      <button type="submit" className="btn btn-primary">{t('login.submit')}</button>
+      <button
+        type="submit"
+        className="btn"
+        style={{
+          backgroundColor: 'var(--color-primary)',
+          borderColor: 'var(--color-primary)',
+          color: '#fff',
+        }}
+      >
+        {t('login.submit')}
+      </button>
       <p className="mt-3">
         <Link to="/register">{t('register.submit')}</Link>
       </p>

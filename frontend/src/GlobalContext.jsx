@@ -23,6 +23,13 @@ export function GlobalProvider({ children }) {
     api('/structures', {}, false).then(setStructures).catch(() => setStructures([]));
   }, []);
 
+  const toastStyles = {
+    primary: { backgroundColor: 'var(--color-primary)', color: '#fff' },
+    secondary: { backgroundColor: 'var(--color-secondary)', color: '#fff' },
+    success: { backgroundColor: 'var(--color-success)', color: '#fff' },
+    danger: { backgroundColor: 'var(--color-danger)', color: '#fff' },
+  };
+
   return (
     <GlobalContext.Provider value={{ roles, structures, notify }}>
       {children}
@@ -32,10 +39,11 @@ export function GlobalProvider({ children }) {
       >
         {toast && (
           <div
-            className={`toast show text-bg-${toast.type}`}
+            className="toast show"
             role="alert"
             aria-live="assertive"
             aria-atomic="true"
+            style={toastStyles[toast.type]}
           >
             <div className="d-flex">
               <div className="toast-body">{toast.message}</div>
