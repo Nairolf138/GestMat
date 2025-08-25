@@ -56,6 +56,10 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
+.nav-link.active {
+  text-decoration: underline;
+}
+
 .btn:hover,
 .btn:focus,
 .nav-link:hover,
