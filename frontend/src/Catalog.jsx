@@ -21,6 +21,8 @@ function Catalog() {
   const [success, setSuccess] = useState('');
   const [quantities, setQuantities] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  const isInvalidPeriod =
+    filters.startDate && filters.endDate && filters.startDate > filters.endDate;
 
   const fetchItems = () => {
     const params = new URLSearchParams({
@@ -58,6 +60,11 @@ function Catalog() {
     if (!qty) return;
     if (!filters.startDate || !filters.endDate) {
       setError(t('catalog.select_period'));
+      setSuccess('');
+      return;
+    }
+    if (isInvalidPeriod) {
+      setError(t('catalog.invalid_period'));
       setSuccess('');
       return;
     }
@@ -124,7 +131,13 @@ function Catalog() {
           <input name="endDate" type="date" className="form-control" value={filters.endDate} onChange={handleChange} />
         </div>
         <div className="col-auto">
-          <button onClick={fetchItems} className="btn btn-primary">{t('catalog.search_button')}</button>
+          <button
+            onClick={fetchItems}
+            className="btn btn-primary"
+            disabled={isInvalidPeriod}
+          >
+            {t('catalog.search_button')}
+          </button>
         </div>
       </div>
       {isMobile ? (

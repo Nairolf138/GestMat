@@ -106,6 +106,7 @@
     "add_to_cart": "Ajouter au panier",
     "quantity_prompt": "Quantité ?",
     "select_period": "Veuillez sélectionner une période",
+    "invalid_period": "Période invalide",
     "unavailable": "Quantité indisponible pour cette période",
     "added": "Ajouté au panier",
     "error": "Erreur"
