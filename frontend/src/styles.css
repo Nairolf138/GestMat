@@ -111,3 +111,13 @@ body {
   flex-wrap: wrap;
   gap: var(--spacing-sm);
 }
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-icon {
+  font-size: 1.25rem;
+}
