@@ -57,6 +57,12 @@ function Home() {
     return start && start > now;
   });
 
+  const shortcutStyle = {
+    backgroundColor: 'var(--color-primary)',
+    borderColor: 'var(--color-primary)',
+    color: '#fff',
+  };
+
   return (
     <div className="container">
       <NavBar />
@@ -153,19 +159,19 @@ function Home() {
       </p>
       <h2>{t('home.shortcuts')}</h2>
       <div className="d-flex flex-wrap gap-2 mb-4">
-        <Link className="btn btn-primary" to="/inventory">
+        <Link className="btn" style={shortcutStyle} to="/inventory">
           {t('nav.inventory')}
         </Link>
-        <Link className="btn btn-primary" to="/catalog">
+        <Link className="btn" style={shortcutStyle} to="/catalog">
           {t('nav.catalog')}
         </Link>
-        <Link className="btn btn-primary" to="/loans">
+        <Link className="btn" style={shortcutStyle} to="/loans">
           {t('nav.loans')}
         </Link>
-        <Link className="btn btn-primary" to="/cart">
+        <Link className="btn" style={shortcutStyle} to="/cart">
           {t('nav.cart')}
         </Link>
-        <Link className="btn btn-primary" to="/profile">
+        <Link className="btn" style={shortcutStyle} to="/profile">
           {t('nav.profile')}
         </Link>
       </div>

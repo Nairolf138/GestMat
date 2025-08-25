@@ -59,6 +59,18 @@ function Catalog() {
     setQuantities({ ...quantities, [id]: value });
   };
 
+  const primaryBtnStyle = {
+    backgroundColor: 'var(--color-primary)',
+    borderColor: 'var(--color-primary)',
+    color: '#fff',
+  };
+
+  const successBtnStyle = {
+    backgroundColor: 'var(--color-success)',
+    borderColor: 'var(--color-success)',
+    color: '#fff',
+  };
+
   const addToCart = async (eq) => {
     const qty = Number(quantities[eq._id] || 1);
     if (!qty) return;
@@ -137,7 +149,8 @@ function Catalog() {
         <div className="col-auto">
           <button
             onClick={fetchItems}
-            className="btn btn-primary"
+            className="btn"
+            style={primaryBtnStyle}
             disabled={isInvalidPeriod}
           >
             {t('catalog.search_button')}
@@ -168,7 +181,8 @@ function Catalog() {
                       onChange={(e) => handleQtyChange(it._id, e.target.value)}
                     />
                     <button
-                      className="btn btn-success btn-sm"
+                      className="btn btn-sm"
+                      style={successBtnStyle}
                       onClick={() => addToCart(it)}
                     >
                       {t('catalog.add_to_cart')}
@@ -216,7 +230,8 @@ function Catalog() {
                     </td>
                     <td>
                       <button
-                        className="btn btn-success btn-sm"
+                        className="btn btn-sm"
+                        style={successBtnStyle}
                         onClick={() => addToCart(it)}
                       >
                         {t('catalog.add_to_cart')}

@@ -72,6 +72,24 @@ function Equipments() {
     }
   };
 
+  const primaryBtnStyle = {
+    backgroundColor: 'var(--color-primary)',
+    borderColor: 'var(--color-primary)',
+    color: '#fff',
+  };
+
+  const secondaryBtnStyle = {
+    backgroundColor: 'var(--color-secondary)',
+    borderColor: 'var(--color-secondary)',
+    color: '#fff',
+  };
+
+  const dangerBtnStyle = {
+    backgroundColor: 'var(--color-danger)',
+    borderColor: 'var(--color-danger)',
+    color: '#fff',
+  };
+
   return (
     <div className="container">
       <NavBar />
@@ -148,12 +166,13 @@ function Equipments() {
           </select>
         </div>
         <div className="col-auto">
-          <button type="submit" className="btn btn-primary me-2">
+          <button type="submit" className="btn me-2" style={primaryBtnStyle}>
             {t('equipments.search_button')}
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn"
+            style={secondaryBtnStyle}
             onClick={() => {
               setSearch('');
               setType('');
@@ -185,14 +204,16 @@ function Equipments() {
                   <div className="card-actions">
                     <button
                       type="button"
-                      className="btn btn-sm btn-secondary me-2"
+                      className="btn btn-sm me-2"
+                      style={secondaryBtnStyle}
                       onClick={() => setEditing(e)}
                     >
                       {t('equipments.edit.button')}
                     </button>
                     <button
                       type="button"
-                      className="btn btn-sm btn-danger"
+                      className="btn btn-sm"
+                      style={dangerBtnStyle}
                       onClick={() => deleteEquipment(e._id)}
                     >
                       {t('equipments.delete.button')}
@@ -232,14 +253,16 @@ function Equipments() {
                     <td>
                       <button
                         type="button"
-                        className="btn btn-sm btn-secondary me-2"
+                        className="btn btn-sm me-2"
+                        style={secondaryBtnStyle}
                         onClick={() => setEditing(e)}
                       >
                         {t('equipments.edit.button')}
                       </button>
                       <button
                         type="button"
-                        className="btn btn-sm btn-danger"
+                        className="btn btn-sm"
+                        style={dangerBtnStyle}
                         onClick={() => deleteEquipment(e._id)}
                       >
                         {t('equipments.delete.button')}
@@ -254,7 +277,8 @@ function Equipments() {
       )}
       <button
         onClick={() => setShowForm(!showForm)}
-        className="btn btn-secondary mb-3"
+        className="btn mb-3"
+        style={secondaryBtnStyle}
         type="button"
       >
         {t('equipments.add.title')}

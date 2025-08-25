@@ -101,7 +101,15 @@ function NavBar() {
               >
                 {t('nav.profile')}
               </NavLink>
-              <button className="btn btn-outline-primary ms-2" onClick={handleLogout}>
+              <button
+                className="btn ms-2"
+                style={{
+                  color: 'var(--color-primary)',
+                  borderColor: 'var(--color-primary)',
+                  backgroundColor: 'transparent',
+                }}
+                onClick={handleLogout}
+              >
                 {t('nav.logout')}
               </button>
             </>
@@ -127,7 +135,12 @@ function NavBar() {
           </div>
           <div className="d-flex ms-auto align-items-center">
             <button
-              className="btn btn-outline-secondary me-2 theme-toggle-btn"
+              className="btn me-2 theme-toggle-btn"
+              style={{
+                color: 'var(--color-secondary)',
+                borderColor: 'var(--color-secondary)',
+                backgroundColor: 'transparent',
+              }}
               onClick={handleThemeToggle}
               aria-pressed={isDarkTheme}
               aria-label={themeLabel}

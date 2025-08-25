@@ -226,7 +226,17 @@ function Register() {
           </div>
         )}
       </div>
-      <button type="submit" className="btn btn-primary">{t('register.submit')}</button>
+      <button
+        type="submit"
+        className="btn"
+        style={{
+          backgroundColor: 'var(--color-primary)',
+          borderColor: 'var(--color-primary)',
+          color: '#fff',
+        }}
+      >
+        {t('register.submit')}
+      </button>
     </form>
   );
 }
