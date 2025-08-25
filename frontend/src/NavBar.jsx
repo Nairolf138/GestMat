@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
@@ -42,9 +42,9 @@ function NavBar() {
   return (
     <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/">
+        <NavLink className="navbar-brand" to="/">
           GestMat
-        </Link>
+        </NavLink>
         <button
           className="navbar-toggler"
           type="button"
@@ -60,23 +60,23 @@ function NavBar() {
           id="navbarNav"
         >
           <div className="navbar-nav">
-          <Link className="nav-link" to="/catalog">
+          <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/catalog">
             {t('nav.catalog')}
-          </Link>
+          </NavLink>
           {user && (
             <>
-              <Link className="nav-link" to="/inventory">
+              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/inventory">
                 {t('nav.inventory')}
-              </Link>
-              <Link className="nav-link" to="/loans">
+              </NavLink>
+              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/loans">
                 {t('nav.loans')}
-              </Link>
-              <Link className="nav-link" to="/cart">
+              </NavLink>
+              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/cart">
                 {t('nav.cart')}
-              </Link>
-              <Link className="nav-link" to="/profile">
+              </NavLink>
+              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/profile">
                 {t('nav.profile')}
-              </Link>
+              </NavLink>
               <button className="btn btn-outline-primary ms-2" onClick={handleLogout}>
                 {t('nav.logout')}
               </button>
@@ -84,12 +84,12 @@ function NavBar() {
           )}
           {!user && (
             <>
-              <Link className="nav-link" to="/login">
+              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/login">
                 {t('nav.login')}
-              </Link>
-              <Link className="nav-link" to="/register">
+              </NavLink>
+              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/register">
                 {t('register.title')}
-              </Link>
+              </NavLink>
             </>
           )}
           </div>
