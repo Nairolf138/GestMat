@@ -4,7 +4,7 @@
   --color-text: #212529;
   --color-navbar-bg: #ffffff;
   --color-primary: #4a90e2;
-  --color-secondary: #357abd;
+  --color-secondary: #245a8b;
   --color-success: #28a745;
   --color-danger: #dc3545;
 
@@ -22,7 +22,7 @@
       --color-text: #f4f6f9;
       --color-navbar-bg: #343a40;
       --color-primary: #4a90e2;
-      --color-secondary: #357abd;
+      --color-secondary: #245a8b;
       --color-success: #28a745;
       --color-danger: #dc3545;
     }
@@ -33,7 +33,7 @@
   --color-text: #f4f6f9;
   --color-navbar-bg: #343a40;
   --color-primary: #4a90e2;
-  --color-secondary: #357abd;
+  --color-secondary: #245a8b;
   --color-success: #28a745;
   --color-danger: #dc3545;
 }

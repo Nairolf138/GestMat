@@ -137,9 +137,13 @@ function NavBar() {
             <button
               className="btn me-2 theme-toggle-btn"
               style={{
-                color: 'var(--color-secondary)',
+                color: isDarkTheme
+                  ? 'var(--color-text)'
+                  : 'var(--color-secondary)',
                 borderColor: 'var(--color-secondary)',
-                backgroundColor: 'transparent',
+                backgroundColor: isDarkTheme
+                  ? 'var(--color-secondary)'
+                  : 'transparent',
               }}
               onClick={handleThemeToggle}
               aria-pressed={isDarkTheme}
