@@ -5,6 +5,7 @@ import { GlobalContext } from './GlobalContext';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { addToCart as addCartItem } from './Cart.jsx';
+import Loading from './Loading.jsx';
 
 function Catalog() {
   const { t } = useTranslation();
@@ -21,10 +22,12 @@ function Catalog() {
   const [success, setSuccess] = useState('');
   const [quantities, setQuantities] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  const [loading, setLoading] = useState(false);
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
 
   const fetchItems = () => {
+    setLoading(true);
     const params = new URLSearchParams({
       search: filters.search,
       type: filters.type,
@@ -33,7 +36,8 @@ function Catalog() {
     });
     api(`/equipments?${params.toString()}`)
       .then(setItems)
-      .catch(() => setItems([]));
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -142,34 +146,38 @@ function Catalog() {
       </div>
       {isMobile ? (
         <div className="card-grid">
-          {items.map((it) => (
-            <div className="card" key={it._id}>
-              <div className="card-body">
-                <h5 className="card-title">{it.name}</h5>
-                <p className="card-text">
-                  <strong>{t('catalog.structure')}:</strong> {it.structure?.name}
-                  <br />
-                  <strong>{t('catalog.available_total')}:</strong> {it.availability}
-                </p>
-                <div className="card-actions">
-                  <input
-                    name={`quantity-${it._id}`}
-                    type="number"
-                    min="1"
-                    className="form-control form-control-sm me-2"
-                    value={quantities[it._id] || 1}
-                    onChange={(e) => handleQtyChange(it._id, e.target.value)}
-                  />
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={() => addToCart(it)}
-                  >
-                    {t('catalog.add_to_cart')}
-                  </button>
+          {loading ? (
+            <Loading />
+          ) : (
+            items.map((it) => (
+              <div className="card" key={it._id}>
+                <div className="card-body">
+                  <h5 className="card-title">{it.name}</h5>
+                  <p className="card-text">
+                    <strong>{t('catalog.structure')}:</strong> {it.structure?.name}
+                    <br />
+                    <strong>{t('catalog.available_total')}:</strong> {it.availability}
+                  </p>
+                  <div className="card-actions">
+                    <input
+                      name={`quantity-${it._id}`}
+                      type="number"
+                      min="1"
+                      className="form-control form-control-sm me-2"
+                      value={quantities[it._id] || 1}
+                      onChange={(e) => handleQtyChange(it._id, e.target.value)}
+                    />
+                    <button
+                      className="btn btn-success btn-sm"
+                      onClick={() => addToCart(it)}
+                    >
+                      {t('catalog.add_to_cart')}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       ) : (
         <div className="table-responsive">
@@ -184,31 +192,39 @@ function Catalog() {
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => (
-                <tr key={it._id}>
-                  <td>{it.name}</td>
-                  <td>{it.structure?.name}</td>
-                  <td>{it.availability}</td>
-                  <td>
-                    <input
-                      name={`quantity-${it._id}`}
-                      type="number"
-                      min="1"
-                      className="form-control form-control-sm"
-                      value={quantities[it._id] || 1}
-                      onChange={(e) => handleQtyChange(it._id, e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => addToCart(it)}
-                    >
-                      {t('catalog.add_to_cart')}
-                    </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="5">
+                    <Loading />
                   </td>
                 </tr>
-              ))}
+              ) : (
+                items.map((it) => (
+                  <tr key={it._id}>
+                    <td>{it.name}</td>
+                    <td>{it.structure?.name}</td>
+                    <td>{it.availability}</td>
+                    <td>
+                      <input
+                        name={`quantity-${it._id}`}
+                        type="number"
+                        min="1"
+                        className="form-control form-control-sm"
+                        value={quantities[it._id] || 1}
+                        onChange={(e) => handleQtyChange(it._id, e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={() => addToCart(it)}
+                      >
+                        {t('catalog.add_to_cart')}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
