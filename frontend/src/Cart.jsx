@@ -108,7 +108,7 @@ function Cart() {
   return (
       <div className="container">
         <NavBar />
-        <h1>{t('cart.title')}</h1>
+        <h1 className="h1">{t('cart.title')}</h1>
         <Alert message={error} />
         <Alert type="success" message={success} />
       <ul className="list-group mb-3">

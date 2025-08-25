@@ -63,7 +63,7 @@ function Profile() {
   return (
     <div className="container">
       <NavBar />
-      <h1>{t('profile.title')}</h1>
+      <h1 className="h1">{t('profile.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={success} />
       <form onSubmit={handleSubmit} className="mt-3">

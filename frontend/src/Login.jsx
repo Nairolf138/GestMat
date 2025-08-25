@@ -45,7 +45,7 @@ function Login() {
 
   return (
     <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="login-title">
-      <h1 id="login-title">{t('login.title')}</h1>
+      <h1 id="login-title" className="h1">{t('login.title')}</h1>
       <Alert type="success" message={location.state?.message} />
       <Alert message={error} />
       <div className="mb-3">

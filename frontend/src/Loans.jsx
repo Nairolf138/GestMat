@@ -83,7 +83,7 @@ function Loans() {
   return (
     <div className="container">
       <NavBar />
-      <h1>{t('loans.title')}</h1>
+      <h1 className="h1">{t('loans.title')}</h1>
       {loading ? (
         <Loading />
       ) : error ? (

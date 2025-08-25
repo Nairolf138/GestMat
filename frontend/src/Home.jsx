@@ -66,11 +66,11 @@ function Home() {
   return (
     <div className="container">
       <NavBar />
-      <h1>{t('home.title')}</h1>
+      <h1 className="h1">{t('home.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={message} />
       {user && <p>{t('home.greeting', { name: user.firstName || user.username })}</p>}
-      <h2>{t('home.recent_requests')}</h2>
+      <h2 className="h2">{t('home.recent_requests')}</h2>
       <ul className="list-group mb-3">
         {pending.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
@@ -95,7 +95,7 @@ function Home() {
         )}
         <Link to="/loans">{t('home.view_all')}</Link>
       </p>
-      <h2>{t('home.current_loans')}</h2>
+      <h2 className="h2">{t('home.current_loans')}</h2>
       <ul className="list-group mb-3">
         {currentLoans.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
@@ -126,7 +126,7 @@ function Home() {
         )}
         <Link to="/loans">{t('home.view_all')}</Link>
       </p>
-      <h2>{t('home.incoming_loans')}</h2>
+      <h2 className="h2">{t('home.incoming_loans')}</h2>
       <ul className="list-group mb-3">
         {upcomingLoans.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
@@ -157,7 +157,7 @@ function Home() {
         )}
         <Link to="/loans">{t('home.view_all')}</Link>
       </p>
-      <h2>{t('home.shortcuts')}</h2>
+      <h2 className="h2">{t('home.shortcuts')}</h2>
       <div className="d-flex flex-wrap gap-2 mb-4">
         <Link className="btn" style={shortcutStyle} to="/inventory">
           {t('nav.inventory')}

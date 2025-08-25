@@ -95,7 +95,7 @@ function Equipments() {
       <NavBar />
       <Alert message={error?.message} />
       <Alert type="success" message={message} />
-      <h1>
+      <h1 className="h1">
         {t('equipments.title')}
         {structureName && ` - ${structureName}`}
       </h1>
@@ -193,7 +193,7 @@ function Equipments() {
             items.map((e) => (
               <div className="card" key={e._id}>
                 <div className="card-body">
-                  <h5 className="card-title">{e.name}</h5>
+                  <h5 className="card-title h5">{e.name}</h5>
                   <p className="card-text">
                     <strong>{t('equipments.type')}:</strong> {e.type}
                     <br />

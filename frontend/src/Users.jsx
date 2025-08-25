@@ -16,7 +16,7 @@ function Users() {
   return (
     <div className="container">
       <NavBar />
-      <h1>{t('users.title')}</h1>
+      <h1 className="h1">{t('users.title')}</h1>
       <ul className="list-group">
         {users.map((u) => (
           <li key={u._id} className="list-group-item">

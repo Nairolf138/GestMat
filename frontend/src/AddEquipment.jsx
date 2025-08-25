@@ -71,7 +71,7 @@ function AddEquipment({ onCreated }) {
       autoComplete="off"
       aria-labelledby="add-equip-title"
     >
-      <h2 id="add-equip-title">{t('equipments.add.title')}</h2>
+      <h2 id="add-equip-title" className="h2">{t('equipments.add.title')}</h2>
       <Alert message={error} />
       <div className="mb-3">
         <label className="form-label" htmlFor="eq-name">{t('equipments.add.name')}</label>
