@@ -49,6 +49,19 @@ body {
   margin-right: var(--spacing-sm);
   border-radius: var(--radius-sm);
   font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-link {
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn:hover,
+.btn:focus,
+.nav-link:hover,
+.nav-link:focus {
+  background-color: var(--color-text);
+  color: var(--color-bg);
 }
 
 /* override Bootstrap spacing */
