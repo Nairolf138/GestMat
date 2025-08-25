@@ -21,7 +21,7 @@ function Catalog() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [quantities, setQuantities] = useState({});
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [loading, setLoading] = useState(false);
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
@@ -45,7 +45,7 @@ function Catalog() {
   }, [filters.search, filters.type, filters.structure]);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 600);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -113,7 +113,10 @@ function Catalog() {
       <h1 className="h1">{t('catalog.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={success} />
-      <div className="row g-2 mb-3">
+      <div
+        className="row"
+        style={{ gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xl)' }}
+      >
         <div className="col-md">
           <input name="search" placeholder={t('catalog.search')} className="form-control" value={filters.search} onChange={handleChange} />
         </div>
@@ -158,7 +161,7 @@ function Catalog() {
         </div>
       </div>
       {isMobile ? (
-        <div className="card-grid">
+        <div className="card-grid" style={{ marginBottom: 'var(--spacing-xxl)' }}>
           {loading ? (
             <Loading />
           ) : (
@@ -176,9 +179,10 @@ function Catalog() {
                       name={`quantity-${it._id}`}
                       type="number"
                       min="1"
-                      className="form-control form-control-sm me-2"
+                      className="form-control form-control-sm"
                       value={quantities[it._id] || 1}
                       onChange={(e) => handleQtyChange(it._id, e.target.value)}
+                      style={{ marginRight: 'var(--spacing-sm)' }}
                     />
                     <button
                       className="btn btn-sm"
