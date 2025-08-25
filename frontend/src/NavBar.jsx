@@ -42,7 +42,11 @@ function NavBar() {
   return (
     <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm">
       <div className="container-fluid">
-        <NavLink className="navbar-brand" to="/">
+        <NavLink
+          className="navbar-brand"
+          to="/"
+          onClick={() => setIsOpen(false)}
+        >
           GestMat
         </NavLink>
         <button
@@ -60,21 +64,41 @@ function NavBar() {
           id="navbarNav"
         >
           <div className="navbar-nav">
-          <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/catalog">
+          <NavLink
+            className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+            to="/catalog"
+            onClick={() => setIsOpen(false)}
+          >
             {t('nav.catalog')}
           </NavLink>
           {user && (
             <>
-              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/inventory">
+              <NavLink
+                className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+                to="/inventory"
+                onClick={() => setIsOpen(false)}
+              >
                 {t('nav.inventory')}
               </NavLink>
-              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/loans">
+              <NavLink
+                className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+                to="/loans"
+                onClick={() => setIsOpen(false)}
+              >
                 {t('nav.loans')}
               </NavLink>
-              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/cart">
+              <NavLink
+                className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+                to="/cart"
+                onClick={() => setIsOpen(false)}
+              >
                 {t('nav.cart')}
               </NavLink>
-              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/profile">
+              <NavLink
+                className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+                to="/profile"
+                onClick={() => setIsOpen(false)}
+              >
                 {t('nav.profile')}
               </NavLink>
               <button className="btn btn-outline-primary ms-2" onClick={handleLogout}>
@@ -84,10 +108,18 @@ function NavBar() {
           )}
           {!user && (
             <>
-              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/login">
+              <NavLink
+                className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+                to="/login"
+                onClick={() => setIsOpen(false)}
+              >
                 {t('nav.login')}
               </NavLink>
-              <NavLink className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')} to="/register">
+              <NavLink
+                className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+                to="/register"
+                onClick={() => setIsOpen(false)}
+              >
                 {t('register.title')}
               </NavLink>
             </>
