@@ -127,13 +127,16 @@ function NavBar() {
           </div>
           <div className="d-flex ms-auto align-items-center">
             <button
-              className="btn btn-outline-secondary me-2"
+              className="btn btn-outline-secondary me-2 theme-toggle-btn"
               onClick={handleThemeToggle}
               aria-pressed={isDarkTheme}
               aria-label={themeLabel}
               title={themeLabel}
             >
-              {isDarkTheme ? '☀️' : '🌙'}
+              <i
+                className={`fa-solid ${isDarkTheme ? 'fa-sun' : 'fa-moon'} theme-toggle-icon`}
+                aria-hidden="true"
+              ></i>
             </button>
             <select
               className="form-select"
