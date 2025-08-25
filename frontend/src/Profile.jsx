@@ -5,6 +5,7 @@ import Alert from './Alert.jsx';
 import { GlobalContext } from './GlobalContext.jsx';
 import { AuthContext } from './AuthContext.jsx';
 import { useTranslation } from 'react-i18next';
+import FormCard from './components/FormCard.jsx';
 
 function Profile() {
   const { t } = useTranslation();
@@ -66,7 +67,7 @@ function Profile() {
       <h1 className="h1">{t('profile.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={success} />
-      <form onSubmit={handleSubmit} className="mt-3">
+      <FormCard onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">{t('profile.username')}</label>
           <input
@@ -206,7 +207,7 @@ function Profile() {
         >
           {t('profile.save')}
         </button>
-      </form>
+      </FormCard>
     </div>
   );
 }

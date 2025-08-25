@@ -4,6 +4,7 @@ import { api } from './api';
 import Alert from './Alert.jsx';
 import { GlobalContext } from './GlobalContext.jsx';
 import { useTranslation } from 'react-i18next';
+import FormCard from './components/FormCard.jsx';
 
 function Register() {
   const { roles, structures } = useContext(GlobalContext);
@@ -71,7 +72,7 @@ function Register() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="register-title">
+    <FormCard onSubmit={handleSubmit} aria-labelledby="register-title">
       <h1 id="register-title" className="h1">{t('register.title')}</h1>
       <Alert message={error} />
       <div className="mb-3">
@@ -237,7 +238,7 @@ function Register() {
       >
         {t('register.submit')}
       </button>
-    </form>
+    </FormCard>
   );
 }
 
