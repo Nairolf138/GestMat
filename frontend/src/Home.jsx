@@ -71,7 +71,7 @@ function Home() {
       <Alert type="success" message={message} />
       {user && <p>{t('home.greeting', { name: user.firstName || user.username })}</p>}
       <h2 className="h2">{t('home.recent_requests')}</h2>
-      <ul className="list-group mb-3">
+      <ul className="list-group" style={{ marginBottom: 'var(--spacing-lg)' }}>
         {pending.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
             {l.borrower?.name} → {l.owner?.name} (
@@ -96,7 +96,7 @@ function Home() {
         <Link to="/loans">{t('home.view_all')}</Link>
       </p>
       <h2 className="h2">{t('home.current_loans')}</h2>
-      <ul className="list-group mb-3">
+      <ul className="list-group" style={{ marginBottom: 'var(--spacing-lg)' }}>
         {currentLoans.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
             {l.owner?.name} (
@@ -127,7 +127,7 @@ function Home() {
         <Link to="/loans">{t('home.view_all')}</Link>
       </p>
       <h2 className="h2">{t('home.incoming_loans')}</h2>
-      <ul className="list-group mb-3">
+      <ul className="list-group" style={{ marginBottom: 'var(--spacing-lg)' }}>
         {upcomingLoans.slice(0, previewCount).map((l) => (
           <li key={l._id} className="list-group-item">
             {l.owner?.name} (
@@ -158,7 +158,10 @@ function Home() {
         <Link to="/loans">{t('home.view_all')}</Link>
       </p>
       <h2 className="h2">{t('home.shortcuts')}</h2>
-      <div className="d-flex flex-wrap gap-2 mb-4">
+      <div
+        className="d-flex flex-wrap"
+        style={{ gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xl)' }}
+      >
         <Link className="btn" style={shortcutStyle} to="/inventory">
           {t('nav.inventory')}
         </Link>

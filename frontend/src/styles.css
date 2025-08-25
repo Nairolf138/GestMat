@@ -1,4 +1,6 @@
 /* CSS variable system */
+/* Spacing scale (8px grid):
+   xs=4px, sm=8px, md=16px, lg=32px, xl=48px, xxl=64px */
 :root {
   --color-bg: #f4f6f9;
   --color-text: #212529;
@@ -12,6 +14,8 @@
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  --spacing-xxl: 4rem;
 
   --radius-sm: 0.25rem;
   --font-size-h1: clamp(2rem, 5vw, 3rem);
@@ -105,15 +109,27 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   body {
     padding: var(--spacing-sm);
   }
 }
 
-@media (min-width: 601px) and (max-width: 1024px) {
+@media (min-width: 769px) and (max-width: 1024px) {
   body {
     padding: var(--spacing-md);
+  }
+}
+
+@media (min-width: 1440px) {
+  body {
+    padding: var(--spacing-xl);
+  }
+}
+
+@media (min-width: 1920px) {
+  body {
+    padding: var(--spacing-xxl);
   }
 }
 
@@ -123,9 +139,15 @@ body {
 
 .card-grid {
   display: grid;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-lg);
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   align-items: stretch;
+}
+
+@media (min-width: 480px) {
+  .card-grid {
+    gap: var(--spacing-xl);
+  }
 }
 
 .card-actions {
