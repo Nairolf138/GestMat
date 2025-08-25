@@ -108,4 +108,37 @@ describe('Catalog', () => {
       },
     ]);
   });
+
+  it('shows error on invalid period and disables search button', async () => {
+    api.api.mockResolvedValueOnce([
+      { _id: 'eq1', name: 'Eq1', structure: { _id: 's1', name: 'S1' } },
+    ]); // fetch items
+
+    const { container } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <GlobalContext.Provider value={{ structures: [{ _id: 's1', name: 'S1' }] }}>
+          <Catalog />
+        </GlobalContext.Provider>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(api.api).toHaveBeenCalled());
+
+    fireEvent.change(container.querySelector('input[name="startDate"]'), {
+      target: { value: '2024-01-02' },
+    });
+    fireEvent.change(container.querySelector('input[name="endDate"]'), {
+      target: { value: '2024-01-01' },
+    });
+
+    const searchBtn = screen.getByRole('button', { name: 'Rechercher' });
+    expect(searchBtn.disabled).toBe(true);
+
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0]
+    );
+
+    await waitFor(() => expect(api.api).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText('Période invalide')).not.toBeNull();
+  });
 });
