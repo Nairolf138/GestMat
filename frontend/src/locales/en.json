@@ -25,7 +25,10 @@
     "profile": "Profile",
     "login": "Login",
     "logout": "Logout",
-    "toggle_theme": "Dark mode"
+    "toggle_theme": {
+      "activate": "Enable dark mode",
+      "deactivate": "Disable dark mode"
+    }
   },
   "equipments": {
     "title": "Local inventory",

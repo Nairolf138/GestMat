@@ -9,6 +9,10 @@ function NavBar() {
   const navigate = useNavigate();
   const { user, setUser } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(() =>
+    document.body.classList.contains('dark-theme') ||
+    localStorage.getItem('theme') === 'dark'
+  );
   const handleLanguageChange = (event) => {
     const newLang = event.target.value;
     i18n.changeLanguage(newLang);
@@ -23,11 +27,16 @@ function NavBar() {
     }
   };
 
+  const themeLabel = isDarkTheme
+    ? t('nav.toggle_theme.deactivate')
+    : t('nav.toggle_theme.activate');
+
   const handleThemeToggle = () => {
     const body = document.body;
     body.classList.toggle('dark-theme');
     const newTheme = body.classList.contains('dark-theme') ? 'dark' : 'light';
     localStorage.setItem('theme', newTheme);
+    setIsDarkTheme(newTheme === 'dark');
   };
 
   return (
@@ -88,8 +97,11 @@ function NavBar() {
             <button
               className="btn btn-outline-secondary me-2"
               onClick={handleThemeToggle}
+              aria-pressed={isDarkTheme}
+              aria-label={themeLabel}
+              title={themeLabel}
             >
-              {t('nav.toggle_theme')}
+              {isDarkTheme ? '☀️' : '🌙'}
             </button>
             <select
               className="form-select"
