@@ -25,7 +25,10 @@
     "profile": "Profil",
     "login": "Connexion",
     "logout": "Se d\u00e9connecter",
-    "toggle_theme": "Mode sombre"
+    "toggle_theme": {
+      "activate": "Activer le mode sombre",
+      "deactivate": "Désactiver le mode sombre"
+    }
   },
   "equipments": {
     "title": "Inventaire local",
