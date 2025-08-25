@@ -5,6 +5,7 @@ import { AuthContext } from './AuthContext.jsx';
 import { useTranslation } from 'react-i18next';
 import LoanItem from './LoanItem.jsx';
 import Loading from './Loading.jsx';
+import CollapsibleSection from './CollapsibleSection.jsx';
 
 function Loans() {
   const { t } = useTranslation();
@@ -13,6 +14,14 @@ function Loans() {
   const [tab, setTab] = useState('owner');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sectionsOpen, setSectionsOpen] = useState({
+    finished: true,
+    ongoing: true,
+    upcoming: true,
+  });
+
+  const toggleSection = (section) =>
+    setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }));
 
   const refresh = () => {
     setLoading(true);
@@ -100,21 +109,36 @@ function Loans() {
             </li>
           </ul>
           <div className="mt-3">
-            <h2>{t('loans.finished')}</h2>
-            {renderSection(
-              tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished,
-              tab === 'owner'
-            )}
-            <h2>{t('loans.ongoing')}</h2>
-            {renderSection(
-              tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
-              tab === 'owner'
-            )}
-            <h2>{t('loans.upcoming')}</h2>
-            {renderSection(
-              tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
-              tab === 'owner'
-            )}
+            <CollapsibleSection
+              title={t('loans.finished')}
+              isOpen={sectionsOpen.finished}
+              onToggle={() => toggleSection('finished')}
+            >
+              {renderSection(
+                tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished,
+                tab === 'owner'
+              )}
+            </CollapsibleSection>
+            <CollapsibleSection
+              title={t('loans.ongoing')}
+              isOpen={sectionsOpen.ongoing}
+              onToggle={() => toggleSection('ongoing')}
+            >
+              {renderSection(
+                tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
+                tab === 'owner'
+              )}
+            </CollapsibleSection>
+            <CollapsibleSection
+              title={t('loans.upcoming')}
+              isOpen={sectionsOpen.upcoming}
+              onToggle={() => toggleSection('upcoming')}
+            >
+              {renderSection(
+                tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
+                tab === 'owner'
+              )}
+            </CollapsibleSection>
           </div>
         </>
       )}
