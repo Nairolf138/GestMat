@@ -126,7 +126,12 @@
     "as_borrower": "Emprunts",
     "finished": "Terminés",
     "ongoing": "En cours",
-    "upcoming": "À venir"
+    "upcoming": "À venir",
+    "status": {
+      "pending": "En attente",
+      "accepted": "Accepté",
+      "refused": "Refusé"
+    }
   },
   "profile": {
     "title": "Profil",

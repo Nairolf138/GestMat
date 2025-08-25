@@ -60,7 +60,7 @@ function LoanItem({ loan, isOwner, refresh }) {
         <span
           className={`badge ${statusColors[loan.status] || 'bg-secondary'} rounded-pill`}
         >
-          {loan.status}
+          {t(`loans.status.${loan.status}`)}
         </span>
       </div>
       {isOwner && loan.status === 'pending' && (
