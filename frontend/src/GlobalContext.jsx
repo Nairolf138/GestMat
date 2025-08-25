@@ -31,8 +31,21 @@ export function GlobalProvider({ children }) {
         style={{ zIndex: 1060 }}
       >
         {toast && (
-          <div className={`toast show text-bg-${toast.type}`} role="alert">
-            <div className="toast-body">{toast.message}</div>
+          <div
+            className={`toast show text-bg-${toast.type}`}
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+          >
+            <div className="d-flex">
+              <div className="toast-body">{toast.message}</div>
+              <button
+                type="button"
+                className="btn-close btn-close-white me-2 m-auto"
+                aria-label="Fermer"
+                onClick={() => setToast(null)}
+              ></button>
+            </div>
           </div>
         )}
       </div>
