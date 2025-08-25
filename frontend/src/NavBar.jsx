@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
+import logo from './logo.png';
 
 function NavBar() {
   const { t, i18n } = useTranslation();
@@ -47,7 +48,7 @@ function NavBar() {
           to="/"
           onClick={() => setIsOpen(false)}
         >
-          <img src="logo.png" alt="GestMat" />
+          <img src={logo} alt="GestMat" />
         </NavLink>
         <button
           className="navbar-toggler"
