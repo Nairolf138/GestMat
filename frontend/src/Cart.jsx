@@ -45,6 +45,19 @@ function Cart() {
     localStorage.setItem('cart', JSON.stringify(newCart));
   };
 
+  const updateQuantity = (idx, quantity) => {
+    const value = Number(quantity);
+    if (value <= 0) {
+      removeItem(idx);
+      return;
+    }
+    const newCart = cart.map((item, i) =>
+      i === idx ? { ...item, quantity: value } : item
+    );
+    setCart(newCart);
+    localStorage.setItem('cart', JSON.stringify(newCart));
+  };
+
   const validate = async () => {
     if (!cart.length) return;
     const groups = {};
@@ -96,9 +109,14 @@ function Cart() {
               {it.equipment.name} ({it.startDate} → {it.endDate})
             </span>
             <div className="d-flex align-items-center">
-              <span className="badge bg-primary rounded-pill me-3">
-                {it.quantity}
-              </span>
+              <input
+                type="number"
+                min="1"
+                value={it.quantity}
+                onChange={(e) => updateQuantity(idx, e.target.value)}
+                className="form-control me-3"
+                style={{ width: '6rem' }}
+              />
               <button
                 className="btn btn-outline-danger btn-sm"
                 onClick={() => removeItem(idx)}
