@@ -47,7 +47,7 @@ function NavBar() {
           to="/"
           onClick={() => setIsOpen(false)}
         >
-          GestMat
+          <img src="logo.svg" alt="GestMat" />
         </NavLink>
         <button
           className="navbar-toggler"

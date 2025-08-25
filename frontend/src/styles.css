@@ -77,6 +77,11 @@ body {
   font-weight: bold;
 }
 
+.navbar-brand img {
+  height: 40px;
+  width: auto;
+}
+
 .navbar {
   background-color: var(--color-navbar-bg);
   transition: background-color 0.3s, color 0.3s;
