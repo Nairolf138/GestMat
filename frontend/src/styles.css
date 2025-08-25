@@ -59,6 +59,9 @@ body {
 
 .nav-link.active {
   text-decoration: underline;
+  background-color: var(--color-text);
+  color: var(--color-bg);
+  font-weight: bold;
 }
 
 .btn:hover,
