@@ -4,17 +4,29 @@ import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import { useTranslation } from 'react-i18next';
 import LoanItem from './LoanItem.jsx';
+import Loading from './Loading.jsx';
 
 function Loans() {
   const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const [loans, setLoans] = useState([]);
   const [tab, setTab] = useState('owner');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const refresh = () => {
+    setLoading(true);
+    setError(null);
     api('/loans')
-      .then(setLoans)
-      .catch(() => setLoans([]));
+      .then((data) => {
+        setLoans(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setLoans([]);
+        setError(err);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -63,41 +75,49 @@ function Loans() {
     <div className="container">
       <NavBar />
       <h1>{t('loans.title')}</h1>
-      <ul className="nav nav-tabs mt-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
-            onClick={() => setTab('owner')}
-          >
-            {t('loans.as_owner')}
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
-            onClick={() => setTab('borrower')}
-          >
-            {t('loans.as_borrower')}
-          </button>
-        </li>
-      </ul>
-      <div className="mt-3">
-        <h2>{t('loans.finished')}</h2>
-        {renderSection(
-          tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished,
-          tab === 'owner'
-        )}
-        <h2>{t('loans.ongoing')}</h2>
-        {renderSection(
-          tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
-          tab === 'owner'
-        )}
-        <h2>{t('loans.upcoming')}</h2>
-        {renderSection(
-          tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
-          tab === 'owner'
-        )}
-      </div>
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <div className="alert alert-danger">{t('common.error')}</div>
+      ) : (
+        <>
+          <ul className="nav nav-tabs mt-4">
+            <li className="nav-item">
+              <button
+                className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
+                onClick={() => setTab('owner')}
+              >
+                {t('loans.as_owner')}
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
+                onClick={() => setTab('borrower')}
+              >
+                {t('loans.as_borrower')}
+              </button>
+            </li>
+          </ul>
+          <div className="mt-3">
+            <h2>{t('loans.finished')}</h2>
+            {renderSection(
+              tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished,
+              tab === 'owner'
+            )}
+            <h2>{t('loans.ongoing')}</h2>
+            {renderSection(
+              tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
+              tab === 'owner'
+            )}
+            <h2>{t('loans.upcoming')}</h2>
+            {renderSection(
+              tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
+              tab === 'owner'
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
