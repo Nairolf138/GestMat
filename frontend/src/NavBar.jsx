@@ -142,6 +142,7 @@ function NavBar() {
               className="form-select"
               value={i18n.language}
               onChange={handleLanguageChange}
+              aria-label={t('nav.language')}
             >
               <option value="fr">fr</option>
               <option value="en">en</option>
