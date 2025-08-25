@@ -92,6 +92,8 @@ body {
 .card-grid {
   display: grid;
   gap: var(--spacing-sm);
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  align-items: stretch;
 }
 
 .card-actions {
