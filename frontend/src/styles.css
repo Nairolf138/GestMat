@@ -151,3 +151,16 @@ body {
 .h4 { font-size: var(--font-size-h4); }
 .h5 { font-size: var(--font-size-h5); }
 .h6 { font-size: var(--font-size-h6); }
+
+.form-card-container {
+  display: flex;
+  justify-content: center;
+}
+
+.form-card {
+  width: 100%;
+  max-width: 500px;
+  margin-top: calc(var(--spacing-lg) - var(--spacing-sm));
+  padding: calc(var(--spacing-lg) - var(--spacing-sm));
+}
+

@@ -3,6 +3,7 @@ import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { GlobalContext } from './GlobalContext.jsx';
+import FormCard from './components/FormCard.jsx';
 
 function EditEquipment({ equipment, onUpdated, onCancel }) {
   const { t } = useTranslation();
@@ -69,9 +70,8 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
   };
 
   return (
-    <form
+    <FormCard
       onSubmit={handleSubmit}
-      className="mt-4"
       autoComplete="off"
       aria-labelledby="edit-equip-title"
     >
@@ -217,7 +217,7 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
           {t('equipments.edit.cancel')}
         </button>
       )}
-    </form>
+    </FormCard>
   );
 }
 

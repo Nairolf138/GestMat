@@ -4,6 +4,7 @@ import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from './AuthContext.jsx';
+import FormCard from './components/FormCard.jsx';
 
 function Login() {
   const { t } = useTranslation();
@@ -44,7 +45,7 @@ function Login() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="login-title">
+    <FormCard onSubmit={handleSubmit} aria-labelledby="login-title">
       <h1 id="login-title" className="h1">{t('login.title')}</h1>
       <Alert type="success" message={location.state?.message} />
       <Alert message={error} />
@@ -114,7 +115,7 @@ function Login() {
       <p className="mt-3">
         <Link to="/register">{t('register.submit')}</Link>
       </p>
-    </form>
+    </FormCard>
   );
 }
 

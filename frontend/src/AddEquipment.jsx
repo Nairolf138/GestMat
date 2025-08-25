@@ -3,6 +3,7 @@ import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { GlobalContext } from './GlobalContext.jsx';
+import FormCard from './components/FormCard.jsx';
 
 function AddEquipment({ onCreated }) {
   const { t } = useTranslation();
@@ -65,9 +66,8 @@ function AddEquipment({ onCreated }) {
   };
 
   return (
-    <form
+    <FormCard
       onSubmit={handleSubmit}
-      className="mt-4"
       autoComplete="off"
       aria-labelledby="add-equip-title"
     >
@@ -199,7 +199,7 @@ function AddEquipment({ onCreated }) {
       >
         {t('equipments.add.submit')}
       </button>
-    </form>
+    </FormCard>
   );
 }
 
