@@ -72,7 +72,7 @@ function Register() {
 
   return (
     <form onSubmit={handleSubmit} className="container mt-4" aria-labelledby="register-title">
-      <h1 id="register-title">{t('register.title')}</h1>
+      <h1 id="register-title" className="h1">{t('register.title')}</h1>
       <Alert message={error} />
       <div className="mb-3">
         <label className="form-label" htmlFor="reg-username">{t('login.username')}</label>

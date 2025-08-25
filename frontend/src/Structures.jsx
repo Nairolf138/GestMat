@@ -16,7 +16,7 @@ function Structures() {
   return (
     <div className="container">
       <NavBar />
-      <h1>{t('structures.title')}</h1>
+      <h1 className="h1">{t('structures.title')}</h1>
       <ul className="list-group">
         {structures.map((s) => (
           <li key={s._id} className="list-group-item">

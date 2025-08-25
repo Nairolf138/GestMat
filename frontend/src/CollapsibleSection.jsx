@@ -3,7 +3,7 @@ import React from 'react';
 function CollapsibleSection({ title, isOpen, onToggle, children }) {
   return (
     <div className="mb-3">
-      <h2>
+      <h2 className="h2">
         <button
           type="button"
           className="btn btn-link p-0"

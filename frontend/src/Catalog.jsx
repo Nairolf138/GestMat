@@ -110,7 +110,7 @@ function Catalog() {
   return (
     <div className="container">
       <NavBar />
-      <h1>{t('catalog.title')}</h1>
+      <h1 className="h1">{t('catalog.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={success} />
       <div className="row g-2 mb-3">
@@ -165,7 +165,7 @@ function Catalog() {
             items.map((it) => (
               <div className="card" key={it._id}>
                 <div className="card-body">
-                  <h5 className="card-title">{it.name}</h5>
+                  <h5 className="card-title h5">{it.name}</h5>
                   <p className="card-text">
                     <strong>{t('catalog.structure')}:</strong> {it.structure?.name}
                     <br />

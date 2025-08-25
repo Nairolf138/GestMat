@@ -75,7 +75,7 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
       autoComplete="off"
       aria-labelledby="edit-equip-title"
     >
-      <h2 id="edit-equip-title">{t('equipments.edit.title')}</h2>
+      <h2 id="edit-equip-title" className="h2">{t('equipments.edit.title')}</h2>
       <Alert message={error} />
       <div className="mb-3">
         <label className="form-label" htmlFor="edit-eq-name">{t('equipments.add.name')}</label>
