@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 
 import validate from '../middleware/validate';
@@ -20,6 +20,7 @@ import {
   deleteSessionsByUser,
 } from '../models/Session';
 import { unauthorized, ApiError } from '../utils/errors';
+import { AuthUser } from '../types';
 import { normalizeRole } from '../utils/roleAccess';
 
 const router = express.Router();
@@ -114,9 +115,9 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
     const { refreshToken } = req.cookies || {};
     if (!refreshToken) return next(unauthorized('Refresh token required'));
 
-    let payload: JwtPayload;
+    let payload: AuthUser;
     try {
-      payload = jwt.verify(refreshToken, JWT_SECRET) as JwtPayload;
+      payload = jwt.verify(refreshToken, JWT_SECRET) as AuthUser;
     } catch {
       return next(unauthorized('Invalid refresh token'));
     }

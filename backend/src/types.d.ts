@@ -10,12 +10,19 @@ declare module './routes/loans';
 declare module './routes/stats';
 declare module './routes/roles';
 
+export interface AuthUser {
+  id: string;
+  role: string;
+  structure?: string;
+}
+
 declare global {
   namespace Express {
     interface Request {
-      user?: any;
+      user?: AuthUser;
     }
   }
 }
 
 export {};
+
