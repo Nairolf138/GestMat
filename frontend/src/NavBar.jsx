@@ -41,7 +41,7 @@ function NavBar() {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm">
+    <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm py-2">
       <div className="container-fluid">
         <NavLink
           className="navbar-brand"
@@ -64,7 +64,7 @@ function NavBar() {
           className={`collapse navbar-collapse${isOpen ? ' show' : ''}`}
           id="navbarNav"
         >
-          <div className="navbar-nav">
+          <div className="navbar-nav align-items-center">
           <NavLink
             className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
             to="/catalog"
@@ -134,9 +134,9 @@ function NavBar() {
             </>
           )}
           </div>
-          <div className="d-flex ms-auto align-items-center">
+          <div className="navbar-utils d-flex ms-auto align-items-center">
             <button
-              className="btn me-2 theme-toggle-btn"
+              className="btn theme-toggle-btn"
               style={{
                 color: isDarkTheme
                   ? 'var(--color-text)'
@@ -157,7 +157,7 @@ function NavBar() {
               ></i>
             </button>
             <select
-              className="form-select"
+              className="form-select form-select-sm"
               value={i18n.language}
               onChange={handleLanguageChange}
               aria-label={t('nav.language')}
