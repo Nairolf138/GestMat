@@ -2,6 +2,15 @@ const API_URL =
   import.meta.env.VITE_API_URL ??
   (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');
 
+export class ApiError extends Error {
+  constructor(message, code, fields) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.fields = fields;
+  }
+}
+
 function getCsrfToken() {
   const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
@@ -66,15 +75,21 @@ export async function api(path, options = {}, retry = true) {
             }, {})
           : data.errors;
       }
-      throw { code: res.status, message: data.message || 'API error', fields };
+      throw new ApiError(data.message || 'API error', res.status, fields);
     }
     return data;
   } catch (err) {
-    const error = {
-      code: err.code || 'NETWORK_ERROR',
-      message: err.message || 'Network error',
-      fields: err.fields || err.fieldErrors,
-    };
+    const error =
+      err instanceof ApiError
+        ? err
+        : new ApiError(
+            err.message || 'Network error',
+            err.code || 'NETWORK_ERROR',
+            err.fields || err.fieldErrors
+          );
+    if (!(err instanceof ApiError) && err.stack) {
+      error.stack = err.stack;
+    }
     errorHandler(error);
     throw error;
   }
