@@ -76,7 +76,6 @@ body {
 }
 
 .nav-link {
-  padding: var(--spacing-xs) var(--spacing-sm);
   transition: background-color 0.2s, color 0.2s;
 }
 
@@ -101,27 +100,13 @@ body {
 }
 
 .navbar-brand img {
-  height: 48px;
+  height: 40px;
   width: auto;
 }
 
 .navbar {
   background-color: var(--color-navbar-bg);
   transition: background-color 0.3s, color 0.3s;
-  padding: var(--spacing-sm) var(--spacing-md);
-}
-
-.navbar-nav {
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.navbar-utils {
-  gap: var(--spacing-sm);
-}
-
-.navbar-utils .form-select {
-  width: auto;
 }
 
 @media (max-width: 768px) {
