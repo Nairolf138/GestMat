@@ -50,8 +50,14 @@ async function _populate(db: Db, loan: LoanRequest, session?: ClientSession): Pr
   return loan;
 }
 
-export async function findLoans(db: Db): Promise<LoanRequest[]> {
-  const loans = await db.collection<LoanRequest>('loanrequests').find().toArray();
+export async function findLoans(
+  db: Db,
+  filter: Record<string, unknown> = {}
+): Promise<LoanRequest[]> {
+  const loans = await db
+    .collection<LoanRequest>('loanrequests')
+    .find(filter)
+    .toArray();
   await Promise.all(loans.map((loan) => _populate(db, loan)));
   return loans;
 }
