@@ -15,14 +15,17 @@ async function listLoans(db, user) {
   }
   const u = await findUserById(db, user.id);
   const structId = u?.structure?.toString();
-  const all = await findLoans(db);
-  return all.filter(
-    (l) =>
-      l.owner?._id?.toString() === structId ||
-      l.owner?.toString() === structId ||
-      l.borrower?._id?.toString() === structId ||
-      l.borrower?.toString() === structId
-  );
+  if (!structId) return [];
+  const id = new ObjectId(structId);
+  const filter = {
+    $or: [
+      { owner: id },
+      { 'owner._id': id },
+      { borrower: id },
+      { 'borrower._id': id },
+    ],
+  };
+  return findLoans(db, filter);
 }
 
 async function createLoanRequest(db, data) {
