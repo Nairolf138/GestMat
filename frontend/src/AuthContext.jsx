@@ -7,7 +7,7 @@ export const AuthContext = createContext({ user: null, setUser: () => {} });
 
 export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
-  const { data: user, isFetching } = useQuery({
+  const { data: user, status, isFetching } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
 
   const setUser = (newUser) => queryClient.setQueryData(['currentUser'], newUser);
 
-  if (isFetching) return <Loading />;
+  if (status === 'pending') return <Loading />;
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
