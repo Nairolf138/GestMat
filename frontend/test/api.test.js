@@ -1,5 +1,5 @@
 import { it, expect, vi } from 'vitest';
-import { api } from '../src/api.js';
+import { api, ApiError } from '../src/api.js';
 
 it('uses JSON headers without Authorization', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
@@ -36,7 +36,9 @@ it('returns uniform error objects', async () => {
         }),
     }),
   );
-  await expect(api('/test')).rejects.toEqual({
+  const promise = api('/test');
+  await expect(promise).rejects.toBeInstanceOf(ApiError);
+  await expect(promise).rejects.toMatchObject({
     code: 400,
     message: 'Bad Request',
     fields: { name: 'Required' },
@@ -46,7 +48,9 @@ it('returns uniform error objects', async () => {
 
 it('wraps network failures', async () => {
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')));
-  await expect(api('/test')).rejects.toEqual({
+  const promise = api('/test');
+  await expect(promise).rejects.toBeInstanceOf(ApiError);
+  await expect(promise).rejects.toMatchObject({
     code: 'NETWORK_ERROR',
     message: 'boom',
     fields: undefined,
