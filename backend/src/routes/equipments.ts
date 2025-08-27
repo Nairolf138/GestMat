@@ -28,8 +28,8 @@ router.get('/', auth(), async (req: Request, res: Response) => {
   const db = req.app.locals.db;
   const query = req.query as any;
   let structure = query.structure;
-  if (!query.all && !structure && ObjectId.isValid(req.user.id)) {
-    const user = await findUserById(db, req.user.id);
+  if (!query.all && !structure && ObjectId.isValid(req.user!.id)) {
+    const user = await findUserById(db, req.user!.id);
     if (user && user.structure) structure = user.structure.toString();
   }
     const filter = createEquipmentFilter({ ...query, structure });
@@ -58,8 +58,8 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req: Request
   const db = req.app.locals.db;
   let location = '';
   let structureId: ObjectId | null = null;
-  if (ObjectId.isValid(req.user.id)) {
-    const user = await findUserById(db, req.user.id);
+  if (ObjectId.isValid(req.user!.id)) {
+    const user = await findUserById(db, req.user!.id);
     if (user && user.structure) {
       const struct = await findStructureById(db, user.structure.toString());
       location = (struct?.name as string) || '';
@@ -67,7 +67,7 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req: Request
     }
   }
   const type = normalizeType(req.body.type);
-  if (!type || !canModify(req.user.role, type)) {
+  if (!type || !canModify(req.user!.role, type)) {
     return next(forbidden('Access denied'));
   }
   const availableQty = req.body.availableQty ?? req.body.totalQty;
@@ -87,11 +87,11 @@ router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async 
     const current = await findEquipmentById(db, req.params.id);
     if (!current) return next(notFound('Equipment not found'));
     let user;
-    if (ObjectId.isValid(req.user.id)) {
-      user = await findUserById(db, req.user.id);
+    if (ObjectId.isValid(req.user!.id)) {
+      user = await findUserById(db, req.user!.id);
     }
     if (
-      req.user.role !== ADMIN_ROLE &&
+      req.user!.role !== ADMIN_ROLE &&
       current.structure?.toString() !== user?.structure?.toString()
     ) {
       return next(forbidden('Access denied'));
@@ -99,7 +99,7 @@ router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async 
     const newType = req.body.type
       ? normalizeType(req.body.type)
       : normalizeType(current.type as string);
-    if (!newType || !canModify(req.user.role, newType)) {
+    if (!newType || !canModify(req.user!.role, newType)) {
       return next(forbidden('Access denied'));
     }
     const updateData = req.body.type ? { ...req.body, type: newType } : req.body;
@@ -117,17 +117,17 @@ router.delete('/:id', auth(), checkId(), async (req: Request, res: Response, nex
     const current = await findEquipmentById(db, req.params.id);
     if (!current) return next(notFound('Equipment not found'));
     let user;
-    if (ObjectId.isValid(req.user.id)) {
-      user = await findUserById(db, req.user.id);
+    if (ObjectId.isValid(req.user!.id)) {
+      user = await findUserById(db, req.user!.id);
     }
     if (
-      req.user.role !== ADMIN_ROLE &&
+      req.user!.role !== ADMIN_ROLE &&
       current.structure?.toString() !== user?.structure?.toString()
     ) {
       return next(forbidden('Access denied'));
     }
     const type = normalizeType(current.type as string);
-    if (!canModify(req.user.role, type)) {
+    if (!canModify(req.user!.role, type)) {
       return next(forbidden('Access denied'));
     }
     const removed = await deleteEquipment(db, req.params.id);

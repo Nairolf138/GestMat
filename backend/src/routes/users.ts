@@ -36,7 +36,7 @@ router.delete('/:id', auth(MANAGE_USERS), checkId(), async (req: Request, res: R
 
 router.get('/me', auth(), async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
-  const user = await findUserById(db, req.user.id);
+  const user = await findUserById(db, req.user!.id);
   if (!user) return next(notFound('User not found'));
   if (user.structure) {
     const struct = await findStructureById(db, user.structure.toString());
@@ -56,7 +56,7 @@ router.put('/me', auth(), updateUserValidator, validate, async (req: Request, re
   if (data.password) {
     data.password = await bcrypt.hash(data.password as string, 10);
   }
-  const updated = await updateUser(db, req.user.id, data);
+  const updated = await updateUser(db, req.user!.id, data);
   if (!updated) return next(notFound('User not found'));
   if (updated.structure) {
     const struct = await findStructureById(db, updated.structure.toString());
