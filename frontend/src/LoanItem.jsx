@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
+import { toLoanItemsPayload } from './utils';
 
 function LoanItem({ loan, isOwner, refresh }) {
   const { t } = useTranslation();
@@ -37,9 +38,16 @@ function LoanItem({ loan, isOwner, refresh }) {
   };
 
   const modifyLoan = async () => {
+    const payload = {
+      startDate: loan.startDate,
+      endDate: loan.endDate,
+      status: loan.status,
+      items: toLoanItemsPayload(loan.items),
+    };
+
     await api(`/loans/${loan._id}`, {
       method: 'PUT',
-      body: JSON.stringify(loan),
+      body: JSON.stringify(payload),
     });
     refresh();
   };
