@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
@@ -9,7 +9,7 @@ import FormCard from './components/FormCard.jsx';
 
 function Profile() {
   const { t } = useTranslation();
-  const { roles, structures } = useContext(GlobalContext);
+  const { structures } = useContext(GlobalContext);
   const { user, setUser } = useContext(AuthContext);
   const [form, setForm] = useState({
     username: '',
@@ -33,6 +33,15 @@ function Profile() {
       setError(t('profile.load_error'));
     }
   }, [user, t]);
+
+  const structureName = useMemo(() => {
+    if (!form.structure) return '';
+    return (
+      structures.find((s) => s._id === form.structure)?.name ||
+      user?.structure?.name ||
+      ''
+    );
+  }, [structures, form.structure, user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -77,47 +86,49 @@ function Profile() {
             disabled
           />
         </div>
-        <div className="mb-3">
-          <label className="form-label">{t('profile.first_name')}</label>
-          <input
-            name="firstName"
-            className={`form-control${errors.firstName ? ' is-invalid' : ''}`}
-            value={form.firstName}
-            onChange={handleChange}
-            aria-invalid={errors.firstName ? 'true' : undefined}
-            aria-describedby={errors.firstName ? 'firstName-error' : undefined}
-          />
-          {errors.firstName && (
-            <div
-              className="invalid-feedback"
-              id="firstName-error"
-              role="alert"
-              aria-live="polite"
-            >
-              {errors.firstName}
-            </div>
-          )}
-        </div>
-        <div className="mb-3">
-          <label className="form-label">{t('profile.last_name')}</label>
-          <input
-            name="lastName"
-            className={`form-control${errors.lastName ? ' is-invalid' : ''}`}
-            value={form.lastName}
-            onChange={handleChange}
-            aria-invalid={errors.lastName ? 'true' : undefined}
-            aria-describedby={errors.lastName ? 'lastName-error' : undefined}
-          />
-          {errors.lastName && (
-            <div
-              className="invalid-feedback"
-              id="lastName-error"
-              role="alert"
-              aria-live="polite"
-            >
-              {errors.lastName}
-            </div>
-          )}
+        <div className="row">
+          <div className="col-md-6 mb-3">
+            <label className="form-label">{t('profile.first_name')}</label>
+            <input
+              name="firstName"
+              className={`form-control${errors.firstName ? ' is-invalid' : ''}`}
+              value={form.firstName}
+              onChange={handleChange}
+              aria-invalid={errors.firstName ? 'true' : undefined}
+              aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+            />
+            {errors.firstName && (
+              <div
+                className="invalid-feedback"
+                id="firstName-error"
+                role="alert"
+                aria-live="polite"
+              >
+                {errors.firstName}
+              </div>
+            )}
+          </div>
+          <div className="col-md-6 mb-3">
+            <label className="form-label">{t('profile.last_name')}</label>
+            <input
+              name="lastName"
+              className={`form-control${errors.lastName ? ' is-invalid' : ''}`}
+              value={form.lastName}
+              onChange={handleChange}
+              aria-invalid={errors.lastName ? 'true' : undefined}
+              aria-describedby={errors.lastName ? 'lastName-error' : undefined}
+            />
+            {errors.lastName && (
+              <div
+                className="invalid-feedback"
+                id="lastName-error"
+                role="alert"
+                aria-live="polite"
+              >
+                {errors.lastName}
+              </div>
+            )}
+          </div>
         </div>
         <div className="mb-3">
           <label className="form-label">{t('profile.email')}</label>
@@ -164,37 +175,25 @@ function Profile() {
             </div>
           )}
         </div>
-        <div className="mb-3">
-          <label className="form-label">{t('profile.role')}</label>
-          <select
-            name="role"
-            className="form-select"
-            value={form.role}
-            disabled
-          >
-            <option value="">{t('common.choose')}</option>
-            {roles.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">{t('profile.structure')}</label>
-          <select
-            name="structure"
-            className="form-select"
-            value={form.structure}
-            disabled
-          >
-            <option value="">{t('common.choose')}</option>
-            {structures.map((s) => (
-              <option key={s._id || s} value={s._id || s.name || s}>
-                {s.name || s}
-              </option>
-            ))}
-          </select>
+        <div className="row">
+          <div className="col-md-6 mb-3">
+            <label className="form-label">{t('profile.role')}</label>
+            <input
+              name="role"
+              className="form-control"
+              value={form.role}
+              disabled
+            />
+          </div>
+          <div className="col-md-6 mb-3">
+            <label className="form-label">{t('profile.structure')}</label>
+            <input
+              name="structure"
+              className="form-control"
+              value={structureName}
+              disabled
+            />
+          </div>
         </div>
         <button
           type="submit"
