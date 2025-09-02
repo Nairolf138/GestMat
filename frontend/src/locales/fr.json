@@ -173,6 +173,12 @@
   "structures": {
     "title": "Structures"
   },
+  "admin_stats": {
+    "monthly_loans": "Prêts par mois",
+    "top_equipments": "Équipements les plus empruntés",
+    "loans": "Prêts",
+    "equipments": "Équipements"
+  },
   "common": {
     "choose": "Choisir...",
     "required": "Requis",
