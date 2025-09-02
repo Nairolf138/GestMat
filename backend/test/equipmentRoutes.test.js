@@ -75,6 +75,32 @@ test('default availableQty to totalQty when missing', async () => {
   await mongod.stop();
 });
 
+test('list excludes equipments from user structure', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const struct1 = new ObjectId();
+  const struct2 = new ObjectId();
+  await db.collection('structures').insertMany([
+    { _id: struct1, name: 'S1' },
+    { _id: struct2, name: 'S2' },
+  ]);
+  await db.collection('equipments').insertMany([
+    { name: 'Eq1', type: 'Son', condition: 'Neuf', totalQty: 1, availableQty: 1, structure: struct1 },
+    { name: 'Eq2', type: 'Son', condition: 'Neuf', totalQty: 1, availableQty: 1, structure: struct2 },
+  ]);
+  const u1 = new ObjectId();
+  await db.collection('users').insertOne({ _id: u1, username: 'u1', role: 'Regisseur Son', structure: struct1 });
+  const token1 = jwt.sign({ id: u1.toString(), role: 'Regisseur Son' }, 'test', { expiresIn: '1h' });
+  const res = await request(app)
+    .get('/api/equipments')
+    .set({ Authorization: `Bearer ${token1}` })
+    .expect(200);
+  assert.strictEqual(res.body.length, 1);
+  assert.strictEqual(res.body[0].name, 'Eq2');
+  await client.close();
+  await mongod.stop();
+});
+
 test('deny updates and deletes when structures differ', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();

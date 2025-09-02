@@ -35,3 +35,9 @@ test('createEquipmentFilter ignores invalid structure id', () => {
   assert.deepStrictEqual(filter, {});
 });
 
+test('createEquipmentFilter excludes provided structure', () => {
+  const id = new ObjectId().toString();
+  const filter = createFilter({ excludeStructure: id });
+  assert.deepStrictEqual(filter, { structure: { $ne: new ObjectId(id) } });
+});
+

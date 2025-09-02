@@ -27,13 +27,13 @@ const router = express.Router();
 router.get('/', auth(), async (req: Request, res: Response) => {
   const db = req.app.locals.db;
   const query = req.query as any;
-  let structure = query.structure;
-  if (!query.all && !structure && ObjectId.isValid(req.user!.id)) {
+  let excludeStructure = '';
+  if (!query.all && ObjectId.isValid(req.user!.id)) {
     const user = await findUserById(db, req.user!.id);
-    if (user && user.structure) structure = user.structure.toString();
+    if (user?.structure) excludeStructure = user.structure.toString();
   }
-    const filter = createEquipmentFilter({ ...query, structure });
-    const equipments = await findEquipments(db, filter as any);
+  const filter = createEquipmentFilter({ ...query, excludeStructure });
+  const equipments = await findEquipments(db, filter as any);
   await Promise.all(
     equipments.map(async (eq) => {
       if (eq.structure) {

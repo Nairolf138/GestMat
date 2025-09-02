@@ -34,17 +34,21 @@ function auth() {
 test('create, update and delete loan request', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
   const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
+    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1, structure: owner })
   ).insertedId;
-  await db
-    .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: structId });
+  const ownerUser = new ObjectId();
+  await db.collection('users').insertMany([
+    { _id: ownerUser, structure: owner },
+    { _id: new ObjectId(userId), structure: borrower },
+  ]);
+  const ownerToken = jwt.sign({ id: ownerUser.toString() }, 'test', { expiresIn: '1h' });
 
   const payload = {
-    owner: structId.toString(),
-    borrower: structId.toString(),
+    owner: owner.toString(),
+    borrower: borrower.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
     endDate: '2024-01-02',
@@ -74,11 +78,11 @@ test('create, update and delete loan request', async () => {
   const id = res.body._id;
   const upd = await request(app)
     .put(`/api/loans/${id}`)
-    .set(auth())
+    .set({ Authorization: `Bearer ${ownerToken}` })
     .send({ status: 'accepted' })
     .expect(200);
   assert.strictEqual(upd.body.status, 'accepted');
-  assert.strictEqual(upd.body.processedBy._id.toString(), userId);
+  assert.strictEqual(upd.body.processedBy._id.toString(), ownerUser.toString());
 
   await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
   const availAfterDelete = await checkEquipmentAvailability(
@@ -107,17 +111,18 @@ test('create, update and delete loan request', async () => {
 test('loan creation fails on quantity conflict', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
   const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
+    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1, structure: owner })
   ).insertedId;
   await db
     .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: structId });
+    .insertOne({ _id: new ObjectId(userId), structure: borrower });
 
   const payload = {
-    owner: structId.toString(),
-    borrower: structId.toString(),
+    owner: owner.toString(),
+    borrower: borrower.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
     endDate: '2024-01-02',
@@ -134,6 +139,35 @@ test('loan creation fails on quantity conflict', async () => {
     .set(auth())
     .send(payload)
     .expect(400);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('reject loan request to own structure', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const struct = (await db.collection('structures').insertOne({ name: 'S' })).insertedId;
+  const eqId = (
+    await db.collection('equipments').insertOne({ name: 'E', totalQty: 1, structure: struct })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: struct });
+
+  const payload = {
+    owner: struct.toString(),
+    borrower: struct.toString(),
+    items: [{ equipment: eqId.toString(), quantity: 1 }],
+    startDate: '2024-01-01',
+    endDate: '2024-01-02',
+  };
+
+  await request(app)
+    .post('/api/loans')
+    .set(auth())
+    .send(payload)
+    .expect(403);
 
   await client.close();
   await mongod.stop();
