@@ -9,6 +9,8 @@ export interface LoanRequest {
   _id?: ObjectId;
   borrower?: ObjectId | Record<string, unknown>;
   owner?: ObjectId | Record<string, unknown>;
+  requestedBy?: ObjectId | Record<string, unknown>;
+  processedBy?: ObjectId | Record<string, unknown>;
   items?: LoanItem[];
   startDate?: Date;
   endDate?: Date;
@@ -31,6 +33,22 @@ async function _populate(db: Db, loan: LoanRequest, session?: ClientSession): Pr
           .findOne({ _id: loan.owner as ObjectId }, { session })
           .then((s) => {
             loan.owner = s || loan.owner;
+          })
+      : null,
+    loan.requestedBy
+      ? db
+          .collection('users')
+          .findOne({ _id: loan.requestedBy as ObjectId }, { session })
+          .then((u) => {
+            loan.requestedBy = u || loan.requestedBy;
+          })
+      : null,
+    loan.processedBy
+      ? db
+          .collection('users')
+          .findOne({ _id: loan.processedBy as ObjectId }, { session })
+          .then((u) => {
+            loan.processedBy = u || loan.processedBy;
           })
       : null,
     loan.items
@@ -69,6 +87,8 @@ export async function createLoan(
 ): Promise<LoanRequest> {
   if (data.borrower) data.borrower = new ObjectId(data.borrower as ObjectId);
   if (data.owner) data.owner = new ObjectId(data.owner as ObjectId);
+  if (data.requestedBy) data.requestedBy = new ObjectId(data.requestedBy as ObjectId);
+  if (data.processedBy) data.processedBy = new ObjectId(data.processedBy as ObjectId);
   if (data.items) {
     data.items = data.items.map((it) => ({ ...it, equipment: new ObjectId(it.equipment as ObjectId) }));
   }
@@ -89,6 +109,8 @@ export async function updateLoan(
 ): Promise<LoanRequest | null> {
   if (data.borrower) data.borrower = new ObjectId(data.borrower as ObjectId);
   if (data.owner) data.owner = new ObjectId(data.owner as ObjectId);
+  if (data.requestedBy) data.requestedBy = new ObjectId(data.requestedBy as ObjectId);
+  if (data.processedBy) data.processedBy = new ObjectId(data.processedBy as ObjectId);
   if (data.items) {
     data.items = data.items.map((it) => ({ ...it, equipment: new ObjectId(it.equipment as ObjectId) }));
   }
