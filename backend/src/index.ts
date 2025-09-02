@@ -18,6 +18,7 @@ import statsRoutes from './routes/stats';
 import rolesRoutes from './routes/roles';
 import { Db } from 'mongodb';
 import { Server } from 'http';
+import { ensureSessionIndexes } from './models/Session';
 
 const app = express();
 app.use(
@@ -76,6 +77,7 @@ export async function start(connect: () => Promise<Db> = connectDB): Promise<Ser
       location: 1,
       structure: 1,
     });
+    await ensureSessionIndexes(db);
   } catch (err) {
     logger.error('Failed to start server: %o', err as Error);
     process.exit(1);
