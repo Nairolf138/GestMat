@@ -74,6 +74,29 @@ test('GET /api/stats/loans/monthly aggregates by month', async () => {
   await mongod.stop();
 });
 
+test('GET /api/stats/loans/monthly applies date range and fills empty months', async () => {
+  const { app, client, mongod, db } = await createApp();
+  await db.collection('loanrequests').insertMany([
+    { startDate: new Date('2022-12-15') },
+    { startDate: new Date('2023-01-10') },
+    { startDate: new Date('2023-03-05') },
+    { startDate: new Date('2023-05-01') },
+  ]);
+  const res = await request(app)
+    .get('/api/stats/loans/monthly?from=2023-01-01&to=2023-04-30')
+    .set(auth())
+    .expect(200);
+  const labels = res.body.map((m) => m._id);
+  assert.deepStrictEqual(labels, ['2023-01', '2023-02', '2023-03', '2023-04']);
+  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  assert.strictEqual(counts['2023-01'], 1);
+  assert.strictEqual(counts['2023-02'], 0);
+  assert.strictEqual(counts['2023-03'], 1);
+  assert.strictEqual(counts['2023-04'], 0);
+  await client.close();
+  await mongod.stop();
+});
+
 test('GET /api/stats/equipments/top returns aggregated equipment counts', async () => {
   const { app, client, mongod, db } = await createApp();
   const e1 = new ObjectId();
