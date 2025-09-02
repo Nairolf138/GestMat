@@ -32,17 +32,7 @@ function AdminStats() {
           api('/stats/equipments/top'),
         ]);
         setMonthly(monthlyData);
-        const detailed = await Promise.all(
-          topData.map(async (item) => {
-            try {
-              const eq = await api(`/equipments/${item._id}`);
-              return { ...item, name: eq.name || item._id };
-            } catch {
-              return { ...item, name: item._id };
-            }
-          }),
-        );
-        setTopEquipments(detailed);
+        setTopEquipments(topData);
       } catch (err) {
         setError(err.message);
         setMonthly([]);
