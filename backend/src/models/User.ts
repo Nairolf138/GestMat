@@ -30,8 +30,28 @@ export function findUserByUsername(db: Db, username: string): Promise<User | nul
   return db.collection<User>('users').findOne({ username });
 }
 
-export function findUsers(db: Db): Promise<User[]> {
-  return db.collection<User>('users').find().toArray();
+export function findUsers(
+  db: Db,
+  search?: string,
+  page = 1,
+  limit = 10
+): Promise<User[]> {
+  const filter: Record<string, unknown> = {};
+  if (search) {
+    const regex = new RegExp(search, 'i');
+    filter.$or = [
+      { username: regex },
+      { firstName: regex },
+      { lastName: regex },
+    ];
+  }
+  return db
+    .collection<User>('users')
+    .find(filter)
+    .sort({ username: 1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .toArray();
 }
 
 export function deleteUserById(db: Db, id: string): Promise<DeleteResult> {

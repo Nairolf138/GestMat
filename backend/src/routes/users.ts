@@ -15,7 +15,10 @@ const router = express.Router();
 
 router.get('/', auth(MANAGE_USERS), async (req: Request, res: Response) => {
   const db = req.app.locals.db;
-  const users = await findUsers(db);
+  const search = (req.query.search as string) || '';
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const users = await findUsers(db, search, page, limit);
   await Promise.all(
     users.map(async (user) => {
       if (user.structure) {

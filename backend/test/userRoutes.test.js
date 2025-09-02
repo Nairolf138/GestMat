@@ -55,6 +55,34 @@ test('GET /api/users requires admin role', async () => {
   await mongod.stop();
 });
 
+test('GET /api/users supports search and pagination', async () => {
+  const { app, client, mongod, db } = await createApp();
+  await db.collection('users').insertMany([
+    { username: 'alice', password: 'pw', firstName: 'Alice' },
+    { username: 'bob', password: 'pw', firstName: 'Bob' },
+    { username: 'charlie', password: 'pw', firstName: 'Charlie' },
+  ]);
+
+  let res = await request(app)
+    .get('/api/users')
+    .query({ search: 'ali' })
+    .set(auth('a1', 'Administrateur'))
+    .expect(200);
+  assert.strictEqual(res.body.length, 1);
+  assert.strictEqual(res.body[0].username, 'alice');
+
+  res = await request(app)
+    .get('/api/users')
+    .query({ page: 2, limit: 1 })
+    .set(auth('a1', 'Administrateur'))
+    .expect(200);
+  assert.strictEqual(res.body.length, 1);
+  assert.strictEqual(res.body[0].username, 'bob');
+
+  await client.close();
+  await mongod.stop();
+});
+
 test('PUT /api/users/me updates user and checks auth failures', async () => {
   const { app, client, mongod, db } = await createApp();
   const id = new ObjectId();
