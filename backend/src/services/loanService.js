@@ -32,6 +32,13 @@ async function createLoanRequest(db, data, user) {
   const start = data.startDate ? new Date(data.startDate) : null;
   const end = data.endDate ? new Date(data.endDate) : null;
   const items = data.items || [];
+  const u = await findUserById(db, user.id);
+  const userStruct = u?.structure?.toString();
+  const owner = data.owner?.toString();
+  const borrower = data.borrower?.toString();
+  if ((owner && borrower && owner === borrower) || (userStruct && owner === userStruct)) {
+    throw forbidden('Cannot request loan for own structure');
+  }
   for (let attempt = 0; attempt < 5; attempt++) {
     const session = db.client.startSession();
     try {
