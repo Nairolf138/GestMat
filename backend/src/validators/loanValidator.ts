@@ -1,8 +1,8 @@
-const { body } = require('express-validator');
+import { body, ValidationChain } from 'express-validator';
 
 const statusValues = ['pending', 'accepted', 'refused', 'cancelled'];
 
-const createLoanValidator = [
+export const createLoanValidator: ValidationChain[] = [
   body('owner').isMongoId().withMessage('owner must be a valid id'),
   body('borrower').isMongoId().withMessage('borrower must be a valid id'),
   body('items').isArray().withMessage('items must be an array'),
@@ -21,7 +21,7 @@ const createLoanValidator = [
   body('status').optional().isIn(statusValues),
 ];
 
-const updateLoanValidator = [
+export const updateLoanValidator: ValidationChain[] = [
   body('owner').optional().isMongoId(),
   body('borrower').optional().isMongoId(),
   body('items').optional().isArray(),
@@ -48,5 +48,3 @@ const updateLoanValidator = [
     }),
   body('status').optional().isIn(statusValues),
 ];
-
-module.exports = { createLoanValidator, updateLoanValidator };

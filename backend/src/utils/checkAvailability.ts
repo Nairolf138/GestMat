@@ -1,7 +1,14 @@
-const { ObjectId } = require('mongodb');
+import { Db, ObjectId, ClientSession } from 'mongodb';
 
 // Availability is computed dynamically from total quantity and overlapping loan requests.
-async function checkEquipmentAvailability(db, equipmentId, start, end, quantity, session) {
+export async function checkEquipmentAvailability(
+  db: Db,
+  equipmentId: string,
+  start: Date | null,
+  end: Date | null,
+  quantity: number,
+  session?: ClientSession,
+): Promise<{ available: boolean; availableQty: number } | null> {
   const eq = await db
     .collection('equipments')
     .findOne({ _id: new ObjectId(equipmentId) }, { session });
@@ -26,7 +33,7 @@ async function checkEquipmentAvailability(db, equipmentId, start, end, quantity,
           { $match: { 'items.equipment': eq._id } },
           { $group: { _id: null, qty: { $sum: '$items.quantity' } } },
         ],
-        { session }
+        { session },
       )
       .toArray();
     reserved = agg[0]?.qty || 0;
@@ -34,5 +41,3 @@ async function checkEquipmentAvailability(db, equipmentId, start, end, quantity,
   const availQty = (eq.totalQty || 0) - reserved;
   return { available: quantity <= availQty, availableQty: availQty };
 }
-
-module.exports = { checkEquipmentAvailability };

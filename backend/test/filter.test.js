@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('assert');
 const { ObjectId } = require('mongodb');
-const createFilter = require('../src/utils/createEquipmentFilter');
+const createFilter = require('../src/utils/createEquipmentFilter').default;
 
 test('createEquipmentFilter builds correct filter', () => {
   const q = { search: 'mic', type: 'audio', location: 'main' };

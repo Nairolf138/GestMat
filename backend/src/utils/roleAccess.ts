@@ -1,6 +1,6 @@
-const ALL_TYPES = ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'];
+export const ALL_TYPES = ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'];
 
-function normalizeRole(role = '') {
+export function normalizeRole(role = ''): string {
   return role
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -9,7 +9,7 @@ function normalizeRole(role = '') {
     .trim();
 }
 
-function normalizeType(type = '') {
+export function normalizeType(type = ''): string | undefined {
   const norm = type
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
@@ -20,11 +20,11 @@ function normalizeType(type = '') {
       t
         .normalize('NFD')
         .replace(/\p{Diacritic}/gu, '')
-        .toLowerCase() === norm
+        .toLowerCase() === norm,
   );
 }
 
-const roleMap = {
+export const roleMap: Record<string, string[]> = {
   Administrateur: ALL_TYPES,
   'Regisseur General': ALL_TYPES,
   'Regisseur Son': ['Son', 'Vidéo', 'Autre'],
@@ -33,11 +33,9 @@ const roleMap = {
   Autre: ALL_TYPES,
 };
 
-function canModify(role, type) {
+export function canModify(role: string, type?: string): boolean {
   const allowed = roleMap[normalizeRole(role)];
   if (!allowed) return false;
   if (!type) return true; // if type not specified, allow as long as role is known
   return allowed.includes(type);
 }
-
-module.exports = { roleMap, canModify, ALL_TYPES, normalizeRole, normalizeType };

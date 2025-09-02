@@ -1,15 +1,22 @@
-const { findLoans, createLoan, updateLoan, deleteLoan } = require('../models/LoanRequest');
-const { sendMail } = require('../utils/sendMail');
-const { getLoanRecipients } = require('../utils/getLoanRecipients');
-const { getStructureEmails } = require('../utils/getStructureEmails');
-const { findUserById } = require('../models/User');
-const { ObjectId } = require('mongodb');
-const { ADMIN_ROLE } = require('../config/roles');
-const { forbidden, notFound, badRequest } = require('../utils/errors');
-const { checkEquipmentAvailability } = require('../utils/checkAvailability');
-const logger = require('../utils/logger');
+import { Db, ObjectId } from 'mongodb';
+import {
+  findLoans,
+  createLoan,
+  updateLoan,
+  deleteLoan,
+  LoanRequest,
+} from '../models/LoanRequest';
+import { sendMail } from '../utils/sendMail';
+import { getLoanRecipients } from '../utils/getLoanRecipients';
+import { getStructureEmails } from '../utils/getStructureEmails';
+import { findUserById } from '../models/User';
+import { ADMIN_ROLE } from '../config/roles';
+import { forbidden, notFound, badRequest } from '../utils/errors';
+import { checkEquipmentAvailability } from '../utils/checkAvailability';
+import logger from '../utils/logger';
+import type { AuthUser } from '../types';
 
-async function listLoans(db, user) {
+export async function listLoans(db: Db, user: AuthUser): Promise<LoanRequest[]> {
   if (user.role === ADMIN_ROLE) {
     return findLoans(db);
   }
@@ -28,29 +35,33 @@ async function listLoans(db, user) {
   return findLoans(db, filter);
 }
 
-async function createLoanRequest(db, data, user) {
+export async function createLoanRequest(
+  db: Db,
+  data: LoanRequest,
+  user: AuthUser,
+): Promise<LoanRequest> {
   const start = data.startDate ? new Date(data.startDate) : null;
   const end = data.endDate ? new Date(data.endDate) : null;
   const items = data.items || [];
   const u = await findUserById(db, user.id);
   const userStruct = u?.structure?.toString();
-  const owner = data.owner?.toString();
-  const borrower = data.borrower?.toString();
+  const owner = (data.owner as any)?.toString();
+  const borrower = (data.borrower as any)?.toString();
   if ((owner && borrower && owner === borrower) || (userStruct && owner === userStruct)) {
     throw forbidden('Cannot request loan for own structure');
   }
   for (let attempt = 0; attempt < 5; attempt++) {
-    const session = db.client.startSession();
+    const session = (db as any).client.startSession();
     try {
       session.startTransaction();
       for (const item of items) {
         const avail = await checkEquipmentAvailability(
           db,
-          item.equipment,
+          item.equipment as any,
           start,
           end,
-          item.quantity,
-          session
+          item.quantity as number,
+          session,
         );
         if (!avail?.available) {
           throw badRequest('Quantity not available');
@@ -58,34 +69,40 @@ async function createLoanRequest(db, data, user) {
         await db
           .collection('equipments')
           .updateOne(
-            { _id: new ObjectId(item.equipment) },
+            { _id: new ObjectId(item.equipment as any) },
             { $currentDate: { updatedAt: true } },
-            { session }
+            { session },
           );
       }
 
-      const loan = await createLoan(db, { ...data, status: 'pending', requestedBy: user.id }, session);
+      const loan = await createLoan(
+        db,
+        { ...data, status: 'pending', requestedBy: user.id as any },
+        session,
+      );
       await session.commitTransaction();
       session.endSession();
 
       try {
-        const recipients = await getLoanRecipients(db, loan.owner, loan.items || []);
+        const recipients = await getLoanRecipients(db, loan.owner as any, items as any);
         if (recipients.length) {
           await sendMail({
             to: recipients.join(','),
             subject: 'Nouvelle demande de prêt',
-            text: `Demande de prêt de ${loan.borrower?.name || ''} pour ${loan.owner?.name || ''}`,
+            text: `Demande de prêt de ${(loan.borrower as any)?.name || ''} pour ${
+              (loan.owner as any)?.name || ''
+            }`,
           });
         }
       } catch (err) {
         logger.error('mail error %o', err);
       }
       return loan;
-    } catch (err) {
+    } catch (err: any) {
       await session.abortTransaction();
       session.endSession();
       if (err.code && attempt < 4) {
-        continue; // retry once on write conflict
+        continue; // retry on write conflict
       }
       if (err.code) {
         throw badRequest('Quantity not available');
@@ -93,12 +110,18 @@ async function createLoanRequest(db, data, user) {
       throw err;
     }
   }
+  throw badRequest('Unable to create loan request');
 }
 
-async function updateLoanRequest(db, user, id, data) {
-  const session = db.client.startSession();
+export async function updateLoanRequest(
+  db: Db,
+  user: AuthUser,
+  id: string,
+  data: LoanRequest,
+): Promise<LoanRequest | null> {
+    const session = (db as any).client.startSession();
   session.startTransaction();
-  let updated;
+  let updated: LoanRequest | null;
   try {
     const loan = await db
       .collection('loanrequests')
@@ -114,7 +137,7 @@ async function updateLoanRequest(db, user, id, data) {
 
     if (user.role !== ADMIN_ROLE) {
       const keys = Object.keys(data);
-      const status = data.status;
+      const status = (data as any).status;
       if (status === 'accepted' || status === 'refused') {
         if (!isOwner || keys.some((k) => k !== 'status')) {
           throw forbidden('Access denied');
@@ -130,35 +153,39 @@ async function updateLoanRequest(db, user, id, data) {
     }
 
     if (data.status && (data.status === 'accepted' || data.status === 'refused')) {
-      data.processedBy = user.id;
+      (data as any).processedBy = user.id;
     }
 
-    if (data.status && releaseStatuses.includes(data.status) && !releaseStatuses.includes(loan.status)) {
-      for (const item of loan.items || []) {
+      if (
+        status &&
+        releaseStatuses.includes(status) &&
+        !releaseStatuses.includes(loan.status as any)
+      ) {
+        for (const item of loan.items || []) {
         await db
           .collection('equipments')
           .updateOne(
             { _id: item.equipment },
             { $currentDate: { updatedAt: true } },
-            { session }
+            { session },
           );
       }
     }
-    if (
-      data.status &&
-      !releaseStatuses.includes(data.status) &&
-      releaseStatuses.includes(loan.status)
-    ) {
+      if (
+        status &&
+        !releaseStatuses.includes(status) &&
+        releaseStatuses.includes(loan.status as any)
+      ) {
       const start = loan.startDate;
       const end = loan.endDate;
       for (const item of loan.items || []) {
         const avail = await checkEquipmentAvailability(
           db,
-          item.equipment,
+          item.equipment as any,
           start,
           end,
-          item.quantity,
-          session
+          item.quantity as number,
+          session,
         );
         if (!avail?.available) {
           throw badRequest('Quantity not available');
@@ -168,21 +195,25 @@ async function updateLoanRequest(db, user, id, data) {
           .updateOne(
             { _id: item.equipment },
             { $currentDate: { updatedAt: true } },
-            { session }
+            { session },
           );
       }
     }
     updated = await updateLoan(db, id, data, session);
     await session.commitTransaction();
 
-    if (data.status) {
+    if (status) {
       try {
-        const emails = await getStructureEmails(db, loan.borrower);
+        const borrowerId = (
+          (loan.borrower as any)?._id?.toString() ||
+          (loan.borrower as any)?.toString()
+        ) as string;
+        const emails = await getStructureEmails(db, borrowerId);
         if (emails.length) {
           await sendMail({
             to: emails.join(','),
-            subject: `Demande ${data.status}`,
-            text: `La demande ${updated._id} est maintenant ${data.status}`,
+            subject: `Demande ${status}`,
+            text: `La demande ${updated?._id} est maintenant ${status}`,
           });
         }
       } catch (err) {
@@ -198,8 +229,12 @@ async function updateLoanRequest(db, user, id, data) {
   }
 }
 
-async function deleteLoanRequest(db, user, id) {
-  const session = db.client.startSession();
+export async function deleteLoanRequest(
+  db: Db,
+  user: AuthUser,
+  id: string,
+): Promise<{ message: string }> {
+  const session = (db as any).client.startSession();
   session.startTransaction();
   try {
     const loan = await db
@@ -226,7 +261,7 @@ async function deleteLoanRequest(db, user, id) {
         .updateOne(
           { _id: item.equipment },
           { $currentDate: { updatedAt: true } },
-          { session }
+          { session },
         );
     }
 
@@ -242,7 +277,7 @@ async function deleteLoanRequest(db, user, id) {
   }
 }
 
-module.exports = {
+export default {
   listLoans,
   createLoanRequest,
   updateLoanRequest,
