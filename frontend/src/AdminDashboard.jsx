@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
+import AdminStats from './AdminStats';
 
 function ManageUsers() {
   const [users, setUsers] = useState([]);
@@ -394,11 +395,20 @@ function AdminDashboard() {
             Inventory
           </button>
         </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${tab === 'stats' ? 'active' : ''}`}
+            onClick={() => setTab('stats')}
+          >
+            Statistics
+          </button>
+        </li>
       </ul>
       <div className="mt-3">
         {tab === 'users' && <ManageUsers />}
         {tab === 'loans' && <ManageLoans />}
         {tab === 'inventory' && <ManageInventory />}
+        {tab === 'stats' && <AdminStats />}
       </div>
     </div>
   );
