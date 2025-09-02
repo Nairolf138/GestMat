@@ -78,6 +78,10 @@ test('GET /api/stats/equipments/top returns aggregated equipment counts', async 
   const { app, client, mongod, db } = await createApp();
   const e1 = new ObjectId();
   const e2 = new ObjectId();
+  await db.collection('equipments').insertMany([
+    { _id: e1, name: 'Eq1' },
+    { _id: e2, name: 'Eq2' },
+  ]);
   await db.collection('loanrequests').insertMany([
     { items: [{ equipment: e1, quantity: 2 }] },
     { items: [{ equipment: e1, quantity: 1 }, { equipment: e2, quantity: 1 }] },
@@ -89,6 +93,7 @@ test('GET /api/stats/equipments/top returns aggregated equipment counts', async 
   assert.strictEqual(res.body.length, 1);
   assert.strictEqual(res.body[0]._id.toString(), e1.toString());
   assert.strictEqual(res.body[0].count, 3);
+  assert.strictEqual(res.body[0].name, 'Eq1');
   await client.close();
   await mongod.stop();
 });

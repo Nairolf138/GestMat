@@ -61,6 +61,22 @@ router.get(
           },
           { $sort: { count: -1 } },
           { $limit: limit },
+          {
+            $lookup: {
+              from: 'equipments',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'equipment',
+            },
+          },
+          { $unwind: '$equipment' },
+          {
+            $project: {
+              _id: 1,
+              count: 1,
+              name: '$equipment.name',
+            },
+          },
         ])
         .toArray();
       res.json(agg);
