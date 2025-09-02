@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
@@ -52,6 +52,51 @@ test('GET /api/stats/loans requires auth', async () => {
     .get('/api/stats/loans')
     .set({ Authorization: 'Bearer badtoken' })
     .expect(401);
+  await client.close();
+  await mongod.stop();
+});
+
+test('GET /api/stats/loans/monthly aggregates by month', async () => {
+  const { app, client, mongod, db } = await createApp();
+  await db.collection('loanrequests').insertMany([
+    { startDate: new Date('2023-01-15') },
+    { startDate: new Date('2023-01-20') },
+    { startDate: new Date('2023-02-10') },
+  ]);
+  const res = await request(app)
+    .get('/api/stats/loans/monthly')
+    .set(auth())
+    .expect(200);
+  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  assert.strictEqual(counts['2023-01'], 2);
+  assert.strictEqual(counts['2023-02'], 1);
+  await client.close();
+  await mongod.stop();
+});
+
+test('GET /api/stats/equipments/top returns aggregated equipment counts', async () => {
+  const { app, client, mongod, db } = await createApp();
+  const e1 = new ObjectId();
+  const e2 = new ObjectId();
+  await db.collection('loanrequests').insertMany([
+    { items: [{ equipment: e1, quantity: 2 }] },
+    { items: [{ equipment: e1, quantity: 1 }, { equipment: e2, quantity: 1 }] },
+  ]);
+  const res = await request(app)
+    .get('/api/stats/equipments/top?limit=1')
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(res.body.length, 1);
+  assert.strictEqual(res.body[0]._id.toString(), e1.toString());
+  assert.strictEqual(res.body[0].count, 3);
+  await client.close();
+  await mongod.stop();
+});
+
+test('new stats routes require auth', async () => {
+  const { app, client, mongod } = await createApp();
+  await request(app).get('/api/stats/loans/monthly').expect(401);
+  await request(app).get('/api/stats/equipments/top').expect(401);
   await client.close();
   await mongod.stop();
 });
