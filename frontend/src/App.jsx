@@ -9,6 +9,7 @@ import Register from "./Register";
 import Equipments from "./Equipments";
 import Home from "./Home";
 import Loans from "./Loans";
+import LoanDetail from "./LoanDetail.jsx";
 import Profile from "./Profile";
 import Catalog from "./Catalog";
 import Cart from "./Cart";
@@ -35,6 +36,7 @@ function App() {
           <Route path="/inventory" element={<PrivateRoute><Equipments /></PrivateRoute>} />
           <Route path="/catalog" element={<PrivateRoute><Catalog /></PrivateRoute>} />
           <Route path="/loans" element={<PrivateRoute><Loans /></PrivateRoute>} />
+          <Route path="/loans/:id" element={<PrivateRoute><LoanDetail /></PrivateRoute>} />
           <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminDashboard/></AdminRoute>} />
