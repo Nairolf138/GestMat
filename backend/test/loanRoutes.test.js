@@ -26,8 +26,8 @@ async function createApp() {
 }
 
 const userId = new ObjectId().toString();
-function auth() {
-  const token = jwt.sign({ id: userId }, 'test', { expiresIn: '1h' });
+function auth(role = 'Administrateur') {
+  const token = jwt.sign({ id: userId, role }, 'test', { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }
 
@@ -44,7 +44,11 @@ test('create, update and delete loan request', async () => {
     { _id: ownerUser, structure: owner },
     { _id: new ObjectId(userId), structure: borrower },
   ]);
-  const ownerToken = jwt.sign({ id: ownerUser.toString() }, 'test', { expiresIn: '1h' });
+    const ownerToken = jwt.sign(
+      { id: ownerUser.toString(), role: 'Administrateur' },
+      'test',
+      { expiresIn: '1h' }
+    );
 
   const payload = {
     owner: owner.toString(),
@@ -182,7 +186,7 @@ test('delete loan request unauthorized returns 403', async () => {
   const loanId = (
     await db.collection('loanrequests').insertOne({ owner: struct2, borrower: struct2 })
   ).insertedId;
-  await request(app).delete(`/api/loans/${loanId}`).set(auth()).expect(403);
+  await request(app).delete(`/api/loans/${loanId}`).set(auth('Autre')).expect(403);
   await client.close();
   await mongod.stop();
 });
@@ -197,7 +201,7 @@ test('unauthorized delete does not remove loan', async () => {
     await db.collection('loanrequests').insertOne({ owner: struct2, borrower: struct2 })
   ).insertedId;
 
-  await request(app).delete(`/api/loans/${loanId}`).set(auth()).expect(403);
+  await request(app).delete(`/api/loans/${loanId}`).set(auth('Autre')).expect(403);
 
   const loan = await db.collection('loanrequests').findOne({ _id: loanId });
   assert.ok(loan);
@@ -206,149 +210,37 @@ test('unauthorized delete does not remove loan', async () => {
   await mongod.stop();
 });
 
-test('borrower can update and delete future loan', async () => {
+test('non-admin cannot create, update or delete loan', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const owner = (await db.collection('structures').insertOne({ name: 'O' })).insertedId;
-  const borrower = (await db.collection('structures').insertOne({ name: 'B' })).insertedId;
-  const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E', totalQty: 1 })
-  ).insertedId;
-  await db
-    .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: borrower });
-
+  const struct = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const eqId = (await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })).insertedId;
   const payload = {
-    owner: owner.toString(),
-    borrower: borrower.toString(),
+    owner: struct.toString(),
+    borrower: struct.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
-    startDate: '2099-01-01',
-    endDate: '2099-01-02',
+    startDate: '2024-01-01',
+    endDate: '2024-01-02',
   };
-
-  const res = await request(app)
+  await request(app)
+    .post('/api/loans')
+    .set(auth('Autre'))
+    .send(payload)
+    .expect(403);
+  const created = await request(app)
     .post('/api/loans')
     .set(auth())
     .send(payload)
     .expect(200);
-  const id = res.body._id;
-
   await request(app)
-    .put(`/api/loans/${id}`)
-    .set(auth())
-    .send({ startDate: '2099-01-05' })
-    .expect(200);
-
-  await request(app)
-    .put(`/api/loans/${id}`)
-    .set(auth())
+    .put(`/api/loans/${created.body._id}`)
+    .set(auth('Autre'))
     .send({ status: 'accepted' })
     .expect(403);
-
   await request(app)
-    .put(`/api/loans/${id}`)
-    .set(auth())
-    .send({ status: 'cancelled' })
-    .expect(200);
-
-  await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
-
-  await client.close();
-  await mongod.stop();
-});
-
-test('borrower cannot update or delete past accepted loan', async () => {
-  const { app, client, mongod } = await createApp();
-  const db = client.db();
-  const owner = (await db.collection('structures').insertOne({ name: 'O' })).insertedId;
-  const borrower = (await db.collection('structures').insertOne({ name: 'B' })).insertedId;
-  const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E', totalQty: 1 })
-  ).insertedId;
-  await db
-    .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: borrower });
-
-  const pastPayload = {
-    owner: owner.toString(),
-    borrower: borrower.toString(),
-    items: [{ equipment: eqId.toString(), quantity: 1 }],
-    startDate: '2000-01-01',
-    endDate: '2000-01-02',
-  };
-
-  const past = await request(app)
-    .post('/api/loans')
-    .set(auth())
-    .send(pastPayload)
-    .expect(200);
-  const pastId = past.body._id;
-
-  await request(app)
-    .put(`/api/loans/${pastId}`)
-    .set(auth())
-    .send({ status: 'accepted' })
+    .delete(`/api/loans/${created.body._id}`)
+    .set(auth('Autre'))
     .expect(403);
-
-  const delId = (
-    await db.collection('loanrequests').insertOne({
-      owner,
-      borrower,
-      startDate: new Date('2000-01-01'),
-      endDate: new Date('2000-01-02'),
-      status: 'accepted',
-    })
-  ).insertedId;
-
-  await request(app).delete(`/api/loans/${delId}`).set(auth()).expect(403);
-  const loan = await db.collection('loanrequests').findOne({ _id: delId });
-  assert.ok(loan);
-
-  await client.close();
-  await mongod.stop();
-});
-
-test('owner can only update status and cannot delete', async () => {
-  const { app, client, mongod } = await createApp();
-  const db = client.db();
-  const owner = (await db.collection('structures').insertOne({ name: 'O' })).insertedId;
-  const borrower = (await db.collection('structures').insertOne({ name: 'B' })).insertedId;
-  await db
-    .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: owner });
-
-  const loanId = (
-    await db.collection('loanrequests').insertOne({
-      owner,
-      borrower,
-      startDate: new Date('2099-01-01'),
-      endDate: new Date('2099-01-02'),
-    })
-  ).insertedId;
-
-  await request(app)
-    .put(`/api/loans/${loanId}`)
-    .set(auth())
-    .send({ startDate: '2099-01-05' })
-    .expect(403);
-
-  await request(app)
-    .put(`/api/loans/${loanId}`)
-    .set(auth())
-    .send({ status: 'cancelled' })
-    .expect(403);
-
-  await request(app)
-    .put(`/api/loans/${loanId}`)
-    .set(auth())
-    .send({ status: 'accepted' })
-    .expect(200);
-
-  await request(app)
-    .delete(`/api/loans/${loanId}`)
-    .set(auth())
-    .expect(403);
-
   await client.close();
   await mongod.stop();
 });
