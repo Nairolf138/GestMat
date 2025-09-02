@@ -28,7 +28,7 @@ async function listLoans(db, user) {
   return findLoans(db, filter);
 }
 
-async function createLoanRequest(db, data) {
+async function createLoanRequest(db, data, user) {
   const start = data.startDate ? new Date(data.startDate) : null;
   const end = data.endDate ? new Date(data.endDate) : null;
   const items = data.items || [];
@@ -57,7 +57,7 @@ async function createLoanRequest(db, data) {
           );
       }
 
-      const loan = await createLoan(db, { ...data, status: 'pending' }, session);
+      const loan = await createLoan(db, { ...data, status: 'pending', requestedBy: user.id }, session);
       await session.commitTransaction();
       session.endSession();
 
@@ -103,15 +103,30 @@ async function updateLoanRequest(db, user, id, data) {
     const isOwner = loan.owner?.toString() === structId;
     const isBorrower = loan.borrower?.toString() === structId;
     const now = new Date();
-    if (
-      user.role !== ADMIN_ROLE &&
-      !isOwner &&
-      !(isBorrower && new Date(loan.startDate) > now)
-    ) {
-      throw forbidden('Access denied');
+    const releaseStatuses = ['refused', 'cancelled'];
+
+    if (user.role !== ADMIN_ROLE) {
+      const keys = Object.keys(data);
+      const status = data.status;
+      if (status === 'accepted' || status === 'refused') {
+        if (!isOwner || keys.some((k) => k !== 'status')) {
+          throw forbidden('Access denied');
+        }
+      } else {
+        if (status && status !== 'cancelled') {
+          throw forbidden('Access denied');
+        }
+        if (!isBorrower || new Date(loan.startDate) <= now) {
+          throw forbidden('Access denied');
+        }
+      }
     }
 
-    if (data.status === 'refused' && loan.status !== 'refused') {
+    if (data.status && (data.status === 'accepted' || data.status === 'refused')) {
+      data.processedBy = user.id;
+    }
+
+    if (data.status && releaseStatuses.includes(data.status) && !releaseStatuses.includes(loan.status)) {
       for (const item of loan.items || []) {
         await db
           .collection('equipments')
@@ -122,7 +137,11 @@ async function updateLoanRequest(db, user, id, data) {
           );
       }
     }
-    if (data.status !== 'refused' && loan.status === 'refused') {
+    if (
+      data.status &&
+      !releaseStatuses.includes(data.status) &&
+      releaseStatuses.includes(loan.status)
+    ) {
       const start = loan.startDate;
       const end = loan.endDate;
       for (const item of loan.items || []) {
@@ -184,16 +203,13 @@ async function deleteLoanRequest(db, user, id) {
     if (user.role !== ADMIN_ROLE) {
       const u = await findUserById(db, user.id);
       const structId = u?.structure?.toString();
-      const isOwner = loan.owner?.toString() === structId;
       const isBorrower = loan.borrower?.toString() === structId;
-      if (!isOwner && !isBorrower) {
+      if (!isBorrower) {
         throw forbidden('Access denied');
       }
-      if (isBorrower && !isOwner) {
-        const start = new Date(loan.startDate);
-        if (loan.status !== 'pending' && start <= new Date()) {
-          throw forbidden('Access denied');
-        }
+      const start = new Date(loan.startDate);
+      if (loan.status !== 'pending' && start <= new Date()) {
+        throw forbidden('Access denied');
       }
     }
 

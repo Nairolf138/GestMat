@@ -1,6 +1,6 @@
 const { body } = require('express-validator');
 
-const statusValues = ['pending', 'accepted', 'refused'];
+const statusValues = ['pending', 'accepted', 'refused', 'cancelled'];
 
 const createLoanValidator = [
   body('owner').isMongoId().withMessage('owner must be a valid id'),

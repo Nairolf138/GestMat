@@ -25,7 +25,7 @@ router.get('/', auth(), async (req: Request, res: Response, next: NextFunction) 
 router.post('/', auth(), createLoanValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
-    const loan = await createLoanRequest(db, req.body);
+    const loan = await createLoanRequest(db, req.body, req.user!);
     res.json(loan);
   } catch (err) {
     next(err);

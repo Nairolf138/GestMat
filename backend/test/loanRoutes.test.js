@@ -56,6 +56,7 @@ test('create, update and delete loan request', async () => {
     .send(payload)
     .expect(200);
   assert.ok(res.body._id);
+  assert.strictEqual(res.body.requestedBy._id.toString(), userId);
   const start = new Date('2024-01-01');
   const end = new Date('2024-01-02');
   const availAfterCreate = await checkEquipmentAvailability(
@@ -77,6 +78,7 @@ test('create, update and delete loan request', async () => {
     .send({ status: 'accepted' })
     .expect(200);
   assert.strictEqual(upd.body.status, 'accepted');
+  assert.strictEqual(upd.body.processedBy._id.toString(), userId);
 
   await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
   const availAfterDelete = await checkEquipmentAvailability(
@@ -203,6 +205,18 @@ test('borrower can update and delete future loan', async () => {
     .send({ startDate: '2099-01-05' })
     .expect(200);
 
+  await request(app)
+    .put(`/api/loans/${id}`)
+    .set(auth())
+    .send({ status: 'accepted' })
+    .expect(403);
+
+  await request(app)
+    .put(`/api/loans/${id}`)
+    .set(auth())
+    .send({ status: 'cancelled' })
+    .expect(200);
+
   await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
 
   await client.close();
@@ -255,6 +269,51 @@ test('borrower cannot update or delete past accepted loan', async () => {
   await request(app).delete(`/api/loans/${delId}`).set(auth()).expect(403);
   const loan = await db.collection('loanrequests').findOne({ _id: delId });
   assert.ok(loan);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('owner can only update status and cannot delete', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const owner = (await db.collection('structures').insertOne({ name: 'O' })).insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'B' })).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: owner });
+
+  const loanId = (
+    await db.collection('loanrequests').insertOne({
+      owner,
+      borrower,
+      startDate: new Date('2099-01-01'),
+      endDate: new Date('2099-01-02'),
+    })
+  ).insertedId;
+
+  await request(app)
+    .put(`/api/loans/${loanId}`)
+    .set(auth())
+    .send({ startDate: '2099-01-05' })
+    .expect(403);
+
+  await request(app)
+    .put(`/api/loans/${loanId}`)
+    .set(auth())
+    .send({ status: 'cancelled' })
+    .expect(403);
+
+  await request(app)
+    .put(`/api/loans/${loanId}`)
+    .set(auth())
+    .send({ status: 'accepted' })
+    .expect(200);
+
+  await request(app)
+    .delete(`/api/loans/${loanId}`)
+    .set(auth())
+    .expect(403);
 
   await client.close();
   await mongod.stop();
