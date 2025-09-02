@@ -1,9 +1,9 @@
-const { body } = require('express-validator');
-const { ALL_TYPES, normalizeType } = require('../utils/roleAccess');
+import { body, ValidationChain } from 'express-validator';
+import { ALL_TYPES, normalizeType } from '../utils/roleAccess';
 
 const conditionValues = ['Neuf', 'Légèrement usé', 'Usé', 'Très usé'];
 
-const createEquipmentValidator = [
+export const createEquipmentValidator: ValidationChain[] = [
   body('name').notEmpty().withMessage('Name is required'),
   body('type')
     .trim()
@@ -33,7 +33,7 @@ const createEquipmentValidator = [
     }),
 ];
 
-const updateEquipmentValidator = [
+export const updateEquipmentValidator: ValidationChain[] = [
   body('name').optional().notEmpty(),
   body('type')
     .optional()
@@ -64,5 +64,3 @@ const updateEquipmentValidator = [
       return true;
     }),
 ];
-
-module.exports = { createEquipmentValidator, updateEquipmentValidator };

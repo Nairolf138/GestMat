@@ -1,7 +1,11 @@
 declare module './config';
 declare module './config/db';
-declare module './utils/errors';
-declare module './utils/logger';
+declare module './config/roles';
+declare module '../config';
+declare module '../config/roles';
+declare module './middleware/checkObjectId';
+declare module '../middleware/checkObjectId';
+declare module 'nodemailer';
 declare module './routes/auth';
 declare module './routes/users';
 declare module './routes/structures';

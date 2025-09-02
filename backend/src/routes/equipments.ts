@@ -45,13 +45,13 @@ router.get('/', auth(), async (req: Request, res: Response) => {
         const struct = await findStructureById(db, eq.structure.toString());
         if (struct) eq.structure = struct;
       }
-      const avail = await checkEquipmentAvailability(
-        db,
-        eq._id,
-        start,
-        end,
-        1
-      );
+        const avail = await checkEquipmentAvailability(
+          db,
+          eq._id!.toString(),
+          start,
+          end,
+          1
+        );
       eq.availability = `${avail?.availableQty ?? 0}/${eq.totalQty || 0}`;
       delete eq.availableQty;
     })
