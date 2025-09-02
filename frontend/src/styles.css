@@ -75,6 +75,12 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
+.shortcut-btn {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
 .nav-link {
   padding: var(--spacing-xs) var(--spacing-sm);
   transition: background-color 0.2s, color 0.2s;
