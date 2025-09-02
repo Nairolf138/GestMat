@@ -1,31 +1,101 @@
 import React, { useEffect, useState } from 'react';
+import { Bar, Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { useTranslation } from 'react-i18next';
+import Loading from './Loading';
 import { api } from './api';
 
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+
 function AdminStats() {
-  const [stats, setStats] = useState([]);
+  const { t } = useTranslation();
+  const [monthly, setMonthly] = useState([]);
+  const [topEquipments, setTopEquipments] = useState([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setError('');
-    api('/stats/loans')
-      .then(setStats)
-      .catch((err) => {
+    setLoading(true);
+    async function load() {
+      try {
+        const [monthlyData, topData] = await Promise.all([
+          api('/stats/loans/monthly'),
+          api('/stats/equipments/top'),
+        ]);
+        setMonthly(monthlyData);
+        const detailed = await Promise.all(
+          topData.map(async (item) => {
+            try {
+              const eq = await api(`/equipments/${item._id}`);
+              return { ...item, name: eq.name || item._id };
+            } catch {
+              return { ...item, name: item._id };
+            }
+          }),
+        );
+        setTopEquipments(detailed);
+      } catch (err) {
         setError(err.message);
-        setStats([]);
-      });
+        setMonthly([]);
+        setTopEquipments([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
+
+  if (loading) return <Loading />;
+
+  const monthlyChart = {
+    labels: monthly.map((m) => m._id),
+    datasets: [
+      {
+        label: t('admin_stats.loans'),
+        data: monthly.map((m) => m.count),
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+      },
+    ],
+  };
+
+  const equipmentChart = {
+    labels: topEquipments.map((e) => e.name),
+    datasets: [
+      {
+        label: t('admin_stats.equipments'),
+        data: topEquipments.map((e) => e.count),
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40',
+        ],
+      },
+    ],
+  };
 
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
-      <ul className="list-group">
-        {stats.map((s) => (
-          <li key={s._id} className="list-group-item d-flex justify-content-between align-items-center">
-            <span>{s._id}</span>
-            <span className="badge bg-primary rounded-pill">{s.count}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="mb-4">
+        <h2>{t('admin_stats.monthly_loans')}</h2>
+        <Bar data={monthlyChart} />
+      </div>
+      <div>
+        <h2>{t('admin_stats.top_equipments')}</h2>
+        <Pie data={equipmentChart} />
+      </div>
     </div>
   );
 }
