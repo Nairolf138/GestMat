@@ -10,8 +10,18 @@ export interface Equipment {
   [key: string]: unknown;
 }
 
-export function findEquipments(db: Db, filter: any): Promise<Equipment[]> {
-  return db.collection<Equipment>('equipments').find(filter).sort({ name: 1 }).toArray();
+export function findEquipments(
+  db: Db,
+  filter: any,
+  page = 1,
+  limit = 0,
+): Promise<Equipment[]> {
+  const cursor = db.collection<Equipment>('equipments').find(filter).sort({ name: 1 });
+  if (limit > 0) {
+    const skip = (page - 1) * limit;
+    cursor.skip(skip).limit(limit);
+  }
+  return cursor.toArray();
 }
 
 export async function createEquipment(db: Db, data: Equipment): Promise<WithId<Equipment>> {

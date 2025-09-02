@@ -74,6 +74,36 @@ test('default availableQty to totalQty when missing', async () => {
   await mongod.stop();
 });
 
+test('supports filtering and pagination', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  await db.collection('equipments').insertMany([
+    { name: 'Cam', type: 'Video', location: 'Studio', totalQty: 1, availableQty: 1 },
+    { name: 'Light', type: 'Light', location: 'Stage', totalQty: 1, availableQty: 1 },
+    { name: 'Mic', type: 'Sound', location: 'Studio', totalQty: 1, availableQty: 1 },
+  ]);
+  const filterRes = await request(app)
+    .get('/api/equipments?search=Mic&type=Sound&location=Studio')
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(filterRes.body.length, 1);
+  assert.strictEqual(filterRes.body[0].name, 'Mic');
+  const page1 = await request(app)
+    .get('/api/equipments?page=1&limit=2')
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(page1.body.length, 2);
+  assert.strictEqual(page1.body[0].name, 'Cam');
+  const page2 = await request(app)
+    .get('/api/equipments?page=2&limit=2')
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(page2.body.length, 1);
+  assert.strictEqual(page2.body[0].name, 'Mic');
+  await client.close();
+  await mongod.stop();
+});
+
 test('list excludes equipments from user structure', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();

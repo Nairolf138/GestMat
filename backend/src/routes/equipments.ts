@@ -35,10 +35,19 @@ router.get('/', auth(), async (req: Request, res: Response) => {
     const user = await findUserById(db, req.user!.id);
     if (user?.structure) excludeStructure = user.structure.toString();
   }
-  const filter = createEquipmentFilter({ ...query, excludeStructure });
+  const { search, type, location, structure } = query;
+  const filter = createEquipmentFilter({
+    search,
+    type,
+    location,
+    structure,
+    excludeStructure,
+  });
+  const page = query.page ? parseInt(query.page as string, 10) : 1;
+  const limit = query.limit ? parseInt(query.limit as string, 10) : 0;
   const start = query.startDate ? new Date(query.startDate) : new Date();
   const end = query.endDate ? new Date(query.endDate) : start;
-  const equipments = await findEquipments(db, filter as any);
+  const equipments = await findEquipments(db, filter as any, page, limit);
   await Promise.all(
     equipments.map(async (eq) => {
       if (eq.structure) {

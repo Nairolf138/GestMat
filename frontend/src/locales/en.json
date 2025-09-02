@@ -162,6 +162,14 @@
     "previous": "Previous",
     "delete": "Delete"
   },
+  "inventory": {
+    "search": "Search",
+    "name": "Name",
+    "type": "Type",
+    "location": "Location",
+    "next": "Next",
+    "previous": "Previous"
+  },
   "structures": {
     "title": "Structures"
   },
