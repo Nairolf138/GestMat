@@ -10,7 +10,8 @@ import ROLES, { ADMIN_ROLE } from '../config/roles';
 const DEFAULT_ROLE = 'Autre';
 const ALLOWED_ROLES = ROLES.filter((r) => r !== ADMIN_ROLE);
 
-import { JWT_SECRET, NODE_ENV } from '../config';
+import { JWT_SECRET } from '../config';
+import { cookieOptions } from '../utils/cookieOptions';
 import { createUser, findUserByUsername } from '../models/User';
 import { findStructureById } from '../models/Structure';
 import {
@@ -94,11 +95,6 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
     const hashedRefreshToken = hashToken(refreshToken);
     await deleteSessionsByUser(db, user._id!.toString());
     await createSession(db, { token: hashedRefreshToken, userId: user._id!.toString() });
-      const cookieOptions = {
-        httpOnly: true,
-        secure: NODE_ENV === 'production',
-        sameSite: 'strict' as const,
-      };
       res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
       res.cookie('refreshToken', refreshToken, {
         ...cookieOptions,
@@ -141,11 +137,6 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
     const hashedNewRefreshToken = hashToken(newRefreshToken);
     await createSession(db, { token: hashedNewRefreshToken, userId: String(payload.id) });
     await deleteSessionByToken(db, hashedRefreshToken);
-      const cookieOptions = {
-        httpOnly: true,
-        secure: NODE_ENV === 'production',
-        sameSite: 'strict' as const,
-      };
     res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
     res.cookie('refreshToken', newRefreshToken, {
       ...cookieOptions,
@@ -163,11 +154,6 @@ router.post('/logout', async (req: Request, res: Response) => {
   if (refreshToken) {
     await deleteSessionByToken(db, hashToken(refreshToken)).catch(() => {});
   }
-  const cookieOptions = {
-    httpOnly: true,
-    secure: NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-  };
   res.clearCookie('token', cookieOptions);
   res.clearCookie('refreshToken', cookieOptions);
   res.sendStatus(204);
