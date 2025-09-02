@@ -6,6 +6,7 @@ import { api } from "./api";
 import Alert from "./Alert.jsx";
 import { AuthContext } from "./AuthContext.jsx";
 import i18n from "./i18n";
+import Loading from "./Loading.jsx";
 
 function Home() {
   const { t } = useTranslation();
@@ -33,7 +34,7 @@ function Home() {
     return (
       <div className="container">
         <NavBar />
-        <p>Chargement...</p>
+        <Loading />
       </div>
     );
   }

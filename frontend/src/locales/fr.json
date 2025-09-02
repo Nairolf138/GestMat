@@ -164,6 +164,7 @@
   "common": {
     "choose": "Choisir...",
     "required": "Requis",
-    "error": "Erreur"
+    "error": "Erreur",
+    "loading": "Chargement..."
   }
 }
