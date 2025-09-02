@@ -156,7 +156,11 @@
     "requests_sent": "Demandes envoyées"
   },
   "users": {
-    "title": "Utilisateurs"
+    "title": "Utilisateurs",
+    "search": "Rechercher",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "delete": "Supprimer"
   },
   "structures": {
     "title": "Structures"

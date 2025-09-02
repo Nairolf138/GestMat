@@ -156,7 +156,11 @@
     "requests_sent": "Requests sent"
   },
   "users": {
-    "title": "Users"
+    "title": "Users",
+    "search": "Search",
+    "next": "Next",
+    "previous": "Previous",
+    "delete": "Delete"
   },
   "structures": {
     "title": "Structures"
