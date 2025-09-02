@@ -22,6 +22,7 @@
     "inventory": "Local inventory",
     "loans": "Loans",
     "cart": "Cart",
+    "admin": "Admin",
     "profile": "Profile",
     "login": "Login",
     "logout": "Logout",

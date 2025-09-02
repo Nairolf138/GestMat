@@ -14,6 +14,7 @@ function NavBar() {
     document.body.classList.contains('dark-theme') ||
     localStorage.getItem('theme') === 'dark'
   );
+  const isAdmin = user?.role === 'Administrateur';
   const handleLanguageChange = (event) => {
     const newLang = event.target.value;
     i18n.changeLanguage(newLang);
@@ -95,6 +96,15 @@ function NavBar() {
               >
                 {t('nav.cart')}
               </NavLink>
+              {isAdmin && (
+                <NavLink
+                  className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
+                  to="/admin"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {t('nav.admin')}
+                </NavLink>
+              )}
               <NavLink
                 className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
                 to="/profile"
