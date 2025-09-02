@@ -42,21 +42,32 @@ async function refreshToken() {
   }
 }
 
+/**
+ * Perform a JSON fetch to the API.
+ * `options.timeout` (ms) aborts the request after the given delay (default 10 000).
+ */
 export async function api(path, options = {}, retry = true) {
+  const { timeout = 10000, signal, ...fetchOptions } = options;
   const headers = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
+    ...(fetchOptions.headers || {}),
   };
-  const method = (options.method || 'GET').toUpperCase();
+  const method = (fetchOptions.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
     const token = getCsrfToken();
     if (token) headers['CSRF-Token'] = token;
   }
+  const controller = new AbortController();
+  if (signal) {
+    signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+  const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(`${API_URL}${path}`, {
-      ...options,
+      ...fetchOptions,
       headers,
       credentials: 'include',
+      signal: controller.signal,
     });
     if (res.status === 401 && retry) {
       const refreshed = await refreshToken();
@@ -79,6 +90,11 @@ export async function api(path, options = {}, retry = true) {
     }
     return data;
   } catch (err) {
+    if (err.name === 'AbortError') {
+      const error = new ApiError('Request timed out', 'ABORT_ERROR');
+      errorHandler(error);
+      throw error;
+    }
     const error =
       err instanceof ApiError
         ? err
@@ -92,6 +108,8 @@ export async function api(path, options = {}, retry = true) {
     }
     errorHandler(error);
     throw error;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
