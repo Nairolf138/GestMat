@@ -18,6 +18,7 @@ import {
   findSessionByToken,
   deleteSessionByToken,
   deleteSessionsByUser,
+  hashToken,
 } from '../models/Session';
 import { unauthorized, ApiError } from '../utils/errors';
 import { AuthUser } from '../types';
@@ -90,8 +91,9 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-      await deleteSessionsByUser(db, user._id!.toString());
-      await createSession(db, { token: refreshToken, userId: user._id!.toString() });
+    const hashedRefreshToken = hashToken(refreshToken);
+    await deleteSessionsByUser(db, user._id!.toString());
+    await createSession(db, { token: hashedRefreshToken, userId: user._id!.toString() });
       const cookieOptions = {
         httpOnly: true,
         secure: NODE_ENV === 'production',
@@ -122,7 +124,8 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
       return next(unauthorized('Invalid refresh token'));
     }
 
-    const session = await findSessionByToken(db, refreshToken);
+    const hashedRefreshToken = hashToken(refreshToken);
+    const session = await findSessionByToken(db, hashedRefreshToken);
     if (!session) return next(unauthorized('Invalid refresh token'));
 
     const token = jwt.sign(
@@ -135,8 +138,9 @@ router.post('/login', loginLimiter, loginValidator, validate, async (req: Reques
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-    await createSession(db, { token: newRefreshToken, userId: String(payload.id) });
-      await deleteSessionByToken(db, refreshToken);
+    const hashedNewRefreshToken = hashToken(newRefreshToken);
+    await createSession(db, { token: hashedNewRefreshToken, userId: String(payload.id) });
+    await deleteSessionByToken(db, hashedRefreshToken);
       const cookieOptions = {
         httpOnly: true,
         secure: NODE_ENV === 'production',
@@ -157,7 +161,7 @@ router.post('/logout', async (req: Request, res: Response) => {
   const db = req.app.locals.db;
   const { refreshToken } = req.cookies || {};
   if (refreshToken) {
-    await deleteSessionByToken(db, refreshToken).catch(() => {});
+    await deleteSessionByToken(db, hashToken(refreshToken)).catch(() => {});
   }
   const cookieOptions = {
     httpOnly: true,
