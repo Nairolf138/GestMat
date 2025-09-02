@@ -23,3 +23,7 @@ Application React propulsée par Vite.
    ```
 
 Node.js 22 ou plus récent est requis.
+
+## API utilitaire
+
+La fonction `api` disponible dans `src/api.js` accepte une option `timeout` (en millisecondes, 10 000 par défaut) pour annuler automatiquement les requêtes trop longues.
