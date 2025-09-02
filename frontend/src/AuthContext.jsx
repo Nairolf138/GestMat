@@ -48,11 +48,15 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    const last = Number(localStorage.getItem('lastActivity')) || 0;
+    if (!user) return;
+    const last = Number(localStorage.getItem('lastActivity')) || Date.now();
     if (Date.now() - last > INACTIVITY_LIMIT) {
       logout();
-    } else if (user) {
-      timerRef.current = setTimeout(logout, INACTIVITY_LIMIT - (Date.now() - last));
+    } else {
+      timerRef.current = setTimeout(
+        logout,
+        INACTIVITY_LIMIT - (Date.now() - last)
+      );
     }
 
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
