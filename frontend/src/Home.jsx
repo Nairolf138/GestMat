@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import NavBar from "./NavBar";
@@ -30,6 +30,36 @@ function Home() {
       .finally(() => setLoading(false));
   }, []);
 
+  const now = useMemo(() => new Date(), []);
+
+  const pending = useMemo(
+    () => loans.filter((l) => l.status === "pending"),
+    [loans, user, now]
+  );
+
+  const currentLoans = useMemo(
+    () =>
+      loans.filter((l) => {
+        if (l.borrower?._id !== (user?.structure?._id || user?.structure))
+          return false;
+        const start = l.startDate ? new Date(l.startDate) : null;
+        const end = l.endDate ? new Date(l.endDate) : null;
+        return start && end && start <= now && end >= now;
+      }),
+    [loans, user, now]
+  );
+
+  const upcomingLoans = useMemo(
+    () =>
+      loans.filter((l) => {
+        if (l.borrower?._id !== (user?.structure?._id || user?.structure))
+          return false;
+        const start = l.startDate ? new Date(l.startDate) : null;
+        return start && start > now;
+      }),
+    [loans, user, now]
+  );
+
   if (loading) {
     return (
       <div className="container">
@@ -39,24 +69,7 @@ function Home() {
     );
   }
 
-  const pending = loans.filter((l) => l.status === "pending");
-  const now = new Date();
   const previewCount = 5;
-
-  const currentLoans = loans.filter((l) => {
-    if (l.borrower?._id !== (user?.structure?._id || user?.structure))
-      return false;
-    const start = l.startDate ? new Date(l.startDate) : null;
-    const end = l.endDate ? new Date(l.endDate) : null;
-    return start && end && start <= now && end >= now;
-  });
-
-  const upcomingLoans = loans.filter((l) => {
-    if (l.borrower?._id !== (user?.structure?._id || user?.structure))
-      return false;
-    const start = l.startDate ? new Date(l.startDate) : null;
-    return start && start > now;
-  });
 
   return (
     <div className="container">
