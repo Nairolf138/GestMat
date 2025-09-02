@@ -8,7 +8,7 @@ import csrf from 'csurf';
 import { connectDB, closeDB } from './config/db';
 import { ApiError } from './utils/errors';
 import logger from './utils/logger';
-import { PORT, CORS_ORIGIN, NODE_ENV } from './config';
+import { PORT, CORS_ORIGIN, NODE_ENV, RATE_LIMIT_MAX } from './config';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import structureRoutes from './routes/structures';
@@ -60,7 +60,7 @@ if (NODE_ENV !== 'test') {
     next();
   });
 }
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: RATE_LIMIT_MAX });
 app.use(limiter);
 
 client.collectDefaultMetrics();

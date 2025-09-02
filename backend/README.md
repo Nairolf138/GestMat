@@ -32,6 +32,7 @@ The API reads its configuration from the following variables:
 | `API_URL` | Public base URL of the API. Defaults to `http://localhost:<PORT>/api`. |
 | `SMTP_URL` | SMTP connection string to enable email notifications. |
 | `NOTIFY_EMAIL` | Optional recipient address for notification emails. |
+| `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development. |
 
 If `CORS_ORIGIN` is left unset, the API denies cross-origin requests.
 
