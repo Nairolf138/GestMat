@@ -13,6 +13,8 @@ import Profile from "./Profile";
 import Catalog from "./Catalog";
 import Cart from "./Cart";
 import PrivateRoute from "./PrivateRoute";
+import AdminRoute from "./AdminRoute";
+import AdminDashboard from "./AdminDashboard";
 import ErrorBoundary from "./ErrorBoundary";
 import i18n from "./i18n";
 
@@ -35,6 +37,7 @@ function App() {
           <Route path="/loans" element={<PrivateRoute><Loans /></PrivateRoute>} />
           <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminDashboard/></AdminRoute>} />
         </Routes>
       </Router>
     </ErrorBoundary>
