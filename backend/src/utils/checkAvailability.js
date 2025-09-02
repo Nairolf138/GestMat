@@ -16,7 +16,7 @@ async function checkEquipmentAvailability(db, equipmentId, start, end, quantity,
         [
           {
             $match: {
-              status: { $ne: 'refused' },
+              status: { $nin: ['refused', 'cancelled'] },
               startDate: { $lte: end },
               endDate: { $gte: start },
               items: { $elemMatch: { equipment: eq._id } },

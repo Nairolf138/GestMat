@@ -33,6 +33,8 @@ router.get('/', auth(), async (req: Request, res: Response) => {
     if (user?.structure) excludeStructure = user.structure.toString();
   }
   const filter = createEquipmentFilter({ ...query, excludeStructure });
+  const start = query.startDate ? new Date(query.startDate) : new Date();
+  const end = query.endDate ? new Date(query.endDate) : start;
   const equipments = await findEquipments(db, filter as any);
   await Promise.all(
     equipments.map(async (eq) => {
@@ -43,8 +45,8 @@ router.get('/', auth(), async (req: Request, res: Response) => {
       const avail = await checkEquipmentAvailability(
         db,
         eq._id,
-        new Date(),
-        new Date(),
+        start,
+        end,
         1
       );
       eq.availability = `${avail?.availableQty ?? 0}/${eq.totalQty || 0}`;
