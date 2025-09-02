@@ -219,6 +219,7 @@ function ManageLoans() {
 }
 
 function ManageInventory() {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
@@ -227,6 +228,9 @@ function ManageInventory() {
     location: '',
     availability: '',
   });
+  const [filters, setFilters] = useState({ name: '', type: '', location: '' });
+  const [page, setPage] = useState(1);
+  const limit = 10;
   const [editing, setEditing] = useState(null);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -237,7 +241,14 @@ function ManageInventory() {
 
   const load = () => {
     setError('');
-    api('/equipments')
+    const params = new URLSearchParams({
+      search: filters.name,
+      type: filters.type,
+      location: filters.location,
+      page: String(page),
+      limit: String(limit),
+    });
+    api(`/equipments?${params.toString()}`)
       .then(setItems)
       .catch((err) => {
         setError(err.message);
@@ -247,7 +258,12 @@ function ManageInventory() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [page]);
+
+  const doSearch = () => {
+    setPage(1);
+    load();
+  };
 
   const create = async (e) => {
     e.preventDefault();
@@ -342,6 +358,37 @@ function ManageInventory() {
           </button>
         </div>
       </form>
+      <div className="row g-2 mb-3">
+        <div className="col-md">
+          <input
+            className="form-control"
+            placeholder={t('inventory.name')}
+            value={filters.name}
+            onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+          />
+        </div>
+        <div className="col-md">
+          <input
+            className="form-control"
+            placeholder={t('inventory.type')}
+            value={filters.type}
+            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+          />
+        </div>
+        <div className="col-md">
+          <input
+            className="form-control"
+            placeholder={t('inventory.location')}
+            value={filters.location}
+            onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+          />
+        </div>
+        <div className="col-md-auto">
+          <button className="btn btn-primary" type="button" onClick={doSearch}>
+            {t('inventory.search')}
+          </button>
+        </div>
+      </div>
       <ul className="list-group">
         {items.map((it) => (
           <li key={it._id} className="list-group-item">
@@ -412,6 +459,22 @@ function ManageInventory() {
           </li>
         ))}
       </ul>
+      <div className="mt-2">
+        <button
+          className="btn btn-secondary me-2"
+          disabled={page <= 1}
+          onClick={() => setPage(page - 1)}
+        >
+          {t('inventory.previous')}
+        </button>
+        <button
+          className="btn btn-secondary"
+          disabled={items.length < limit}
+          onClick={() => setPage(page + 1)}
+        >
+          {t('inventory.next')}
+        </button>
+      </div>
     </div>
   );
 }
