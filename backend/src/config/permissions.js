@@ -3,6 +3,8 @@ const { ADMIN_ROLE } = require('./roles');
 const PERMISSIONS = {
   MANAGE_STRUCTURES: [ADMIN_ROLE],
   MANAGE_USERS: [ADMIN_ROLE],
+  MANAGE_LOANS: [ADMIN_ROLE],
+  MANAGE_EQUIPMENTS: [ADMIN_ROLE],
 };
 
 module.exports = PERMISSIONS;

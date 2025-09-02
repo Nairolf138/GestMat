@@ -21,8 +21,8 @@ async function createApp() {
   return { app, client, mongod };
 }
 
-function auth() {
-  const token = jwt.sign({ id: 'u1' }, 'test', { expiresIn: '1h' });
+function auth(role = 'Administrateur') {
+  const token = jwt.sign({ id: 'u1', role }, 'test', { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }
 

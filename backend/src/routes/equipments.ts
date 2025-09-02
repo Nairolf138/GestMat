@@ -13,6 +13,7 @@ import auth from '../middleware/auth';
 import createEquipmentFilter from '../utils/createEquipmentFilter';
 import { canModify, normalizeType } from '../utils/roleAccess';
 import { ADMIN_ROLE } from '../config/roles';
+import PERMISSIONS from '../config/permissions';
 import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import {
@@ -21,6 +22,8 @@ import {
 } from '../validators/equipmentValidator';
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
+
+const { MANAGE_EQUIPMENTS } = PERMISSIONS;
 
 const router = express.Router();
 
@@ -56,7 +59,7 @@ router.get('/', auth(), async (req: Request, res: Response) => {
   res.json(equipments);
 });
 
-router.post('/', auth(), createEquipmentValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', auth(MANAGE_EQUIPMENTS), createEquipmentValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   let location = '';
   let structureId: ObjectId | null = null;
@@ -83,7 +86,7 @@ router.post('/', auth(), createEquipmentValidator, validate, async (req: Request
   res.json(equipment);
 });
 
-router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', auth(MANAGE_EQUIPMENTS), checkId(), updateEquipmentValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);
@@ -113,7 +116,7 @@ router.put('/:id', auth(), checkId(), updateEquipmentValidator, validate, async 
   }
 });
 
-router.delete('/:id', auth(), checkId(), async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', auth(MANAGE_EQUIPMENTS), checkId(), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const db = req.app.locals.db;
     const current = await findEquipmentById(db, req.params.id);

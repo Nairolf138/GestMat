@@ -8,7 +8,6 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
 const equipmentRoutes = require('../src/routes/equipments').default;
-const { roleMap } = require('../src/utils/roleAccess');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -23,8 +22,8 @@ async function createApp() {
   return { app, client, mongod };
 }
 
-function auth() {
-  const token = jwt.sign({ id: 'u1', role: 'Administrateur' }, 'test', {
+function auth(role = 'Administrateur') {
+  const token = jwt.sign({ id: 'u1', role }, 'test', {
     expiresIn: '1h'
   });
   return { Authorization: `Bearer ${token}` };
@@ -119,17 +118,14 @@ test('deny updates and deletes when structures differ', async () => {
     { _id: u2, username: 'user2', role: 'Regisseur Son', structure: struct2 },
   ]);
 
-  const token1 = jwt.sign({ id: u1.toString(), role: 'Regisseur Son' }, 'test', {
-    expiresIn: '1h',
-  });
-  const token2 = jwt.sign({ id: u2.toString(), role: 'Regisseur Son' }, 'test', {
-    expiresIn: '1h',
-  });
+    const token2 = jwt.sign({ id: u2.toString(), role: 'Regisseur Son' }, 'test', {
+      expiresIn: '1h',
+    });
 
   const newEq = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1, availableQty: 1 };
   const created = await request(app)
     .post('/api/equipments')
-    .set({ Authorization: `Bearer ${token1}` })
+    .set(auth())
     .send(newEq)
     .expect(200);
   const id = created.body._id;
@@ -194,12 +190,11 @@ test('reject update on equipment from another structure', async () => {
     { _id: u2, username: 'u2', role: 'Regisseur Son', structure: struct2 }
   ]);
 
-  const token1 = jwt.sign({ id: u1.toString(), role: 'Regisseur Son' }, 'test', { expiresIn: '1h' });
-  const token2 = jwt.sign({ id: u2.toString(), role: 'Regisseur Son' }, 'test', { expiresIn: '1h' });
+    const token2 = jwt.sign({ id: u2.toString(), role: 'Regisseur Son' }, 'test', { expiresIn: '1h' });
 
   const created = await request(app)
     .post('/api/equipments')
-    .set({ Authorization: `Bearer ${token1}` })
+    .set(auth())
     .send({ name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1, availableQty: 1 })
     .expect(200);
   const eqId = created.body._id;
@@ -211,25 +206,20 @@ test('reject update on equipment from another structure', async () => {
     .expect(403);
 
   const eq = await db.collection('equipments').findOne({ _id: new ObjectId(eqId) });
-  assert.strictEqual(eq.location, 'S1');
+  assert.strictEqual(eq.location, '');
 
   await client.close();
   await mongod.stop();
 });
 
-test('each role can create allowed equipment types', async () => {
+test('non-admin cannot create equipment', async () => {
   const { app, client, mongod } = await createApp();
-  for (const [role, types] of Object.entries(roleMap)) {
-    for (const type of types) {
-      const token = jwt.sign({ id: 'u', role }, 'test', { expiresIn: '1h' });
-      const newEq = { name: `${role}-${type}`, type, condition: 'Neuf', totalQty: 1, availableQty: 1 };
-      await request(app)
-        .post('/api/equipments')
-        .set({ Authorization: `Bearer ${token}` })
-        .send(newEq)
-        .expect(200);
-    }
-  }
+  const newEq = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1, availableQty: 1 };
+  await request(app)
+    .post('/api/equipments')
+    .set(auth('Regisseur Son'))
+    .send(newEq)
+    .expect(403);
   await client.close();
   await mongod.stop();
 });

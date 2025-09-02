@@ -9,6 +9,9 @@ import auth from '../middleware/auth';
 import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import { createLoanValidator, updateLoanValidator } from '../validators/loanValidator';
+import PERMISSIONS from '../config/permissions';
+
+const { MANAGE_LOANS } = PERMISSIONS;
 
 const router = express.Router();
 
@@ -22,7 +25,7 @@ router.get('/', auth(), async (req: Request, res: Response, next: NextFunction) 
   }
 });
 
-router.post('/', auth(), createLoanValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', auth(MANAGE_LOANS), createLoanValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     const loan = await createLoanRequest(db, req.body, req.user!);
@@ -32,7 +35,7 @@ router.post('/', auth(), createLoanValidator, validate, async (req: Request, res
   }
 });
 
-router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', auth(MANAGE_LOANS), checkId(), updateLoanValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     const updated = await updateLoanRequest(db, req.user!, req.params.id, req.body);
@@ -42,7 +45,7 @@ router.put('/:id', auth(), checkId(), updateLoanValidator, validate, async (req:
   }
 });
 
-router.delete('/:id', auth(), checkId(), async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', auth(MANAGE_LOANS), checkId(), async (req: Request, res: Response, next: NextFunction) => {
   const db = req.app.locals.db;
   try {
     const result = await deleteLoanRequest(db, req.user!, req.params.id);
