@@ -119,3 +119,15 @@ On startup the API creates a compound index on the `equipments` collection:
 queries that filter or sort by these fields, which reduces response times for
 equipment searches. The trade-off is additional overhead when inserting or
 updating equipment documents as MongoDB must maintain the index entries.
+
+## Statistics endpoints
+
+The API provides aggregated statistics related to loans and equipment. All of
+these routes require authentication.
+
+- `GET /api/stats/loans` – count loan requests grouped by status.
+- `GET /api/stats/loans/monthly` – count loan requests grouped by month of the
+  `startDate` field.
+- `GET /api/stats/equipments/top?limit=5` – list the most requested equipment
+  sorted by total quantity, limited by the optional `limit` query parameter
+  (default: `5`).
