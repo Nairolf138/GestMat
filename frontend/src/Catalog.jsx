@@ -34,6 +34,8 @@ function Catalog() {
       structure: filters.structure,
       all: 'true',
     });
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
     api(`/equipments?${params.toString()}`)
       .then(setItems)
       .catch(() => setItems([]))
