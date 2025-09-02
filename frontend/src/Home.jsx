@@ -5,8 +5,8 @@ import NavBar from "./NavBar";
 import { api } from "./api";
 import Alert from "./Alert.jsx";
 import { AuthContext } from "./AuthContext.jsx";
-import i18n from "./i18n";
 import Loading from "./Loading.jsx";
+import LoanPreviewSection from "./components/LoanPreviewSection.jsx";
 
 function Home() {
   const { t } = useTranslation();
@@ -71,93 +71,39 @@ function Home() {
       <Alert message={error} />
       <Alert type="success" message={message} />
       {user && <p>{t('home.greeting', { name: user.firstName || user.username })}</p>}
-      <h2 className="h2">{t('home.recent_requests')}</h2>
-      <ul className="list-group" style={{ marginBottom: 'var(--spacing-lg)' }}>
-        {pending.slice(0, previewCount).map((l) => (
-          <li key={l._id} className="list-group-item">
-            {l.borrower?.name} → {l.owner?.name} (
-            {l.startDate
-              ? new Date(l.startDate).toLocaleDateString(i18n.language)
-              : ""}
-            )
-          </li>
-        ))}
-        {!pending.length && <li className="list-group-item">{t('home.no_requests')}</li>}
-      </ul>
-      <p>
-        {pending.length > previewCount && (
-          <span>
-            {t('home.counter', {
-              shown: previewCount,
-              total: pending.length,
-              category: t('home.recent_requests').toLowerCase(),
-            })}{' '}
-          </span>
-        )}
-        <Link to="/loans">{t('home.view_all')}</Link>
-      </p>
-      <h2 className="h2">{t('home.current_loans')}</h2>
-      <ul className="list-group" style={{ marginBottom: 'var(--spacing-lg)' }}>
-        {currentLoans.slice(0, previewCount).map((l) => (
-          <li key={l._id} className="list-group-item">
-            {l.owner?.name} (
-            {l.startDate
-              ? new Date(l.startDate).toLocaleDateString(i18n.language)
-              : ""}
-            →{' '}
-            {l.endDate
-              ? new Date(l.endDate).toLocaleDateString(i18n.language)
-              : ""}
-            )
-          </li>
-        ))}
-        {!currentLoans.length && (
-          <li className="list-group-item">{t('home.no_loans')}</li>
-        )}
-      </ul>
-      <p>
-        {currentLoans.length > previewCount && (
-          <span>
-            {t('home.counter', {
-              shown: previewCount,
-              total: currentLoans.length,
-              category: t('home.current_loans').toLowerCase(),
-            })}{' '}
-          </span>
-        )}
-        <Link to="/loans">{t('home.view_all')}</Link>
-      </p>
-      <h2 className="h2">{t('home.incoming_loans')}</h2>
-      <ul className="list-group" style={{ marginBottom: 'var(--spacing-lg)' }}>
-        {upcomingLoans.slice(0, previewCount).map((l) => (
-          <li key={l._id} className="list-group-item">
-            {l.owner?.name} (
-            {l.startDate
-              ? new Date(l.startDate).toLocaleDateString(i18n.language)
-              : ""}
-            →{' '}
-            {l.endDate
-              ? new Date(l.endDate).toLocaleDateString(i18n.language)
-              : ""}
-            )
-          </li>
-        ))}
-        {!upcomingLoans.length && (
-          <li className="list-group-item">{t('home.no_loans')}</li>
-        )}
-      </ul>
-      <p>
-        {upcomingLoans.length > previewCount && (
-          <span>
-            {t('home.counter', {
-              shown: previewCount,
-              total: upcomingLoans.length,
-              category: t('home.incoming_loans').toLowerCase(),
-            })}{' '}
-          </span>
-        )}
-        <Link to="/loans">{t('home.view_all')}</Link>
-      </p>
+      <LoanPreviewSection
+        title={t('home.recent_requests')}
+        loans={pending}
+        emptyMessage={t('home.no_requests')}
+        previewCount={previewCount}
+        counterLabel={t('home.counter', {
+          shown: previewCount,
+          total: pending.length,
+          category: t('home.recent_requests').toLowerCase(),
+        })}
+      />
+      <LoanPreviewSection
+        title={t('home.current_loans')}
+        loans={currentLoans}
+        emptyMessage={t('home.no_loans')}
+        previewCount={previewCount}
+        counterLabel={t('home.counter', {
+          shown: previewCount,
+          total: currentLoans.length,
+          category: t('home.current_loans').toLowerCase(),
+        })}
+      />
+      <LoanPreviewSection
+        title={t('home.incoming_loans')}
+        loans={upcomingLoans}
+        emptyMessage={t('home.no_loans')}
+        previewCount={previewCount}
+        counterLabel={t('home.counter', {
+          shown: previewCount,
+          total: upcomingLoans.length,
+          category: t('home.incoming_loans').toLowerCase(),
+        })}
+      />
       <h2 className="h2">{t('home.shortcuts')}</h2>
       <div
         className="d-flex flex-wrap"
