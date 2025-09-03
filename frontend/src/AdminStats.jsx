@@ -21,14 +21,19 @@ function AdminStats() {
   const [topEquipments, setTopEquipments] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
 
   useEffect(() => {
     setError('');
     setLoading(true);
     async function load() {
       try {
+        const params = new URLSearchParams();
+        if (from) params.set('from', `${from}-01`);
+        if (to) params.set('to', `${to}-01`);
         const [monthlyData, topData] = await Promise.all([
-          api('/stats/loans/monthly'),
+          api(`/stats/loans/monthly${params.toString() ? `?${params.toString()}` : ''}`),
           api('/stats/equipments/top'),
         ]);
         setMonthly(monthlyData);
@@ -42,7 +47,7 @@ function AdminStats() {
       }
     }
     load();
-  }, []);
+  }, [from, to]);
 
   if (loading) return <Loading />;
 
@@ -78,6 +83,28 @@ function AdminStats() {
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
+      <div className="d-flex mb-3">
+        <div className="me-2">
+          <label htmlFor="from" className="form-label">From</label>
+          <input
+            id="from"
+            type="month"
+            className="form-control"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="to" className="form-label">To</label>
+          <input
+            id="to"
+            type="month"
+            className="form-control"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </div>
+      </div>
       <div className="mb-4">
         <h2>{t('admin_stats.monthly_loans')}</h2>
         <Bar data={monthlyChart} />
