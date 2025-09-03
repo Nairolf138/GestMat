@@ -114,11 +114,13 @@ Users created without an explicit role are assigned to `Autre`.
 
 ## Indexes
 
-On startup the API creates a compound index on the `equipments` collection:
-`{ name: 1, type: 1, location: 1, structure: 1 }`. This index accelerates
-queries that filter or sort by these fields, which reduces response times for
-equipment searches. The trade-off is additional overhead when inserting or
-updating equipment documents as MongoDB must maintain the index entries.
+On startup the API ensures several indexes to optimize common lookups:
+
+- **Equipments**: compound index `{ name: 1, type: 1, location: 1, structure: 1 }`
+  speeds up catalogue searches at the cost of extra insert/update overhead.
+- **Loan requests**: single-field indexes on `status`, `startDate` and
+  `items.equipment` support filtering by request status, retrieving loans by
+  their scheduled start date and querying by contained equipment items.
 
 ## Statistics endpoints
 
