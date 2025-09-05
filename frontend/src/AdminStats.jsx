@@ -19,6 +19,7 @@ function AdminStats() {
   const { t } = useTranslation();
   const [monthly, setMonthly] = useState([]);
   const [topEquipments, setTopEquipments] = useState([]);
+  const [statusCounts, setStatusCounts] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
@@ -32,16 +33,19 @@ function AdminStats() {
         const params = new URLSearchParams();
         if (from) params.set('from', `${from}-01`);
         if (to) params.set('to', `${to}-01`);
-        const [monthlyData, topData] = await Promise.all([
+        const [monthlyData, topData, statusData] = await Promise.all([
           api(`/stats/loans/monthly${params.toString() ? `?${params.toString()}` : ''}`),
           api('/stats/equipments/top'),
+          api('/stats/loans'),
         ]);
         setMonthly(monthlyData);
         setTopEquipments(topData);
+        setStatusCounts(statusData);
       } catch (err) {
         setError(err.message);
         setMonthly([]);
         setTopEquipments([]);
+        setStatusCounts([]);
       } finally {
         setLoading(false);
       }
@@ -68,6 +72,24 @@ function AdminStats() {
       {
         label: t('admin_stats.equipments'),
         data: topEquipments.map((e) => e.count),
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40',
+        ],
+      },
+    ],
+  };
+
+  const statusChart = {
+    labels: statusCounts.map((s) => t(`loans.status.${s._id}`)),
+    datasets: [
+      {
+        label: t('admin_stats.loans'),
+        data: statusCounts.map((s) => s.count),
         backgroundColor: [
           '#FF6384',
           '#36A2EB',
@@ -109,9 +131,13 @@ function AdminStats() {
         <h2>{t('admin_stats.monthly_loans')}</h2>
         <Bar data={monthlyChart} />
       </div>
-      <div>
+      <div className="mb-4">
         <h2>{t('admin_stats.top_equipments')}</h2>
         <Pie data={equipmentChart} />
+      </div>
+      <div>
+        <h2>{t('admin_stats.status_breakdown')}</h2>
+        <Pie data={statusChart} />
       </div>
     </div>
   );
