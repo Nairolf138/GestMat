@@ -84,15 +84,19 @@ export async function createLoanRequest(
       session.endSession();
 
       try {
-        const recipients = await getLoanRecipients(db, loan.owner as any, items as any);
-        if (recipients.length) {
-          await sendMail({
-            to: recipients.join(','),
-            subject: 'Nouvelle demande de prêt',
-            text: `Demande de prêt de ${(loan.borrower as any)?.name || ''} pour ${
-              (loan.owner as any)?.name || ''
-            }`,
-          });
+        const ownerId =
+          (loan.owner as any)?._id?.toString() || (loan.owner as any)?.toString();
+        if (ownerId) {
+          const recipients = await getLoanRecipients(db, ownerId, items as any);
+          if (recipients.length) {
+            await sendMail({
+              to: recipients.join(','),
+              subject: 'Nouvelle demande de prêt',
+              text: `Demande de prêt de ${(loan.borrower as any)?.name || ''} pour ${
+                (loan.owner as any)?.name || ''
+              }`,
+            });
+          }
         }
       } catch (err) {
         logger.error('mail error %o', err);
@@ -119,7 +123,7 @@ export async function updateLoanRequest(
   id: string,
   data: LoanRequest,
 ): Promise<LoanRequest | null> {
-    const session = (db as any).client.startSession();
+  const session = (db as any).client.startSession();
   session.startTransaction();
   let updated: LoanRequest | null;
   try {
@@ -134,10 +138,10 @@ export async function updateLoanRequest(
     const isBorrower = loan.borrower?.toString() === structId;
     const now = new Date();
     const releaseStatuses = ['refused', 'cancelled'];
+    const status = (data as any).status;
 
     if (user.role !== ADMIN_ROLE) {
       const keys = Object.keys(data);
-      const status = (data as any).status;
       if (status === 'accepted' || status === 'refused') {
         if (!isOwner || keys.some((k) => k !== 'status')) {
           throw forbidden('Access denied');
@@ -156,12 +160,12 @@ export async function updateLoanRequest(
       (data as any).processedBy = user.id;
     }
 
-      if (
-        status &&
-        releaseStatuses.includes(status) &&
-        !releaseStatuses.includes(loan.status as any)
-      ) {
-        for (const item of loan.items || []) {
+    if (
+      status &&
+      releaseStatuses.includes(status) &&
+      !releaseStatuses.includes(loan.status as any)
+    ) {
+      for (const item of loan.items || []) {
         await db
           .collection('equipments')
           .updateOne(
@@ -171,11 +175,11 @@ export async function updateLoanRequest(
           );
       }
     }
-      if (
-        status &&
-        !releaseStatuses.includes(status) &&
-        releaseStatuses.includes(loan.status as any)
-      ) {
+    if (
+      status &&
+      !releaseStatuses.includes(status) &&
+      releaseStatuses.includes(loan.status as any)
+    ) {
       const start = loan.startDate;
       const end = loan.endDate;
       for (const item of loan.items || []) {

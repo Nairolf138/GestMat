@@ -213,11 +213,16 @@ test('unauthorized delete does not remove loan', async () => {
 test('non-admin cannot create, update or delete loan', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const struct = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const eqId = (await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })).insertedId;
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, structure: owner })
+  ).insertedId;
   const payload = {
-    owner: struct.toString(),
-    borrower: struct.toString(),
+    owner: owner.toString(),
+    borrower: borrower.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
     endDate: '2024-01-02',
