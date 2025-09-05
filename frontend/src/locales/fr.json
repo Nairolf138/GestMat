@@ -177,7 +177,8 @@
     "monthly_loans": "Prêts par mois",
     "top_equipments": "Équipements les plus empruntés",
     "loans": "Prêts",
-    "equipments": "Équipements"
+    "equipments": "Équipements",
+    "status_breakdown": "Prêts par statut"
   },
   "common": {
     "choose": "Choisir...",

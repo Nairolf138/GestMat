@@ -177,7 +177,8 @@
     "monthly_loans": "Loans per month",
     "top_equipments": "Most borrowed equipments",
     "loans": "Loans",
-    "equipments": "Equipments"
+    "equipments": "Equipments",
+    "status_breakdown": "Loans by status"
   },
   "common": {
     "choose": "Choose...",
