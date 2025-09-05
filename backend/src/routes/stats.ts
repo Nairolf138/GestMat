@@ -74,6 +74,68 @@ router.get(
 );
 
 router.get(
+  '/loans/duration',
+  auth(),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const from = req.query.from ? new Date(req.query.from as string) : undefined;
+      const to = req.query.to ? new Date(req.query.to as string) : undefined;
+      const needMedian = req.query.median === 'true' || req.query.median === '1';
+
+      const match: any = { startDate: { $exists: true }, endDate: { $exists: true } };
+      if (from || to) {
+        match.startDate = { ...match.startDate };
+        if (from) match.startDate.$gte = from;
+        if (to) match.startDate.$lte = to;
+      }
+
+      const pipeline: any[] = [{ $match: match }];
+      pipeline.push({
+        $project: {
+          duration: {
+            $divide: [{ $subtract: ['$endDate', '$startDate'] }, 1000 * 60 * 60 * 24],
+          },
+        },
+      });
+
+      if (needMedian) {
+        pipeline.push({
+          $group: {
+            _id: null,
+            avgDuration: { $avg: '$duration' },
+            durations: { $push: '$duration' },
+          },
+        });
+      } else {
+        pipeline.push({
+          $group: { _id: null, avgDuration: { $avg: '$duration' } },
+        });
+      }
+
+      const agg = await db.collection('loanrequests').aggregate(pipeline).toArray();
+      const avg = agg[0]?.avgDuration || 0;
+      const result: any = { average: avg };
+
+      if (needMedian) {
+        const arr: number[] = agg[0]?.durations || [];
+        arr.sort((a, b) => a - b);
+        let median = 0;
+        if (arr.length) {
+          const mid = Math.floor(arr.length / 2);
+          median = arr.length % 2 === 0 ? (arr[mid - 1] + arr[mid]) / 2 : arr[mid];
+        }
+        result.median = median;
+      }
+
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
   '/equipments/top',
   auth(),
   async (req: Request, res: Response, next: NextFunction) => {

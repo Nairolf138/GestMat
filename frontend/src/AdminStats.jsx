@@ -20,6 +20,7 @@ function AdminStats() {
   const [monthly, setMonthly] = useState([]);
   const [topEquipments, setTopEquipments] = useState([]);
   const [statusCounts, setStatusCounts] = useState([]);
+  const [duration, setDuration] = useState({ average: 0, median: 0 });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
@@ -33,19 +34,25 @@ function AdminStats() {
         const params = new URLSearchParams();
         if (from) params.set('from', `${from}-01`);
         if (to) params.set('to', `${to}-01`);
-        const [monthlyData, topData, statusData] = await Promise.all([
-          api(`/stats/loans/monthly${params.toString() ? `?${params.toString()}` : ''}`),
+        const paramsStr = params.toString();
+        const durationParams = new URLSearchParams(params);
+        durationParams.set('median', 'true');
+        const [monthlyData, topData, statusData, durationData] = await Promise.all([
+          api(`/stats/loans/monthly${paramsStr ? `?${paramsStr}` : ''}`),
           api('/stats/equipments/top'),
           api('/stats/loans'),
+          api(`/stats/loans/duration?${durationParams.toString()}`),
         ]);
         setMonthly(monthlyData);
         setTopEquipments(topData);
         setStatusCounts(statusData);
+        setDuration(durationData);
       } catch (err) {
         setError(err.message);
         setMonthly([]);
         setTopEquipments([]);
         setStatusCounts([]);
+        setDuration({ average: 0, median: 0 });
       } finally {
         setLoading(false);
       }
@@ -102,6 +109,17 @@ function AdminStats() {
     ],
   };
 
+  const durationChart = {
+    labels: [t('admin_stats.average'), t('admin_stats.median')],
+    datasets: [
+      {
+        label: t('admin_stats.loan_duration'),
+        data: [duration.average, duration.median],
+        backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(153, 102, 255, 0.5)'],
+      },
+    ],
+  };
+
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
@@ -130,6 +148,10 @@ function AdminStats() {
       <div className="mb-4">
         <h2>{t('admin_stats.monthly_loans')}</h2>
         <Bar data={monthlyChart} />
+      </div>
+      <div className="mb-4">
+        <h2>{t('admin_stats.loan_duration')}</h2>
+        <Bar data={durationChart} />
       </div>
       <div className="mb-4">
         <h2>{t('admin_stats.top_equipments')}</h2>

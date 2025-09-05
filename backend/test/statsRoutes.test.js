@@ -97,6 +97,23 @@ test('GET /api/stats/loans/monthly applies date range and fills empty months', a
   await mongod.stop();
 });
 
+test('GET /api/stats/loans/duration computes average and median', async () => {
+  const { app, client, mongod, db } = await createApp();
+  await db.collection('loanrequests').insertMany([
+    { startDate: new Date('2023-01-01'), endDate: new Date('2023-01-11') }, // 10 days
+    { startDate: new Date('2023-01-01'), endDate: new Date('2023-01-21') }, // 20 days
+    { startDate: new Date('2023-01-01'), endDate: new Date('2023-01-31') }, // 30 days
+  ]);
+  const res = await request(app)
+    .get('/api/stats/loans/duration?median=true')
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(res.body.average, 20);
+  assert.strictEqual(res.body.median, 20);
+  await client.close();
+  await mongod.stop();
+});
+
 test('GET /api/stats/equipments/top returns aggregated equipment counts', async () => {
   const { app, client, mongod, db } = await createApp();
   const e1 = new ObjectId();
@@ -125,6 +142,7 @@ test('new stats routes require auth', async () => {
   const { app, client, mongod } = await createApp();
   await request(app).get('/api/stats/loans/monthly').expect(401);
   await request(app).get('/api/stats/equipments/top').expect(401);
+  await request(app).get('/api/stats/loans/duration').expect(401);
   await client.close();
   await mongod.stop();
 });

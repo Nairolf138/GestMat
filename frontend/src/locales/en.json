@@ -178,7 +178,10 @@
     "top_equipments": "Most borrowed equipments",
     "loans": "Loans",
     "equipments": "Equipments",
-    "status_breakdown": "Loans by status"
+    "status_breakdown": "Loans by status",
+    "loan_duration": "Loan duration",
+    "average": "Average",
+    "median": "Median"
   },
   "common": {
     "choose": "Choose...",
