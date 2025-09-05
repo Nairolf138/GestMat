@@ -178,7 +178,10 @@
     "top_equipments": "Équipements les plus empruntés",
     "loans": "Prêts",
     "equipments": "Équipements",
-    "status_breakdown": "Prêts par statut"
+    "status_breakdown": "Prêts par statut",
+    "loan_duration": "Durée des prêts",
+    "average": "Moyenne",
+    "median": "Médiane"
   },
   "common": {
     "choose": "Choisir...",
