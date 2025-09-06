@@ -7,6 +7,7 @@ import Alert from "./Alert.jsx";
 import { AuthContext } from "./AuthContext.jsx";
 import Loading from "./Loading.jsx";
 import LoanPreviewSection from "./components/LoanPreviewSection.jsx";
+import DashboardSummary from "./components/DashboardSummary.jsx";
 
 function Home() {
   const { t } = useTranslation();
@@ -78,6 +79,7 @@ function Home() {
       <Alert message={error} />
       <Alert type="success" message={message} />
       {user && <p>{t('home.greeting', { name: user.firstName || user.username })}</p>}
+      {user && <DashboardSummary />}
       <LoanPreviewSection
         title={t('home.recent_requests')}
         loans={pending}
