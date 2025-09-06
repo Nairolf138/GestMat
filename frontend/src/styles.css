@@ -171,6 +171,53 @@ body {
   }
 }
 
+.card {
+  background-color: var(--color-navbar-bg);
+  color: var(--color-text);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid transparent;
+}
+
+.card.pending {
+  border-left-color: var(--color-secondary);
+}
+
+.card.accepted {
+  border-left-color: var(--color-success);
+}
+
+.card.refused {
+  border-left-color: var(--color-danger);
+}
+
+.loan-card-info {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.status-badge.pending {
+  background-color: var(--color-secondary);
+}
+
+.status-badge.accepted {
+  background-color: var(--color-success);
+}
+
+.status-badge.refused {
+  background-color: var(--color-danger);
+}
+
 .card-actions {
   margin-top: var(--spacing-sm);
   display: flex;
