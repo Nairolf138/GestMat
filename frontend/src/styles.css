@@ -132,6 +132,18 @@ body {
   gap: var(--spacing-sm);
 }
 
+.user-dropdown .dropdown-toggle {
+  color: var(--color-primary);
+  background-color: transparent;
+  border: none;
+}
+
+.user-dropdown .dropdown-toggle:hover,
+.user-dropdown .dropdown-toggle:focus {
+  background-color: var(--color-text);
+  color: var(--color-bg);
+}
+
 .navbar-utils {
   gap: var(--spacing-sm);
 }
