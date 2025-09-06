@@ -188,24 +188,26 @@ function Home() {
         })}
       />
       <h2 className="h2">{t('home.shortcuts')}</h2>
-      <div
-        className="d-flex flex-wrap"
-        style={{ gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-xl)' }}
-      >
-        <Link className="btn shortcut-btn" to="/inventory">
-          {t('nav.inventory')}
+      <div className="card-grid shortcuts">
+        <Link className="shortcut-card" to="/inventory">
+          <i className="fa-solid fa-warehouse" aria-hidden="true"></i>
+          <span>{t('nav.inventory')}</span>
         </Link>
-        <Link className="btn shortcut-btn" to="/catalog">
-          {t('nav.catalog')}
+        <Link className="shortcut-card" to="/catalog">
+          <i className="fa-solid fa-book" aria-hidden="true"></i>
+          <span>{t('nav.catalog')}</span>
         </Link>
-        <Link className="btn shortcut-btn" to="/loans">
-          {t('nav.loans')}
+        <Link className="shortcut-card" to="/loans">
+          <i className="fa-solid fa-handshake" aria-hidden="true"></i>
+          <span>{t('nav.loans')}</span>
         </Link>
-        <Link className="btn shortcut-btn" to="/cart">
-          {t('nav.cart')}
+        <Link className="shortcut-card" to="/cart">
+          <i className="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+          <span>{t('nav.cart')}</span>
         </Link>
-        <Link className="btn shortcut-btn" to="/profile">
-          {t('nav.profile')}
+        <Link className="shortcut-card" to="/profile">
+          <i className="fa-solid fa-user" aria-hidden="true"></i>
+          <span>{t('nav.profile')}</span>
         </Link>
       </div>
     </div>
