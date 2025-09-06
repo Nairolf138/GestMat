@@ -140,7 +140,9 @@
       "pending": "En attente",
       "accepted": "Accepté",
       "refused": "Refusé"
-    }
+    },
+    "items": "{{count}} équipement",
+    "items_plural": "{{count}} équipements"
   },
   "profile": {
     "title": "Profil",

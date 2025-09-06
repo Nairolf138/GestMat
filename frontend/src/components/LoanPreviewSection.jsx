@@ -9,12 +9,12 @@ function LoanPreviewSection({ title, loans, emptyMessage, previewCount, counterL
   return (
     <>
       <h2 className="h2">{title}</h2>
-      <ul className="list-group" style={{ marginBottom: "var(--spacing-lg)" }}>
+      <div className="card-grid" style={{ marginBottom: "var(--spacing-lg)" }}>
         {loans.slice(0, previewCount).map((l) => (
           <LoanSummaryItem key={l._id} loan={l} />
         ))}
-        {!loans.length && <li className="list-group-item">{emptyMessage}</li>}
-      </ul>
+        {!loans.length && <div className="card">{emptyMessage}</div>}
+      </div>
       <p>
         {loans.length > previewCount && <span>{counterLabel} </span>}
         <Link to="/loans">{t("home.view_all")}</Link>

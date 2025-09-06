@@ -140,7 +140,9 @@
       "pending": "Pending",
       "accepted": "Accepted",
       "refused": "Refused"
-    }
+    },
+    "items": "{{count}} equipment",
+    "items_plural": "{{count}} equipments"
   },
   "profile": {
     "title": "Profile",
