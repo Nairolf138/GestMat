@@ -33,7 +33,8 @@
     "mongodb": "^5.9.2",
     "nodemailer": "^6.9.11",
     "prom-client": "^15.1.3",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.7",
