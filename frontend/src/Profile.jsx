@@ -73,6 +73,7 @@ function Profile() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <h1 className="h1">{t('profile.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={success} />
@@ -207,6 +208,7 @@ function Profile() {
           {t('profile.save')}
         </button>
       </FormCard>
+      </main>
     </div>
   );
 }

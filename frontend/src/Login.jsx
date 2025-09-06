@@ -45,6 +45,7 @@ function Login() {
   };
 
   return (
+    <main id="main-content">
     <FormCard onSubmit={handleSubmit} aria-labelledby="login-title">
       <h1 id="login-title" className="h1">{t('login.title')}</h1>
       <Alert type="success" message={location.state?.message} />
@@ -116,6 +117,7 @@ function Login() {
         <Link to="/register">{t('register.submit')}</Link>
       </p>
     </FormCard>
+    </main>
   );
 }
 

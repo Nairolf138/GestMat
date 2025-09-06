@@ -24,7 +24,9 @@ function LoanDetail() {
     return (
       <div className="container">
         <NavBar />
-        <Loading />
+        <main id="main-content">
+          <Loading />
+        </main>
       </div>
     );
   }
@@ -33,7 +35,9 @@ function LoanDetail() {
     return (
       <div className="container">
         <NavBar />
-        <Alert message={error} />
+        <main id="main-content">
+          <Alert message={error} />
+        </main>
       </div>
     );
   }
@@ -42,7 +46,9 @@ function LoanDetail() {
     return (
       <div className="container">
         <NavBar />
-        <p>{t('home.no_loans')}</p>
+        <main id="main-content">
+          <p>{t('home.no_loans')}</p>
+        </main>
       </div>
     );
   }
@@ -53,6 +59,7 @@ function LoanDetail() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <h1 className="h1">{t('loans.title')}</h1>
       <p>
         {loan.owner?.name} → {loan.borrower?.name}
@@ -69,6 +76,7 @@ function LoanDetail() {
         ))}
       </ul>
       <Link to="/loans">{t('home.view_all')}</Link>
+      </main>
     </div>
   );
 }

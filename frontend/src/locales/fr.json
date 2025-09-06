@@ -28,6 +28,7 @@
     "login": "Connexion",
     "logout": "D\u00e9connexion",
     "language": "Langue",
+    "skip": "Aller au contenu principal",
     "toggle_theme": {
       "activate": "Activer le mode sombre",
       "deactivate": "Désactiver le mode sombre"

@@ -16,6 +16,7 @@ function Structures() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <h1 className="h1">{t('structures.title')}</h1>
       <ul className="list-group">
         {structures.map((s) => (
@@ -24,6 +25,7 @@ function Structures() {
           </li>
         ))}
       </ul>
+      </main>
     </div>
   );
 }

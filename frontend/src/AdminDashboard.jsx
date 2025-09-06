@@ -485,6 +485,7 @@ function AdminDashboard() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <h1 className="h1">Admin Dashboard</h1>
       <ul className="nav nav-tabs mt-4">
         <li className="nav-item">
@@ -526,6 +527,7 @@ function AdminDashboard() {
         {tab === 'inventory' && <ManageInventory />}
         {tab === 'stats' && <AdminStats />}
       </div>
+      </main>
     </div>
   );
 }

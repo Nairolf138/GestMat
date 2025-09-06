@@ -72,6 +72,7 @@ function Register() {
   };
 
   return (
+    <main id="main-content">
     <FormCard onSubmit={handleSubmit} aria-labelledby="register-title">
       <h1 id="register-title" className="h1">{t('register.title')}</h1>
       <Alert message={error} />
@@ -239,6 +240,7 @@ function Register() {
         {t('register.submit')}
       </button>
     </FormCard>
+    </main>
   );
 }
 

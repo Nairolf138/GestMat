@@ -108,6 +108,7 @@ function Cart() {
   return (
       <div className="container">
         <NavBar />
+        <main id="main-content">
         <h1 className="h1">{t('cart.title')}</h1>
         <Alert message={error} />
         <Alert type="success" message={success} />
@@ -148,6 +149,7 @@ function Cart() {
         >
           {t('cart.send_requests')}
         </button>
+      </main>
       </div>
   );
 }

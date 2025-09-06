@@ -55,7 +55,11 @@ function NavBar() {
   }, []);
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm py-2 sticky-top">
+    <>
+      <a href="#main-content" className="skip-link">
+        {t('nav.skip')}
+      </a>
+      <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm py-2 sticky-top">
       <div className="container-fluid">
         <NavLink
           className="navbar-brand"
@@ -219,6 +223,7 @@ function NavBar() {
         </div>
       </div>
     </nav>
+    </>
   );
 }
 
