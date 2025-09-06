@@ -17,6 +17,7 @@ function NavBar() {
   const [cartCount, setCartCount] = useState(
     JSON.parse(localStorage.getItem('cart') || '[]').length
   );
+  const [accountOpen, setAccountOpen] = useState(false);
   const isAdmin = user?.role === 'Administrateur';
   const handleLanguageChange = (event) => {
     const newLang = event.target.value;
@@ -120,24 +121,48 @@ function NavBar() {
                   {t('nav.admin')}
                 </NavLink>
               )}
-              <NavLink
-                className={({isActive}) => 'nav-link' + (isActive ? ' active' : '')}
-                to="/profile"
-                onClick={() => setIsOpen(false)}
-              >
-                {t('nav.profile')}
-              </NavLink>
-              <button
-                className="btn ms-2"
-                style={{
-                  color: 'var(--color-primary)',
-                  borderColor: 'var(--color-primary)',
-                  backgroundColor: 'transparent',
-                }}
-                onClick={handleLogout}
-              >
-                {t('nav.logout')}
-              </button>
+              <div className="dropdown user-dropdown">
+                <button
+                  className="btn dropdown-toggle"
+                  type="button"
+                  aria-expanded={accountOpen}
+                  aria-label={t('nav.account')}
+                  onClick={() => setAccountOpen(!accountOpen)}
+                >
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user.username} className="rounded-circle" />
+                  ) : (
+                    user?.username
+                  )}
+                </button>
+                <ul
+                  className={`dropdown-menu dropdown-menu-end${accountOpen ? ' show' : ''}`}
+                >
+                  <li>
+                    <NavLink
+                      className="dropdown-item"
+                      to="/profile"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {t('nav.profile')}
+                    </NavLink>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setAccountOpen(false);
+                        handleLogout();
+                      }}
+                    >
+                      {t('nav.logout')}
+                    </button>
+                  </li>
+                </ul>
+              </div>
             </>
           )}
           {!user && (

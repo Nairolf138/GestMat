@@ -23,9 +23,10 @@
     "loans": "Pr\u00eats/Emprunts",
     "cart": "Panier",
     "admin": "Administration",
+    "account": "Compte",
     "profile": "Profil",
     "login": "Connexion",
-    "logout": "Se d\u00e9connecter",
+    "logout": "D\u00e9connexion",
     "language": "Langue",
     "toggle_theme": {
       "activate": "Activer le mode sombre",

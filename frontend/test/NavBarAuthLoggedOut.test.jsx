@@ -17,6 +17,6 @@ describe('NavBar when logged out', () => {
     expect(getAllByRole('link', { name: 'Connexion' })[0]).toBeTruthy();
     expect(getAllByRole('link', { name: 'Inscription' })[0]).toBeTruthy();
     expect(queryByRole('link', { name: 'Inventaire local' })).toBeNull();
-    expect(queryByRole('button', { name: 'Se déconnecter' })).toBeNull();
+    expect(queryByRole('button', { name: 'Déconnexion' })).toBeNull();
   });
 });
