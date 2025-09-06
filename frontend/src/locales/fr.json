@@ -94,6 +94,17 @@
     "search_placeholder": "Rechercher un équipement...",
     "no_results": "Aucun équipement trouvé"
   },
+  "tour": {
+    "help": "Aide",
+    "notifications": "Les retours \u00e0 venir s'affichent ici.",
+    "search": "Recherchez un \u00e9quipement ici.",
+    "shortcuts": "Acc\u00e9dez rapidement aux sections principales.",
+    "back": "Pr\u00e9c\u00e9dent",
+    "next": "Suivant",
+    "close": "Fermer",
+    "last": "Terminer",
+    "skip": "Passer"
+  },
   "dashboard": {
     "pending": "En attente",
     "ongoing": "En cours",
