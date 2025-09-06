@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import NavBar from "./NavBar";
 import { api } from "./api";
@@ -16,7 +16,11 @@ function Home() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
   const [message] = useState(location.state?.message || "");
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     api("/loans")
@@ -37,6 +41,39 @@ function Home() {
     () => loans.filter((l) => l.status === "pending"),
     [loans, user, now]
   );
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      api(`/equipments?search=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+      })
+        .then((data) => {
+          if (Array.isArray(data)) setSuggestions(data.slice(0, 5));
+          else setSuggestions([]);
+        })
+        .catch(() => setSuggestions([]));
+    }, 300);
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [query]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (query.trim()) navigate(`/catalog?search=${encodeURIComponent(query)}`);
+    setShowSuggestions(false);
+  };
+
+  const handleSelect = (item) => {
+    navigate(`/catalog?search=${encodeURIComponent(item.name)}`);
+    setShowSuggestions(false);
+  };
 
   const currentLoans = useMemo(
     () =>
@@ -75,6 +112,43 @@ function Home() {
   return (
     <div className="container">
       <NavBar />
+      <form
+        className="mb-3 position-relative"
+        autoComplete="off"
+        onSubmit={handleSubmit}
+      >
+        <input
+          type="text"
+          className="form-control"
+          placeholder={t('home.search_placeholder')}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+        />
+        {showSuggestions && (suggestions.length > 0 || query.trim()) && (
+          <ul
+            className="list-group position-absolute w-100"
+            style={{ zIndex: 1000 }}
+          >
+            {suggestions.length > 0 ? (
+              suggestions.map((s) => (
+                <li
+                  key={s._id}
+                  className="list-group-item list-group-item-action"
+                  onMouseDown={() => handleSelect(s)}
+                >
+                  {s.name}
+                </li>
+              ))
+            ) : (
+              <li className="list-group-item">
+                {t('home.no_results')}
+              </li>
+            )}
+          </ul>
+        )}
+      </form>
       <h1 className="h1">{t('home.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={message} />

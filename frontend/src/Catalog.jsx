@@ -6,13 +6,16 @@ import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { addToCart as addCartItem } from './Cart.jsx';
 import Loading from './Loading.jsx';
+import { useSearchParams } from 'react-router-dom';
 
 function Catalog() {
   const { t } = useTranslation();
   const { structures } = useContext(GlobalContext);
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
   const [items, setItems] = useState([]);
   const [filters, setFilters] = useState({
-    search: '',
+    search: initialSearch,
     type: '',
     structure: '',
     startDate: '',

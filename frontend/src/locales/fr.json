@@ -90,7 +90,9 @@
     "shortcuts": "Raccourcis",
     "error_fetch": "Erreur lors du chargement des pr\u00eats",
     "view_all": "Tout voir",
-    "counter": "{{shown}} sur {{total}} {{category}}"
+    "counter": "{{shown}} sur {{total}} {{category}}",
+    "search_placeholder": "Rechercher un équipement...",
+    "no_results": "Aucun équipement trouvé"
   },
   "dashboard": {
     "pending": "En attente",
