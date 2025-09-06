@@ -16,6 +16,7 @@ function Users() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <h1 className="h1">{t('users.title')}</h1>
       <ul className="list-group">
         {users.map((u) => (
@@ -27,6 +28,7 @@ function Users() {
           </li>
         ))}
       </ul>
+      </main>
     </div>
   );
 }

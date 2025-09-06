@@ -60,6 +60,28 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  padding: var(--spacing-sm);
+  background: var(--color-primary);
+  color: #fff;
+  z-index: 1000;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: var(--spacing-sm);
+  top: var(--spacing-sm);
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
 .form {
   margin-top: var(--spacing-md);
 }

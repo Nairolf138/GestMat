@@ -28,6 +28,7 @@
     "login": "Login",
     "logout": "Logout",
     "language": "Language",
+    "skip": "Skip to main content",
     "toggle_theme": {
       "activate": "Enable dark mode",
       "deactivate": "Disable dark mode"

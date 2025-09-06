@@ -105,7 +105,9 @@ function Home() {
     return (
       <div className="container">
         <NavBar />
-        <Loading />
+        <main id="main-content">
+          <Loading />
+        </main>
       </div>
     );
   }
@@ -115,6 +117,7 @@ function Home() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <div className="d-flex justify-content-end mt-2">
         <button
           className="btn btn-outline-secondary"
@@ -225,6 +228,7 @@ function Home() {
         </Link>
       </div>
       <OnboardingTour run={runTour} onClose={() => setRunTour(false)} />
+      </main>
     </div>
   );
 }

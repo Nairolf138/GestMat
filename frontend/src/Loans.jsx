@@ -83,6 +83,7 @@ function Loans() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <h1 className="h1">{t('loans.title')}</h1>
       {loading ? (
         <Loading />
@@ -142,6 +143,7 @@ function Loans() {
           </div>
         </>
       )}
+      </main>
     </div>
   );
 }

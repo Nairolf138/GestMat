@@ -93,6 +93,7 @@ function Equipments() {
   return (
     <div className="container">
       <NavBar />
+      <main id="main-content">
       <Alert message={error?.message} />
       <Alert type="success" message={message} />
       <h1 className="h1">
@@ -301,6 +302,7 @@ function Equipments() {
           onCancel={() => setEditing(null)}
         />
       )}
+      </main>
     </div>
   );
 }
