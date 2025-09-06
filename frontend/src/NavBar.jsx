@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
@@ -13,6 +13,9 @@ function NavBar() {
   const [isDarkTheme, setIsDarkTheme] = useState(() =>
     document.body.classList.contains('dark-theme') ||
     localStorage.getItem('theme') === 'dark'
+  );
+  const [cartCount, setCartCount] = useState(
+    JSON.parse(localStorage.getItem('cart') || '[]').length
   );
   const isAdmin = user?.role === 'Administrateur';
   const handleLanguageChange = (event) => {
@@ -40,6 +43,15 @@ function NavBar() {
     localStorage.setItem('theme', newTheme);
     setIsDarkTheme(newTheme === 'dark');
   };
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setCartCount(JSON.parse(localStorage.getItem('cart') || '[]').length);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm py-2">
@@ -95,6 +107,9 @@ function NavBar() {
                 onClick={() => setIsOpen(false)}
               >
                 {t('nav.cart')}
+                {cartCount > 0 && (
+                  <span className="cart-badge">{cartCount}</span>
+                )}
               </NavLink>
               {isAdmin && (
                 <NavLink
