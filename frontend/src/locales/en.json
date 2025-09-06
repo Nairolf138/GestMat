@@ -92,6 +92,11 @@
     "view_all": "View all",
     "counter": "{{shown}} of {{total}} {{category}}"
   },
+  "dashboard": {
+    "pending": "Pending",
+    "ongoing": "Ongoing",
+    "upcoming": "Upcoming"
+  },
   "catalog": {
     "title": "Catalog",
     "search": "Search",

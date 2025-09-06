@@ -14,6 +14,7 @@ describe('Login success', () => {
   it('displays success message after login', async () => {
     api.api.mockResolvedValueOnce({ user: { structure: 's1' } });
     api.api.mockResolvedValueOnce([]);
+    api.api.mockResolvedValueOnce([]);
     function Wrapper({ children }) {
       const [user, setUser] = useState(null);
       return (

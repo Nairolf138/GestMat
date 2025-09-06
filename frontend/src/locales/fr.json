@@ -92,6 +92,11 @@
     "view_all": "Tout voir",
     "counter": "{{shown}} sur {{total}} {{category}}"
   },
+  "dashboard": {
+    "pending": "En attente",
+    "ongoing": "En cours",
+    "upcoming": "\u00c0 venir"
+  },
   "catalog": {
     "title": "Catalogue",
     "search": "Recherche",
