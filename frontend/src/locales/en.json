@@ -94,6 +94,17 @@
     "search_placeholder": "Search equipment...",
     "no_results": "No equipment found"
   },
+  "tour": {
+    "help": "Help",
+    "notifications": "Upcoming returns are shown here.",
+    "search": "Search for equipment here.",
+    "shortcuts": "Quick access to main sections.",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "last": "Finish",
+    "skip": "Skip"
+  },
   "dashboard": {
     "pending": "Pending",
     "ongoing": "Ongoing",

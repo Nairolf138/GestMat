@@ -9,6 +9,7 @@ import Loading from "./Loading.jsx";
 import LoanPreviewSection from "./components/LoanPreviewSection.jsx";
 import DashboardSummary from "./components/DashboardSummary.jsx";
 import Notifications from "./components/Notifications.jsx";
+import OnboardingTour from "./components/OnboardingTour.jsx";
 
 function Home() {
   const { t } = useTranslation();
@@ -22,6 +23,7 @@ function Home() {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [runTour, setRunTour] = useState(false);
 
   useEffect(() => {
     api("/loans")
@@ -113,9 +115,19 @@ function Home() {
   return (
     <div className="container">
       <NavBar />
-      <Notifications />
+      <div className="d-flex justify-content-end mt-2">
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => setRunTour(true)}
+        >
+          {t('tour.help')}
+        </button>
+      </div>
+      <div className="tutorial-notifications">
+        <Notifications />
+      </div>
       <form
-        className="mb-3 position-relative"
+        className="mb-3 position-relative tutorial-search"
         autoComplete="off"
         onSubmit={handleSubmit}
       >
@@ -190,7 +202,7 @@ function Home() {
         })}
       />
       <h2 className="h2">{t('home.shortcuts')}</h2>
-      <div className="card-grid shortcuts">
+      <div className="card-grid shortcuts tutorial-shortcuts">
         <Link className="shortcut-card" to="/inventory">
           <i className="fa-solid fa-warehouse" aria-hidden="true"></i>
           <span>{t('nav.inventory')}</span>
@@ -212,6 +224,7 @@ function Home() {
           <span>{t('nav.profile')}</span>
         </Link>
       </div>
+      <OnboardingTour run={runTour} onClose={() => setRunTour(false)} />
     </div>
   );
 }
