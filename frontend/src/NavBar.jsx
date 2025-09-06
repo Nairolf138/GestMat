@@ -55,7 +55,7 @@ function NavBar() {
   }, []);
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm py-2">
+    <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm py-2 sticky-top">
       <div className="container-fluid">
         <NavLink
           className="navbar-brand"
