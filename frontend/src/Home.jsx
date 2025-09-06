@@ -8,6 +8,7 @@ import { AuthContext } from "./AuthContext.jsx";
 import Loading from "./Loading.jsx";
 import LoanPreviewSection from "./components/LoanPreviewSection.jsx";
 import DashboardSummary from "./components/DashboardSummary.jsx";
+import Notifications from "./components/Notifications.jsx";
 
 function Home() {
   const { t } = useTranslation();
@@ -112,6 +113,7 @@ function Home() {
   return (
     <div className="container">
       <NavBar />
+      <Notifications />
       <form
         className="mb-3 position-relative"
         autoComplete="off"

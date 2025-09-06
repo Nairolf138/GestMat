@@ -99,6 +99,11 @@
     "ongoing": "En cours",
     "upcoming": "\u00c0 venir"
   },
+  "notifications": {
+    "title": "Retours à échéance",
+    "none": "Aucun retour imminent",
+    "error": "Erreur de récupération des notifications"
+  },
   "catalog": {
     "title": "Catalogue",
     "search": "Recherche",

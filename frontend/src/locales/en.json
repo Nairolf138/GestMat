@@ -99,6 +99,11 @@
     "ongoing": "Ongoing",
     "upcoming": "Upcoming"
   },
+  "notifications": {
+    "title": "Upcoming returns",
+    "none": "No returns due soon",
+    "error": "Error fetching notifications"
+  },
   "catalog": {
     "title": "Catalog",
     "search": "Search",
