@@ -19,7 +19,11 @@ describe('Equipments', () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
-    queryClient = new QueryClient();
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { staleTime: 5 * 60 * 1000 },
+      },
+    });
   });
 
   function renderWithClient(ui) {

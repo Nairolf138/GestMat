@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
 import EditEquipment from './EditEquipment';
@@ -23,6 +23,7 @@ function Equipments() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  const queryClient = useQueryClient();
   const {
     data: items = [],
     isFetching,
@@ -41,7 +42,6 @@ function Equipments() {
       return await api(`/equipments?${params.toString()}`);
     },
     enabled: userStructure !== '',
-    staleTime: 5 * 60 * 1000,
   });
 
   const structureName =
@@ -62,11 +62,17 @@ function Equipments() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api(`/equipments/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipments'] });
+    },
+  });
+
   const deleteEquipment = async (id) => {
     if (!window.confirm(t('equipments.delete.confirm'))) return;
     try {
-      await api(`/equipments/${id}`, { method: 'DELETE' });
-      refetch();
+      await deleteMutation.mutateAsync(id);
     } catch {
       // ignore errors
     }
@@ -286,20 +292,12 @@ function Equipments() {
           {t('equipments.add.title')}
         </button>
         {showForm && (
-          <AddEquipment
-            onCreated={() => {
-              refetch();
-              setShowForm(false);
-            }}
-          />
+          <AddEquipment onCreated={() => setShowForm(false)} />
         )}
         {editing && (
           <EditEquipment
             equipment={editing}
-            onUpdated={() => {
-              refetch();
-              setEditing(null);
-            }}
+            onUpdated={() => setEditing(null)}
             onCancel={() => setEditing(null)}
           />
         )}

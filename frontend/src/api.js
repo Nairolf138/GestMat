@@ -1,3 +1,14 @@
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache results for five minutes to limit network requests
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
+
 const API_URL =
   import.meta.env.VITE_API_URL ??
   (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api');

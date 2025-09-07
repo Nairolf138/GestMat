@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,7 @@ import FormCard from './components/FormCard.jsx';
 function EditEquipment({ equipment, onUpdated, onCancel }) {
   const { t } = useTranslation();
   const { notify } = useContext(GlobalContext);
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     name: '',
     type: '',
@@ -16,6 +18,25 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
   });
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
+
+  const mutation = useMutation({
+    mutationFn: (payload) =>
+      api(`/equipments/${equipment._id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      notify(t('equipments.edit.success'), 'success');
+      setError('');
+      setErrors({});
+      queryClient.invalidateQueries({ queryKey: ['equipments'] });
+      if (onUpdated) onUpdated();
+    },
+    onError: (err) => {
+      setErrors(err.fieldErrors || {});
+      setError(err.message || t('equipments.edit.error_update'));
+    },
+  });
 
   useEffect(() => {
     if (equipment) {
@@ -46,23 +67,11 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
 
-    try {
-      const payload = {
-        ...form,
-        totalQty: Number(form.totalQty) || 0,
-      };
-      await api(`/equipments/${equipment._id}`, {
-        method: 'PUT',
-        body: JSON.stringify(payload),
-      });
-      notify(t('equipments.edit.success'), 'success');
-      setError('');
-      setErrors({});
-      if (onUpdated) onUpdated();
-    } catch (err) {
-      setErrors(err.fieldErrors || {});
-      setError(err.message || t('equipments.edit.error_update'));
-    }
+    const payload = {
+      ...form,
+      totalQty: Number(form.totalQty) || 0,
+    };
+    mutation.mutate(payload);
   };
 
   return (
