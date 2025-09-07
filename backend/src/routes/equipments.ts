@@ -13,7 +13,7 @@ import auth from '../middleware/auth';
 import createEquipmentFilter from '../utils/createEquipmentFilter';
 import { canModify, normalizeType } from '../utils/roleAccess';
 import { ADMIN_ROLE } from '../config/roles';
-import PERMISSIONS from '../config/permissions';
+import permissions from '../config/permissions';
 import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import {
@@ -23,7 +23,7 @@ import {
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
 
-const { MANAGE_EQUIPMENTS } = PERMISSIONS;
+const { MANAGE_EQUIPMENTS } = permissions;
 
 const router = express.Router();
 

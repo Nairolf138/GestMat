@@ -6,13 +6,13 @@ import {
   deleteStructure,
 } from '../models/Structure';
 import auth from '../middleware/auth';
-import PERMISSIONS from '../config/permissions';
+import permissions from '../config/permissions';
 import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import { structureValidator } from '../validators/structureValidator';
 import { badRequest, notFound } from '../utils/errors';
 
-const { MANAGE_STRUCTURES } = PERMISSIONS;
+const { MANAGE_STRUCTURES } = permissions;
 
 const router = express.Router();
 
