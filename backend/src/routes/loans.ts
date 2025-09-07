@@ -12,9 +12,9 @@ import {
   createLoanValidator,
   updateLoanValidator,
 } from '../validators/loanValidator';
-import PERMISSIONS from '../config/permissions';
+import permissions from '../config/permissions';
 
-const { MANAGE_LOANS } = PERMISSIONS;
+const { MANAGE_LOANS } = permissions;
 
 const router = express.Router();
 

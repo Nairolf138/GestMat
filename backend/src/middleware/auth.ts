@@ -2,10 +2,13 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config';
 import { Request, Response, NextFunction } from 'express';
 import { AuthUser } from '../types';
+import permissionsConfig from '../config/permissions';
 
-type Roles = string | string[];
+const { PERMISSIONS } = permissionsConfig as any;
 
-export default function auth(allowedRoles: Roles = []) {
+type Permissions = string | string[];
+
+export default function auth(requiredPermissions: Permissions = []) {
   return (req: Request, res: Response, next: NextFunction) => {
     const token =
       req.headers.authorization?.split(' ')[1] || req.cookies?.token;
@@ -15,9 +18,17 @@ export default function auth(allowedRoles: Roles = []) {
       const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
       req.user = decoded;
 
-      const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-      if (roles.length && !roles.includes(decoded.role)) {
-        return res.status(403).json({ message: 'Access denied' });
+      const perms = Array.isArray(requiredPermissions)
+        ? requiredPermissions
+        : [requiredPermissions];
+      if (perms.length) {
+        const userRole = decoded.role;
+        const hasPermission = perms.some(
+          (perm) => PERMISSIONS[perm]?.includes(userRole),
+        );
+        if (!hasPermission) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
       }
 
       next();

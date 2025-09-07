@@ -8,13 +8,13 @@ import {
 } from '../models/User';
 import { findStructureById } from '../models/Structure';
 import auth from '../middleware/auth';
-import PERMISSIONS from '../config/permissions';
+import permissions from '../config/permissions';
 import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import { updateUserValidator } from '../validators/userValidator';
 import { notFound } from '../utils/errors';
 
-const { MANAGE_USERS } = PERMISSIONS;
+const { MANAGE_USERS } = permissions;
 
 const router = express.Router();
 
