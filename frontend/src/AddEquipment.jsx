@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
@@ -8,14 +9,33 @@ import FormCard from './components/FormCard.jsx';
 function AddEquipment({ onCreated }) {
   const { t } = useTranslation();
   const { notify } = useContext(GlobalContext);
-  const [form, setForm] = useState({
+  const queryClient = useQueryClient();
+  const initialForm = {
     name: '',
     type: '',
     totalQty: 0,
     condition: '',
-  });
+  };
+  const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
+
+  const mutation = useMutation({
+    mutationFn: (payload) =>
+      api('/equipments', { method: 'POST', body: JSON.stringify(payload) }),
+    onSuccess: () => {
+      notify(t('equipments.add.success'), 'success');
+      setForm(initialForm);
+      setError('');
+      setErrors({});
+      queryClient.invalidateQueries({ queryKey: ['equipments'] });
+      if (onCreated) onCreated();
+    },
+    onError: (err) => {
+      setErrors(err.fieldErrors || {});
+      setError(err.message || t('equipments.add.error_create'));
+    },
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,30 +55,12 @@ function AddEquipment({ onCreated }) {
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
 
-    try {
-      const payload = {
-        ...form,
-        totalQty: Number(form.totalQty) || 0,
-        availableQty: Number(form.totalQty) || 0,
-      };
-      await api('/equipments', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      notify(t('equipments.add.success'), 'success');
-      setForm({
-        name: '',
-        type: '',
-        totalQty: 0,
-        condition: '',
-      });
-      setError('');
-      setErrors({});
-      if (onCreated) onCreated();
-    } catch (err) {
-      setErrors(err.fieldErrors || {});
-      setError(err.message || t('equipments.add.error_create'));
-    }
+    const payload = {
+      ...form,
+      totalQty: Number(form.totalQty) || 0,
+      availableQty: Number(form.totalQty) || 0,
+    };
+    mutation.mutate(payload);
   };
 
   return (

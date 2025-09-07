@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AddEquipment from '../src/AddEquipment.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
@@ -8,7 +9,12 @@ import * as api from '../src/api.js';
 describe('AddEquipment', () => {
   it('submits form data with availableQty derived from totalQty', async () => {
     api.api.mockResolvedValue({});
-    const { container, getByText } = render(<AddEquipment />);
+    const queryClient = new QueryClient();
+    const { container, getByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <AddEquipment />
+      </QueryClientProvider>,
+    );
     fireEvent.change(container.querySelector('input[name="name"]'), {
       target: { value: 'Lamp' },
     });
@@ -37,7 +43,12 @@ describe('AddEquipment', () => {
     api.api.mockRejectedValueOnce(
       Object.assign(new Error('Validation error'), { fieldErrors }),
     );
-    const { container, findByText } = render(<AddEquipment />);
+    const queryClient = new QueryClient();
+    const { container, findByText } = render(
+      <QueryClientProvider client={queryClient}>
+        <AddEquipment />
+      </QueryClientProvider>,
+    );
     fireEvent.change(container.querySelector('input[name="name"]'), {
       target: { value: 'Lamp' },
     });
