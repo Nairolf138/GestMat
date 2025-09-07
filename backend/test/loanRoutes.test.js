@@ -10,7 +10,9 @@ process.env.JWT_SECRET = 'test';
 const loanRoutes = require('../src/routes/loans').default;
 const mailer = require('../src/utils/sendMail');
 mailer.sendMail = async () => {};
-const { checkEquipmentAvailability } = require('../src/utils/checkAvailability');
+const {
+  checkEquipmentAvailability,
+} = require('../src/utils/checkAvailability');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -34,21 +36,25 @@ function auth(role = 'Administrateur') {
 test('create, update and delete loan request', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const owner = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const borrower = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
   const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1, structure: owner })
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, structure: owner })
   ).insertedId;
   const ownerUser = new ObjectId();
   await db.collection('users').insertMany([
     { _id: ownerUser, structure: owner },
     { _id: new ObjectId(userId), structure: borrower },
   ]);
-    const ownerToken = jwt.sign(
-      { id: ownerUser.toString(), role: 'Administrateur' },
-      'test',
-      { expiresIn: '1h' }
-    );
+  const ownerToken = jwt.sign(
+    { id: ownerUser.toString(), role: 'Administrateur' },
+    'test',
+    { expiresIn: '1h' },
+  );
 
   const payload = {
     owner: owner.toString(),
@@ -72,7 +78,7 @@ test('create, update and delete loan request', async () => {
     eqId.toString(),
     start,
     end,
-    1
+    1,
   );
   assert.strictEqual(availAfterCreate.availableQty, 0);
 
@@ -94,7 +100,7 @@ test('create, update and delete loan request', async () => {
     eqId.toString(),
     start,
     end,
-    1
+    1,
   );
   assert.strictEqual(availAfterDelete.availableQty, 1);
   const list2 = await request(app).get('/api/loans').set(auth()).expect(200);
@@ -115,10 +121,14 @@ test('create, update and delete loan request', async () => {
 test('loan creation fails on quantity conflict', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const owner = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const borrower = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
   const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1, structure: owner })
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, structure: owner })
   ).insertedId;
   await db
     .collection('users')
@@ -132,17 +142,9 @@ test('loan creation fails on quantity conflict', async () => {
     endDate: '2024-01-02',
   };
 
-  await request(app)
-    .post('/api/loans')
-    .set(auth())
-    .send(payload)
-    .expect(200);
+  await request(app).post('/api/loans').set(auth()).send(payload).expect(200);
 
-  await request(app)
-    .post('/api/loans')
-    .set(auth())
-    .send(payload)
-    .expect(400);
+  await request(app).post('/api/loans').set(auth()).send(payload).expect(400);
 
   await client.close();
   await mongod.stop();
@@ -151,9 +153,12 @@ test('loan creation fails on quantity conflict', async () => {
 test('reject loan request to own structure', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const struct = (await db.collection('structures').insertOne({ name: 'S' })).insertedId;
+  const struct = (await db.collection('structures').insertOne({ name: 'S' }))
+    .insertedId;
   const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E', totalQty: 1, structure: struct })
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E', totalQty: 1, structure: struct })
   ).insertedId;
   await db
     .collection('users')
@@ -167,11 +172,7 @@ test('reject loan request to own structure', async () => {
     endDate: '2024-01-02',
   };
 
-  await request(app)
-    .post('/api/loans')
-    .set(auth())
-    .send(payload)
-    .expect(403);
+  await request(app).post('/api/loans').set(auth()).send(payload).expect(403);
 
   await client.close();
   await mongod.stop();
@@ -180,13 +181,22 @@ test('reject loan request to own structure', async () => {
 test('delete loan request unauthorized returns 403', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
-  await db.collection('users').insertOne({ _id: new ObjectId(userId), structure: struct1 });
+  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: struct1 });
   const loanId = (
-    await db.collection('loanrequests').insertOne({ owner: struct2, borrower: struct2 })
+    await db
+      .collection('loanrequests')
+      .insertOne({ owner: struct2, borrower: struct2 })
   ).insertedId;
-  await request(app).delete(`/api/loans/${loanId}`).set(auth('Autre')).expect(403);
+  await request(app)
+    .delete(`/api/loans/${loanId}`)
+    .set(auth('Autre'))
+    .expect(403);
   await client.close();
   await mongod.stop();
 });
@@ -194,14 +204,23 @@ test('delete loan request unauthorized returns 403', async () => {
 test('unauthorized delete does not remove loan', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
-  await db.collection('users').insertOne({ _id: new ObjectId(userId), structure: struct1 });
+  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: struct1 });
   const loanId = (
-    await db.collection('loanrequests').insertOne({ owner: struct2, borrower: struct2 })
+    await db
+      .collection('loanrequests')
+      .insertOne({ owner: struct2, borrower: struct2 })
   ).insertedId;
 
-  await request(app).delete(`/api/loans/${loanId}`).set(auth('Autre')).expect(403);
+  await request(app)
+    .delete(`/api/loans/${loanId}`)
+    .set(auth('Autre'))
+    .expect(403);
 
   const loan = await db.collection('loanrequests').findOne({ _id: loanId });
   assert.ok(loan);
@@ -213,8 +232,11 @@ test('unauthorized delete does not remove loan', async () => {
 test('non-admin cannot create, update or delete loan', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const struct = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const eqId = (await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })).insertedId;
+  const struct = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const eqId = (
+    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
+  ).insertedId;
   const payload = {
     owner: struct.toString(),
     borrower: struct.toString(),

@@ -24,27 +24,39 @@ async function createApp() {
 
 function auth() {
   const token = jwt.sign({ id: 'u1', role: 'Administrateur' }, 'test', {
-    expiresIn: '1h'
+    expiresIn: '1h',
   });
   return { Authorization: `Bearer ${token}` };
 }
 
 test('availableQty cannot exceed totalQty on create and update', async () => {
   const { app, client, mongod } = await createApp();
-  const payload = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 2, availableQty: 3 };
+  const payload = {
+    name: 'Mic',
+    type: 'Son',
+    condition: 'Neuf',
+    totalQty: 2,
+    availableQty: 3,
+  };
   const res1 = await request(app)
     .post('/api/equipments')
     .set(auth())
     .send(payload)
     .expect(400);
-  if (!res1.body.errors?.some(e => e.msg.includes('cannot exceed'))) {
+  if (!res1.body.errors?.some((e) => e.msg.includes('cannot exceed'))) {
     throw new Error('Expected validation error for availableQty');
   }
 
   const valid = await request(app)
     .post('/api/equipments')
     .set(auth())
-    .send({ name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 2, availableQty: 1 })
+    .send({
+      name: 'Mic',
+      type: 'Son',
+      condition: 'Neuf',
+      totalQty: 2,
+      availableQty: 1,
+    })
     .expect(200);
 
   await request(app)
@@ -74,7 +86,13 @@ test('reject invalid type values and normalize case/accents', async () => {
   const res2 = await request(app)
     .post('/api/equipments')
     .set(auth())
-    .send({ name: 'Light', type: 'lumiere', condition: 'Neuf', totalQty: 1, availableQty: 1 })
+    .send({
+      name: 'Light',
+      type: 'lumiere',
+      condition: 'Neuf',
+      totalQty: 1,
+      availableQty: 1,
+    })
     .expect(200);
   assert.strictEqual(res2.body.type, 'Lumière');
 

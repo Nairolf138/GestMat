@@ -63,10 +63,14 @@ function Loans() {
 
   const structureId = user?.structure?._id || user?.structure;
   const ownerLoans = categorize(
-    loans.filter((l) => l.owner?._id === structureId || l.owner === structureId)
+    loans.filter(
+      (l) => l.owner?._id === structureId || l.owner === structureId,
+    ),
   );
   const borrowerLoans = categorize(
-    loans.filter((l) => l.borrower?._id === structureId || l.borrower === structureId)
+    loans.filter(
+      (l) => l.borrower?._id === structureId || l.borrower === structureId,
+    ),
   );
 
   const renderSection = (list, isOwner) => (
@@ -84,65 +88,69 @@ function Loans() {
     <div className="container">
       <NavBar />
       <main id="main-content">
-      <h1 className="h1">{t('loans.title')}</h1>
-      {loading ? (
-        <Loading />
-      ) : error ? (
-        <div className="alert alert-danger">{t('common.error')}</div>
-      ) : (
-        <>
-          <ul className="nav nav-tabs mt-4">
-            <li className="nav-item">
-              <button
-                className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
-                onClick={() => setTab('owner')}
+        <h1 className="h1">{t('loans.title')}</h1>
+        {loading ? (
+          <Loading />
+        ) : error ? (
+          <div className="alert alert-danger">{t('common.error')}</div>
+        ) : (
+          <>
+            <ul className="nav nav-tabs mt-4">
+              <li className="nav-item">
+                <button
+                  className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
+                  onClick={() => setTab('owner')}
+                >
+                  {t('loans.as_owner')}
+                </button>
+              </li>
+              <li className="nav-item">
+                <button
+                  className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
+                  onClick={() => setTab('borrower')}
+                >
+                  {t('loans.as_borrower')}
+                </button>
+              </li>
+            </ul>
+            <div className="mt-3">
+              <CollapsibleSection
+                title={t('loans.finished')}
+                isOpen={sectionsOpen.finished}
+                onToggle={() => toggleSection('finished')}
               >
-                {t('loans.as_owner')}
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
-                onClick={() => setTab('borrower')}
+                {renderSection(
+                  tab === 'owner'
+                    ? ownerLoans.finished
+                    : borrowerLoans.finished,
+                  tab === 'owner',
+                )}
+              </CollapsibleSection>
+              <CollapsibleSection
+                title={t('loans.ongoing')}
+                isOpen={sectionsOpen.ongoing}
+                onToggle={() => toggleSection('ongoing')}
               >
-                {t('loans.as_borrower')}
-              </button>
-            </li>
-          </ul>
-          <div className="mt-3">
-            <CollapsibleSection
-              title={t('loans.finished')}
-              isOpen={sectionsOpen.finished}
-              onToggle={() => toggleSection('finished')}
-            >
-              {renderSection(
-                tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished,
-                tab === 'owner'
-              )}
-            </CollapsibleSection>
-            <CollapsibleSection
-              title={t('loans.ongoing')}
-              isOpen={sectionsOpen.ongoing}
-              onToggle={() => toggleSection('ongoing')}
-            >
-              {renderSection(
-                tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
-                tab === 'owner'
-              )}
-            </CollapsibleSection>
-            <CollapsibleSection
-              title={t('loans.upcoming')}
-              isOpen={sectionsOpen.upcoming}
-              onToggle={() => toggleSection('upcoming')}
-            >
-              {renderSection(
-                tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
-                tab === 'owner'
-              )}
-            </CollapsibleSection>
-          </div>
-        </>
-      )}
+                {renderSection(
+                  tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
+                  tab === 'owner',
+                )}
+              </CollapsibleSection>
+              <CollapsibleSection
+                title={t('loans.upcoming')}
+                isOpen={sectionsOpen.upcoming}
+                onToggle={() => toggleSection('upcoming')}
+              >
+                {renderSection(
+                  tab === 'owner'
+                    ? ownerLoans.upcoming
+                    : borrowerLoans.upcoming,
+                  tab === 'owner',
+                )}
+              </CollapsibleSection>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

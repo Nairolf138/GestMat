@@ -6,7 +6,9 @@ async function main() {
   dotenv.config();
   const names = process.argv.slice(2);
   if (names.length === 0) {
-    console.error('Usage: node scripts/createStructures.js <name1> [name2 ...]');
+    console.error(
+      'Usage: node scripts/createStructures.js <name1> [name2 ...]',
+    );
     process.exit(1);
   }
   const db = await connectDB();

@@ -4,7 +4,8 @@ import { api } from '../src/api.js';
 it('retries request after refresh on 401', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn()
+    vi
+      .fn()
       .mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -41,7 +42,8 @@ it('retries request after refresh on 401', async () => {
 it('throws when refresh fails', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn()
+    vi
+      .fn()
       .mockResolvedValueOnce({
         ok: false,
         status: 401,

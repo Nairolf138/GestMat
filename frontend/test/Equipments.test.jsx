@@ -34,21 +34,23 @@ describe('Equipments', () => {
     ]);
 
     renderWithClient(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AuthContext.Provider value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <AuthContext.Provider
+          value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}
+        >
           <Equipments />
         </AuthContext.Provider>
       </MemoryRouter>,
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
-    expect(api.api).toHaveBeenLastCalledWith(
-      expect.stringContaining('sort='),
-    );
+    expect(api.api).toHaveBeenLastCalledWith(expect.stringContaining('sort='));
     expect(
       screen.getByRole('heading', {
         name: 'Inventaire local - Structure 1',
-      })
+      }),
     ).toBeTruthy();
     await screen.findByText('Eq1');
     expect(screen.getByText('Loc')).toBeTruthy();
@@ -105,8 +107,12 @@ describe('Equipments', () => {
     ]);
 
     const tree = (
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AuthContext.Provider value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <AuthContext.Provider
+          value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}
+        >
           <Equipments />
         </AuthContext.Provider>
       </MemoryRouter>
@@ -121,4 +127,3 @@ describe('Equipments', () => {
     expect(api.api).toHaveBeenCalledTimes(1);
   });
 });
-

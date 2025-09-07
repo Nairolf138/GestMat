@@ -17,7 +17,11 @@ export interface LoanRequest {
   [key: string]: unknown;
 }
 
-async function _populate(db: Db, loan: LoanRequest, session?: ClientSession): Promise<LoanRequest> {
+async function _populate(
+  db: Db,
+  loan: LoanRequest,
+  session?: ClientSession,
+): Promise<LoanRequest> {
   await Promise.all([
     loan.borrower
       ? db
@@ -61,7 +65,7 @@ async function _populate(db: Db, loan: LoanRequest, session?: ClientSession): Pr
                   .findOne({ _id: item.equipment as ObjectId }, { session })) ||
                 item.equipment;
             }
-          })
+          }),
         )
       : null,
   ]);
@@ -70,7 +74,7 @@ async function _populate(db: Db, loan: LoanRequest, session?: ClientSession): Pr
 
 export async function findLoans(
   db: Db,
-  filter: Record<string, unknown> = {}
+  filter: Record<string, unknown> = {},
 ): Promise<LoanRequest[]> {
   const loans = await db
     .collection<LoanRequest>('loanrequests')
@@ -83,14 +87,19 @@ export async function findLoans(
 export async function createLoan(
   db: Db,
   data: LoanRequest,
-  session?: ClientSession
+  session?: ClientSession,
 ): Promise<LoanRequest> {
   if (data.borrower) data.borrower = new ObjectId(data.borrower as ObjectId);
   if (data.owner) data.owner = new ObjectId(data.owner as ObjectId);
-  if (data.requestedBy) data.requestedBy = new ObjectId(data.requestedBy as ObjectId);
-  if (data.processedBy) data.processedBy = new ObjectId(data.processedBy as ObjectId);
+  if (data.requestedBy)
+    data.requestedBy = new ObjectId(data.requestedBy as ObjectId);
+  if (data.processedBy)
+    data.processedBy = new ObjectId(data.processedBy as ObjectId);
   if (data.items) {
-    data.items = data.items.map((it) => ({ ...it, equipment: new ObjectId(it.equipment as ObjectId) }));
+    data.items = data.items.map((it) => ({
+      ...it,
+      equipment: new ObjectId(it.equipment as ObjectId),
+    }));
   }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
@@ -105,22 +114,29 @@ export async function updateLoan(
   db: Db,
   id: string,
   data: LoanRequest,
-  session?: ClientSession
+  session?: ClientSession,
 ): Promise<LoanRequest | null> {
   if (data.borrower) data.borrower = new ObjectId(data.borrower as ObjectId);
   if (data.owner) data.owner = new ObjectId(data.owner as ObjectId);
-  if (data.requestedBy) data.requestedBy = new ObjectId(data.requestedBy as ObjectId);
-  if (data.processedBy) data.processedBy = new ObjectId(data.processedBy as ObjectId);
+  if (data.requestedBy)
+    data.requestedBy = new ObjectId(data.requestedBy as ObjectId);
+  if (data.processedBy)
+    data.processedBy = new ObjectId(data.processedBy as ObjectId);
   if (data.items) {
-    data.items = data.items.map((it) => ({ ...it, equipment: new ObjectId(it.equipment as ObjectId) }));
+    data.items = data.items.map((it) => ({
+      ...it,
+      equipment: new ObjectId(it.equipment as ObjectId),
+    }));
   }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
-  const res = await db.collection<LoanRequest>('loanrequests').findOneAndUpdate(
-    { _id: new ObjectId(id) },
-    { $set: data },
-    { returnDocument: 'after', session }
-  );
+  const res = await db
+    .collection<LoanRequest>('loanrequests')
+    .findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: data },
+      { returnDocument: 'after', session },
+    );
   if (!res.value) return null;
   return _populate(db, res.value, session);
 }
@@ -128,7 +144,7 @@ export async function updateLoan(
 export async function deleteLoan(
   db: Db,
   id: string,
-  session?: ClientSession
+  session?: ClientSession,
 ): Promise<boolean> {
   const res = await db
     .collection('loanrequests')

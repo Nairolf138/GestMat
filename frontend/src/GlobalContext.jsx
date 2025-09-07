@@ -19,8 +19,12 @@ export function GlobalProvider({ children }) {
 
   useEffect(() => {
     setErrorHandler((err) => notify(err.message));
-    api('/roles', {}, false).then(setRoles).catch(() => setRoles([]));
-    api('/structures', {}, false).then(setStructures).catch(() => setStructures([]));
+    api('/roles', {}, false)
+      .then(setRoles)
+      .catch(() => setRoles([]));
+    api('/structures', {}, false)
+      .then(setStructures)
+      .catch(() => setStructures([]));
   }, []);
 
   const toastStyles = {

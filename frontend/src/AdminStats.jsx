@@ -13,7 +13,14 @@ import { useTranslation } from 'react-i18next';
 import Loading from './Loading';
 import { api } from './api';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+);
 
 function AdminStats() {
   const { t } = useTranslation();
@@ -37,12 +44,13 @@ function AdminStats() {
         const paramsStr = params.toString();
         const durationParams = new URLSearchParams(params);
         durationParams.set('median', 'true');
-        const [monthlyData, topData, statusData, durationData] = await Promise.all([
-          api(`/stats/loans/monthly${paramsStr ? `?${paramsStr}` : ''}`),
-          api('/stats/equipments/top'),
-          api('/stats/loans'),
-          api(`/stats/loans/duration?${durationParams.toString()}`),
-        ]);
+        const [monthlyData, topData, statusData, durationData] =
+          await Promise.all([
+            api(`/stats/loans/monthly${paramsStr ? `?${paramsStr}` : ''}`),
+            api('/stats/equipments/top'),
+            api('/stats/loans'),
+            api(`/stats/loans/duration?${durationParams.toString()}`),
+          ]);
         setMonthly(monthlyData);
         setTopEquipments(topData);
         setStatusCounts(statusData);
@@ -115,7 +123,10 @@ function AdminStats() {
       {
         label: t('admin_stats.loan_duration'),
         data: [duration.average, duration.median],
-        backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(153, 102, 255, 0.5)'],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.5)',
+          'rgba(153, 102, 255, 0.5)',
+        ],
       },
     ],
   };
@@ -125,7 +136,9 @@ function AdminStats() {
       {error && <div className="alert alert-danger">{error}</div>}
       <div className="d-flex mb-3">
         <div className="me-2">
-          <label htmlFor="from" className="form-label">From</label>
+          <label htmlFor="from" className="form-label">
+            From
+          </label>
           <input
             id="from"
             type="month"
@@ -135,7 +148,9 @@ function AdminStats() {
           />
         </div>
         <div>
-          <label htmlFor="to" className="form-label">To</label>
+          <label htmlFor="to" className="form-label">
+            To
+          </label>
           <input
             id="to"
             type="month"

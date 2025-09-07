@@ -9,13 +9,23 @@ describe('AdminRoute', () => {
   it('redirects to login when unauthenticated', () => {
     render(
       <AuthContext.Provider value={{ user: null }}>
-        <MemoryRouter initialEntries={['/admin']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <MemoryRouter
+          initialEntries={['/admin']}
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           <Routes>
-            <Route path='/admin' element={<AdminRoute><h1>Admin</h1></AdminRoute>} />
-            <Route path='/login' element={<h1>Connexion</h1>} />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <h1>Admin</h1>
+                </AdminRoute>
+              }
+            />
+            <Route path="/login" element={<h1>Connexion</h1>} />
           </Routes>
         </MemoryRouter>
-      </AuthContext.Provider>
+      </AuthContext.Provider>,
     );
     expect(screen.getByRole('heading', { name: 'Connexion' })).toBeTruthy();
   });
@@ -23,26 +33,48 @@ describe('AdminRoute', () => {
   it('redirects to home when not administrateur', () => {
     render(
       <AuthContext.Provider value={{ user: { id: 'u1', role: 'Utilisateur' } }}>
-        <MemoryRouter initialEntries={['/admin']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <MemoryRouter
+          initialEntries={['/admin']}
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           <Routes>
-            <Route path='/admin' element={<AdminRoute><h1>Admin</h1></AdminRoute>} />
-            <Route path='/' element={<h1>Accueil</h1>} />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <h1>Admin</h1>
+                </AdminRoute>
+              }
+            />
+            <Route path="/" element={<h1>Accueil</h1>} />
           </Routes>
         </MemoryRouter>
-      </AuthContext.Provider>
+      </AuthContext.Provider>,
     );
     expect(screen.getByRole('heading', { name: 'Accueil' })).toBeTruthy();
   });
 
   it('renders child when administrateur', () => {
     render(
-      <AuthContext.Provider value={{ user: { id: 'u1', role: 'Administrateur' } }}>
-        <MemoryRouter initialEntries={['/admin']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AuthContext.Provider
+        value={{ user: { id: 'u1', role: 'Administrateur' } }}
+      >
+        <MemoryRouter
+          initialEntries={['/admin']}
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           <Routes>
-            <Route path='/admin' element={<AdminRoute><h1>Admin</h1></AdminRoute>} />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <h1>Admin</h1>
+                </AdminRoute>
+              }
+            />
           </Routes>
         </MemoryRouter>
-      </AuthContext.Provider>
+      </AuthContext.Provider>,
     );
     expect(screen.getByRole('heading', { name: 'Admin' })).toBeTruthy();
   });

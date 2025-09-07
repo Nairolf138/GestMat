@@ -15,10 +15,14 @@ async function createDb() {
 
 test('listLoans filters documents by user structure', async () => {
   const { db, client, mongod } = await createDb();
-  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
+  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
   const userId = new ObjectId().toString();
-  await db.collection('users').insertOne({ _id: new ObjectId(userId), structure: struct1 });
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: struct1 });
 
   await db.collection('loanrequests').insertMany([
     { owner: struct1, borrower: struct2 },

@@ -3,17 +3,22 @@ import auth from '../middleware/auth';
 
 const router = express.Router();
 
-router.get('/loans', auth(), async (req: Request, res: Response, next: NextFunction) => {
-  const db = req.app.locals.db;
-  try {
-    const agg = await db.collection('loanrequests').aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } },
-    ]).toArray();
-    res.json(agg);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get(
+  '/loans',
+  auth(),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const agg = await db
+        .collection('loanrequests')
+        .aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }])
+        .toArray();
+      res.json(agg);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 router.get(
   '/loans/monthly',
@@ -21,7 +26,9 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
-      const from = req.query.from ? new Date(req.query.from as string) : undefined;
+      const from = req.query.from
+        ? new Date(req.query.from as string)
+        : undefined;
       const to = req.query.to ? new Date(req.query.to as string) : undefined;
 
       const pipeline: any[] = [];
@@ -42,7 +49,10 @@ router.get(
         { $sort: { _id: 1 } },
       );
 
-      const agg = await db.collection('loanrequests').aggregate(pipeline).toArray();
+      const agg = await db
+        .collection('loanrequests')
+        .aggregate(pipeline)
+        .toArray();
 
       // ensure months with zero counts are included
       const result: { _id: string; count: number }[] = [];
@@ -79,11 +89,17 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
-      const from = req.query.from ? new Date(req.query.from as string) : undefined;
+      const from = req.query.from
+        ? new Date(req.query.from as string)
+        : undefined;
       const to = req.query.to ? new Date(req.query.to as string) : undefined;
-      const needMedian = req.query.median === 'true' || req.query.median === '1';
+      const needMedian =
+        req.query.median === 'true' || req.query.median === '1';
 
-      const match: any = { startDate: { $exists: true }, endDate: { $exists: true } };
+      const match: any = {
+        startDate: { $exists: true },
+        endDate: { $exists: true },
+      };
       if (from || to) {
         match.startDate = { ...match.startDate };
         if (from) match.startDate.$gte = from;
@@ -94,7 +110,10 @@ router.get(
       pipeline.push({
         $project: {
           duration: {
-            $divide: [{ $subtract: ['$endDate', '$startDate'] }, 1000 * 60 * 60 * 24],
+            $divide: [
+              { $subtract: ['$endDate', '$startDate'] },
+              1000 * 60 * 60 * 24,
+            ],
           },
         },
       });
@@ -113,7 +132,10 @@ router.get(
         });
       }
 
-      const agg = await db.collection('loanrequests').aggregate(pipeline).toArray();
+      const agg = await db
+        .collection('loanrequests')
+        .aggregate(pipeline)
+        .toArray();
       const avg = agg[0]?.avgDuration || 0;
       const result: any = { average: avg };
 
@@ -123,7 +145,8 @@ router.get(
         let median = 0;
         if (arr.length) {
           const mid = Math.floor(arr.length / 2);
-          median = arr.length % 2 === 0 ? (arr[mid - 1] + arr[mid]) / 2 : arr[mid];
+          median =
+            arr.length % 2 === 0 ? (arr[mid - 1] + arr[mid]) / 2 : arr[mid];
         }
         result.median = median;
       }

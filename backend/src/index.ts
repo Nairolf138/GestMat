@@ -29,7 +29,7 @@ app.use(
         'script-src': ["'self'", "'unsafe-inline'"],
       },
     },
-  })
+  }),
 );
 const corsOptions = CORS_ORIGIN.length
   ? { origin: CORS_ORIGIN, credentials: true }
@@ -65,7 +65,9 @@ app.use(limiter);
 
 client.collectDefaultMetrics();
 
-export async function start(connect: () => Promise<Db> = connectDB): Promise<Server> {
+export async function start(
+  connect: () => Promise<Db> = connectDB,
+): Promise<Server> {
   let db: Db;
   try {
     db = await connect();

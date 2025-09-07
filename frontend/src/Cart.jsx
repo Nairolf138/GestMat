@@ -11,7 +11,7 @@ export function addToCart(newItem) {
     (it) =>
       it.equipment._id === newItem.equipment._id &&
       it.startDate === newItem.startDate &&
-      it.endDate === newItem.endDate
+      it.endDate === newItem.endDate,
   );
   if (existing) {
     existing.quantity += newItem.quantity;
@@ -52,7 +52,7 @@ function Cart() {
       return;
     }
     const newCart = cart.map((item, i) =>
-      i === idx ? { ...item, quantity: value } : item
+      i === idx ? { ...item, quantity: value } : item,
     );
     setCart(newCart);
     localStorage.setItem('cart', JSON.stringify(newCart));
@@ -84,7 +84,10 @@ function Cart() {
           items: [],
         };
       }
-      groups[key].items.push({ equipment: it.equipment._id, quantity: it.quantity });
+      groups[key].items.push({
+        equipment: it.equipment._id,
+        quantity: it.quantity,
+      });
     });
     try {
       await Promise.all(
@@ -92,55 +95,55 @@ function Cart() {
           api('/loans', {
             method: 'POST',
             body: JSON.stringify({ ...g, borrower }),
-          })
-        )
+          }),
+        ),
       );
-        setCart([]);
-        localStorage.removeItem('cart');
-        setSuccess(t('cart.requests_sent'));
-        setError('');
-      } catch (err) {
-        setError(err.message || t('common.error'));
-        setSuccess('');
-      }
-    };
+      setCart([]);
+      localStorage.removeItem('cart');
+      setSuccess(t('cart.requests_sent'));
+      setError('');
+    } catch (err) {
+      setError(err.message || t('common.error'));
+      setSuccess('');
+    }
+  };
 
   return (
-      <div className="container">
-        <NavBar />
-        <main id="main-content">
+    <div className="container">
+      <NavBar />
+      <main id="main-content">
         <h1 className="h1">{t('cart.title')}</h1>
         <Alert message={error} />
         <Alert type="success" message={success} />
-      <ul className="list-group mb-3">
-        {cart.map((it, idx) => (
-          <li
-            key={idx}
-            className="list-group-item d-flex justify-content-between align-items-center"
-          >
-            <span>
-              {it.equipment.name} ({it.startDate} → {it.endDate})
-            </span>
-            <div className="d-flex align-items-center">
-              <input
-                type="number"
-                min="1"
-                value={it.quantity}
-                onChange={(e) => updateQuantity(idx, e.target.value)}
-                className="form-control me-3"
-                style={{ width: '6rem' }}
-              />
-              <button
-                className="btn btn-sm"
-                style={outlineDangerStyle}
-                onClick={() => removeItem(idx)}
-              >
-                {t('cart.remove')}
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+        <ul className="list-group mb-3">
+          {cart.map((it, idx) => (
+            <li
+              key={idx}
+              className="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <span>
+                {it.equipment.name} ({it.startDate} → {it.endDate})
+              </span>
+              <div className="d-flex align-items-center">
+                <input
+                  type="number"
+                  min="1"
+                  value={it.quantity}
+                  onChange={(e) => updateQuantity(idx, e.target.value)}
+                  className="form-control me-3"
+                  style={{ width: '6rem' }}
+                />
+                <button
+                  className="btn btn-sm"
+                  style={outlineDangerStyle}
+                  onClick={() => removeItem(idx)}
+                >
+                  {t('cart.remove')}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
         <button
           disabled={!cart.length}
           onClick={validate}
@@ -150,7 +153,7 @@ function Cart() {
           {t('cart.send_requests')}
         </button>
       </main>
-      </div>
+    </div>
   );
 }
 

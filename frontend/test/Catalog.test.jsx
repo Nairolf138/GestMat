@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, waitFor, screen, cleanup } from '@testing-library/react';
+import {
+  render,
+  fireEvent,
+  waitFor,
+  screen,
+  cleanup,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Catalog from '../src/Catalog.jsx';
 import { GlobalContext } from '../src/GlobalContext.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
-
 
 describe('Catalog', () => {
   beforeEach(() => {
@@ -24,11 +29,15 @@ describe('Catalog', () => {
       .mockResolvedValueOnce({ available: true });
 
     const { container } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <GlobalContext.Provider value={{ structures: [{ _id: 's1', name: 'S1' }] }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <GlobalContext.Provider
+          value={{ structures: [{ _id: 's1', name: 'S1' }] }}
+        >
           <Catalog />
         </GlobalContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
@@ -43,14 +52,18 @@ describe('Catalog', () => {
       target: { value: '3' },
     });
     fireEvent.click(
-      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0]
+      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0],
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalledTimes(2));
     const cart = JSON.parse(localStorage.getItem('cart'));
     expect(cart).toEqual([
       {
-        equipment: { _id: 'eq1', name: 'Eq1', structure: { _id: 's1', name: 'S1' } },
+        equipment: {
+          _id: 'eq1',
+          name: 'Eq1',
+          structure: { _id: 's1', name: 'S1' },
+        },
         quantity: 3,
         startDate: '2024-01-01',
         endDate: '2024-01-02',
@@ -66,11 +79,15 @@ describe('Catalog', () => {
       .mockResolvedValue({ available: true });
 
     const { container } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <GlobalContext.Provider value={{ structures: [{ _id: 's1', name: 'S1' }] }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <GlobalContext.Provider
+          value={{ structures: [{ _id: 's1', name: 'S1' }] }}
+        >
           <Catalog />
         </GlobalContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
@@ -86,7 +103,7 @@ describe('Catalog', () => {
       target: { value: '2' },
     });
     fireEvent.click(
-      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0]
+      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0],
     );
 
     // Second add 1 item
@@ -94,14 +111,18 @@ describe('Catalog', () => {
       target: { value: '1' },
     });
     fireEvent.click(
-      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0]
+      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0],
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalledTimes(3));
     const cart = JSON.parse(localStorage.getItem('cart'));
     expect(cart).toEqual([
       {
-        equipment: { _id: 'eq1', name: 'Eq1', structure: { _id: 's1', name: 'S1' } },
+        equipment: {
+          _id: 'eq1',
+          name: 'Eq1',
+          structure: { _id: 's1', name: 'S1' },
+        },
         quantity: 3,
         startDate: '2024-01-01',
         endDate: '2024-01-02',
@@ -115,11 +136,15 @@ describe('Catalog', () => {
     ]); // fetch items
 
     const { container } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <GlobalContext.Provider value={{ structures: [{ _id: 's1', name: 'S1' }] }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <GlobalContext.Provider
+          value={{ structures: [{ _id: 's1', name: 'S1' }] }}
+        >
           <Catalog />
         </GlobalContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
@@ -135,7 +160,7 @@ describe('Catalog', () => {
     expect(searchBtn.disabled).toBe(true);
 
     fireEvent.click(
-      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0]
+      screen.getAllByRole('button', { name: 'Ajouter au panier' })[0],
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalledTimes(1));

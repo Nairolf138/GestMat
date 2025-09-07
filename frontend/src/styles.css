@@ -28,17 +28,17 @@
   --font-size-h6: clamp(0.875rem, 1.5vw, 1rem);
 }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --color-bg: #212529;
-      --color-text: #f4f6f9;
-      --color-navbar-bg: #343a40;
-      --color-primary: #4a90e2;
-      --color-secondary: #245a8b;
-      --color-success: #28a745;
-      --color-danger: #dc3545;
-    }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #212529;
+    --color-text: #f4f6f9;
+    --color-navbar-bg: #343a40;
+    --color-primary: #4a90e2;
+    --color-secondary: #245a8b;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
   }
+}
 
 .dark-theme {
   --color-bg: #212529;
@@ -57,7 +57,9 @@ body {
   padding-top: calc(var(--spacing-lg) + var(--navbar-height));
   background-color: var(--color-bg);
   color: var(--color-text);
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 }
 
 .skip-link {
@@ -97,12 +99,16 @@ body {
   margin-right: var(--spacing-sm);
   border-radius: var(--radius-sm);
   font-weight: 500;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .nav-link {
   padding: var(--spacing-xs) var(--spacing-sm);
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
   position: relative;
 }
 
@@ -148,7 +154,9 @@ body {
 
 .navbar {
   background-color: var(--color-navbar-bg);
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
   padding: var(--spacing-sm) var(--spacing-md);
   z-index: 1030;
 }
@@ -268,7 +276,9 @@ body {
   text-decoration: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
 }
 
 .shortcut-card i {
@@ -318,12 +328,24 @@ body {
   font-size: 1.25rem;
 }
 
-.h1 { font-size: var(--font-size-h1); }
-.h2 { font-size: var(--font-size-h2); }
-.h3 { font-size: var(--font-size-h3); }
-.h4 { font-size: var(--font-size-h4); }
-.h5 { font-size: var(--font-size-h5); }
-.h6 { font-size: var(--font-size-h6); }
+.h1 {
+  font-size: var(--font-size-h1);
+}
+.h2 {
+  font-size: var(--font-size-h2);
+}
+.h3 {
+  font-size: var(--font-size-h3);
+}
+.h4 {
+  font-size: var(--font-size-h4);
+}
+.h5 {
+  font-size: var(--font-size-h5);
+}
+.h6 {
+  font-size: var(--font-size-h6);
+}
 
 .form-card-container {
   display: flex;
@@ -336,4 +358,3 @@ body {
   margin-top: calc(var(--spacing-lg) - var(--spacing-sm));
   padding: calc(var(--spacing-lg) - var(--spacing-sm));
 }
-

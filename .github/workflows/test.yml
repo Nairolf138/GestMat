@@ -16,4 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: cd ${{ matrix.project }} && npm ci && npm test
+      - run: cd ${{ matrix.project }} && npm ci
+      - run: cd ${{ matrix.project }} && npm run lint
+      - run: cd ${{ matrix.project }} && npm run format:check
+      - run: cd ${{ matrix.project }} && npm test

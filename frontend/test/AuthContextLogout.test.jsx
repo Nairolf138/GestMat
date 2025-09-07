@@ -11,7 +11,7 @@ it('does not call /auth/logout when no user is logged in', async () => {
       ok: false,
       status: 401,
       json: () => Promise.resolve({}),
-    })
+    }),
   );
   const queryClient = new QueryClient();
   render(
@@ -19,12 +19,12 @@ it('does not call /auth/logout when no user is logged in', async () => {
       <AuthProvider>
         <div />
       </AuthProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
   await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
   expect(fetch).not.toHaveBeenCalledWith(
     expect.stringContaining('/auth/logout'),
-    expect.any(Object)
+    expect.any(Object),
   );
   vi.unstubAllGlobals();
 });

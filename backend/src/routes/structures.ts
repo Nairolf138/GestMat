@@ -24,32 +24,52 @@ router.get('/', async (req: Request, res: Response) => {
   res.json(structures);
 });
 
-router.post('/', auth(MANAGE_STRUCTURES), structureValidator, validate, async (req: Request, res: Response) => {
-  const db = req.app.locals.db;
-  const structure = await createStructure(db, { name: req.body.name });
-  res.json(structure);
-});
-
-router.put('/:id', auth(MANAGE_STRUCTURES), checkId(), structureValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
-  try {
+router.post(
+  '/',
+  auth(MANAGE_STRUCTURES),
+  structureValidator,
+  validate,
+  async (req: Request, res: Response) => {
     const db = req.app.locals.db;
-    const updated = await updateStructure(db, req.params.id, { name: req.body.name });
-    if (!updated) return next(notFound('Structure not found'));
-    res.json(updated);
-  } catch (err) {
-    next(badRequest('Invalid request'));
-  }
-});
+    const structure = await createStructure(db, { name: req.body.name });
+    res.json(structure);
+  },
+);
 
-router.delete('/:id', auth(MANAGE_STRUCTURES), checkId(), async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const db = req.app.locals.db;
-    const removed = await deleteStructure(db, req.params.id);
-    if (!removed) return next(notFound('Structure not found'));
-    res.json({ message: 'Structure deleted' });
-  } catch (err) {
-    next(badRequest('Invalid request'));
-  }
-});
+router.put(
+  '/:id',
+  auth(MANAGE_STRUCTURES),
+  checkId(),
+  structureValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const db = req.app.locals.db;
+      const updated = await updateStructure(db, req.params.id, {
+        name: req.body.name,
+      });
+      if (!updated) return next(notFound('Structure not found'));
+      res.json(updated);
+    } catch (err) {
+      next(badRequest('Invalid request'));
+    }
+  },
+);
+
+router.delete(
+  '/:id',
+  auth(MANAGE_STRUCTURES),
+  checkId(),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const db = req.app.locals.db;
+      const removed = await deleteStructure(db, req.params.id);
+      if (!removed) return next(notFound('Structure not found'));
+      res.json({ message: 'Structure deleted' });
+    } catch (err) {
+      next(badRequest('Invalid request'));
+    }
+  },
+);
 
 export default router;
