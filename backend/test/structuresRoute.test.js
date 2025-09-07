@@ -32,5 +32,7 @@ test('GET /api/structures is public', async () => {
 });
 
 async function dbSetup(db) {
-  await db.collection('structures').insertMany([{ name: 'S1' }, { name: 'S2' }]);
+  await db
+    .collection('structures')
+    .insertMany([{ name: 'S1' }, { name: 'S2' }]);
 }

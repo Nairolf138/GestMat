@@ -29,16 +29,20 @@ function auth(role = 'Administrateur') {
 
 test('GET /api/stats/loans returns aggregated counts', async () => {
   const { app, client, mongod, db } = await createApp();
-  await db.collection('loanrequests').insertMany([
-    { status: 'pending' },
-    { status: 'accepted' },
-    { status: 'accepted' },
-  ]);
+  await db
+    .collection('loanrequests')
+    .insertMany([
+      { status: 'pending' },
+      { status: 'accepted' },
+      { status: 'accepted' },
+    ]);
   const res = await request(app)
     .get('/api/stats/loans')
     .set(auth())
     .expect(200);
-  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  const counts = Object.fromEntries(
+    res.body.map(({ _id, count }) => [_id, count]),
+  );
   assert.strictEqual(counts.pending, 1);
   assert.strictEqual(counts.accepted, 2);
   await client.close();
@@ -58,16 +62,20 @@ test('GET /api/stats/loans requires auth', async () => {
 
 test('GET /api/stats/loans/monthly aggregates by month', async () => {
   const { app, client, mongod, db } = await createApp();
-  await db.collection('loanrequests').insertMany([
-    { startDate: new Date('2023-01-15') },
-    { startDate: new Date('2023-01-20') },
-    { startDate: new Date('2023-02-10') },
-  ]);
+  await db
+    .collection('loanrequests')
+    .insertMany([
+      { startDate: new Date('2023-01-15') },
+      { startDate: new Date('2023-01-20') },
+      { startDate: new Date('2023-02-10') },
+    ]);
   const res = await request(app)
     .get('/api/stats/loans/monthly')
     .set(auth())
     .expect(200);
-  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  const counts = Object.fromEntries(
+    res.body.map(({ _id, count }) => [_id, count]),
+  );
   assert.strictEqual(counts['2023-01'], 2);
   assert.strictEqual(counts['2023-02'], 1);
   await client.close();
@@ -76,19 +84,23 @@ test('GET /api/stats/loans/monthly aggregates by month', async () => {
 
 test('GET /api/stats/loans/monthly applies date range and fills empty months', async () => {
   const { app, client, mongod, db } = await createApp();
-  await db.collection('loanrequests').insertMany([
-    { startDate: new Date('2022-12-15') },
-    { startDate: new Date('2023-01-10') },
-    { startDate: new Date('2023-03-05') },
-    { startDate: new Date('2023-05-01') },
-  ]);
+  await db
+    .collection('loanrequests')
+    .insertMany([
+      { startDate: new Date('2022-12-15') },
+      { startDate: new Date('2023-01-10') },
+      { startDate: new Date('2023-03-05') },
+      { startDate: new Date('2023-05-01') },
+    ]);
   const res = await request(app)
     .get('/api/stats/loans/monthly?from=2023-01-01&to=2023-04-30')
     .set(auth())
     .expect(200);
   const labels = res.body.map((m) => m._id);
   assert.deepStrictEqual(labels, ['2023-01', '2023-02', '2023-03', '2023-04']);
-  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  const counts = Object.fromEntries(
+    res.body.map(({ _id, count }) => [_id, count]),
+  );
   assert.strictEqual(counts['2023-01'], 1);
   assert.strictEqual(counts['2023-02'], 0);
   assert.strictEqual(counts['2023-03'], 1);
@@ -124,7 +136,12 @@ test('GET /api/stats/equipments/top returns aggregated equipment counts', async 
   ]);
   await db.collection('loanrequests').insertMany([
     { items: [{ equipment: e1, quantity: 2 }] },
-    { items: [{ equipment: e1, quantity: 1 }, { equipment: e2, quantity: 1 }] },
+    {
+      items: [
+        { equipment: e1, quantity: 1 },
+        { equipment: e2, quantity: 1 },
+      ],
+    },
   ]);
   const res = await request(app)
     .get('/api/stats/equipments/top?limit=1')

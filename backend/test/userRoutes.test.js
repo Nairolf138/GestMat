@@ -31,7 +31,6 @@ function auth(id, role) {
   return { Authorization: `Bearer ${token(id, role)}` };
 }
 
-
 test('GET /api/users requires admin role', async () => {
   const { app, client, mongod, db } = await createApp();
   await db.collection('users').insertOne({ username: 'bob', password: 'pw' });
@@ -40,10 +39,7 @@ test('GET /api/users requires admin role', async () => {
   await request(app).get('/api/users').expect(401);
 
   // non admin
-  await request(app)
-    .get('/api/users')
-    .set(auth('u1', 'Autre'))
-    .expect(403);
+  await request(app).get('/api/users').set(auth('u1', 'Autre')).expect(403);
 
   // admin
   const res = await request(app)
@@ -86,7 +82,9 @@ test('GET /api/users supports search and pagination', async () => {
 test('PUT /api/users/me updates user and checks auth failures', async () => {
   const { app, client, mongod, db } = await createApp();
   const id = new ObjectId();
-  await db.collection('users').insertOne({ _id: id, username: 'bob', password: 'pw' });
+  await db
+    .collection('users')
+    .insertOne({ _id: id, username: 'bob', password: 'pw' });
 
   // success
   const up = await request(app)
@@ -119,18 +117,29 @@ test('PUT /api/users/me updates user and checks auth failures', async () => {
 
 test('PUT /api/users/me ignores role and structure', async () => {
   const { app, client, mongod, db } = await createApp();
-  const structure1 = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const structure2 = (await db.collection('structures').insertOne({ name: 'S2' })).insertedId;
+  const structure1 = (
+    await db.collection('structures').insertOne({ name: 'S1' })
+  ).insertedId;
+  const structure2 = (
+    await db.collection('structures').insertOne({ name: 'S2' })
+  ).insertedId;
   const id = (
-    await db
-      .collection('users')
-      .insertOne({ username: 'bob', password: 'pw', role: 'Autre', structure: structure1 })
+    await db.collection('users').insertOne({
+      username: 'bob',
+      password: 'pw',
+      role: 'Autre',
+      structure: structure1,
+    })
   ).insertedId;
 
   await request(app)
     .put('/api/users/me')
     .set(auth(id.toString(), 'Autre'))
-    .send({ role: 'Administrateur', structure: structure2.toString(), email: 'new@example.com' })
+    .send({
+      role: 'Administrateur',
+      structure: structure2.toString(),
+      email: 'new@example.com',
+    })
     .expect(200);
 
   const user = await db.collection('users').findOne({ _id: id });
@@ -143,7 +152,9 @@ test('PUT /api/users/me ignores role and structure', async () => {
 
 test('DELETE /api/users/:id respects authorization', async () => {
   const { app, client, mongod, db } = await createApp();
-  const id = (await db.collection('users').insertOne({ username: 'bob', password: 'pw' })).insertedId;
+  const id = (
+    await db.collection('users').insertOne({ username: 'bob', password: 'pw' })
+  ).insertedId;
 
   // missing token
   await request(app).delete(`/api/users/${id}`).expect(401);
@@ -173,7 +184,9 @@ test('DELETE /api/users/:id respects authorization', async () => {
 test('cannot change role via /api/users/me', async () => {
   const { app, client, mongod, db } = await createApp();
   const id = (
-    await db.collection('users').insertOne({ username: 'alice', password: 'pw', role: 'Autre' })
+    await db
+      .collection('users')
+      .insertOne({ username: 'alice', password: 'pw', role: 'Autre' })
   ).insertedId;
 
   const res = await request(app)
@@ -189,4 +202,3 @@ test('cannot change role via /api/users/me', async () => {
   await client.close();
   await mongod.stop();
 });
-

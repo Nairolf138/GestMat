@@ -29,35 +29,40 @@ const router = express.Router();
 const loginLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
-  message: 'Too many login attempts, please try again later.'
+  message: 'Too many login attempts, please try again later.',
 });
 
-router.post('/register', registerValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
-  const db = req.app.locals.db;
-  try {
-    let { username, password, role, structure, firstName, lastName, email } = req.body;
-    role = normalizeRole(role);
-    if (!ALLOWED_ROLES.includes(role)) {
-      role = DEFAULT_ROLE;
-    }
-    if (structure) {
-      const exists = await findStructureById(db, structure);
-      if (!exists) {
-        return next(new ApiError(400, 'Structure not found'));
+router.post(
+  '/register',
+  registerValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      let { username, password, role, structure, firstName, lastName, email } =
+        req.body;
+      role = normalizeRole(role);
+      if (!ALLOWED_ROLES.includes(role)) {
+        role = DEFAULT_ROLE;
       }
-    }
-    const hashed = await bcrypt.hash(password, 10);
-    const user = await createUser(db, {
-      username,
-      password: hashed,
-      role,
-      structure,
-      firstName,
-      lastName,
-      email,
-    });
-    const { password: _pw, ...userData } = user;
-    res.json(userData);
+      if (structure) {
+        const exists = await findStructureById(db, structure);
+        if (!exists) {
+          return next(new ApiError(400, 'Structure not found'));
+        }
+      }
+      const hashed = await bcrypt.hash(password, 10);
+      const user = await createUser(db, {
+        username,
+        password: hashed,
+        role,
+        structure,
+        firstName,
+        lastName,
+        email,
+      });
+      const { password: _pw, ...userData } = user;
+      res.json(userData);
     } catch (err: any) {
       if (err.message === 'Username already exists') {
         next(new ApiError(409, err.message));
@@ -65,88 +70,102 @@ router.post('/register', registerValidator, validate, async (req: Request, res: 
         next(new ApiError(400, err.message || 'Registration failed'));
       }
     }
-  });
+  },
+);
 
-router.post('/login', loginLimiter, loginValidator, validate, async (req: Request, res: Response, next: NextFunction) => {
-  const db = req.app.locals.db;
-  try {
-    const { username, password } = req.body;
-    const user = await findUserByUsername(db, username);
-    if (!user) return next(unauthorized('Invalid credentials'));
+router.post(
+  '/login',
+  loginLimiter,
+  loginValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const { username, password } = req.body;
+      const user = await findUserByUsername(db, username);
+      if (!user) return next(unauthorized('Invalid credentials'));
 
       const valid = await bcrypt.compare(password, user.password!);
-    if (!valid) return next(unauthorized('Invalid credentials'));
+      if (!valid) return next(unauthorized('Invalid credentials'));
 
       if (user.structure) {
         const struct = await findStructureById(db, user.structure.toString());
         if (struct) user.structure = struct;
       }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-    const refreshToken = jwt.sign(
-      { id: user._id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    const hashedRefreshToken = hashToken(refreshToken);
-    await deleteSessionsByUser(db, user._id!.toString());
-    await createSession(db, { token: hashedRefreshToken, userId: user._id!.toString() });
+      const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
+        expiresIn: '1h',
+      });
+      const refreshToken = jwt.sign(
+        { id: user._id, role: user.role },
+        JWT_SECRET,
+        { expiresIn: '7d' },
+      );
+      const hashedRefreshToken = hashToken(refreshToken);
+      await deleteSessionsByUser(db, user._id!.toString());
+      await createSession(db, {
+        token: hashedRefreshToken,
+        userId: user._id!.toString(),
+      });
       res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
       res.cookie('refreshToken', refreshToken, {
         ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-    const { password: _pw, ...userData } = user;
-    res.json({ user: userData });
+      const { password: _pw, ...userData } = user;
+      res.json({ user: userData });
     } catch (err: any) {
       next(new ApiError(500, 'Server error'));
     }
-  });
+  },
+);
 
-  router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
+router.post(
+  '/refresh',
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
-    const db = req.app.locals.db;
-    const { refreshToken } = req.cookies || {};
-    if (!refreshToken) return next(unauthorized('Refresh token required'));
+      const db = req.app.locals.db;
+      const { refreshToken } = req.cookies || {};
+      if (!refreshToken) return next(unauthorized('Refresh token required'));
 
-    let payload: AuthUser;
-    try {
-      payload = jwt.verify(refreshToken, JWT_SECRET) as AuthUser;
-    } catch {
-      return next(unauthorized('Invalid refresh token'));
-    }
+      let payload: AuthUser;
+      try {
+        payload = jwt.verify(refreshToken, JWT_SECRET) as AuthUser;
+      } catch {
+        return next(unauthorized('Invalid refresh token'));
+      }
 
-    const hashedRefreshToken = hashToken(refreshToken);
-    const session = await findSessionByToken(db, hashedRefreshToken);
-    if (!session) return next(unauthorized('Invalid refresh token'));
+      const hashedRefreshToken = hashToken(refreshToken);
+      const session = await findSessionByToken(db, hashedRefreshToken);
+      if (!session) return next(unauthorized('Invalid refresh token'));
 
-    const token = jwt.sign(
-      { id: payload.id, role: payload.role },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-    const newRefreshToken = jwt.sign(
-      { id: payload.id, role: payload.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    const hashedNewRefreshToken = hashToken(newRefreshToken);
-    await createSession(db, { token: hashedNewRefreshToken, userId: String(payload.id) });
-    await deleteSessionByToken(db, hashedRefreshToken);
-    res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
-    res.cookie('refreshToken', newRefreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-    res.json({});
+      const token = jwt.sign(
+        { id: payload.id, role: payload.role },
+        JWT_SECRET,
+        { expiresIn: '1h' },
+      );
+      const newRefreshToken = jwt.sign(
+        { id: payload.id, role: payload.role },
+        JWT_SECRET,
+        { expiresIn: '7d' },
+      );
+      const hashedNewRefreshToken = hashToken(newRefreshToken);
+      await createSession(db, {
+        token: hashedNewRefreshToken,
+        userId: String(payload.id),
+      });
+      await deleteSessionByToken(db, hashedRefreshToken);
+      res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
+      res.cookie('refreshToken', newRefreshToken, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.json({});
     } catch (err: any) {
       next(new ApiError(500, 'Server error'));
     }
-  });
+  },
+);
 
 router.post('/logout', async (req: Request, res: Response) => {
   const db = req.app.locals.db;

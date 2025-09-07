@@ -13,30 +13,47 @@ describe('Register', () => {
   it('marks username invalid on server error', async () => {
     api.api.mockRejectedValue(new Error('Username already exists'));
     const { container, getByText } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <GlobalContext.Provider value={{ roles: ['Administrateur'], structures: [] }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <GlobalContext.Provider
+          value={{ roles: ['Administrateur'], structures: [] }}
+        >
           <Register />
         </GlobalContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
-    fireEvent.change(container.querySelector('input[name="username"]'), { target: { value: 'bob' } });
-    fireEvent.change(container.querySelector('input[name="password"]'), { target: { value: 'pw' } });
-    fireEvent.change(container.querySelector('select[name="role"]'), { target: { value: 'Administrateur' } });
+    fireEvent.change(container.querySelector('input[name="username"]'), {
+      target: { value: 'bob' },
+    });
+    fireEvent.change(container.querySelector('input[name="password"]'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.change(container.querySelector('select[name="role"]'), {
+      target: { value: 'Administrateur' },
+    });
     fireEvent.submit(getByText("S'inscrire").closest('form'));
     await waitFor(() => expect(api.api).toHaveBeenCalled());
-    expect(container.querySelector('input[name="username"]').className).toMatch('is-invalid');
+    expect(container.querySelector('input[name="username"]').className).toMatch(
+      'is-invalid',
+    );
   });
 
   it('redirects to login on successful registration', async () => {
     api.api.mockReset();
     api.api.mockResolvedValueOnce({});
     render(
-      <MemoryRouter initialEntries={['/register']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <GlobalContext.Provider value={{ roles: ['Administrateur'], structures: [] }}>
+      <MemoryRouter
+        initialEntries={['/register']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <GlobalContext.Provider
+          value={{ roles: ['Administrateur'], structures: [] }}
+        >
           <Routes>
-            <Route path='/register' element={<Register />} />
+            <Route path="/register" element={<Register />} />
             <Route
-              path='/login'
+              path="/login"
               element={
                 <AuthContext.Provider value={{ setUser: () => {} }}>
                   <Login />
@@ -45,14 +62,24 @@ describe('Register', () => {
             />
           </Routes>
         </GlobalContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
-    fireEvent.change(screen.getByLabelText('Utilisateur'), { target: { value: 'bob' } });
-    fireEvent.change(screen.getByLabelText('Mot de passe'), { target: { value: 'pw' } });
-    fireEvent.change(screen.getByLabelText('Rôle'), { target: { value: 'Administrateur' } });
-    fireEvent.submit(screen.getByRole('button', { name: "S'inscrire" }).closest('form'));
+    fireEvent.change(screen.getByLabelText('Utilisateur'), {
+      target: { value: 'bob' },
+    });
+    fireEvent.change(screen.getByLabelText('Mot de passe'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.change(screen.getByLabelText('Rôle'), {
+      target: { value: 'Administrateur' },
+    });
+    fireEvent.submit(
+      screen.getByRole('button', { name: "S'inscrire" }).closest('form'),
+    );
     await waitFor(() => expect(api.api).toHaveBeenCalled());
-    expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeTruthy();
+    expect(
+      await screen.findByRole('heading', { name: 'Connexion' }),
+    ).toBeTruthy();
     expect(await screen.findByText('Inscription réussie')).toBeTruthy();
   });
 });

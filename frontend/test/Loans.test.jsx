@@ -23,11 +23,13 @@ describe('Loans', () => {
       .mockResolvedValueOnce([]);
 
     const { getByText } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <AuthContext.Provider value={{ user: { structure: { _id: 's1' } } }}>
           <Loans />
         </AuthContext.Provider>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
@@ -38,8 +40,8 @@ describe('Loans', () => {
         expect.objectContaining({
           method: 'PUT',
           body: JSON.stringify({ status: 'accepted' }),
-        })
-      )
+        }),
+      ),
     );
   });
 });

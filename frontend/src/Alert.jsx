@@ -10,4 +10,3 @@ function Alert({ message, type = 'danger' }) {
 }
 
 export default Alert;
-

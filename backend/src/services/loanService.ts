@@ -16,7 +16,10 @@ import { checkEquipmentAvailability } from '../utils/checkAvailability';
 import logger from '../utils/logger';
 import type { AuthUser } from '../types';
 
-export async function listLoans(db: Db, user: AuthUser): Promise<LoanRequest[]> {
+export async function listLoans(
+  db: Db,
+  user: AuthUser,
+): Promise<LoanRequest[]> {
   if (user.role === ADMIN_ROLE) {
     return findLoans(db);
   }
@@ -47,7 +50,10 @@ export async function createLoanRequest(
   const userStruct = u?.structure?.toString();
   const owner = (data.owner as any)?.toString();
   const borrower = (data.borrower as any)?.toString();
-  if ((owner && borrower && owner === borrower) || (userStruct && owner === userStruct)) {
+  if (
+    (owner && borrower && owner === borrower) ||
+    (userStruct && owner === userStruct)
+  ) {
     throw forbidden('Cannot request loan for own structure');
   }
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -84,7 +90,11 @@ export async function createLoanRequest(
       session.endSession();
 
       try {
-        const recipients = await getLoanRecipients(db, loan.owner as any, items as any);
+        const recipients = await getLoanRecipients(
+          db,
+          loan.owner as any,
+          items as any,
+        );
         if (recipients.length) {
           await sendMail({
             to: recipients.join(','),
@@ -119,7 +129,7 @@ export async function updateLoanRequest(
   id: string,
   data: LoanRequest,
 ): Promise<LoanRequest | null> {
-    const session = (db as any).client.startSession();
+  const session = (db as any).client.startSession();
   session.startTransaction();
   let updated: LoanRequest | null;
   try {
@@ -152,16 +162,19 @@ export async function updateLoanRequest(
       }
     }
 
-    if (data.status && (data.status === 'accepted' || data.status === 'refused')) {
+    if (
+      data.status &&
+      (data.status === 'accepted' || data.status === 'refused')
+    ) {
       (data as any).processedBy = user.id;
     }
 
-      if (
-        status &&
-        releaseStatuses.includes(status) &&
-        !releaseStatuses.includes(loan.status as any)
-      ) {
-        for (const item of loan.items || []) {
+    if (
+      status &&
+      releaseStatuses.includes(status) &&
+      !releaseStatuses.includes(loan.status as any)
+    ) {
+      for (const item of loan.items || []) {
         await db
           .collection('equipments')
           .updateOne(
@@ -171,11 +184,11 @@ export async function updateLoanRequest(
           );
       }
     }
-      if (
-        status &&
-        !releaseStatuses.includes(status) &&
-        releaseStatuses.includes(loan.status as any)
-      ) {
+    if (
+      status &&
+      !releaseStatuses.includes(status) &&
+      releaseStatuses.includes(loan.status as any)
+    ) {
       const start = loan.startDate;
       const end = loan.endDate;
       for (const item of loan.items || []) {
@@ -204,10 +217,8 @@ export async function updateLoanRequest(
 
     if (status) {
       try {
-        const borrowerId = (
-          (loan.borrower as any)?._id?.toString() ||
-          (loan.borrower as any)?.toString()
-        ) as string;
+        const borrowerId = ((loan.borrower as any)?._id?.toString() ||
+          (loan.borrower as any)?.toString()) as string;
         const emails = await getStructureEmails(db, borrowerId);
         if (emails.length) {
           await sendMail({
@@ -283,4 +294,3 @@ export default {
   updateLoanRequest,
   deleteLoanRequest,
 };
-

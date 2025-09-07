@@ -6,7 +6,7 @@ const ROLES = [
   'Regisseur Lumiere',
   'Regisseur Plateau',
   'Regisseur General',
-  'Autre'
+  'Autre',
 ];
 
 module.exports = ROLES;

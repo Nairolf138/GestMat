@@ -46,77 +46,85 @@ function Login() {
 
   return (
     <main id="main-content">
-    <FormCard onSubmit={handleSubmit} aria-labelledby="login-title">
-      <h1 id="login-title" className="h1">{t('login.title')}</h1>
-      <Alert type="success" message={location.state?.message} />
-      <Alert message={error} />
-      <div className="mb-3">
-        <label className="form-label" htmlFor="username">{t('login.username')}</label>
-        <input
-          id="username"
-          className={`form-control${errors.username ? ' is-invalid' : ''}`}
-          aria-label={t('login.username')}
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            if (errors.username) setErrors({ ...errors, username: undefined });
+      <FormCard onSubmit={handleSubmit} aria-labelledby="login-title">
+        <h1 id="login-title" className="h1">
+          {t('login.title')}
+        </h1>
+        <Alert type="success" message={location.state?.message} />
+        <Alert message={error} />
+        <div className="mb-3">
+          <label className="form-label" htmlFor="username">
+            {t('login.username')}
+          </label>
+          <input
+            id="username"
+            className={`form-control${errors.username ? ' is-invalid' : ''}`}
+            aria-label={t('login.username')}
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              if (errors.username)
+                setErrors({ ...errors, username: undefined });
+            }}
+            ref={userRef}
+            aria-invalid={errors.username ? 'true' : undefined}
+            aria-describedby={errors.username ? 'username-error' : undefined}
+          />
+          {errors.username && (
+            <div
+              className="invalid-feedback"
+              id="username-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.username}
+            </div>
+          )}
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="password">
+            {t('login.password')}
+          </label>
+          <input
+            id="password"
+            type="password"
+            className={`form-control${errors.password ? ' is-invalid' : ''}`}
+            aria-label={t('login.password')}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errors.password)
+                setErrors({ ...errors, password: undefined });
+            }}
+            aria-invalid={errors.password ? 'true' : undefined}
+            aria-describedby={errors.password ? 'password-error' : undefined}
+          />
+          {errors.password && (
+            <div
+              className="invalid-feedback"
+              id="password-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.password}
+            </div>
+          )}
+        </div>
+        <button
+          type="submit"
+          className="btn"
+          style={{
+            backgroundColor: 'var(--color-primary)',
+            borderColor: 'var(--color-primary)',
+            color: '#fff',
           }}
-          ref={userRef}
-          aria-invalid={errors.username ? 'true' : undefined}
-          aria-describedby={errors.username ? 'username-error' : undefined}
-        />
-        {errors.username && (
-          <div
-            className="invalid-feedback"
-            id="username-error"
-            role="alert"
-            aria-live="polite"
-          >
-            {errors.username}
-          </div>
-        )}
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="password">{t('login.password')}</label>
-        <input
-          id="password"
-          type="password"
-          className={`form-control${errors.password ? ' is-invalid' : ''}`}
-          aria-label={t('login.password')}
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (errors.password) setErrors({ ...errors, password: undefined });
-          }}
-          aria-invalid={errors.password ? 'true' : undefined}
-          aria-describedby={errors.password ? 'password-error' : undefined}
-        />
-        {errors.password && (
-          <div
-            className="invalid-feedback"
-            id="password-error"
-            role="alert"
-            aria-live="polite"
-          >
-            {errors.password}
-          </div>
-        )}
-      </div>
-      <button
-        type="submit"
-        className="btn"
-        style={{
-          backgroundColor: 'var(--color-primary)',
-          borderColor: 'var(--color-primary)',
-          color: '#fff',
-        }}
-      >
-        {t('login.submit')}
-      </button>
-      <p className="mt-3">
-        <Link to="/register">{t('register.submit')}</Link>
-      </p>
-    </FormCard>
+        >
+          {t('login.submit')}
+        </button>
+        <p className="mt-3">
+          <Link to="/register">{t('register.submit')}</Link>
+        </p>
+      </FormCard>
     </main>
   );
 }

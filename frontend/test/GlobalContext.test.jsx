@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { GlobalProvider } from '../src/GlobalContext.jsx';
 
-
 describe('GlobalContext', () => {
   it('shows a toast on unexpected API errors', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')));
@@ -15,4 +14,3 @@ describe('GlobalContext', () => {
     vi.unstubAllGlobals();
   });
 });
-

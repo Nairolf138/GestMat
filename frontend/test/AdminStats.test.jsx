@@ -15,16 +15,21 @@ import * as api from '../src/api.js';
 describe('AdminStats', () => {
   it('renders charts', async () => {
     api.api.mockImplementation((url) => {
-      if (url.startsWith('/stats/loans/monthly')) return Promise.resolve([{ _id: '2024-01', count: 1 }]);
-      if (url === '/stats/equipments/top') return Promise.resolve([{ name: 'Lamp', count: 2 }]);
-      if (url === '/stats/loans') return Promise.resolve([{ _id: 'pending', count: 3 }]);
+      if (url.startsWith('/stats/loans/monthly'))
+        return Promise.resolve([{ _id: '2024-01', count: 1 }]);
+      if (url === '/stats/equipments/top')
+        return Promise.resolve([{ name: 'Lamp', count: 2 }]);
+      if (url === '/stats/loans')
+        return Promise.resolve([{ _id: 'pending', count: 3 }]);
       throw new Error(`Unexpected url ${url}`);
     });
 
     const { container } = render(<AdminStats />);
     await waitFor(() => {
       expect(container.querySelector('[data-testid="bar-chart"]')).toBeTruthy();
-      expect(container.querySelectorAll('[data-testid="pie-chart"]').length).toBe(2);
+      expect(
+        container.querySelectorAll('[data-testid="pie-chart"]').length,
+      ).toBe(2);
     });
   });
 
@@ -35,4 +40,3 @@ describe('AdminStats', () => {
     await findByText('oops');
   });
 });
-

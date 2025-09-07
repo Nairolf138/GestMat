@@ -23,16 +23,16 @@ Environment variables are defined in `.env.example`.
 
 The API reads its configuration from the following variables:
 
-| Variable | Description |
-| --- | --- |
-| `MONGODB_URI` | MongoDB connection string. Defaults to `mongodb://localhost/gestmat`. |
-| `JWT_SECRET` | **Required.** Secret key used to sign JSON Web Tokens. |
-| `PORT` | Port for the HTTP server. Defaults to `5000`. |
-| `CORS_ORIGIN` | Comma-separated list of allowed origins for CORS. If unset, cross-origin requests are denied. |
-| `API_URL` | Public base URL of the API. Defaults to `http://localhost:<PORT>/api`. |
-| `SMTP_URL` | SMTP connection string to enable email notifications. |
-| `NOTIFY_EMAIL` | Optional recipient address for notification emails. |
-| `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development. |
+| Variable         | Description                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| `MONGODB_URI`    | MongoDB connection string. Defaults to `mongodb://localhost/gestmat`.                         |
+| `JWT_SECRET`     | **Required.** Secret key used to sign JSON Web Tokens.                                        |
+| `PORT`           | Port for the HTTP server. Defaults to `5000`.                                                 |
+| `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. If unset, cross-origin requests are denied. |
+| `API_URL`        | Public base URL of the API. Defaults to `http://localhost:<PORT>/api`.                        |
+| `SMTP_URL`       | SMTP connection string to enable email notifications.                                         |
+| `NOTIFY_EMAIL`   | Optional recipient address for notification emails.                                           |
+| `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
 
 If `CORS_ORIGIN` is left unset, the API denies cross-origin requests.
 
@@ -101,14 +101,14 @@ mongosh "mongodb+srv://<user>:<password>@cluster0.example.mongodb.net/gestmat"
 
 All roles can view every equipment type in the catalogue. Creation and updates, however, are restricted by role:
 
-| Role | Equipment types |
-| --- | --- |
-| Administrateur | all types |
-| Régisseur(se) Général(e) | all types |
-| Régisseur(se) Son | Son, Vidéo, Autre |
-| Régisseur(se) Lumière | Lumière, Vidéo, Autre |
-| Régisseur(se) Plateau | Plateau, Vidéo, Autre |
-| Autre | all types |
+| Role                     | Equipment types       |
+| ------------------------ | --------------------- |
+| Administrateur           | all types             |
+| Régisseur(se) Général(e) | all types             |
+| Régisseur(se) Son        | Son, Vidéo, Autre     |
+| Régisseur(se) Lumière    | Lumière, Vidéo, Autre |
+| Régisseur(se) Plateau    | Plateau, Vidéo, Autre |
+| Autre                    | all types             |
 
 Users created without an explicit role are assigned to `Autre`.
 

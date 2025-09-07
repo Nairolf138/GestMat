@@ -31,11 +31,7 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     const parsed =
-      name === 'totalQty'
-        ? value === ''
-          ? ''
-          : Number(value)
-        : value;
+      name === 'totalQty' ? (value === '' ? '' : Number(value)) : value;
     setForm({ ...form, [name]: parsed });
     if (errors[name]) setErrors({ ...errors, [name]: undefined });
   };
@@ -75,10 +71,14 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
       autoComplete="off"
       aria-labelledby="edit-equip-title"
     >
-      <h2 id="edit-equip-title" className="h2">{t('equipments.edit.title')}</h2>
+      <h2 id="edit-equip-title" className="h2">
+        {t('equipments.edit.title')}
+      </h2>
       <Alert message={error} />
       <div className="mb-3">
-        <label className="form-label" htmlFor="edit-eq-name">{t('equipments.add.name')}</label>
+        <label className="form-label" htmlFor="edit-eq-name">
+          {t('equipments.add.name')}
+        </label>
         <input
           id="edit-eq-name"
           name="name"
@@ -103,7 +103,9 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="edit-eq-type">{t('equipments.add.type')}</label>
+        <label className="form-label" htmlFor="edit-eq-type">
+          {t('equipments.add.type')}
+        </label>
         <select
           id="edit-eq-type"
           name="type"
@@ -135,7 +137,9 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="edit-eq-total">{t('equipments.add.total_quantity')}</label>
+        <label className="form-label" htmlFor="edit-eq-total">
+          {t('equipments.add.total_quantity')}
+        </label>
         <input
           id="edit-eq-total"
           name="totalQty"
@@ -162,7 +166,9 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="edit-eq-condition">{t('equipments.add.condition')}</label>
+        <label className="form-label" htmlFor="edit-eq-condition">
+          {t('equipments.add.condition')}
+        </label>
         <select
           id="edit-eq-condition"
           name="condition"
@@ -173,13 +179,19 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
           required
           autoComplete="off"
           aria-invalid={errors.condition ? 'true' : undefined}
-          aria-describedby={errors.condition ? 'edit-eq-condition-error' : undefined}
+          aria-describedby={
+            errors.condition ? 'edit-eq-condition-error' : undefined
+          }
         >
           <option value="">{t('common.choose')}</option>
           <option value="Neuf">{t('equipments.add.conditions.new')}</option>
-          <option value="Légèrement usé">{t('equipments.add.conditions.used_lightly')}</option>
+          <option value="Légèrement usé">
+            {t('equipments.add.conditions.used_lightly')}
+          </option>
           <option value="Usé">{t('equipments.add.conditions.used')}</option>
-          <option value="Très usé">{t('equipments.add.conditions.very_used')}</option>
+          <option value="Très usé">
+            {t('equipments.add.conditions.very_used')}
+          </option>
         </select>
         {errors.condition && (
           <div

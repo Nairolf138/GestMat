@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
     } else {
       timerRef.current = setTimeout(
         logout,
-        INACTIVITY_LIMIT - (Date.now() - last)
+        INACTIVITY_LIMIT - (Date.now() - last),
       );
     }
 

@@ -15,7 +15,9 @@ describe('Home', () => {
   it('shows an error alert when loan fetch fails', async () => {
     api.mockRejectedValueOnce(new Error('API error'));
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <Home />
       </MemoryRouter>,
     );
@@ -24,4 +26,3 @@ describe('Home', () => {
     ).toBeTruthy();
   });
 });
-

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -11,7 +11,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught an error", error, errorInfo);
+    console.error('ErrorBoundary caught an error', error, errorInfo);
   }
 
   handleReload = () => {
@@ -23,7 +23,9 @@ class ErrorBoundary extends React.Component {
       return (
         <div role="alert" className="p-3">
           <p>Something went wrong.</p>
-          <a href="/" className="me-2">Go back home</a>
+          <a href="/" className="me-2">
+            Go back home
+          </a>
           <button onClick={this.handleReload}>Reload page</button>
         </div>
       );

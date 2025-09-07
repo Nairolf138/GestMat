@@ -17,14 +17,14 @@ function Structures() {
     <div className="container">
       <NavBar />
       <main id="main-content">
-      <h1 className="h1">{t('structures.title')}</h1>
-      <ul className="list-group">
-        {structures.map((s) => (
-          <li key={s._id} className="list-group-item">
-            {s.name}
-          </li>
-        ))}
-      </ul>
+        <h1 className="h1">{t('structures.title')}</h1>
+        <ul className="list-group">
+          {structures.map((s) => (
+            <li key={s._id} className="list-group-item">
+              {s.name}
+            </li>
+          ))}
+        </ul>
       </main>
     </div>
   );

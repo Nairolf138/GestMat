@@ -53,29 +53,31 @@ function LoanDetail() {
     );
   }
 
-  const start = loan.startDate ? new Date(loan.startDate).toLocaleDateString() : '';
+  const start = loan.startDate
+    ? new Date(loan.startDate).toLocaleDateString()
+    : '';
   const end = loan.endDate ? new Date(loan.endDate).toLocaleDateString() : '';
 
   return (
     <div className="container">
       <NavBar />
       <main id="main-content">
-      <h1 className="h1">{t('loans.title')}</h1>
-      <p>
-        {loan.owner?.name} → {loan.borrower?.name}
-      </p>
-      <p>
-        {start}
-        {end && ` – ${end}`}
-      </p>
-      <ul className="list-group mb-3">
-        {loan.items?.map((it) => (
-          <li key={it._id} className="list-group-item">
-            {it.equipment ? `${it.equipment.name} x${it.quantity}` : ''}
-          </li>
-        ))}
-      </ul>
-      <Link to="/loans">{t('home.view_all')}</Link>
+        <h1 className="h1">{t('loans.title')}</h1>
+        <p>
+          {loan.owner?.name} → {loan.borrower?.name}
+        </p>
+        <p>
+          {start}
+          {end && ` – ${end}`}
+        </p>
+        <ul className="list-group mb-3">
+          {loan.items?.map((it) => (
+            <li key={it._id} className="list-group-item">
+              {it.equipment ? `${it.equipment.name} x${it.quantity}` : ''}
+            </li>
+          ))}
+        </ul>
+        <Link to="/loans">{t('home.view_all')}</Link>
       </main>
     </div>
   );

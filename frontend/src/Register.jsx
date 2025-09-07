@@ -62,7 +62,10 @@ function Register() {
         setErrors(err.fieldErrors);
       } else if (err.message === 'Username already exists') {
         setErrors({ username: t('register.user_exists') });
-      } else if (err.message.includes('12 bytes') || err.message.includes('24 hex')) {
+      } else if (
+        err.message.includes('12 bytes') ||
+        err.message.includes('24 hex')
+      ) {
         setErrors({ structure: t('register.invalid_structure') });
       } else {
         setErrors({});
@@ -73,173 +76,194 @@ function Register() {
 
   return (
     <main id="main-content">
-    <FormCard onSubmit={handleSubmit} aria-labelledby="register-title">
-      <h1 id="register-title" className="h1">{t('register.title')}</h1>
-      <Alert message={error} />
-      <div className="mb-3">
-        <label className="form-label" htmlFor="reg-username">{t('login.username')}</label>
-        <input
-          id="reg-username"
-          name="username"
-          className={`form-control${errors.username ? ' is-invalid' : ''}`}
-          aria-label={t('login.username')}
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            if (errors.username) setErrors({ ...errors, username: undefined });
-          }}
-          ref={userRef}
-          required
-          aria-invalid={errors.username ? 'true' : undefined}
-          aria-describedby={errors.username ? 'reg-username-error' : undefined}
-        />
-        {errors.username && (
-          <div
-            className="invalid-feedback"
-            id="reg-username-error"
-            role="alert"
-            aria-live="polite"
+      <FormCard onSubmit={handleSubmit} aria-labelledby="register-title">
+        <h1 id="register-title" className="h1">
+          {t('register.title')}
+        </h1>
+        <Alert message={error} />
+        <div className="mb-3">
+          <label className="form-label" htmlFor="reg-username">
+            {t('login.username')}
+          </label>
+          <input
+            id="reg-username"
+            name="username"
+            className={`form-control${errors.username ? ' is-invalid' : ''}`}
+            aria-label={t('login.username')}
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              if (errors.username)
+                setErrors({ ...errors, username: undefined });
+            }}
+            ref={userRef}
+            required
+            aria-invalid={errors.username ? 'true' : undefined}
+            aria-describedby={
+              errors.username ? 'reg-username-error' : undefined
+            }
+          />
+          {errors.username && (
+            <div
+              className="invalid-feedback"
+              id="reg-username-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.username}
+            </div>
+          )}
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="firstName">
+            {t('profile.first_name')}
+          </label>
+          <input
+            id="firstName"
+            className="form-control"
+            aria-label={t('profile.first_name')}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="lastName">
+            {t('profile.last_name')}
+          </label>
+          <input
+            id="lastName"
+            className="form-control"
+            aria-label={t('profile.last_name')}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="email">
+            {t('profile.email')}
+          </label>
+          <input
+            id="email"
+            type="email"
+            className="form-control"
+            aria-label={t('profile.email')}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="password">
+            {t('login.password')}
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            className={`form-control${errors.password ? ' is-invalid' : ''}`}
+            aria-label={t('login.password')}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errors.password)
+                setErrors({ ...errors, password: undefined });
+            }}
+            required
+            aria-invalid={errors.password ? 'true' : undefined}
+            aria-describedby={errors.password ? 'password-error' : undefined}
+          />
+          {errors.password && (
+            <div
+              className="invalid-feedback"
+              id="password-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.password}
+            </div>
+          )}
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="role">
+            {t('profile.role')}
+          </label>
+          <select
+            id="role"
+            name="role"
+            className={`form-select${errors.role ? ' is-invalid' : ''}`}
+            value={role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              if (errors.role) setErrors({ ...errors, role: undefined });
+            }}
+            required
+            aria-invalid={errors.role ? 'true' : undefined}
+            aria-describedby={errors.role ? 'role-error' : undefined}
           >
-            {errors.username}
-          </div>
-        )}
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="firstName">{t('profile.first_name')}</label>
-        <input
-          id="firstName"
-          className="form-control"
-          aria-label={t('profile.first_name')}
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="lastName">{t('profile.last_name')}</label>
-        <input
-          id="lastName"
-          className="form-control"
-          aria-label={t('profile.last_name')}
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="email">{t('profile.email')}</label>
-        <input
-          id="email"
-          type="email"
-          className="form-control"
-          aria-label={t('profile.email')}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="password">{t('login.password')}</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          className={`form-control${errors.password ? ' is-invalid' : ''}`}
-          aria-label={t('login.password')}
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (errors.password) setErrors({ ...errors, password: undefined });
-          }}
-          required
-          aria-invalid={errors.password ? 'true' : undefined}
-          aria-describedby={errors.password ? 'password-error' : undefined}
-        />
-        {errors.password && (
-          <div
-            className="invalid-feedback"
-            id="password-error"
-            role="alert"
-            aria-live="polite"
+            <option value="">{t('common.choose')}</option>
+            {(Array.isArray(roles) ? roles : []).map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+          {errors.role && (
+            <div
+              className="invalid-feedback"
+              id="role-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.role}
+            </div>
+          )}
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="structure">
+            {t('profile.structure')}
+          </label>
+          <select
+            id="structure"
+            name="structure"
+            className={`form-select${errors.structure ? ' is-invalid' : ''}`}
+            value={structure}
+            onChange={(e) => {
+              setStructure(e.target.value);
+              if (errors.structure)
+                setErrors({ ...errors, structure: undefined });
+            }}
+            aria-invalid={errors.structure ? 'true' : undefined}
+            aria-describedby={errors.structure ? 'structure-error' : undefined}
           >
-            {errors.password}
-          </div>
-        )}
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="role">{t('profile.role')}</label>
-        <select
-          id="role"
-          name="role"
-          className={`form-select${errors.role ? ' is-invalid' : ''}`}
-          value={role}
-          onChange={(e) => {
-            setRole(e.target.value);
-            if (errors.role) setErrors({ ...errors, role: undefined });
+            <option value="">{t('common.choose')}</option>
+            {(Array.isArray(structures) ? structures : []).map((s) => (
+              <option key={s._id || s} value={s._id || s.name || s}>
+                {s.name || s}
+              </option>
+            ))}
+          </select>
+          {errors.structure && (
+            <div
+              className="invalid-feedback"
+              id="structure-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.structure}
+            </div>
+          )}
+        </div>
+        <button
+          type="submit"
+          className="btn"
+          style={{
+            backgroundColor: 'var(--color-primary)',
+            borderColor: 'var(--color-primary)',
+            color: '#fff',
           }}
-          required
-          aria-invalid={errors.role ? 'true' : undefined}
-          aria-describedby={errors.role ? 'role-error' : undefined}
         >
-          <option value="">{t('common.choose')}</option>
-          {(Array.isArray(roles) ? roles : []).map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        {errors.role && (
-          <div
-            className="invalid-feedback"
-            id="role-error"
-            role="alert"
-            aria-live="polite"
-          >
-            {errors.role}
-          </div>
-        )}
-      </div>
-      <div className="mb-3">
-        <label className="form-label" htmlFor="structure">{t('profile.structure')}</label>
-        <select
-          id="structure"
-          name="structure"
-          className={`form-select${errors.structure ? ' is-invalid' : ''}`}
-          value={structure}
-          onChange={(e) => {
-            setStructure(e.target.value);
-            if (errors.structure) setErrors({ ...errors, structure: undefined });
-          }}
-          aria-invalid={errors.structure ? 'true' : undefined}
-          aria-describedby={errors.structure ? 'structure-error' : undefined}
-        >
-          <option value="">{t('common.choose')}</option>
-          {(Array.isArray(structures) ? structures : []).map((s) => (
-            <option key={s._id || s} value={s._id || s.name || s}>
-              {s.name || s}
-            </option>
-          ))}
-        </select>
-        {errors.structure && (
-          <div
-            className="invalid-feedback"
-            id="structure-error"
-            role="alert"
-            aria-live="polite"
-          >
-            {errors.structure}
-          </div>
-        )}
-      </div>
-      <button
-        type="submit"
-        className="btn"
-        style={{
-          backgroundColor: 'var(--color-primary)',
-          borderColor: 'var(--color-primary)',
-          color: '#fff',
-        }}
-      >
-        {t('register.submit')}
-      </button>
-    </FormCard>
+          {t('register.submit')}
+        </button>
+      </FormCard>
     </main>
   );
 }

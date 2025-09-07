@@ -6,7 +6,9 @@ test('start exits process if db connection fails', async () => {
   const { start } = require('../src/index');
   let exitCode;
   const originalExit = process.exit;
-  process.exit = (code) => { exitCode = code; };
+  process.exit = (code) => {
+    exitCode = code;
+  };
   try {
     const server = await start(() => Promise.reject(new Error('db fail')));
     if (server) server.close();

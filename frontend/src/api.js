@@ -34,7 +34,10 @@ async function refreshToken() {
       });
     } catch {}
     try {
-      if (typeof navigator === 'undefined' || !navigator.userAgent.includes('jsdom')) {
+      if (
+        typeof navigator === 'undefined' ||
+        !navigator.userAgent.includes('jsdom')
+      ) {
         window.location.href = '/login';
       }
     } catch {}
@@ -101,7 +104,7 @@ export async function api(path, options = {}, retry = true) {
         : new ApiError(
             err.message || 'Network error',
             err.code || 'NETWORK_ERROR',
-            err.fields || err.fieldErrors
+            err.fields || err.fieldErrors,
           );
     if (!(err instanceof ApiError) && err.stack) {
       error.stack = err.stack;
@@ -117,4 +120,3 @@ let errorHandler = () => {};
 export function setErrorHandler(handler) {
   errorHandler = typeof handler === 'function' ? handler : () => {};
 }
-

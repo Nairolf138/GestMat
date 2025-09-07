@@ -25,9 +25,10 @@ function LoanItem({ loan, isOwner, refresh }) {
     },
   };
 
-  const period = start && end
-    ? `${start.toLocaleDateString()} – ${end.toLocaleDateString()}`
-    : '';
+  const period =
+    start && end
+      ? `${start.toLocaleDateString()} – ${end.toLocaleDateString()}`
+      : '';
 
   const changeStatus = async (status) => {
     await api(`/loans/${loan._id}`, {
@@ -69,17 +70,19 @@ function LoanItem({ loan, isOwner, refresh }) {
           <div>
             {loan.items
               ?.map((it) =>
-                it.equipment ? `${it.equipment.name} x${it.quantity}` : ''
+                it.equipment ? `${it.equipment.name} x${it.quantity}` : '',
               )
               .join(', ')}
           </div>
         </div>
         <span
           className="badge rounded-pill"
-          style={statusStyles[loan.status] || {
-            backgroundColor: 'var(--color-secondary)',
-            color: '#fff',
-          }}
+          style={
+            statusStyles[loan.status] || {
+              backgroundColor: 'var(--color-secondary)',
+              color: '#fff',
+            }
+          }
         >
           {t(`loans.status.${loan.status}`)}
         </span>

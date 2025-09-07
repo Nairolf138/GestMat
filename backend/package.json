@@ -10,7 +10,10 @@
     "create-admin": "node -r ts-node/register/transpile-only scripts/createAdmin.js",
     "create-structures": "node -r ts-node/register/transpile-only scripts/createStructures.js",
     "create-roles": "node -r ts-node/register/transpile-only scripts/createRoles.js",
-    "normalize-roles": "node -r ts-node/register/transpile-only scripts/normalizeRoles.js"
+    "normalize-roles": "node -r ts-node/register/transpile-only scripts/normalizeRoles.js",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "keywords": [],
   "author": "",
@@ -46,7 +49,12 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.1.0",
     "@types/nodemailer": "^7.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
     "mongodb-memory-server": "^10.1.4",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.0"

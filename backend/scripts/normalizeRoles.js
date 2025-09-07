@@ -12,7 +12,10 @@ async function main() {
       const user = await all.next();
       const normalized = normalizeRole(user.role);
       if (user.role !== normalized) {
-        await users.updateOne({ _id: user._id }, { $set: { role: normalized } });
+        await users.updateOne(
+          { _id: user._id },
+          { $set: { role: normalized } },
+        );
       }
     }
     console.log('User roles normalized');

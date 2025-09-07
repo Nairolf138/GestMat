@@ -19,15 +19,23 @@ async function createApp() {
   await db.collection('users').createIndex({ username: 1 }, { unique: true });
   app.use('/api/auth', authRoutes);
   app.use((err, req, res, next) => {
-    res.status(err.status || 500).json({ message: err.message || 'Server error' });
+    res
+      .status(err.status || 500)
+      .json({ message: err.message || 'Server error' });
   });
   return { app, client, mongod };
 }
 
 test('register validates fields, defaults role and prevents duplicates', async () => {
   const { app, client, mongod } = await createApp();
-  await request(app).post('/api/auth/register').send({ password: 'pw' }).expect(400);
-  await request(app).post('/api/auth/register').send({ username: 'bob' }).expect(400);
+  await request(app)
+    .post('/api/auth/register')
+    .send({ password: 'pw' })
+    .expect(400);
+  await request(app)
+    .post('/api/auth/register')
+    .send({ username: 'bob' })
+    .expect(400);
   await request(app)
     .post('/api/auth/register')
     .send({ username: 'bob', password: 'pw', email: 'not-an-email' })
@@ -36,9 +44,11 @@ test('register validates fields, defaults role and prevents duplicates', async (
     .post('/api/auth/register')
     .send({ username: 'bob', password: 'pw', structure: '123' })
     .expect(400);
-  const missingStruct = await request(app)
-    .post('/api/auth/register')
-    .send({ username: 'bob', password: 'pw', structure: new ObjectId().toString() });
+  const missingStruct = await request(app).post('/api/auth/register').send({
+    username: 'bob',
+    password: 'pw',
+    structure: new ObjectId().toString(),
+  });
   assert.strictEqual(missingStruct.status, 400);
   assert.strictEqual(missingStruct.body.message, 'Structure not found');
 
@@ -72,8 +82,14 @@ test('register validates fields, defaults role and prevents duplicates', async (
 
 test('login validates required fields', async () => {
   const { app, client, mongod } = await createApp();
-  await request(app).post('/api/auth/login').send({ password: 'pw' }).expect(400);
-  await request(app).post('/api/auth/login').send({ username: 'bob' }).expect(400);
+  await request(app)
+    .post('/api/auth/login')
+    .send({ password: 'pw' })
+    .expect(400);
+  await request(app)
+    .post('/api/auth/login')
+    .send({ username: 'bob' })
+    .expect(400);
   await client.close();
   await mongod.stop();
 });

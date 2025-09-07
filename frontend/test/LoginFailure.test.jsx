@@ -7,11 +7,15 @@ import '../src/i18n.js';
 describe('Login form validation', () => {
   it('shows error when missing credentials', async () => {
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <Login />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
-    expect(await screen.findByText('Utilisateur et mot de passe requis')).toBeTruthy();
+    expect(
+      await screen.findByText('Utilisateur et mot de passe requis'),
+    ).toBeTruthy();
   });
 });

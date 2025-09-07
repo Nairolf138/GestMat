@@ -8,7 +8,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z
     .string()
     .optional()
-    .transform((val) => (val ? val.split(',') : [] as string[])),
+    .transform((val) => (val ? val.split(',') : ([] as string[]))),
   MONGODB_URI: z.string().default('mongodb://localhost/gestmat'),
   JWT_SECRET: z.string(),
   SMTP_URL: z.string().optional(),

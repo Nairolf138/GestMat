@@ -29,7 +29,8 @@ function auth(role = 'Administrateur') {
 test('post validates ids, status and dates', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const structId = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
   const eqId = (
     await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
   ).insertedId;
@@ -39,7 +40,7 @@ test('post validates ids, status and dates', async () => {
     borrower: structId.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
-    endDate: '2024-01-02'
+    endDate: '2024-01-02',
   };
 
   await request(app)
@@ -85,7 +86,8 @@ test('post validates ids, status and dates', async () => {
 test('put validates status and dates', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
+  const structId = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
   const eqId = (
     await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
   ).insertedId;
@@ -95,7 +97,7 @@ test('put validates status and dates', async () => {
     borrower: structId.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
-    endDate: '2024-01-02'
+    endDate: '2024-01-02',
   };
 
   const res = await request(app)

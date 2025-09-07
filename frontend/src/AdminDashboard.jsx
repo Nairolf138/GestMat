@@ -8,7 +8,11 @@ function ManageUsers() {
   const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ firstName: '', lastName: '', role: 'user' });
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    role: 'user',
+  });
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -16,7 +20,9 @@ function ManageUsers() {
 
   const load = () => {
     setError('');
-    api(`/users?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`)
+    api(
+      `/users?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
+    )
       .then(setUsers)
       .catch((err) => {
         setError(err.message);
@@ -89,13 +95,17 @@ function ManageUsers() {
                   className="form-control mb-2"
                   placeholder="First name"
                   value={form.firstName}
-                  onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, firstName: e.target.value })
+                  }
                 />
                 <input
                   className="form-control mb-2"
                   placeholder="Last name"
                   value={form.lastName}
-                  onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, lastName: e.target.value })
+                  }
                 />
                 <select
                   className="form-select mb-2"
@@ -121,7 +131,9 @@ function ManageUsers() {
             ) : (
               <>
                 {u.username}
-                {u.firstName || u.lastName ? ` - ${u.firstName || ''} ${u.lastName || ''}` : ''}
+                {u.firstName || u.lastName
+                  ? ` - ${u.firstName || ''} ${u.lastName || ''}`
+                  : ''}
                 {' - ' + u.role}
                 <button
                   className="btn btn-sm btn-secondary float-end ms-2"
@@ -198,8 +210,8 @@ function ManageLoans() {
         {loans.map((l) => (
           <li key={l._id} className="list-group-item">
             <div>
-              <strong>{l.equipment?.name || l.equipment}</strong> -
-              {' '}{l.borrower?.name || l.borrower} - {l.status}
+              <strong>{l.equipment?.name || l.equipment}</strong> -{' '}
+              {l.borrower?.name || l.borrower} - {l.status}
             </div>
             <select
               className="form-select w-auto mt-2"
@@ -347,9 +359,7 @@ function ManageInventory() {
             className="form-control"
             placeholder="Availability"
             value={form.availability}
-            onChange={(e) =>
-              setForm({ ...form, availability: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, availability: e.target.value })}
           />
         </div>
         <div className="col-md-auto">
@@ -380,7 +390,9 @@ function ManageInventory() {
             className="form-control"
             placeholder={t('inventory.location')}
             value={filters.location}
-            onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, location: e.target.value })
+            }
           />
         </div>
         <div className="col-md-auto">
@@ -486,51 +498,50 @@ function AdminDashboard() {
     <div className="container">
       <NavBar />
       <main id="main-content">
-      <h1 className="h1">Admin Dashboard</h1>
-      <ul className="nav nav-tabs mt-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${tab === 'users' ? 'active' : ''}`}
-            onClick={() => setTab('users')}
-          >
-            Users
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${tab === 'loans' ? 'active' : ''}`}
-            onClick={() => setTab('loans')}
-          >
-            Loans
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${tab === 'inventory' ? 'active' : ''}`}
-            onClick={() => setTab('inventory')}
-          >
-            Inventory
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${tab === 'stats' ? 'active' : ''}`}
-            onClick={() => setTab('stats')}
-          >
-            Statistics
-          </button>
-        </li>
-      </ul>
-      <div className="mt-3">
-        {tab === 'users' && <ManageUsers />}
-        {tab === 'loans' && <ManageLoans />}
-        {tab === 'inventory' && <ManageInventory />}
-        {tab === 'stats' && <AdminStats />}
-      </div>
+        <h1 className="h1">Admin Dashboard</h1>
+        <ul className="nav nav-tabs mt-4">
+          <li className="nav-item">
+            <button
+              className={`nav-link ${tab === 'users' ? 'active' : ''}`}
+              onClick={() => setTab('users')}
+            >
+              Users
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link ${tab === 'loans' ? 'active' : ''}`}
+              onClick={() => setTab('loans')}
+            >
+              Loans
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link ${tab === 'inventory' ? 'active' : ''}`}
+              onClick={() => setTab('inventory')}
+            >
+              Inventory
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link ${tab === 'stats' ? 'active' : ''}`}
+              onClick={() => setTab('stats')}
+            >
+              Statistics
+            </button>
+          </li>
+        </ul>
+        <div className="mt-3">
+          {tab === 'users' && <ManageUsers />}
+          {tab === 'loans' && <ManageLoans />}
+          {tab === 'inventory' && <ManageInventory />}
+          {tab === 'stats' && <AdminStats />}
+        </div>
       </main>
     </div>
   );
 }
 
 export default AdminDashboard;
-

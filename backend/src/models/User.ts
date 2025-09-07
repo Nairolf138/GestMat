@@ -12,7 +12,7 @@ export interface User {
 }
 
 export async function createUser(db: Db, data: User): Promise<WithId<User>> {
-  if (data.structure) data.structure = new ObjectId((data.structure as any));
+  if (data.structure) data.structure = new ObjectId(data.structure as any);
   if (data.role) data.role = normalizeRole(data.role);
   const users = db.collection<User>('users');
   try {
@@ -26,7 +26,10 @@ export async function createUser(db: Db, data: User): Promise<WithId<User>> {
   }
 }
 
-export function findUserByUsername(db: Db, username: string): Promise<User | null> {
+export function findUserByUsername(
+  db: Db,
+  username: string,
+): Promise<User | null> {
   return db.collection<User>('users').findOne({ username });
 }
 
@@ -34,7 +37,7 @@ export function findUsers(
   db: Db,
   search?: string,
   page = 1,
-  limit = 10
+  limit = 10,
 ): Promise<User[]> {
   const filter: Record<string, unknown> = {};
   if (search) {
@@ -65,14 +68,16 @@ export function findUserById(db: Db, id: string): Promise<User | null> {
 export async function updateUser(
   db: Db,
   id: string,
-  data: Partial<User>
+  data: Partial<User>,
 ): Promise<User | null> {
-  if (data.structure) data.structure = new ObjectId((data.structure as any));
+  if (data.structure) data.structure = new ObjectId(data.structure as any);
   if (data.role) data.role = normalizeRole(data.role);
-  const res = await db.collection<User>('users').findOneAndUpdate(
-    { _id: new ObjectId(id) },
-    { $set: data },
-    { returnDocument: 'after' }
-  );
+  const res = await db
+    .collection<User>('users')
+    .findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: data },
+      { returnDocument: 'after' },
+    );
   return res.value;
 }

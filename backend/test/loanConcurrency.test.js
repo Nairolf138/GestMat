@@ -33,9 +33,14 @@ function auth(role = 'Administrateur') {
 test('concurrent loan creation only allows one reservation', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const structId = (await db.collection('structures').insertOne({ name: 'S1' })).insertedId;
-  const eqId = (await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })).insertedId;
-  await db.collection('users').insertOne({ _id: new ObjectId(userId), structure: structId });
+  const structId = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const eqId = (
+    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: structId });
   const payload = {
     owner: structId.toString(),
     borrower: structId.toString(),

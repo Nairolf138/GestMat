@@ -74,140 +74,144 @@ function Profile() {
     <div className="container">
       <NavBar />
       <main id="main-content">
-      <h1 className="h1">{t('profile.title')}</h1>
-      <Alert message={error} />
-      <Alert type="success" message={success} />
-      <FormCard onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label className="form-label">{t('profile.username')}</label>
-          <input
-            name="username"
-            className="form-control"
-            value={form.username}
-            disabled
-          />
-        </div>
-        <div className="row">
-          <div className="col-md-6 mb-3">
-            <label className="form-label">{t('profile.first_name')}</label>
+        <h1 className="h1">{t('profile.title')}</h1>
+        <Alert message={error} />
+        <Alert type="success" message={success} />
+        <FormCard onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label className="form-label">{t('profile.username')}</label>
             <input
-              name="firstName"
-              className={`form-control${errors.firstName ? ' is-invalid' : ''}`}
-              value={form.firstName}
-              onChange={handleChange}
-              aria-invalid={errors.firstName ? 'true' : undefined}
-              aria-describedby={errors.firstName ? 'firstName-error' : undefined}
-            />
-            {errors.firstName && (
-              <div
-                className="invalid-feedback"
-                id="firstName-error"
-                role="alert"
-                aria-live="polite"
-              >
-                {errors.firstName}
-              </div>
-            )}
-          </div>
-          <div className="col-md-6 mb-3">
-            <label className="form-label">{t('profile.last_name')}</label>
-            <input
-              name="lastName"
-              className={`form-control${errors.lastName ? ' is-invalid' : ''}`}
-              value={form.lastName}
-              onChange={handleChange}
-              aria-invalid={errors.lastName ? 'true' : undefined}
-              aria-describedby={errors.lastName ? 'lastName-error' : undefined}
-            />
-            {errors.lastName && (
-              <div
-                className="invalid-feedback"
-                id="lastName-error"
-                role="alert"
-                aria-live="polite"
-              >
-                {errors.lastName}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">{t('profile.email')}</label>
-          <input
-            type="email"
-            name="email"
-            className={`form-control${errors.email ? ' is-invalid' : ''}`}
-            value={form.email}
-            onChange={handleChange}
-            aria-invalid={errors.email ? 'true' : undefined}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-          />
-          {errors.email && (
-            <div
-              className="invalid-feedback"
-              id="email-error"
-              role="alert"
-              aria-live="polite"
-            >
-              {errors.email}
-            </div>
-          )}
-        </div>
-        <div className="mb-3">
-          <label className="form-label">{t('profile.password')}</label>
-          <input
-            type="password"
-            name="password"
-            className={`form-control${errors.password ? ' is-invalid' : ''}`}
-            value={form.password}
-            onChange={handleChange}
-            placeholder={t('profile.password_placeholder')}
-            aria-invalid={errors.password ? 'true' : undefined}
-            aria-describedby={errors.password ? 'password-error' : undefined}
-          />
-          {errors.password && (
-            <div
-              className="invalid-feedback"
-              id="password-error"
-              role="alert"
-              aria-live="polite"
-            >
-              {errors.password}
-            </div>
-          )}
-        </div>
-        <div className="row">
-          <div className="col-md-6 mb-3">
-            <label className="form-label">{t('profile.role')}</label>
-            <input
-              name="role"
+              name="username"
               className="form-control"
-              value={form.role}
+              value={form.username}
               disabled
             />
           </div>
-          <div className="col-md-6 mb-3">
-            <label className="form-label">{t('profile.structure')}</label>
-            <input
-              name="structure"
-              className="form-control"
-              value={structureName}
-              disabled
-            />
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label">{t('profile.first_name')}</label>
+              <input
+                name="firstName"
+                className={`form-control${errors.firstName ? ' is-invalid' : ''}`}
+                value={form.firstName}
+                onChange={handleChange}
+                aria-invalid={errors.firstName ? 'true' : undefined}
+                aria-describedby={
+                  errors.firstName ? 'firstName-error' : undefined
+                }
+              />
+              {errors.firstName && (
+                <div
+                  className="invalid-feedback"
+                  id="firstName-error"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {errors.firstName}
+                </div>
+              )}
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">{t('profile.last_name')}</label>
+              <input
+                name="lastName"
+                className={`form-control${errors.lastName ? ' is-invalid' : ''}`}
+                value={form.lastName}
+                onChange={handleChange}
+                aria-invalid={errors.lastName ? 'true' : undefined}
+                aria-describedby={
+                  errors.lastName ? 'lastName-error' : undefined
+                }
+              />
+              {errors.lastName && (
+                <div
+                  className="invalid-feedback"
+                  id="lastName-error"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {errors.lastName}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-        <button
-          type="submit"
-          className="btn"
-          style={{
-            backgroundColor: 'var(--color-primary)',
-            borderColor: 'var(--color-primary)',
-            color: '#fff',
-          }}
-        >
-          {t('profile.save')}
-        </button>
-      </FormCard>
+          <div className="mb-3">
+            <label className="form-label">{t('profile.email')}</label>
+            <input
+              type="email"
+              name="email"
+              className={`form-control${errors.email ? ' is-invalid' : ''}`}
+              value={form.email}
+              onChange={handleChange}
+              aria-invalid={errors.email ? 'true' : undefined}
+              aria-describedby={errors.email ? 'email-error' : undefined}
+            />
+            {errors.email && (
+              <div
+                className="invalid-feedback"
+                id="email-error"
+                role="alert"
+                aria-live="polite"
+              >
+                {errors.email}
+              </div>
+            )}
+          </div>
+          <div className="mb-3">
+            <label className="form-label">{t('profile.password')}</label>
+            <input
+              type="password"
+              name="password"
+              className={`form-control${errors.password ? ' is-invalid' : ''}`}
+              value={form.password}
+              onChange={handleChange}
+              placeholder={t('profile.password_placeholder')}
+              aria-invalid={errors.password ? 'true' : undefined}
+              aria-describedby={errors.password ? 'password-error' : undefined}
+            />
+            {errors.password && (
+              <div
+                className="invalid-feedback"
+                id="password-error"
+                role="alert"
+                aria-live="polite"
+              >
+                {errors.password}
+              </div>
+            )}
+          </div>
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label">{t('profile.role')}</label>
+              <input
+                name="role"
+                className="form-control"
+                value={form.role}
+                disabled
+              />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label">{t('profile.structure')}</label>
+              <input
+                name="structure"
+                className="form-control"
+                value={structureName}
+                disabled
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="btn"
+            style={{
+              backgroundColor: 'var(--color-primary)',
+              borderColor: 'var(--color-primary)',
+              color: '#fff',
+            }}
+          >
+            {t('profile.save')}
+          </button>
+        </FormCard>
       </main>
     </div>
   );

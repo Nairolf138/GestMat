@@ -15,7 +15,7 @@ function LoanSummaryItem({ loan }) {
   const link = loan._id ? `/loans/${loan._id}` : '/loans';
   const totalItems = loan.items?.reduce(
     (sum, it) => sum + (it.quantity || 0),
-    0
+    0,
   );
 
   return (

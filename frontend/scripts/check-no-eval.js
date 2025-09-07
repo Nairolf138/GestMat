@@ -4,8 +4,14 @@ const path = require('path');
 const forbiddenPatterns = [
   { regex: /\beval\s*\(/, message: 'eval()' },
   { regex: /\bnew\s+Function\b/, message: 'new Function()' },
-  { regex: /\bsetTimeout\s*\(\s*['"`]/, message: 'setTimeout with string argument' },
-  { regex: /\bsetInterval\s*\(\s*['"`]/, message: 'setInterval with string argument' },
+  {
+    regex: /\bsetTimeout\s*\(\s*['"`]/,
+    message: 'setTimeout with string argument',
+  },
+  {
+    regex: /\bsetInterval\s*\(\s*['"`]/,
+    message: 'setInterval with string argument',
+  },
 ];
 
 function checkFile(filePath) {

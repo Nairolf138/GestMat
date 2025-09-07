@@ -25,10 +25,20 @@ describe('Login success', () => {
     }
     render(
       <Wrapper>
-        <MemoryRouter initialEntries={['/login']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <MemoryRouter
+          initialEntries={['/login']}
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           <Routes>
-            <Route path='/login' element={<Login />} />
-            <Route path='/' element={<PrivateRoute><Home /></PrivateRoute>} />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Home />
+                </PrivateRoute>
+              }
+            />
           </Routes>
         </MemoryRouter>
       </Wrapper>,

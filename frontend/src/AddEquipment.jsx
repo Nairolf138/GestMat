@@ -20,11 +20,7 @@ function AddEquipment({ onCreated }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     const parsed =
-      name === 'totalQty'
-        ? value === ''
-          ? ''
-          : Number(value)
-        : value;
+      name === 'totalQty' ? (value === '' ? '' : Number(value)) : value;
     setForm({ ...form, [name]: parsed });
     if (errors[name]) setErrors({ ...errors, [name]: undefined });
   };
@@ -71,10 +67,14 @@ function AddEquipment({ onCreated }) {
       autoComplete="off"
       aria-labelledby="add-equip-title"
     >
-      <h2 id="add-equip-title" className="h2">{t('equipments.add.title')}</h2>
+      <h2 id="add-equip-title" className="h2">
+        {t('equipments.add.title')}
+      </h2>
       <Alert message={error} />
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-name">{t('equipments.add.name')}</label>
+        <label className="form-label" htmlFor="eq-name">
+          {t('equipments.add.name')}
+        </label>
         <input
           id="eq-name"
           name="name"
@@ -99,7 +99,9 @@ function AddEquipment({ onCreated }) {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-type">{t('equipments.add.type')}</label>
+        <label className="form-label" htmlFor="eq-type">
+          {t('equipments.add.type')}
+        </label>
         <select
           id="eq-type"
           name="type"
@@ -131,7 +133,9 @@ function AddEquipment({ onCreated }) {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-total">{t('equipments.add.total_quantity')}</label>
+        <label className="form-label" htmlFor="eq-total">
+          {t('equipments.add.total_quantity')}
+        </label>
         <input
           id="eq-total"
           name="totalQty"
@@ -158,7 +162,9 @@ function AddEquipment({ onCreated }) {
         )}
       </div>
       <div className="mb-3">
-        <label className="form-label" htmlFor="eq-condition">{t('equipments.add.condition')}</label>
+        <label className="form-label" htmlFor="eq-condition">
+          {t('equipments.add.condition')}
+        </label>
         <select
           id="eq-condition"
           name="condition"
@@ -166,16 +172,20 @@ function AddEquipment({ onCreated }) {
           aria-label={t('equipments.add.condition')}
           value={form.condition}
           onChange={handleChange}
-           required
-           autoComplete="off"
-           aria-invalid={errors.condition ? 'true' : undefined}
-           aria-describedby={errors.condition ? 'eq-condition-error' : undefined}
+          required
+          autoComplete="off"
+          aria-invalid={errors.condition ? 'true' : undefined}
+          aria-describedby={errors.condition ? 'eq-condition-error' : undefined}
         >
           <option value="">{t('common.choose')}</option>
           <option value="Neuf">{t('equipments.add.conditions.new')}</option>
-          <option value="Légèrement usé">{t('equipments.add.conditions.used_lightly')}</option>
+          <option value="Légèrement usé">
+            {t('equipments.add.conditions.used_lightly')}
+          </option>
           <option value="Usé">{t('equipments.add.conditions.used')}</option>
-          <option value="Très usé">{t('equipments.add.conditions.very_used')}</option>
+          <option value="Très usé">
+            {t('equipments.add.conditions.very_used')}
+          </option>
         </select>
         {errors.condition && (
           <div

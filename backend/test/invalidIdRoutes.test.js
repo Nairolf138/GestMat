@@ -31,10 +31,20 @@ async function createApp(route, path) {
 
 // Equipment
 test('equipment routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(equipmentRoutes, '/api/equipments');
-  await request(app).put('/api/equipments/badid').set(auth()).send({}).expect(400);
+  const { app, client, mongod } = await createApp(
+    equipmentRoutes,
+    '/api/equipments',
+  );
+  await request(app)
+    .put('/api/equipments/badid')
+    .set(auth())
+    .send({})
+    .expect(400);
   await request(app).delete('/api/equipments/badid').set(auth()).expect(400);
-  await request(app).get('/api/equipments/badid/availability').set(auth()).expect(400);
+  await request(app)
+    .get('/api/equipments/badid/availability')
+    .set(auth())
+    .expect(400);
   await client.close();
   await mongod.stop();
 });
@@ -50,8 +60,15 @@ test('loan routes return 400 for invalid id', async () => {
 
 // Structures
 test('structure routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(structureRoutes, '/api/structures');
-  await request(app).put('/api/structures/badid').set(auth()).send({ name: 's' }).expect(400);
+  const { app, client, mongod } = await createApp(
+    structureRoutes,
+    '/api/structures',
+  );
+  await request(app)
+    .put('/api/structures/badid')
+    .set(auth())
+    .send({ name: 's' })
+    .expect(400);
   await request(app).delete('/api/structures/badid').set(auth()).expect(400);
   await client.close();
   await mongod.stop();

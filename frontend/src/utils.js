@@ -5,4 +5,3 @@ export const toLoanItemsPayload = (items = []) =>
       equipment: item.equipment._id,
       quantity: item.quantity,
     }));
-

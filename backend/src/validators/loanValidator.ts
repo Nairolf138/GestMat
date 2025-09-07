@@ -6,9 +6,15 @@ export const createLoanValidator: ValidationChain[] = [
   body('owner').isMongoId().withMessage('owner must be a valid id'),
   body('borrower').isMongoId().withMessage('borrower must be a valid id'),
   body('items').isArray().withMessage('items must be an array'),
-  body('items.*.equipment').isMongoId().withMessage('equipment must be a valid id'),
-  body('items.*.quantity').isInt({ min: 1 }).withMessage('quantity must be >= 1'),
-  body('startDate').isISO8601().withMessage('startDate must be a valid ISO8601 date'),
+  body('items.*.equipment')
+    .isMongoId()
+    .withMessage('equipment must be a valid id'),
+  body('items.*.quantity')
+    .isInt({ min: 1 })
+    .withMessage('quantity must be >= 1'),
+  body('startDate')
+    .isISO8601()
+    .withMessage('startDate must be a valid ISO8601 date'),
   body('endDate')
     .isISO8601()
     .withMessage('endDate must be a valid ISO8601 date')
@@ -41,7 +47,10 @@ export const updateLoanValidator: ValidationChain[] = [
     .optional()
     .isISO8601()
     .custom((value, { req }) => {
-      if (req.body.startDate && new Date(req.body.startDate) > new Date(value)) {
+      if (
+        req.body.startDate &&
+        new Date(req.body.startDate) > new Date(value)
+      ) {
         throw new Error('startDate must be before or equal to endDate');
       }
       return true;

@@ -25,7 +25,8 @@ export default function createEquipmentFilter(
   const filter: Record<string, unknown> = {};
   if (search) filter.name = { $regex: escapeRegExp(search), $options: 'i' };
   if (type) filter.type = { $regex: escapeRegExp(type), $options: 'i' };
-  if (location) filter.location = { $regex: escapeRegExp(location), $options: 'i' };
+  if (location)
+    filter.location = { $regex: escapeRegExp(location), $options: 'i' };
   if (structure && ObjectId.isValid(structure)) {
     filter.structure = new ObjectId(structure);
   } else if (excludeStructure && ObjectId.isValid(excludeStructure)) {
