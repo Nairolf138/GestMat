@@ -187,13 +187,27 @@
     "search": "Rechercher",
     "next": "Suivant",
     "previous": "Précédent",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "role": "Rôle",
+    "role_user": "Utilisateur",
+    "role_admin": "Administrateur",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Éditer"
   },
   "inventory": {
     "search": "Rechercher",
     "name": "Nom",
     "type": "Type",
     "location": "Emplacement",
+    "availability": "Disponibilité",
+    "add": "Ajouter",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Éditer",
+    "delete": "Supprimer",
     "next": "Suivant",
     "previous": "Précédent"
   },

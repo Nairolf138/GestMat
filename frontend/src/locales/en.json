@@ -187,13 +187,27 @@
     "search": "Search",
     "next": "Next",
     "previous": "Previous",
-    "delete": "Delete"
+    "delete": "Delete",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "role": "Role",
+    "role_user": "user",
+    "role_admin": "admin",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit"
   },
   "inventory": {
     "search": "Search",
     "name": "Name",
     "type": "Type",
     "location": "Location",
+    "availability": "Availability",
+    "add": "Add",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
     "next": "Next",
     "previous": "Previous"
   },

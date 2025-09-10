@@ -105,7 +105,7 @@ function ManageInventory() {
         <div className="col-md">
           <input
             className="form-control"
-            placeholder="Name"
+            placeholder={t('inventory.name')}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
@@ -113,7 +113,7 @@ function ManageInventory() {
         <div className="col-md">
           <input
             className="form-control"
-            placeholder="Type"
+            placeholder={t('inventory.type')}
             value={form.type}
             onChange={(e) => setForm({ ...form, type: e.target.value })}
           />
@@ -121,7 +121,7 @@ function ManageInventory() {
         <div className="col-md">
           <input
             className="form-control"
-            placeholder="Location"
+            placeholder={t('inventory.location')}
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
           />
@@ -129,14 +129,14 @@ function ManageInventory() {
         <div className="col-md">
           <input
             className="form-control"
-            placeholder="Availability"
+            placeholder={t('inventory.availability')}
             value={form.availability}
             onChange={(e) => setForm({ ...form, availability: e.target.value })}
           />
         </div>
         <div className="col-md-auto">
           <button className="btn btn-primary" type="submit">
-            Add
+            {t('inventory.add')}
           </button>
         </div>
       </form>
@@ -180,7 +180,7 @@ function ManageInventory() {
               <>
                 <input
                   className="form-control mb-2"
-                  placeholder="Name"
+                  placeholder={t('inventory.name')}
                   value={editForm.name}
                   onChange={(e) =>
                     setEditForm({ ...editForm, name: e.target.value })
@@ -188,7 +188,7 @@ function ManageInventory() {
                 />
                 <input
                   className="form-control mb-2"
-                  placeholder="Type"
+                  placeholder={t('inventory.type')}
                   value={editForm.type}
                   onChange={(e) =>
                     setEditForm({ ...editForm, type: e.target.value })
@@ -196,7 +196,7 @@ function ManageInventory() {
                 />
                 <input
                   className="form-control mb-2"
-                  placeholder="Location"
+                  placeholder={t('inventory.location')}
                   value={editForm.location}
                   onChange={(e) =>
                     setEditForm({ ...editForm, location: e.target.value })
@@ -204,7 +204,7 @@ function ManageInventory() {
                 />
                 <input
                   className="form-control mb-2"
-                  placeholder="Availability"
+                  placeholder={t('inventory.availability')}
                   value={editForm.availability}
                   onChange={(e) =>
                     setEditForm({ ...editForm, availability: e.target.value })
@@ -214,13 +214,13 @@ function ManageInventory() {
                   className="btn btn-primary btn-sm me-2"
                   onClick={() => save(it._id)}
                 >
-                  Save
+                  {t('inventory.save')}
                 </button>
                 <button
                   className="btn btn-secondary btn-sm"
                   onClick={() => setEditing(null)}
                 >
-                  Cancel
+                  {t('inventory.cancel')}
                 </button>
               </>
             ) : (
@@ -230,13 +230,13 @@ function ManageInventory() {
                   className="btn btn-sm btn-secondary float-end ms-2"
                   onClick={() => startEdit(it)}
                 >
-                  Edit
+                  {t('inventory.edit')}
                 </button>
                 <button
                   className="btn btn-sm btn-danger float-end"
                   onClick={() => remove(it._id)}
                 >
-                  Delete
+                  {t('inventory.delete')}
                 </button>
               </>
             )}

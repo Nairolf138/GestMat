@@ -91,7 +91,7 @@ function ManageUsers() {
               <>
                 <input
                   className="form-control mb-2"
-                  placeholder="First name"
+                  placeholder={t('users.first_name')}
                   value={form.firstName}
                   onChange={(e) =>
                     setForm({ ...form, firstName: e.target.value })
@@ -99,7 +99,7 @@ function ManageUsers() {
                 />
                 <input
                   className="form-control mb-2"
-                  placeholder="Last name"
+                  placeholder={t('users.last_name')}
                   value={form.lastName}
                   onChange={(e) =>
                     setForm({ ...form, lastName: e.target.value })
@@ -110,20 +110,20 @@ function ManageUsers() {
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                 >
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
+                  <option value="user">{t('users.role_user')}</option>
+                  <option value="admin">{t('users.role_admin')}</option>
                 </select>
                 <button
                   className="btn btn-primary btn-sm me-2"
                   onClick={() => save(u._id)}
                 >
-                  Save
+                  {t('users.save')}
                 </button>
                 <button
                   className="btn btn-secondary btn-sm"
                   onClick={() => setEditing(null)}
                 >
-                  Cancel
+                  {t('users.cancel')}
                 </button>
               </>
             ) : (
@@ -132,12 +132,12 @@ function ManageUsers() {
                 {u.firstName || u.lastName
                   ? ` - ${u.firstName || ''} ${u.lastName || ''}`
                   : ''}
-                {' - ' + u.role}
+                {' - ' + t(`users.role_${u.role}`)}
                 <button
                   className="btn btn-sm btn-secondary float-end ms-2"
                   onClick={() => startEdit(u)}
                 >
-                  Edit
+                  {t('users.edit')}
                 </button>
                 <button
                   className="btn btn-sm btn-danger float-end"
