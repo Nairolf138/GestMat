@@ -133,3 +133,11 @@ these routes require authentication.
 - `GET /api/stats/equipments/top?limit=5` – list the most requested equipment
   sorted by total quantity, limited by the optional `limit` query parameter
   (default: `5`).
+
+## Health check
+
+The server exposes a simple health check endpoint to verify that both the API
+and the MongoDB database are reachable.
+
+- `GET /health` – pings the database and responds with `{ status: 'ok' }` when
+  the connection succeeds.
