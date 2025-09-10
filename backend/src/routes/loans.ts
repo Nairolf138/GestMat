@@ -24,7 +24,13 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const db = req.app.locals.db;
-      const loans = await listLoans(db, req.user!);
+      const page = req.query.page
+        ? parseInt(req.query.page as string)
+        : undefined;
+      const limit = req.query.limit
+        ? parseInt(req.query.limit as string)
+        : undefined;
+      const loans = await listLoans(db, req.user!, page, limit);
       res.json(loans);
     } catch (err) {
       next(err);
