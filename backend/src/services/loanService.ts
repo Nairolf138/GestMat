@@ -19,13 +19,18 @@ import type { AuthUser } from '../types';
 export async function listLoans(
   db: Db,
   user: AuthUser,
-): Promise<LoanRequest[]> {
+  page?: number,
+  limit?: number,
+): Promise<LoanRequest[] | { loans: LoanRequest[]; total: number }> {
   if (user.role === ADMIN_ROLE) {
-    return findLoans(db);
+    return findLoans(db, {}, page, limit);
   }
   const u = await findUserById(db, user.id);
   const structId = u?.structure?.toString();
-  if (!structId) return [];
+  if (!structId)
+    return page !== undefined && limit !== undefined
+      ? { loans: [], total: 0 }
+      : [];
   const id = new ObjectId(structId);
   const filter = {
     $or: [
@@ -35,7 +40,7 @@ export async function listLoans(
       { 'borrower._id': id },
     ],
   };
-  return findLoans(db, filter);
+  return findLoans(db, filter, page, limit);
 }
 
 export async function createLoanRequest(

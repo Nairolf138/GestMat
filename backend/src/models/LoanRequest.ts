@@ -75,11 +75,23 @@ async function _populate(
 export async function findLoans(
   db: Db,
   filter: Record<string, unknown> = {},
-): Promise<LoanRequest[]> {
-  const loans = await db
-    .collection<LoanRequest>('loanrequests')
-    .find(filter)
-    .toArray();
+  page?: number,
+  limit?: number,
+): Promise<LoanRequest[] | { loans: LoanRequest[]; total: number }> {
+  const collection = db.collection<LoanRequest>('loanrequests');
+  if (page !== undefined && limit !== undefined) {
+    const [loans, total] = await Promise.all([
+      collection
+        .find(filter)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .toArray(),
+      collection.countDocuments(filter),
+    ]);
+    await Promise.all(loans.map((loan) => _populate(db, loan)));
+    return { loans, total };
+  }
+  const loans = await collection.find(filter).toArray();
   await Promise.all(loans.map((loan) => _populate(db, loan)));
   return loans;
 }
