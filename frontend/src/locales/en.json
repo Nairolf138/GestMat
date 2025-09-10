@@ -188,6 +188,8 @@
     "next": "Next",
     "previous": "Previous",
     "delete": "Delete",
+    "delete_confirm": "Delete this user?",
+    "delete_success": "User deleted",
     "first_name": "First name",
     "last_name": "Last name",
     "role": "Role",
@@ -208,6 +210,8 @@
     "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
+    "delete_confirm": "Delete this equipment?",
+    "delete_success": "Equipment deleted",
     "next": "Next",
     "previous": "Previous"
   },

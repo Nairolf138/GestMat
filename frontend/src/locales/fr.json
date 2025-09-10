@@ -188,6 +188,8 @@
     "next": "Suivant",
     "previous": "Précédent",
     "delete": "Supprimer",
+    "delete_confirm": "Supprimer cet utilisateur ?",
+    "delete_success": "Utilisateur supprimé",
     "first_name": "Prénom",
     "last_name": "Nom",
     "role": "Rôle",
@@ -208,6 +210,8 @@
     "cancel": "Annuler",
     "edit": "Éditer",
     "delete": "Supprimer",
+    "delete_confirm": "Supprimer cet équipement ?",
+    "delete_success": "Équipement supprimé",
     "next": "Suivant",
     "previous": "Précédent"
   },

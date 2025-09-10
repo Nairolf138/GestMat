@@ -1,3 +1,5 @@
+export const confirmDialog = (message) => window.confirm(message);
+
 export const toLoanItemsPayload = (items = []) =>
   items
     .filter((item) => item?.equipment?._id)

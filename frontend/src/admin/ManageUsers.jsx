@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import { useTranslation } from 'react-i18next';
+import { confirmDialog } from '../utils';
 
 function ManageUsers() {
   const { t } = useTranslation();
@@ -12,6 +13,7 @@ function ManageUsers() {
     role: 'user',
   });
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const limit = 10;
@@ -39,8 +41,11 @@ function ManageUsers() {
 
   const del = async (id) => {
     setError('');
+    setMessage('');
+    if (!confirmDialog(t('users.delete_confirm'))) return;
     try {
       await api(`/users/${id}`, { method: 'DELETE' });
+      setMessage(t('users.delete_success'));
       load();
     } catch (err) {
       setError(err.message);
@@ -73,6 +78,7 @@ function ManageUsers() {
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
+      {message && <div className="alert alert-success">{message}</div>}
       <div className="input-group mb-3">
         <input
           className="form-control"

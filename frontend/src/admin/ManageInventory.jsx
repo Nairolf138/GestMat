@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
+import { confirmDialog } from '../utils';
 
 function ManageInventory() {
   const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [form, setForm] = useState({
     name: '',
     type: '',
@@ -90,8 +92,11 @@ function ManageInventory() {
 
   const remove = async (id) => {
     setError('');
+    setMessage('');
+    if (!confirmDialog(t('inventory.delete_confirm'))) return;
     try {
       await api(`/equipments/${id}`, { method: 'DELETE' });
+      setMessage(t('inventory.delete_success'));
       load();
     } catch (err) {
       setError(err.message);
@@ -101,6 +106,7 @@ function ManageInventory() {
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
+      {message && <div className="alert alert-success">{message}</div>}
       <form className="row g-2 mb-3" onSubmit={create}>
         <div className="col-md">
           <input
