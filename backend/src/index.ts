@@ -98,6 +98,17 @@ export async function start(
     res.end(await client.register.metrics());
   });
 
+  app.get('/health', async (req: Request, res: Response) => {
+    try {
+      const db: Db = req.app.locals.db;
+      await db.command({ ping: 1 });
+      res.status(200).json({ status: 'ok' });
+    } catch (err) {
+      logger.error('Health check failed: %o', err as Error);
+      res.status(500).json({ status: 'error' });
+    }
+  });
+
   app.use((req: Request, res: Response) => {
     res.status(404).json({ message: 'Not found' });
   });
