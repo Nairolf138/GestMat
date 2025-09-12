@@ -40,7 +40,7 @@ router.get(
 
 router.post(
   '/',
-  auth(MANAGE_LOANS),
+  auth(),
   createLoanValidator,
   validate,
   async (req: Request, res: Response, next: NextFunction) => {
