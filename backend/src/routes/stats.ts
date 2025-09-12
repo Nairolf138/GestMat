@@ -1,11 +1,14 @@
 import express, { Request, Response, NextFunction } from 'express';
 import auth from '../middleware/auth';
+import permissions from '../config/permissions';
+
+const { MANAGE_STATS } = permissions;
 
 const router = express.Router();
 
 router.get(
   '/loans',
-  auth(),
+  auth(MANAGE_STATS),
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
@@ -22,7 +25,7 @@ router.get(
 
 router.get(
   '/loans/monthly',
-  auth(),
+  auth(MANAGE_STATS),
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
@@ -85,7 +88,7 @@ router.get(
 
 router.get(
   '/loans/duration',
-  auth(),
+  auth(MANAGE_STATS),
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
@@ -160,7 +163,7 @@ router.get(
 
 router.get(
   '/equipments/top',
-  auth(),
+  auth(MANAGE_STATS),
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     const limit = parseInt(req.query.limit as string, 10) || 5;

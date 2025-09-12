@@ -49,13 +49,17 @@ test('GET /api/stats/loans returns aggregated counts', async () => {
   await mongod.stop();
 });
 
-test('GET /api/stats/loans requires auth', async () => {
+test('GET /api/stats/loans requires admin role', async () => {
   const { app, client, mongod } = await createApp();
   await request(app).get('/api/stats/loans').expect(401);
   await request(app)
     .get('/api/stats/loans')
     .set({ Authorization: 'Bearer badtoken' })
     .expect(401);
+  await request(app)
+    .get('/api/stats/loans')
+    .set(auth('Regisseur General'))
+    .expect(403);
   await client.close();
   await mongod.stop();
 });
@@ -155,11 +159,26 @@ test('GET /api/stats/equipments/top returns aggregated equipment counts', async 
   await mongod.stop();
 });
 
-test('new stats routes require auth', async () => {
+test('stats routes are restricted to admins', async () => {
   const { app, client, mongod } = await createApp();
   await request(app).get('/api/stats/loans/monthly').expect(401);
   await request(app).get('/api/stats/equipments/top').expect(401);
   await request(app).get('/api/stats/loans/duration').expect(401);
+
+  const nonAdmin = auth('Regisseur General');
+  await request(app)
+    .get('/api/stats/loans/monthly')
+    .set(nonAdmin)
+    .expect(403);
+  await request(app)
+    .get('/api/stats/equipments/top')
+    .set(nonAdmin)
+    .expect(403);
+  await request(app)
+    .get('/api/stats/loans/duration')
+    .set(nonAdmin)
+    .expect(403);
+
   await client.close();
   await mongod.stop();
 });
