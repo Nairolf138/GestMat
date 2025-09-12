@@ -14,6 +14,11 @@ test('Regisseur Son permissions', () => {
   assert.strictEqual(canModify('Régisseur(se) Son', 'Plateau'), false);
 });
 
+test('Regisseur Lumiere permissions', () => {
+  assert.strictEqual(canModify('Régisseur(se) Lumière', 'Lumière'), true);
+  assert.strictEqual(canModify('Régisseur(se) Lumière', 'Son'), false);
+});
+
 test('Regisseur Plateau permissions', () => {
   assert.strictEqual(canModify('Régisseur(se) Plateau', 'Autre'), true);
   assert.strictEqual(canModify('Régisseur(se) Plateau', 'Son'), false);
