@@ -10,10 +10,18 @@ import { sendMail } from '../utils/sendMail';
 import { getLoanRecipients } from '../utils/getLoanRecipients';
 import { getStructureEmails } from '../utils/getStructureEmails';
 import { findUserById } from '../models/User';
-import { ADMIN_ROLE } from '../config/roles';
+import {
+  ADMIN_ROLE,
+  REGISSEUR_GENERAL_ROLE,
+  REGISSEUR_LUMIERE_ROLE,
+  REGISSEUR_PLATEAU_ROLE,
+  REGISSEUR_SON_ROLE,
+  AUTRE_ROLE,
+} from '../config/roles';
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
 import logger from '../utils/logger';
+import { canModify } from '../utils/roleAccess';
 import type { AuthUser } from '../types';
 
 export async function listLoans(
@@ -40,7 +48,16 @@ export async function listLoans(
       { 'borrower._id': id },
     ],
   };
-  return findLoans(db, filter, page, limit);
+  const res = await findLoans(db, filter, page, limit);
+  const filterFn = (loan: LoanRequest) =>
+    (loan.items || []).some((item) =>
+      canModify(user.role, (item.equipment as any)?.type),
+    );
+  if (Array.isArray(res)) {
+    return res.filter(filterFn);
+  }
+  const loans = res.loans.filter(filterFn);
+  return { loans, total: loans.length };
 }
 
 export async function createLoanRequest(
@@ -147,30 +164,79 @@ export async function updateLoanRequest(
     const structId = u?.structure?.toString();
     const isOwner = loan.owner?.toString() === structId;
     const isBorrower = loan.borrower?.toString() === structId;
+    const isRequester = loan.requestedBy?.toString() === user.id;
     const now = new Date();
     const releaseStatuses = ['refused', 'cancelled'];
+    const keys = Object.keys(data);
+    const status = (data as any).status;
+    const types = await Promise.all(
+      (loan.items || []).map(async (item) => {
+        const eq = await db
+          .collection('equipments')
+          .findOne({ _id: item.equipment as any }, {
+            projection: { type: 1 },
+            session,
+          });
+        return (eq as any)?.type as string | undefined;
+      }),
+    );
 
     if (user.role !== ADMIN_ROLE) {
-      const keys = Object.keys(data);
-      const status = (data as any).status;
-      if (status === 'accepted' || status === 'refused') {
-        if (!isOwner || keys.some((k) => k !== 'status')) {
-          throw forbidden('Access denied');
+      switch (user.role) {
+        case AUTRE_ROLE: {
+          if (status === 'accepted' || status === 'refused' || isOwner) {
+            throw forbidden('Access denied');
+          }
+          if (status && status !== 'cancelled') {
+            throw forbidden('Access denied');
+          }
+          if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
+            throw forbidden('Access denied');
+          }
+          break;
         }
-      } else {
-        if (status && status !== 'cancelled') {
-          throw forbidden('Access denied');
+        case REGISSEUR_SON_ROLE:
+        case REGISSEUR_LUMIERE_ROLE:
+        case REGISSEUR_PLATEAU_ROLE: {
+          if (status === 'accepted' || status === 'refused') {
+            if (
+              !isOwner ||
+              keys.some((k) => k !== 'status') ||
+              !types.every((t) => canModify(user.role, t))
+            ) {
+              throw forbidden('Access denied');
+            }
+          } else {
+            if (status && status !== 'cancelled') {
+              throw forbidden('Access denied');
+            }
+            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
+              throw forbidden('Access denied');
+            }
+          }
+          break;
         }
-        if (!isBorrower || new Date(loan.startDate) <= now) {
-          throw forbidden('Access denied');
+        case REGISSEUR_GENERAL_ROLE: {
+          if (status === 'accepted' || status === 'refused') {
+            if (!isOwner || keys.some((k) => k !== 'status')) {
+              throw forbidden('Access denied');
+            }
+          } else {
+            if (status && status !== 'cancelled') {
+              throw forbidden('Access denied');
+            }
+            if (!isBorrower || new Date(loan.startDate) <= now) {
+              throw forbidden('Access denied');
+            }
+          }
+          break;
         }
+        default:
+          throw forbidden('Access denied');
       }
     }
 
-    if (
-      data.status &&
-      (data.status === 'accepted' || data.status === 'refused')
-    ) {
+    if (status === 'accepted' || status === 'refused') {
       (data as any).processedBy = user.id;
     }
 
@@ -262,8 +328,25 @@ export async function deleteLoanRequest(
       const u = await findUserById(db, user.id);
       const structId = u?.structure?.toString();
       const isBorrower = loan.borrower?.toString() === structId;
-      if (!isBorrower) {
-        throw forbidden('Access denied');
+      const isRequester = loan.requestedBy?.toString() === user.id;
+      switch (user.role) {
+        case AUTRE_ROLE:
+        case REGISSEUR_SON_ROLE:
+        case REGISSEUR_LUMIERE_ROLE:
+        case REGISSEUR_PLATEAU_ROLE:
+          if (!isBorrower || !isRequester) {
+            throw forbidden('Access denied');
+          }
+          break;
+        case REGISSEUR_GENERAL_ROLE:
+          if (!isBorrower) {
+            throw forbidden('Access denied');
+          }
+          break;
+        default:
+          if (!isBorrower) {
+            throw forbidden('Access denied');
+          }
       }
       const start = new Date(loan.startDate);
       if (loan.status !== 'pending' && start <= new Date()) {
