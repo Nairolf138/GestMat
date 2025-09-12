@@ -3,14 +3,17 @@ import { api } from '../api';
 import { useTranslation } from 'react-i18next';
 import { confirmDialog } from '../utils';
 
+const roleKey = (r) => r.toLowerCase().replace(/\s+/g, '_');
+
 function ManageUsers() {
   const { t } = useTranslation();
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
-    role: 'user',
+    role: '',
   });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -33,6 +36,12 @@ function ManageUsers() {
   useEffect(() => {
     load();
   }, [page]);
+
+  useEffect(() => {
+    api('/roles')
+      .then(setRoles)
+      .catch(() => setRoles([]));
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -65,7 +74,7 @@ function ManageUsers() {
     setForm({
       firstName: u.firstName || '',
       lastName: u.lastName || '',
-      role: u.role || 'user',
+      role: u.role || roles[0] || '',
     });
   };
 
@@ -124,8 +133,11 @@ function ManageUsers() {
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                 >
-                  <option value="user">{t('users.role_user')}</option>
-                  <option value="admin">{t('users.role_admin')}</option>
+                  {roles.map((r) => (
+                    <option key={r} value={r}>
+                      {t(`users.role_${roleKey(r)}`)}
+                    </option>
+                  ))}
                 </select>
                 <button
                   className="btn btn-primary btn-sm me-2"
@@ -146,7 +158,7 @@ function ManageUsers() {
                 {u.firstName || u.lastName
                   ? ` - ${u.firstName || ''} ${u.lastName || ''}`
                   : ''}
-                {' - ' + t(`users.role_${u.role}`)}
+                {' - ' + t(`users.role_${roleKey(u.role)}`)}
                 <button
                   className="btn btn-sm btn-secondary float-end ms-2"
                   onClick={() => startEdit(u)}
