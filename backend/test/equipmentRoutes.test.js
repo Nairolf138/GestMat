@@ -332,7 +332,7 @@ test('reject update on equipment from another structure', async () => {
   await mongod.stop();
 });
 
-test('non-admin cannot create equipment', async () => {
+test('regisseur can create equipment', async () => {
   const { app, client, mongod } = await createApp();
   const newEq = {
     name: 'Mic',
@@ -341,11 +341,12 @@ test('non-admin cannot create equipment', async () => {
     totalQty: 1,
     availableQty: 1,
   };
-  await request(app)
+  const res = await request(app)
     .post('/api/equipments')
     .set(auth('Regisseur Son'))
     .send(newEq)
-    .expect(403);
+    .expect(200);
+  assert.ok(res.body._id);
   await client.close();
   await mongod.stop();
 });
