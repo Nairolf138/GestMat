@@ -34,9 +34,17 @@ function ManageUsers() {
     load();
   }, [page]);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (page !== 1) setPage(1);
+      else load();
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
   const doSearch = () => {
-    setPage(1);
-    load();
+    if (page !== 1) setPage(1);
+    else load();
   };
 
   const del = async (id) => {
