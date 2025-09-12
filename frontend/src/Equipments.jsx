@@ -9,6 +9,7 @@ import NavBar from './NavBar';
 import Alert from './Alert.jsx';
 import Loading from './Loading.jsx';
 import { AuthContext } from './AuthContext.jsx';
+import { canManageEquipment } from './utils.js';
 
 function Equipments() {
   const { t } = useTranslation();
@@ -209,24 +210,26 @@ function Equipments() {
                       <strong>{t('equipments.availability')}:</strong>{' '}
                       {e.availability}
                     </p>
-                    <div className="card-actions">
-                      <button
-                        type="button"
-                        className="btn btn-sm me-2"
-                        style={secondaryBtnStyle}
-                        onClick={() => setEditing(e)}
-                      >
-                        {t('equipments.edit.button')}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm"
-                        style={dangerBtnStyle}
-                        onClick={() => deleteEquipment(e._id)}
-                      >
-                        {t('equipments.delete.button')}
-                      </button>
-                    </div>
+                    {canManageEquipment(user?.role, e.type) && (
+                      <div className="card-actions">
+                        <button
+                          type="button"
+                          className="btn btn-sm me-2"
+                          style={secondaryBtnStyle}
+                          onClick={() => setEditing(e)}
+                        >
+                          {t('equipments.edit.button')}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          style={dangerBtnStyle}
+                          onClick={() => deleteEquipment(e._id)}
+                        >
+                          {t('equipments.delete.button')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -259,22 +262,26 @@ function Equipments() {
                       <td>{e.location}</td>
                       <td>{e.availability}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="btn btn-sm me-2"
-                          style={secondaryBtnStyle}
-                          onClick={() => setEditing(e)}
-                        >
-                          {t('equipments.edit.button')}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          style={dangerBtnStyle}
-                          onClick={() => deleteEquipment(e._id)}
-                        >
-                          {t('equipments.delete.button')}
-                        </button>
+                        {canManageEquipment(user?.role, e.type) && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-sm me-2"
+                              style={secondaryBtnStyle}
+                              onClick={() => setEditing(e)}
+                            >
+                              {t('equipments.edit.button')}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              style={dangerBtnStyle}
+                              onClick={() => deleteEquipment(e._id)}
+                            >
+                              {t('equipments.delete.button')}
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -283,18 +290,22 @@ function Equipments() {
             </table>
           </div>
         )}
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="btn mb-3"
-          style={secondaryBtnStyle}
-          type="button"
-        >
-          {t('equipments.add.title')}
-        </button>
-        {showForm && (
-          <AddEquipment onCreated={() => setShowForm(false)} />
+        {canManageEquipment(user?.role) && (
+          <>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn mb-3"
+              style={secondaryBtnStyle}
+              type="button"
+            >
+              {t('equipments.add.title')}
+            </button>
+            {showForm && (
+              <AddEquipment onCreated={() => setShowForm(false)} />
+            )}
+          </>
         )}
-        {editing && (
+        {editing && canManageEquipment(user?.role, editing.type) && (
           <EditEquipment
             equipment={editing}
             onUpdated={() => setEditing(null)}

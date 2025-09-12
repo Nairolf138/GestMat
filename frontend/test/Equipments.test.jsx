@@ -34,7 +34,13 @@ describe('Equipments', () => {
 
   it('lists inventory, sorts and resets filters, and opens add form', async () => {
     api.api.mockResolvedValue([
-      { _id: 'eq1', name: 'Eq1', location: 'Loc', availability: 'Available' },
+      {
+        _id: 'eq1',
+        name: 'Eq1',
+        location: 'Loc',
+        availability: 'Available',
+        type: 'Son',
+      },
     ]);
 
     renderWithClient(
@@ -42,7 +48,12 @@ describe('Equipments', () => {
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <AuthContext.Provider
-          value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}
+          value={{
+            user: {
+              structure: { _id: 's1', name: 'Structure 1' },
+              role: 'Regisseur Son',
+            },
+          }}
         >
           <Equipments />
         </AuthContext.Provider>
@@ -59,6 +70,11 @@ describe('Equipments', () => {
     await screen.findByText('Eq1');
     expect(screen.getByText('Loc')).toBeTruthy();
     expect(screen.getByText('Available')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Nouvel équipement' }),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Éditer' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Supprimer' })).toBeTruthy();
 
     // ensure search fields do not trigger browser autocomplete
     expect(
@@ -107,7 +123,13 @@ describe('Equipments', () => {
   });
   it('uses cached data on remount', async () => {
     api.api.mockResolvedValue([
-      { _id: 'eq1', name: 'Eq1', location: 'Loc', availability: 'Available' },
+      {
+        _id: 'eq1',
+        name: 'Eq1',
+        location: 'Loc',
+        availability: 'Available',
+        type: 'Son',
+      },
     ]);
 
     const tree = (
@@ -115,7 +137,12 @@ describe('Equipments', () => {
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <AuthContext.Provider
-          value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}
+          value={{
+            user: {
+              structure: { _id: 's1', name: 'Structure 1' },
+              role: 'Regisseur Son',
+            },
+          }}
         >
           <Equipments />
         </AuthContext.Provider>
@@ -129,5 +156,77 @@ describe('Equipments', () => {
     renderWithClient(tree);
     await screen.findByText('Eq1');
     expect(api.api).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides edit and delete for unauthorized equipment type', async () => {
+    api.api.mockResolvedValue([
+      {
+        _id: 'eq1',
+        name: 'Eq1',
+        location: 'Loc',
+        availability: 'Available',
+        type: 'Lumière',
+      },
+    ]);
+
+    renderWithClient(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <AuthContext.Provider
+          value={{
+            user: {
+              structure: { _id: 's1', name: 'Structure 1' },
+              role: 'Regisseur Son',
+            },
+          }}
+        >
+          <Equipments />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Eq1');
+    expect(
+      screen.getByRole('button', { name: 'Nouvel équipement' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Éditer' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
+  });
+
+  it('hides management buttons for unknown role', async () => {
+    api.api.mockResolvedValue([
+      {
+        _id: 'eq1',
+        name: 'Eq1',
+        location: 'Loc',
+        availability: 'Available',
+        type: 'Son',
+      },
+    ]);
+
+    renderWithClient(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <AuthContext.Provider
+          value={{
+            user: {
+              structure: { _id: 's1', name: 'Structure 1' },
+              role: 'Visitor',
+            },
+          }}
+        >
+          <Equipments />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Eq1');
+    expect(
+      screen.queryByRole('button', { name: 'Nouvel équipement' }),
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Éditer' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
   });
 });
