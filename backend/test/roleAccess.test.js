@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('assert');
 const { canModify, ALL_TYPES, roleMap } = require('../src/utils/roleAccess');
-const ROLES = require('../src/config/roles');
+const roles = require('../src/config/roles');
 
 test('Autre role permissions allow all types', () => {
   assert.strictEqual(canModify('Autre', 'Son'), true);
@@ -30,8 +30,12 @@ test('Regisseur General permissions cover all types', () => {
   }
 });
 
+const exportedRoles = new Set(
+  Object.values(roles).filter((role) => typeof role === 'string'),
+);
+
 test('roleMap includes all roles from config', () => {
-  for (const role of ROLES) {
+  for (const role of exportedRoles) {
     assert.ok(roleMap[role], `${role} missing from roleMap`);
   }
 });
