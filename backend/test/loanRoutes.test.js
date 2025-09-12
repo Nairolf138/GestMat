@@ -229,7 +229,7 @@ test('unauthorized delete does not remove loan', async () => {
   await mongod.stop();
 });
 
-test('non-admin cannot create, update or delete loan', async () => {
+test('non-admin can create but cannot update or delete loan', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
   const struct = (await db.collection('structures').insertOne({ name: 'S1' }))
@@ -244,14 +244,9 @@ test('non-admin cannot create, update or delete loan', async () => {
     startDate: '2024-01-01',
     endDate: '2024-01-02',
   };
-  await request(app)
-    .post('/api/loans')
-    .set(auth('Autre'))
-    .send(payload)
-    .expect(403);
   const created = await request(app)
     .post('/api/loans')
-    .set(auth())
+    .set(auth('Autre'))
     .send(payload)
     .expect(200);
   await request(app)
