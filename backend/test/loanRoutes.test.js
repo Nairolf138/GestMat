@@ -261,3 +261,43 @@ test('non-admin can create but cannot update or delete loan', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('Autre role can cancel and delete its own loan', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, structure: owner })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: borrower });
+  const payload = {
+    owner: owner.toString(),
+    borrower: borrower.toString(),
+    items: [{ equipment: eqId.toString(), quantity: 1 }],
+    startDate: '2099-01-01',
+    endDate: '2099-01-02',
+  };
+  const created = await request(app)
+    .post('/api/loans')
+    .set(auth('Autre'))
+    .send(payload)
+    .expect(200);
+  await request(app)
+    .put(`/api/loans/${created.body._id}`)
+    .set(auth('Autre'))
+    .send({ status: 'cancelled' })
+    .expect(200);
+  await request(app)
+    .delete(`/api/loans/${created.body._id}`)
+    .set(auth('Autre'))
+    .expect(200);
+  await client.close();
+  await mongod.stop();
+});
