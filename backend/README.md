@@ -99,18 +99,29 @@ mongosh "mongodb+srv://<user>:<password>@cluster0.example.mongodb.net/gestmat"
 
 ## Roles and equipment access
 
-All roles can view every equipment type in the catalogue. Creation and updates, however, are restricted by role:
+All roles except `Autre` can view the entire catalogue. The `Autre` role may only browse its own structure's inventory. Creation and updates are restricted by role:
 
-| Role                     | Equipment types       |
-| ------------------------ | --------------------- |
-| Administrateur           | all types             |
-| Régisseur(se) Général(e) | all types             |
-| Régisseur(se) Son        | Son, Vidéo, Autre     |
-| Régisseur(se) Lumière    | Lumière, Vidéo, Autre |
-| Régisseur(se) Plateau    | Plateau, Vidéo, Autre |
-| Autre                    | all types             |
+| Role             | Equipment types       |
+| ---------------- | --------------------- |
+| Administrateur   | all types             |
+| Regisseur General | all types            |
+| Regisseur Son    | Son, Vidéo, Autre     |
+| Regisseur Lumiere | Lumière, Vidéo, Autre |
+| Regisseur Plateau | Plateau, Vidéo, Autre |
+| Autre            | none                  |
 
 Users created without an explicit role are assigned to `Autre`.
+
+### Loan permissions
+
+| Role             | Outgoing loans | Incoming loans |
+| ---------------- | ------------- | -------------- |
+| Administrateur   | create, modify and cancel any request | accept or refuse any request |
+| Regisseur General | manage all requests for their structure | accept or refuse requests for their structure |
+| Regisseur Son    | create and cancel requests for Son, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
+| Regisseur Lumiere | create and cancel requests for Lumière, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
+| Regisseur Plateau | create and cancel requests for Plateau, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
+| Autre            | none | none |
 
 ## Indexes
 
