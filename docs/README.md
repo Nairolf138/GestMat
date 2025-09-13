@@ -11,16 +11,27 @@ Les deux services communiquent via HTTP ; par défaut l’API écoute sur le po
 
 ## Rôles
 
-Tous les rôles peuvent consulter l'ensemble du catalogue. En revanche, l'ajout ou la modification d'équipements est limitée selon le rôle :
+Tous les rôles, sauf *Autre*, peuvent consulter l'ensemble du catalogue. Le rôle *Autre* ne peut consulter que l'inventaire de sa propre structure. L'ajout ou la modification d'équipements est limitée selon le rôle :
 
 | Rôle | Types d’équipement modifiables |
 | --- | --- |
 | Administrateur | tous |
-| Régisseur(se) Général(e) | tous |
-| Régisseur(se) Son | Son, Vidéo, Autre |
-| Régisseur(se) Lumière | Lumière, Vidéo, Autre |
-| Régisseur(se) Plateau | Plateau, Vidéo, Autre |
-| Autre | tous |
+| Regisseur General | tous |
+| Regisseur Son | Son, Vidéo, Autre |
+| Regisseur Lumiere | Lumière, Vidéo, Autre |
+| Regisseur Plateau | Plateau, Vidéo, Autre |
+| Autre | aucun |
+
+### Permissions de prêt
+
+| Rôle | Prêts sortants | Prêts entrants |
+| --- | --- | --- |
+| Administrateur | créer, modifier et annuler toutes les demandes | accepter ou refuser toutes les demandes |
+| Regisseur General | gérer toutes les demandes pour sa structure | accepter ou refuser les demandes pour sa structure |
+| Regisseur Son | créer et annuler des demandes pour les équipements Son, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
+| Regisseur Lumiere | créer et annuler des demandes pour les équipements Lumière, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
+| Regisseur Plateau | créer et annuler des demandes pour les équipements Plateau, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
+| Autre | aucun | aucun |
 
 ## Processus de prêt
 
