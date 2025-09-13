@@ -13,7 +13,7 @@ import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
-import { REGISSEUR_SON_ROLE } from '../../roles';
+import { REGISSEUR_SON_ROLE, AUTRE_ROLE } from '../../roles';
 
 describe('Equipments', () => {
   let queryClient;
@@ -191,6 +191,42 @@ describe('Equipments', () => {
     expect(
       screen.getByRole('button', { name: 'Nouvel équipement' }),
     ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Éditer' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
+  });
+
+  it('hides management buttons for Autre role', async () => {
+    api.api.mockResolvedValue([
+      {
+        _id: 'eq1',
+        name: 'Eq1',
+        location: 'Loc',
+        availability: 'Available',
+        type: 'Son',
+      },
+    ]);
+
+    renderWithClient(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <AuthContext.Provider
+          value={{
+            user: {
+              structure: { _id: 's1', name: 'Structure 1' },
+              role: AUTRE_ROLE,
+            },
+          }}
+        >
+          <Equipments />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Eq1');
+    expect(
+      screen.queryByRole('button', { name: 'Nouvel équipement' }),
+    ).toBeNull();
     expect(screen.queryByRole('button', { name: 'Éditer' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
   });

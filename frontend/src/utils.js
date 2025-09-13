@@ -3,8 +3,7 @@ import {
   REGISSEUR_GENERAL_ROLE,
   REGISSEUR_LUMIERE_ROLE,
   REGISSEUR_SON_ROLE,
-  REGISSEUR_PLATEAU_ROLE,
-  AUTRE_ROLE,
+  REGISSEUR_PLATEAU_ROLE
 } from '../../roles';
 
 export const confirmDialog = (message) => window.confirm(message);
@@ -25,7 +24,6 @@ const roleMap = {
   [REGISSEUR_SON_ROLE]: ['Son', 'Vidéo', 'Autre'],
   [REGISSEUR_LUMIERE_ROLE]: ['Lumière', 'Vidéo', 'Autre'],
   [REGISSEUR_PLATEAU_ROLE]: ['Plateau', 'Vidéo', 'Autre'],
-  [AUTRE_ROLE]: ALL_TYPES,
 };
 
 const normalizeRole = (role = '') =>
