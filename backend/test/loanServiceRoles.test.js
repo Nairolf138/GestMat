@@ -85,7 +85,8 @@ test('role based loan service permissions', async (t) => {
     assert.strictEqual(autreLoans.length, 4);
   });
 
-  await t.test('Autre role can cancel only own outgoing requests', async () => {
+  await t.test('Autre role permissions', async () => {
+    // outgoing request owned by Autre user: can cancel but cannot accept
     const loanId = (
       await db.collection('loanrequests').insertOne({
         owner: s2Id,
@@ -96,16 +97,23 @@ test('role based loan service permissions', async (t) => {
         endDate: new Date('2099-01-02'),
       })
     ).insertedId.toString();
-    const upd = await updateLoanRequest(db, {
-      id: userAutre.toString(),
-      role: AUTRE_ROLE,
-    }, loanId, { status: 'cancelled' });
+    const upd = await updateLoanRequest(
+      db,
+      {
+        id: userAutre.toString(),
+        role: AUTRE_ROLE,
+      },
+      loanId,
+      { status: 'cancelled' },
+    );
     assert.strictEqual(upd.status, 'cancelled');
-    await assert.rejects(
-      () =>
-        updateLoanRequest(db, { id: userAutre.toString(), role: AUTRE_ROLE }, loanId, {
-          status: 'accepted',
-        }),
+    await assert.rejects(() =>
+      updateLoanRequest(
+        db,
+        { id: userAutre.toString(), role: AUTRE_ROLE },
+        loanId,
+        { status: 'accepted' },
+      ),
     );
     const loan2 = (
       await db.collection('loanrequests').insertOne({
@@ -117,10 +125,47 @@ test('role based loan service permissions', async (t) => {
         endDate: new Date('2099-01-02'),
       })
     ).insertedId.toString();
-    await assert.rejects(
-      () =>
-        deleteLoanRequest(db, { id: userAutre.toString(), role: AUTRE_ROLE }, loan2),
+    await assert.rejects(() =>
+      deleteLoanRequest(
+        db,
+        { id: userAutre.toString(), role: AUTRE_ROLE },
+        loan2,
+      ),
     );
+
+    // incoming request for Autre user's structure: can accept or refuse
+    const incoming1 = (
+      await db.collection('loanrequests').insertOne({
+        owner: s1Id,
+        borrower: s2Id,
+        items: [{ equipment: eqSonS1.insertedId }],
+        startDate: new Date('2099-01-01'),
+        endDate: new Date('2099-01-02'),
+      })
+    ).insertedId.toString();
+    const accepted = await updateLoanRequest(
+      db,
+      { id: userAutre.toString(), role: AUTRE_ROLE },
+      incoming1,
+      { status: 'accepted' },
+    );
+    assert.strictEqual(accepted.status, 'accepted');
+    const incoming2 = (
+      await db.collection('loanrequests').insertOne({
+        owner: s1Id,
+        borrower: s2Id,
+        items: [{ equipment: eqSonS1.insertedId }],
+        startDate: new Date('2099-01-01'),
+        endDate: new Date('2099-01-02'),
+      })
+    ).insertedId.toString();
+    const refused = await updateLoanRequest(
+      db,
+      { id: userAutre.toString(), role: AUTRE_ROLE },
+      incoming2,
+      { status: 'refused' },
+    );
+    assert.strictEqual(refused.status, 'refused');
   });
 
   await t.test('Regisseur Son role restrictions', async () => {

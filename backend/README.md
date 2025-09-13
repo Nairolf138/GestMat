@@ -121,7 +121,7 @@ Users created without an explicit role are assigned to `Autre`.
 | Regisseur Son    | create and cancel requests for Son, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
 | Regisseur Lumiere | create and cancel requests for Lumière, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
 | Regisseur Plateau | create and cancel requests for Plateau, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
-| Autre            | none | none |
+| Autre            | create and cancel own requests | accept or refuse requests for their structure |
 
 ## Indexes
 

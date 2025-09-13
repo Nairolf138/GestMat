@@ -184,14 +184,17 @@ export async function updateLoanRequest(
     if (user.role !== ADMIN_ROLE) {
       switch (user.role) {
         case AUTRE_ROLE: {
-          if (status === 'accepted' || status === 'refused' || isOwner) {
-            throw forbidden('Access denied');
-          }
-          if (status && status !== 'cancelled') {
-            throw forbidden('Access denied');
-          }
-          if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
-            throw forbidden('Access denied');
+          if (status === 'accepted' || status === 'refused') {
+            if (!isOwner || keys.some((k) => k !== 'status')) {
+              throw forbidden('Access denied');
+            }
+          } else {
+            if (status && status !== 'cancelled') {
+              throw forbidden('Access denied');
+            }
+            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
+              throw forbidden('Access denied');
+            }
           }
           break;
         }
