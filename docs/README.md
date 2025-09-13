@@ -11,15 +11,15 @@ Les deux services communiquent via HTTP ; par défaut l’API écoute sur le po
 
 ## Rôles
 
-Tous les rôles, sauf *Autre*, peuvent consulter l'ensemble du catalogue. Le rôle *Autre* ne peut consulter que l'inventaire de sa propre structure. L'ajout ou la modification d'équipements est limitée selon le rôle :
+Tous les rôles peuvent consulter le catalogue des autres structures. Le rôle *Autre* peut accepter ou refuser les demandes adressées à sa structure, mais il ne peut créer, modifier ou annuler que ses propres demandes. L'ajout ou la modification d'équipements est limitée selon le rôle :
 
 | Rôle | Types d’équipement modifiables |
 | --- | --- |
 | Administrateur | tous |
-| Regisseur General | tous |
-| Regisseur Son | Son, Vidéo, Autre |
-| Regisseur Lumiere | Lumière, Vidéo, Autre |
-| Regisseur Plateau | Plateau, Vidéo, Autre |
+| Régisseur(se) Général(e) | tous |
+| Régisseur(se) Son | Son, Vidéo, Autre |
+| Régisseur(se) Lumière | Lumière, Vidéo, Autre |
+| Régisseur(se) Plateau | Plateau, Vidéo, Autre |
 | Autre | aucun |
 
 ### Permissions de prêt
@@ -27,11 +27,11 @@ Tous les rôles, sauf *Autre*, peuvent consulter l'ensemble du catalogue. Le rô
 | Rôle | Prêts sortants | Prêts entrants |
 | --- | --- | --- |
 | Administrateur | créer, modifier et annuler toutes les demandes | accepter ou refuser toutes les demandes |
-| Regisseur General | gérer toutes les demandes pour sa structure | accepter ou refuser les demandes pour sa structure |
-| Regisseur Son | créer et annuler des demandes pour les équipements Son, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
-| Regisseur Lumiere | créer et annuler des demandes pour les équipements Lumière, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
-| Regisseur Plateau | créer et annuler des demandes pour les équipements Plateau, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
-| Autre | créer et annuler ses propres demandes | accepter ou refuser les demandes pour sa structure |
+| Régisseur(se) Général(e) | gérer toutes les demandes pour sa structure | accepter ou refuser les demandes pour sa structure |
+| Régisseur(se) Son | créer et annuler des demandes pour les équipements Son, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
+| Régisseur(se) Lumière | créer et annuler des demandes pour les équipements Lumière, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
+| Régisseur(se) Plateau | créer et annuler des demandes pour les équipements Plateau, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
+| Autre | créer, modifier et annuler ses propres demandes | accepter ou refuser les demandes pour sa structure |
 
 ## Processus de prêt
 

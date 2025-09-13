@@ -30,13 +30,15 @@ La fonction `api` disponible dans `src/api.js` accepte une option `timeout` (en 
 
 ## Rôles et permissions
 
-Le comportement de l'application dépend du rôle de l'utilisateur :
+Tous les rôles peuvent consulter le catalogue des autres structures. Le comportement de l'application dépend du rôle de l'utilisateur :
 
 | Rôle | Permissions principales |
 | --- | --- |
 | Administrateur | accès complet aux équipements et aux prêts |
-| Regisseur General | gère tous les équipements et prêts de sa structure |
-| Regisseur Son / Lumiere / Plateau | gère les équipements et prêts de son domaine (Son, Lumière ou Plateau) ainsi que Vidéo et Autre |
-| Autre | consultation uniquement de l'inventaire local |
+| Régisseur(se) Général(e) | gère tous les équipements et prêts de sa structure |
+| Régisseur(se) Son | gère les équipements et prêts de Son ainsi que Vidéo et Autre |
+| Régisseur(se) Lumière | gère les équipements et prêts de Lumière ainsi que Vidéo et Autre |
+| Régisseur(se) Plateau | gère les équipements et prêts de Plateau ainsi que Vidéo et Autre |
+| Autre | consulte le catalogue, accepte ou refuse les demandes entrantes et peut uniquement créer, modifier ou annuler ses propres demandes |
 
-Les prêts peuvent être sortants (emprunter) ou entrants (prêter). Seuls les rôles listés ci‑dessus, à l'exception de `Autre`, peuvent créer ou valider des demandes.
+Les prêts peuvent être sortants (emprunter) ou entrants (prêter). Chaque rôle peut créer ses propres demandes et valider celles adressées à sa structure selon son périmètre.
