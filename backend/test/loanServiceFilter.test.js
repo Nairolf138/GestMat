@@ -4,7 +4,7 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 process.env.JWT_SECRET = 'test';
 const { listLoans } = require('../src/services/loanService');
-const { ADMIN_ROLE } = require('../src/config/roles');
+const { ADMIN_ROLE, AUTRE_ROLE } = require('../src/config/roles');
 
 async function createDb() {
   const mongod = await MongoMemoryReplSet.create();
@@ -34,7 +34,7 @@ test('listLoans filters documents by user structure', async () => {
 
   const total = await db.collection('loanrequests').countDocuments();
   const adminLoans = await listLoans(db, { role: ADMIN_ROLE });
-  const userLoans = await listLoans(db, { id: userId, role: 'Autre' });
+  const userLoans = await listLoans(db, { id: userId, role: AUTRE_ROLE });
 
   assert.strictEqual(adminLoans.length, total);
   assert.strictEqual(userLoans.length, 3);

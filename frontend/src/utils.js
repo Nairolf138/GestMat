@@ -1,3 +1,12 @@
+import {
+  ADMIN_ROLE,
+  REGISSEUR_GENERAL_ROLE,
+  REGISSEUR_LUMIERE_ROLE,
+  REGISSEUR_SON_ROLE,
+  REGISSEUR_PLATEAU_ROLE,
+  AUTRE_ROLE,
+} from '../../roles';
+
 export const confirmDialog = (message) => window.confirm(message);
 
 export const toLoanItemsPayload = (items = []) =>
@@ -11,12 +20,12 @@ export const toLoanItemsPayload = (items = []) =>
 export const ALL_TYPES = ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'];
 
 const roleMap = {
-  Administrateur: ALL_TYPES,
-  'Regisseur General': ALL_TYPES,
-  'Regisseur Son': ['Son', 'Vidéo', 'Autre'],
-  'Regisseur Lumiere': ['Lumière', 'Vidéo', 'Autre'],
-  'Regisseur Plateau': ['Plateau', 'Vidéo', 'Autre'],
-  Autre: ALL_TYPES,
+  [ADMIN_ROLE]: ALL_TYPES,
+  [REGISSEUR_GENERAL_ROLE]: ALL_TYPES,
+  [REGISSEUR_SON_ROLE]: ['Son', 'Vidéo', 'Autre'],
+  [REGISSEUR_LUMIERE_ROLE]: ['Lumière', 'Vidéo', 'Autre'],
+  [REGISSEUR_PLATEAU_ROLE]: ['Plateau', 'Vidéo', 'Autre'],
+  [AUTRE_ROLE]: ALL_TYPES,
 };
 
 const normalizeRole = (role = '') =>

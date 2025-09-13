@@ -10,6 +10,7 @@ process.env.JWT_SECRET = 'test';
 const loanRoutes = require('../src/routes/loans').default;
 const mailer = require('../src/utils/sendMail');
 mailer.sendMail = async () => {};
+const { ADMIN_ROLE } = require('../src/config/roles');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -25,7 +26,7 @@ async function createApp() {
 }
 
 const userId = new ObjectId().toString();
-function auth(role = 'Administrateur') {
+function auth(role = ADMIN_ROLE) {
   const token = jwt.sign({ id: userId, role }, 'test', { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }

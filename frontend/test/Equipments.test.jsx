@@ -13,6 +13,7 @@ import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
+import { REGISSEUR_SON_ROLE } from '../../roles';
 
 describe('Equipments', () => {
   let queryClient;
@@ -51,7 +52,7 @@ describe('Equipments', () => {
           value={{
             user: {
               structure: { _id: 's1', name: 'Structure 1' },
-              role: 'Regisseur Son',
+              role: REGISSEUR_SON_ROLE,
             },
           }}
         >
@@ -140,7 +141,7 @@ describe('Equipments', () => {
           value={{
             user: {
               structure: { _id: 's1', name: 'Structure 1' },
-              role: 'Regisseur Son',
+              role: REGISSEUR_SON_ROLE,
             },
           }}
         >
@@ -177,7 +178,7 @@ describe('Equipments', () => {
           value={{
             user: {
               structure: { _id: 's1', name: 'Structure 1' },
-              role: 'Regisseur Son',
+              role: REGISSEUR_SON_ROLE,
             },
           }}
         >

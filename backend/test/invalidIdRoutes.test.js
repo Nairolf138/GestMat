@@ -10,8 +10,9 @@ const equipmentRoutes = require('../src/routes/equipments').default;
 const loanRoutes = require('../src/routes/loans').default;
 const structureRoutes = require('../src/routes/structures').default;
 const userRoutes = require('../src/routes/users').default;
+const { ADMIN_ROLE } = require('../src/config/roles');
 
-function auth(role = 'Administrateur') {
+function auth(role = ADMIN_ROLE) {
   const token = jwt.sign({ id: 'u1', role }, 'test', { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }

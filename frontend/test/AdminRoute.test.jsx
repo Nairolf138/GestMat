@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminRoute from '../src/AdminRoute.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
+import { ADMIN_ROLE, AUTRE_ROLE } from '../../roles';
 
 describe('AdminRoute', () => {
   it('redirects to login when unauthenticated', () => {
@@ -32,7 +33,7 @@ describe('AdminRoute', () => {
 
   it('redirects to home when not administrateur', () => {
     render(
-      <AuthContext.Provider value={{ user: { id: 'u1', role: 'Utilisateur' } }}>
+      <AuthContext.Provider value={{ user: { id: 'u1', role: AUTRE_ROLE } }}>
         <MemoryRouter
           initialEntries={['/admin']}
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
@@ -56,9 +57,7 @@ describe('AdminRoute', () => {
 
   it('renders child when administrateur', () => {
     render(
-      <AuthContext.Provider
-        value={{ user: { id: 'u1', role: 'Administrateur' } }}
-      >
+      <AuthContext.Provider value={{ user: { id: 'u1', role: ADMIN_ROLE } }}>
         <MemoryRouter
           initialEntries={['/admin']}
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}

@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
 const equipmentRoutes = require('../src/routes/equipments').default;
+const { ADMIN_ROLE } = require('../src/config/roles');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -22,8 +23,8 @@ async function createApp() {
   return { app, client, mongod };
 }
 
-function auth() {
-  const token = jwt.sign({ id: 'u1', role: 'Administrateur' }, 'test', {
+function auth(role = ADMIN_ROLE) {
+  const token = jwt.sign({ id: 'u1', role }, 'test', {
     expiresIn: '1h',
   });
   return { Authorization: `Bearer ${token}` };
