@@ -8,7 +8,12 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
 const loanRoutes = require('../src/routes/loans').default;
-const { ADMIN_ROLE, AUTRE_ROLE } = require('../src/config/roles');
+const {
+  ADMIN_ROLE,
+  AUTRE_ROLE,
+  REGISSEUR_SON_ROLE,
+  REGISSEUR_GENERAL_ROLE,
+} = require('../src/config/roles');
 const mailer = require('../src/utils/sendMail');
 mailer.sendMail = async () => {};
 const {
@@ -360,6 +365,119 @@ test('Autre role can accept and refuse loan for own structure', async () => {
     .send({ status: 'refused' })
     .expect(200);
   assert.strictEqual(refused.body.status, 'refused');
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('loan listing enforces requester visibility', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const [s1, s2] = await Promise.all([
+    db.collection('structures').insertOne({ name: 'S1' }),
+    db.collection('structures').insertOne({ name: 'S2' }),
+  ]);
+  const s1Id = s1.insertedId;
+  const s2Id = s2.insertedId;
+  const [eqS1, eqS2] = await Promise.all([
+    db
+      .collection('equipments')
+      .insertOne({ name: 'E1', type: 'Son', structure: s1Id }),
+    db
+      .collection('equipments')
+      .insertOne({ name: 'E2', type: 'Son', structure: s2Id }),
+  ]);
+
+  const userAutre = new ObjectId();
+  const userRegSon = new ObjectId();
+  const userRegGen = new ObjectId();
+  const userRegGenS2 = new ObjectId();
+  const userRegSonS2 = new ObjectId();
+  await db.collection('users').insertMany([
+    { _id: userAutre, structure: s1Id, role: AUTRE_ROLE },
+    { _id: userRegSon, structure: s1Id, role: REGISSEUR_SON_ROLE },
+    { _id: userRegGen, structure: s1Id, role: REGISSEUR_GENERAL_ROLE },
+    { _id: userRegGenS2, structure: s2Id, role: REGISSEUR_GENERAL_ROLE },
+    { _id: userRegSonS2, structure: s2Id, role: REGISSEUR_SON_ROLE },
+  ]);
+
+  await db.collection('loanrequests').insertMany([
+    {
+      owner: s1Id,
+      borrower: s2Id,
+      items: [{ equipment: eqS1.insertedId }],
+      requestedBy: userRegGenS2,
+    },
+    {
+      owner: s1Id,
+      borrower: s2Id,
+      items: [{ equipment: eqS1.insertedId }],
+      requestedBy: userRegSonS2,
+    },
+    {
+      owner: s2Id,
+      borrower: s1Id,
+      items: [{ equipment: eqS2.insertedId }],
+      requestedBy: userAutre,
+    },
+    {
+      owner: s2Id,
+      borrower: s1Id,
+      items: [{ equipment: eqS2.insertedId }],
+      requestedBy: userRegSon,
+    },
+    {
+      owner: s2Id,
+      borrower: s1Id,
+      items: [{ equipment: eqS2.insertedId }],
+      requestedBy: userRegGen,
+    },
+  ]);
+
+  const regSonToken = jwt.sign(
+    { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
+    'test',
+    { expiresIn: '1h' },
+  );
+  const autreToken = jwt.sign(
+    { id: userAutre.toString(), role: AUTRE_ROLE },
+    'test',
+    { expiresIn: '1h' },
+  );
+
+  const resRegSon = await request(app)
+    .get('/api/loans')
+    .set({ Authorization: `Bearer ${regSonToken}` })
+    .expect(200);
+  assert.strictEqual(resRegSon.body.length, 4);
+  assert.ok(
+    resRegSon.body.every((l) => {
+      const req = l.requestedBy;
+      const reqId = req._id.toString();
+      const reqRole = req.role;
+      return (
+        reqId === userRegSon.toString() ||
+        reqRole === AUTRE_ROLE ||
+        reqRole === REGISSEUR_GENERAL_ROLE
+      );
+    }),
+  );
+
+  const resAutre = await request(app)
+    .get('/api/loans')
+    .set({ Authorization: `Bearer ${autreToken}` })
+    .expect(200);
+  assert.strictEqual(resAutre.body.length, 3);
+  assert.ok(
+    resAutre.body.every((l) => {
+      const borrowerId = (l.borrower._id || l.borrower).toString();
+      const reqId = l.requestedBy._id.toString();
+      if (borrowerId === s1Id.toString()) {
+        return reqId === userAutre.toString();
+      }
+      return true;
+    }),
+  );
 
   await client.close();
   await mongod.stop();
