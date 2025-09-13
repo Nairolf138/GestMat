@@ -49,10 +49,40 @@ export async function listLoans(
     ],
   };
   const res = await findLoans(db, filter, page, limit);
-  const filterFn = (loan: LoanRequest) =>
-    (loan.items || []).some((item) =>
+  const structIdStr = structId;
+  const filterFn = (loan: LoanRequest) => {
+    const typeOk = (loan.items || []).some((item) =>
       canModify(user.role, (item.equipment as any)?.type),
     );
+    if (!typeOk) return false;
+
+    const req: any = loan.requestedBy;
+    const reqId = req?._id?.toString?.() || req?.toString?.();
+    const reqRole = req?.role;
+
+    if (user.role === AUTRE_ROLE) {
+      const borrowerId =
+        (loan.borrower as any)?._id?.toString?.() ||
+        (loan.borrower as any)?.toString?.();
+      if (borrowerId === structIdStr) {
+        return reqId === user.id;
+      }
+      return true;
+    }
+
+    if (
+      [REGISSEUR_SON_ROLE, REGISSEUR_LUMIERE_ROLE, REGISSEUR_PLATEAU_ROLE].includes(
+        user.role,
+      )
+    ) {
+      if (reqId === user.id) return true;
+      return (
+        reqRole === REGISSEUR_GENERAL_ROLE || reqRole === AUTRE_ROLE
+      );
+    }
+
+    return true;
+  };
   if (Array.isArray(res)) {
     return res.filter(filterFn);
   }
