@@ -4,6 +4,8 @@ import ManageUsers from '../src/admin/ManageUsers.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
+import { AUTRE_ROLE } from '../../roles';
+import { canManageEquipment } from '../src/utils.js';
 
 describe('ManageUsers', () => {
   it('loads roles and saves selected role', async () => {
@@ -39,5 +41,9 @@ describe('ManageUsers', () => {
         JSON.stringify({ firstName: '', lastName: '', role: 'Administrateur' }),
       );
     });
+  });
+
+  it('does not allow Autre role to manage equipment', () => {
+    expect(canManageEquipment(AUTRE_ROLE)).toBe(false);
   });
 });
