@@ -20,13 +20,13 @@
   "nav": {
     "catalog": "Catalogue",
     "inventory": "Inventaire local",
-    "loans": "Pr\u00eats/Emprunts",
+    "loans": "Prêts/Emprunts",
     "cart": "Panier",
     "admin": "Administration",
     "account": "Compte",
     "profile": "Profil",
     "login": "Connexion",
-    "logout": "D\u00e9connexion",
+    "logout": "Déconnexion",
     "language": "Langue",
     "skip": "Aller au contenu principal",
     "toggle_theme": {
@@ -84,13 +84,13 @@
   "home": {
     "title": "Accueil",
     "greeting": "Bonjour {{name}} !",
-    "recent_requests": "Demandes r\u00e9centes",
+    "recent_requests": "Demandes récentes",
     "no_requests": "Aucune demande",
     "current_loans": "Emprunts en cours",
-    "incoming_loans": "Emprunts \u00e0 venir",
+    "incoming_loans": "Emprunts à venir",
     "no_loans": "Aucun emprunt",
     "shortcuts": "Raccourcis",
-    "error_fetch": "Erreur lors du chargement des pr\u00eats",
+    "error_fetch": "Erreur lors du chargement des prêts",
     "view_all": "Tout voir",
     "counter": "{{shown}} sur {{total}} {{category}}",
     "search_placeholder": "Rechercher un équipement...",
@@ -98,10 +98,10 @@
   },
   "tour": {
     "help": "Aide",
-    "notifications": "Les retours \u00e0 venir s'affichent ici.",
-    "search": "Recherchez un \u00e9quipement ici.",
-    "shortcuts": "Acc\u00e9dez rapidement aux sections principales.",
-    "back": "Pr\u00e9c\u00e9dent",
+    "notifications": "Les retours à venir s'affichent ici.",
+    "search": "Recherchez un équipement ici.",
+    "shortcuts": "Accédez rapidement aux sections principales.",
+    "back": "Précédent",
     "next": "Suivant",
     "close": "Fermer",
     "last": "Terminer",
@@ -110,7 +110,7 @@
   "dashboard": {
     "pending": "En attente",
     "ongoing": "En cours",
-    "upcoming": "\u00c0 venir"
+    "upcoming": "À venir"
   },
   "notifications": {
     "title": "Retours à échéance",
@@ -139,7 +139,7 @@
     "error": "Erreur"
   },
   "loans": {
-    "title": "Pr\u00eats",
+    "title": "Prêts",
     "new_request": "Nouvelle demande",
     "owner_structure": "Structure propriétaire",
     "equipment_option": "Équipement",
@@ -149,7 +149,7 @@
     "modify": "Modifier",
     "cancel": "Annuler",
     "error_create": "Erreur lors de la création",
-    "as_owner": "Pr\u00eats",
+    "as_owner": "Prêts",
     "as_borrower": "Emprunts",
     "finished": "Terminés",
     "ongoing": "En cours",
@@ -233,5 +233,13 @@
     "required": "Requis",
     "error": "Erreur",
     "loading": "Chargement..."
+  },
+  "roles": {
+    "Administrateur": "Administrateur",
+    "Regisseur General": "Régisseur(se) Général(e)",
+    "Regisseur Lumiere": "Régisseur(se) Lumière",
+    "Regisseur Son": "Régisseur(se) Son",
+    "Regisseur Plateau": "Régisseur(se) Plateau",
+    "Autre": "Autre"
   }
 }

@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 
 process.env.JWT_SECRET = 'test';
 const statsRoutes = require('../src/routes/stats').default;
+const { ADMIN_ROLE, REGISSEUR_GENERAL_ROLE } = require('../src/config/roles');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -22,7 +23,7 @@ async function createApp() {
   return { app, client, mongod, db };
 }
 
-function auth(role = 'Administrateur') {
+function auth(role = ADMIN_ROLE) {
   const token = jwt.sign({ id: 'u1', role }, 'test', { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }
@@ -58,7 +59,7 @@ test('GET /api/stats/loans requires admin role', async () => {
     .expect(401);
   await request(app)
     .get('/api/stats/loans')
-    .set(auth('Regisseur General'))
+    .set(auth(REGISSEUR_GENERAL_ROLE))
     .expect(403);
   await client.close();
   await mongod.stop();
@@ -165,7 +166,7 @@ test('stats routes are restricted to admins', async () => {
   await request(app).get('/api/stats/equipments/top').expect(401);
   await request(app).get('/api/stats/loans/duration').expect(401);
 
-  const nonAdmin = auth('Regisseur General');
+  const nonAdmin = auth(REGISSEUR_GENERAL_ROLE);
   await request(app)
     .get('/api/stats/loans/monthly')
     .set(nonAdmin)

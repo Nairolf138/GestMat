@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import logo from './logo.png';
+import { ADMIN_ROLE } from '../../roles';
 
 function NavBar() {
   const { t, i18n } = useTranslation();
@@ -19,7 +20,7 @@ function NavBar() {
     JSON.parse(localStorage.getItem('cart') || '[]').length,
   );
   const [accountOpen, setAccountOpen] = useState(false);
-  const isAdmin = user?.role === 'Administrateur';
+  const isAdmin = user?.role === ADMIN_ROLE;
   const handleLanguageChange = (event) => {
     const newLang = event.target.value;
     i18n.changeLanguage(newLang);

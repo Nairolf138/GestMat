@@ -186,7 +186,7 @@ function Profile() {
               <input
                 name="role"
                 className="form-control"
-                value={form.role}
+                value={t(`roles.${form.role}`)}
                 disabled
               />
             </div>

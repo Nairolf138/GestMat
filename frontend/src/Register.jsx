@@ -202,7 +202,7 @@ function Register() {
             <option value="">{t('common.choose')}</option>
             {(Array.isArray(roles) ? roles : []).map((r) => (
               <option key={r} value={r}>
-                {r}
+                {t(`roles.${r}`)}
               </option>
             ))}
           </select>

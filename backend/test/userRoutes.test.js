@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
 const userRoutes = require('../src/routes/users').default;
+const { ADMIN_ROLE, AUTRE_ROLE } = require('../src/config/roles');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -23,7 +24,7 @@ async function createApp() {
   return { app, client, mongod, db };
 }
 
-function token(id, role = 'Autre') {
+function token(id, role = AUTRE_ROLE) {
   return jwt.sign({ id, role }, 'test', { expiresIn: '1h' });
 }
 
@@ -39,12 +40,12 @@ test('GET /api/users requires admin role', async () => {
   await request(app).get('/api/users').expect(401);
 
   // non admin
-  await request(app).get('/api/users').set(auth('u1', 'Autre')).expect(403);
+  await request(app).get('/api/users').set(auth('u1', AUTRE_ROLE)).expect(403);
 
   // admin
   const res = await request(app)
     .get('/api/users')
-    .set(auth('a1', 'Administrateur'))
+    .set(auth('a1', ADMIN_ROLE))
     .expect(200);
   assert.strictEqual(Array.isArray(res.body), true);
   await client.close();
@@ -62,7 +63,7 @@ test('GET /api/users supports search and pagination', async () => {
   let res = await request(app)
     .get('/api/users')
     .query({ search: 'ali' })
-    .set(auth('a1', 'Administrateur'))
+    .set(auth('a1', ADMIN_ROLE))
     .expect(200);
   assert.strictEqual(res.body.length, 1);
   assert.strictEqual(res.body[0].username, 'alice');
@@ -70,7 +71,7 @@ test('GET /api/users supports search and pagination', async () => {
   res = await request(app)
     .get('/api/users')
     .query({ page: 2, limit: 1 })
-    .set(auth('a1', 'Administrateur'))
+    .set(auth('a1', ADMIN_ROLE))
     .expect(200);
   assert.strictEqual(res.body.length, 1);
   assert.strictEqual(res.body[0].username, 'bob');
@@ -89,7 +90,7 @@ test('PUT /api/users/me updates user and checks auth failures', async () => {
   // success
   const up = await request(app)
     .put('/api/users/me')
-    .set(auth(id.toString(), 'Autre'))
+    .set(auth(id.toString(), AUTRE_ROLE))
     .send({ email: 'bob@example.com' })
     .expect(200);
   assert.strictEqual(up.body.email, 'bob@example.com');
@@ -97,7 +98,7 @@ test('PUT /api/users/me updates user and checks auth failures', async () => {
   // not found
   await request(app)
     .put('/api/users/me')
-    .set(auth(new ObjectId().toString(), 'Autre'))
+    .set(auth(new ObjectId().toString(), AUTRE_ROLE))
     .send({ email: 'x@x.com' })
     .expect(404);
 
@@ -127,23 +128,23 @@ test('PUT /api/users/me ignores role and structure', async () => {
     await db.collection('users').insertOne({
       username: 'bob',
       password: 'pw',
-      role: 'Autre',
+      role: AUTRE_ROLE,
       structure: structure1,
     })
   ).insertedId;
 
   await request(app)
     .put('/api/users/me')
-    .set(auth(id.toString(), 'Autre'))
+    .set(auth(id.toString(), AUTRE_ROLE))
     .send({
-      role: 'Administrateur',
+      role: ADMIN_ROLE,
       structure: structure2.toString(),
       email: 'new@example.com',
     })
     .expect(200);
 
   const user = await db.collection('users').findOne({ _id: id });
-  assert.strictEqual(user.role, 'Autre');
+  assert.strictEqual(user.role, AUTRE_ROLE);
   assert.strictEqual(user.structure.toString(), structure1.toString());
   assert.strictEqual(user.email, 'new@example.com');
   await client.close();
@@ -168,13 +169,13 @@ test('DELETE /api/users/:id respects authorization', async () => {
   // non admin
   await request(app)
     .delete(`/api/users/${id}`)
-    .set(auth('u1', 'Autre'))
+    .set(auth('u1', AUTRE_ROLE))
     .expect(403);
 
   // admin success
   await request(app)
     .delete(`/api/users/${id}`)
-    .set(auth('a1', 'Administrateur'))
+    .set(auth('a1', ADMIN_ROLE))
     .expect(200);
 
   await client.close();
@@ -186,18 +187,18 @@ test('cannot change role via /api/users/me', async () => {
   const id = (
     await db
       .collection('users')
-      .insertOne({ username: 'alice', password: 'pw', role: 'Autre' })
+      .insertOne({ username: 'alice', password: 'pw', role: AUTRE_ROLE })
   ).insertedId;
 
   const res = await request(app)
     .put('/api/users/me')
-    .set(auth(id.toString(), 'Autre'))
-    .send({ role: 'Administrateur' })
+    .set(auth(id.toString(), AUTRE_ROLE))
+    .send({ role: ADMIN_ROLE })
     .expect(200);
-  assert.strictEqual(res.body.role, 'Autre');
+  assert.strictEqual(res.body.role, AUTRE_ROLE);
 
   const user = await db.collection('users').findOne({ _id: id });
-  assert.strictEqual(user.role, 'Autre');
+  assert.strictEqual(user.role, AUTRE_ROLE);
 
   await client.close();
   await mongod.stop();

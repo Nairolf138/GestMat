@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
 const loanRoutes = require('../src/routes/loans').default;
+const { ADMIN_ROLE, AUTRE_ROLE } = require('../src/config/roles');
 const mailer = require('../src/utils/sendMail');
 mailer.sendMail = async () => {};
 const {
@@ -28,7 +29,7 @@ async function createApp() {
 }
 
 const userId = new ObjectId().toString();
-function auth(role = 'Administrateur') {
+function auth(role = ADMIN_ROLE) {
   const token = jwt.sign({ id: userId, role }, 'test', { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }
@@ -51,7 +52,7 @@ test('create, update and delete loan request', async () => {
     { _id: new ObjectId(userId), structure: borrower },
   ]);
   const ownerToken = jwt.sign(
-    { id: ownerUser.toString(), role: 'Administrateur' },
+    { id: ownerUser.toString(), role: ADMIN_ROLE },
     'test',
     { expiresIn: '1h' },
   );
@@ -195,7 +196,7 @@ test('delete loan request unauthorized returns 403', async () => {
   ).insertedId;
   await request(app)
     .delete(`/api/loans/${loanId}`)
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .expect(403);
   await client.close();
   await mongod.stop();
@@ -219,7 +220,7 @@ test('unauthorized delete does not remove loan', async () => {
 
   await request(app)
     .delete(`/api/loans/${loanId}`)
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .expect(403);
 
   const loan = await db.collection('loanrequests').findOne({ _id: loanId });
@@ -246,17 +247,17 @@ test('non-admin can create but cannot update or delete loan', async () => {
   };
   const created = await request(app)
     .post('/api/loans')
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .send(payload)
     .expect(200);
   await request(app)
     .put(`/api/loans/${created.body._id}`)
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .send({ status: 'accepted' })
     .expect(403);
   await request(app)
     .delete(`/api/loans/${created.body._id}`)
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .expect(403);
   await client.close();
   await mongod.stop();
@@ -286,17 +287,17 @@ test('Autre role can cancel and delete its own loan', async () => {
   };
   const created = await request(app)
     .post('/api/loans')
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .send(payload)
     .expect(200);
   await request(app)
     .put(`/api/loans/${created.body._id}`)
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .send({ status: 'cancelled' })
     .expect(200);
   await request(app)
     .delete(`/api/loans/${created.body._id}`)
-    .set(auth('Autre'))
+    .set(auth(AUTRE_ROLE))
     .expect(200);
   await client.close();
   await mongod.stop();

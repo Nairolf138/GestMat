@@ -5,9 +5,9 @@ import rateLimit from 'express-rate-limit';
 
 import validate from '../middleware/validate';
 import { registerValidator, loginValidator } from '../validators/userValidator';
-import ROLES, { ADMIN_ROLE } from '../config/roles';
+import ROLES, { ADMIN_ROLE, AUTRE_ROLE } from '../config/roles';
 
-const DEFAULT_ROLE = 'Autre';
+const DEFAULT_ROLE = AUTRE_ROLE;
 const ALLOWED_ROLES = ROLES.filter((r) => r !== ADMIN_ROLE);
 
 import { JWT_SECRET } from '../config';

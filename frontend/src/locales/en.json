@@ -233,5 +233,13 @@
     "required": "Required",
     "error": "Error",
     "loading": "Loading..."
+  },
+  "roles": {
+    "Administrateur": "Administrator",
+    "Regisseur General": "General manager",
+    "Regisseur Lumiere": "Lighting manager",
+    "Regisseur Son": "Sound manager",
+    "Regisseur Plateau": "Stage manager",
+    "Autre": "Other"
   }
 }

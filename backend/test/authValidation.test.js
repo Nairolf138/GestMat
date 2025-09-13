@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 process.env.JWT_SECRET = 'test';
 const authRoutes = require('../src/routes/auth').default;
+const { ADMIN_ROLE, AUTRE_ROLE } = require('../src/config/roles');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -56,7 +57,7 @@ test('register validates fields, defaults role and prevents duplicates', async (
     .post('/api/auth/register')
     .send({ username: 'bob', password: 'pw' });
   assert.strictEqual(defaultRole.status, 200);
-  assert.strictEqual(defaultRole.body.role, 'Autre');
+  assert.strictEqual(defaultRole.body.role, AUTRE_ROLE);
 
   const dup = await request(app)
     .post('/api/auth/register')
@@ -68,13 +69,13 @@ test('register validates fields, defaults role and prevents duplicates', async (
     .post('/api/auth/register')
     .send({ username: 'alice', password: 'pw', role: 'invalid' });
   assert.strictEqual(invalidRole.status, 200);
-  assert.strictEqual(invalidRole.body.role, 'Autre');
+  assert.strictEqual(invalidRole.body.role, AUTRE_ROLE);
 
   const adminRole = await request(app)
     .post('/api/auth/register')
-    .send({ username: 'eve', password: 'pw', role: 'Administrateur' });
+    .send({ username: 'eve', password: 'pw', role: ADMIN_ROLE });
   assert.strictEqual(adminRole.status, 200);
-  assert.strictEqual(adminRole.body.role, 'Autre');
+  assert.strictEqual(adminRole.body.role, AUTRE_ROLE);
 
   await client.close();
   await mongod.stop();

@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 
 const equipmentRoutes = require('../src/routes/equipments').default;
+const { ADMIN_ROLE, REGISSEUR_SON_ROLE } = require('../src/config/roles');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -22,7 +23,7 @@ async function createApp() {
   return { app, client, mongod };
 }
 
-function auth(role = 'Administrateur') {
+function auth(role = ADMIN_ROLE) {
   const token = jwt.sign({ id: 'u1', role }, 'test', {
     expiresIn: '1h',
   });
@@ -172,11 +173,11 @@ test('list excludes equipments from user structure', async () => {
   await db.collection('users').insertOne({
     _id: u1,
     username: 'u1',
-    role: 'Regisseur Son',
+    role: REGISSEUR_SON_ROLE,
     structure: struct1,
   });
   const token1 = jwt.sign(
-    { id: u1.toString(), role: 'Regisseur Son' },
+    { id: u1.toString(), role: REGISSEUR_SON_ROLE },
     'test',
     { expiresIn: '1h' },
   );
@@ -204,12 +205,12 @@ test('deny updates and deletes when structures differ', async () => {
   const u1 = new ObjectId();
   const u2 = new ObjectId();
   await db.collection('users').insertMany([
-    { _id: u1, username: 'user1', role: 'Regisseur Son', structure: struct1 },
-    { _id: u2, username: 'user2', role: 'Regisseur Son', structure: struct2 },
+    { _id: u1, username: 'user1', role: REGISSEUR_SON_ROLE, structure: struct1 },
+    { _id: u2, username: 'user2', role: REGISSEUR_SON_ROLE, structure: struct2 },
   ]);
 
   const token2 = jwt.sign(
-    { id: u2.toString(), role: 'Regisseur Son' },
+    { id: u2.toString(), role: REGISSEUR_SON_ROLE },
     'test',
     {
       expiresIn: '1h',
@@ -294,12 +295,12 @@ test('reject update on equipment from another structure', async () => {
   const u1 = new ObjectId();
   const u2 = new ObjectId();
   await db.collection('users').insertMany([
-    { _id: u1, username: 'u1', role: 'Regisseur Son', structure: struct1 },
-    { _id: u2, username: 'u2', role: 'Regisseur Son', structure: struct2 },
+    { _id: u1, username: 'u1', role: REGISSEUR_SON_ROLE, structure: struct1 },
+    { _id: u2, username: 'u2', role: REGISSEUR_SON_ROLE, structure: struct2 },
   ]);
 
   const token2 = jwt.sign(
-    { id: u2.toString(), role: 'Regisseur Son' },
+    { id: u2.toString(), role: REGISSEUR_SON_ROLE },
     'test',
     { expiresIn: '1h' },
   );
@@ -343,7 +344,7 @@ test('regisseur can create equipment', async () => {
   };
   const res = await request(app)
     .post('/api/equipments')
-    .set(auth('Regisseur Son'))
+    .set(auth(REGISSEUR_SON_ROLE))
     .send(newEq)
     .expect(200);
   assert.ok(res.body._id);
