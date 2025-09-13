@@ -302,3 +302,65 @@ test('Autre role can cancel and delete its own loan', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('Autre role can accept and refuse loan for own structure', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, structure: owner })
+  ).insertedId;
+  const ownerUser = new ObjectId();
+  const borrowerUser = new ObjectId();
+  await db.collection('users').insertMany([
+    { _id: ownerUser, structure: owner },
+    { _id: borrowerUser, structure: borrower },
+  ]);
+  const ownerToken = jwt.sign(
+    { id: ownerUser.toString(), role: AUTRE_ROLE },
+    'test',
+    { expiresIn: '1h' },
+  );
+
+  const loan1 = (
+    await db.collection('loanrequests').insertOne({
+      owner,
+      borrower,
+      items: [{ equipment: eqId }],
+      requestedBy: borrowerUser,
+      startDate: new Date('2099-01-01'),
+      endDate: new Date('2099-01-02'),
+    })
+  ).insertedId.toString();
+  const accepted = await request(app)
+    .put(`/api/loans/${loan1}`)
+    .set({ Authorization: `Bearer ${ownerToken}` })
+    .send({ status: 'accepted' })
+    .expect(200);
+  assert.strictEqual(accepted.body.status, 'accepted');
+
+  const loan2 = (
+    await db.collection('loanrequests').insertOne({
+      owner,
+      borrower,
+      items: [{ equipment: eqId }],
+      requestedBy: borrowerUser,
+      startDate: new Date('2099-01-01'),
+      endDate: new Date('2099-01-02'),
+    })
+  ).insertedId.toString();
+  const refused = await request(app)
+    .put(`/api/loans/${loan2}`)
+    .set({ Authorization: `Bearer ${ownerToken}` })
+    .send({ status: 'refused' })
+    .expect(200);
+  assert.strictEqual(refused.body.status, 'refused');
+
+  await client.close();
+  await mongod.stop();
+});

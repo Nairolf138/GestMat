@@ -31,7 +31,7 @@ Tous les rôles, sauf *Autre*, peuvent consulter l'ensemble du catalogue. Le rô
 | Regisseur Son | créer et annuler des demandes pour les équipements Son, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
 | Regisseur Lumiere | créer et annuler des demandes pour les équipements Lumière, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
 | Regisseur Plateau | créer et annuler des demandes pour les équipements Plateau, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
-| Autre | aucun | aucun |
+| Autre | créer et annuler ses propres demandes | accepter ou refuser les demandes pour sa structure |
 
 ## Processus de prêt
 
