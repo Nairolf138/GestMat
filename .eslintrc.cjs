@@ -35,7 +35,7 @@ module.exports = {
       },
     },
     {
-      files: ['backend/**/*.{js,ts}'],
+      files: ['backend/**/*.{ts,tsx}'],
       env: {
         node: true,
         es2021: true,
@@ -54,6 +54,23 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-var-requires': 'off',
+        'prefer-const': 'off',
+      },
+    },
+    {
+      files: ['backend/**/*.js'],
+      env: {
+        node: true,
+        es2021: true,
+      },
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'script',
+      },
+      extends: ['eslint:recommended', 'prettier'],
+      rules: {
+        'no-unused-vars': 'off',
         'prefer-const': 'off',
       },
     },
