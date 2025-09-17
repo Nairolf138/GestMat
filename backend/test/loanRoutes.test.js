@@ -92,6 +92,25 @@ test('create, update and delete loan request', async () => {
   assert.strictEqual(list1.body.length, 1);
 
   const id = res.body._id;
+  const single = await request(app)
+    .get(`/api/loans/${id}`)
+    .set(auth())
+    .expect(200);
+  assert.strictEqual(single.body._id.toString(), id.toString());
+  assert.strictEqual(single.body.owner._id.toString(), owner.toString());
+  assert.strictEqual(
+    single.body.borrower._id.toString(),
+    borrower.toString(),
+  );
+  assert.strictEqual(
+    single.body.requestedBy._id.toString(),
+    userId.toString(),
+  );
+  assert.strictEqual(
+    single.body.items[0].equipment._id.toString(),
+    eqId.toString(),
+  );
+
   const upd = await request(app)
     .put(`/api/loans/${id}`)
     .set({ Authorization: `Bearer ${ownerToken}` })
@@ -119,6 +138,18 @@ test('create, update and delete loan request', async () => {
     .send(payload)
     .expect(200);
   assert.ok(res2.body._id);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('get loan request returns 404 when not found', async () => {
+  const { app, client, mongod } = await createApp();
+
+  await request(app)
+    .get(`/api/loans/${new ObjectId().toString()}`)
+    .set(auth())
+    .expect(404);
 
   await client.close();
   await mongod.stop();

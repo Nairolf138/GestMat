@@ -90,6 +90,17 @@ export async function listLoans(
   return { loans, total: loans.length };
 }
 
+export async function getLoanRequestById(
+  db: Db,
+  id: string,
+): Promise<LoanRequest | null> {
+  const result = await findLoans(db, { _id: new ObjectId(id) });
+  if (Array.isArray(result)) {
+    return result[0] || null;
+  }
+  return result.loans[0] || null;
+}
+
 export async function createLoanRequest(
   db: Db,
   data: LoanRequest,
@@ -411,6 +422,7 @@ export async function deleteLoanRequest(
 
 export default {
   listLoans,
+  getLoanRequestById,
   createLoanRequest,
   updateLoanRequest,
   deleteLoanRequest,
