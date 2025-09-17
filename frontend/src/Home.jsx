@@ -10,6 +10,7 @@ import LoanPreviewSection from './components/LoanPreviewSection.jsx';
 import DashboardSummary from './components/DashboardSummary.jsx';
 import Notifications from './components/Notifications.jsx';
 import OnboardingTour from './components/OnboardingTour.jsx';
+import { ADMIN_ROLE } from '../../roles';
 
 function Home() {
   const { t } = useTranslation();
@@ -39,6 +40,7 @@ function Home() {
   }, []);
 
   const now = useMemo(() => new Date(), []);
+  const isAdmin = user?.role === ADMIN_ROLE;
 
   const pending = useMemo(
     () => loans.filter((l) => l.status === 'pending'),
@@ -170,7 +172,7 @@ function Home() {
         {user && (
           <p>{t('home.greeting', { name: user.firstName || user.username })}</p>
         )}
-        {user && <DashboardSummary />}
+        {isAdmin && <DashboardSummary />}
         <LoanPreviewSection
           title={t('home.recent_requests')}
           loans={pending}
