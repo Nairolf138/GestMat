@@ -157,7 +157,8 @@
     "status": {
       "pending": "Pending",
       "accepted": "Accepted",
-      "refused": "Refused"
+      "refused": "Refused",
+      "cancelled": "Cancelled"
     },
     "items": "{{count}} equipment",
     "items_plural": "{{count}} equipments"
