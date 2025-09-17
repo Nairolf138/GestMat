@@ -1,8 +1,23 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import Loading from '../Loading.jsx';
 
+const statusOptions = ['pending', 'accepted', 'refused', 'cancelled'];
+
+const summarizeItems = (items = []) =>
+  items
+    .map((item) => {
+      const name = item?.equipment?.name;
+      if (!name) return '';
+      const quantity = item?.quantity;
+      return `${name}${quantity ? ` x${quantity}` : ''}`;
+    })
+    .filter(Boolean)
+    .join(', ');
+
 function ManageLoans() {
+  const { t } = useTranslation();
   const [loans, setLoans] = useState([]);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
@@ -57,24 +72,33 @@ function ManageLoans() {
         <Loading />
       ) : (
         <ul className="list-group">
-          {loans.map((l) => (
-            <li key={l._id} className="list-group-item">
-              <div>
-                <strong>{l.equipment?.name || l.equipment}</strong> -{' '}
-                {l.borrower?.name || l.borrower} - {l.status}
-              </div>
-              <select
-                className="form-select w-auto mt-2"
-                value={l.status}
-                onChange={(e) => update(l._id, e.target.value)}
-              >
-                <option value="pending">pending</option>
-                <option value="approved">approved</option>
-                <option value="returned">returned</option>
-                <option value="refused">refused</option>
-              </select>
-            </li>
-          ))}
+          {loans.map((l) => {
+            const items = summarizeItems(l.items);
+            const itemCount = l.items?.length ?? 0;
+            const borrower = l.borrower?.name || l.borrower || '';
+            const statusLabel = t(`loans.status.${l.status}`, {
+              defaultValue: l.status,
+            });
+            return (
+              <li key={l._id} className="list-group-item">
+                <div>
+                  <strong>{items || t('loans.items', { count: itemCount })}</strong> -{' '}
+                  {borrower} - {statusLabel}
+                </div>
+                <select
+                  className="form-select w-auto mt-2"
+                  value={l.status}
+                  onChange={(e) => update(l._id, e.target.value)}
+                >
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {t(`loans.status.${status}`, { defaultValue: status })}
+                    </option>
+                  ))}
+                </select>
+              </li>
+            );
+          })}
         </ul>
       )}
       <div className="mt-2">
