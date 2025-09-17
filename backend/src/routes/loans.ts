@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import {
   listLoans,
+  getLoanRequestById,
   createLoanRequest,
   updateLoanRequest,
   deleteLoanRequest,
@@ -13,6 +14,7 @@ import {
   updateLoanValidator,
 } from '../validators/loanValidator';
 import permissions from '../config/permissions';
+import { notFound } from '../utils/errors';
 
 const { MANAGE_LOANS } = permissions;
 
@@ -32,6 +34,24 @@ router.get(
         : undefined;
       const loans = await listLoans(db, req.user!, page, limit);
       res.json(loans);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  '/:id',
+  auth(),
+  checkId(),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const db = req.app.locals.db;
+      const loan = await getLoanRequestById(db, req.params.id);
+      if (!loan) {
+        return next(notFound('Loan request not found'));
+      }
+      res.json(loan);
     } catch (err) {
       next(err);
     }
