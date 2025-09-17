@@ -10,7 +10,6 @@ import LoanPreviewSection from './components/LoanPreviewSection.jsx';
 import DashboardSummary from './components/DashboardSummary.jsx';
 import Notifications from './components/Notifications.jsx';
 import OnboardingTour from './components/OnboardingTour.jsx';
-import { ADMIN_ROLE } from '../../roles';
 
 function Home() {
   const { t } = useTranslation();
@@ -37,15 +36,11 @@ function Home() {
         setLoans([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const now = useMemo(() => new Date(), []);
-  const isAdmin = user?.role === ADMIN_ROLE;
 
-  const pending = useMemo(
-    () => loans.filter((l) => l.status === 'pending'),
-    [loans, user, now],
-  );
+  const pending = useMemo(() => loans.filter((l) => l.status === 'pending'), [loans]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -101,6 +96,15 @@ function Home() {
         return start && start > now;
       }),
     [loans, user, now],
+  );
+
+  const counts = useMemo(
+    () => ({
+      pending: pending.length,
+      ongoing: currentLoans.length,
+      upcoming: upcomingLoans.length,
+    }),
+    [pending, currentLoans, upcomingLoans],
   );
 
   if (loading) {
@@ -172,7 +176,7 @@ function Home() {
         {user && (
           <p>{t('home.greeting', { name: user.firstName || user.username })}</p>
         )}
-        {isAdmin && <DashboardSummary />}
+        {user && <DashboardSummary counts={counts} />}
         <LoanPreviewSection
           title={t('home.recent_requests')}
           loans={pending}
