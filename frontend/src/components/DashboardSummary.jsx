@@ -1,15 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
+import { AuthContext } from '../AuthContext.jsx';
+import { ADMIN_ROLE } from '../../../roles';
 
 function DashboardSummary() {
   const { t } = useTranslation();
+  const { user } = useContext(AuthContext);
   const [counts, setCounts] = useState({ pending: 0, ongoing: 0, upcoming: 0 });
   const [error, setError] = useState('');
+  const isAdmin = user?.role === ADMIN_ROLE;
 
   useEffect(() => {
-    api('/stats/loans')
+    if (!isAdmin) return undefined;
+
+    let isMounted = true;
+    const controller = new AbortController();
+    setError('');
+    api('/stats/loans', { signal: controller.signal })
       .then((data) => {
+        if (!isMounted) return;
         const map = data.reduce((acc, { _id, count }) => {
           acc[_id] = count;
           return acc;
@@ -20,8 +30,18 @@ function DashboardSummary() {
           upcoming: map.upcoming || 0,
         });
       })
-      .catch(() => setError(t('common.error')));
-  }, [t]);
+      .catch(() => {
+        if (!isMounted) return;
+        setError(t('common.error'));
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [isAdmin, t]);
+
+  if (!isAdmin) return null;
 
   if (error) return <div className="alert alert-danger">{error}</div>;
 
