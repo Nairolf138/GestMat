@@ -5,6 +5,7 @@ import {
   updateLoan,
   deleteLoan,
   LoanRequest,
+  LoanItem,
 } from '../models/LoanRequest';
 import { sendMail } from '../utils/sendMail';
 import { getLoanRecipients } from '../utils/getLoanRecipients';
@@ -211,7 +212,7 @@ export async function updateLoanRequest(
     const keys = Object.keys(data);
     const status = (data as any).status;
     const types = await Promise.all(
-      (loan.items || []).map(async (item) => {
+      (loan.items || []).map(async (item: LoanItem) => {
         const eq = await db
           .collection('equipments')
           .findOne({ _id: item.equipment as any }, {
