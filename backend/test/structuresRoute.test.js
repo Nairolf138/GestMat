@@ -31,6 +31,15 @@ test('GET /api/structures is public', async () => {
   await mongod.stop();
 });
 
+test('GET /api/structures includes CORS header', async () => {
+  const { app, client, mongod } = await createApp();
+  await dbSetup(client.db());
+  const res = await request(app).get('/api/structures').expect(200);
+  assert.strictEqual(res.headers['access-control-allow-origin'], '*');
+  await client.close();
+  await mongod.stop();
+});
+
 async function dbSetup(db) {
   await db
     .collection('structures')
