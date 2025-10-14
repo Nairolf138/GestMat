@@ -4,7 +4,7 @@ import ManageUsers from '../src/admin/ManageUsers.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
-import { AUTRE_ROLE } from '../../roles';
+import { AUTRE_ROLE } from '../roles';
 import { canManageEquipment } from '../src/utils.js';
 
 describe('ManageUsers', () => {

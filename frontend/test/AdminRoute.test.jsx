@@ -4,7 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AdminRoute from '../src/AdminRoute.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
-import { ADMIN_ROLE, AUTRE_ROLE } from '../../roles';
+import { ADMIN_ROLE, AUTRE_ROLE } from '../roles';
 
 describe('AdminRoute', () => {
   it('redirects to login when unauthenticated', () => {

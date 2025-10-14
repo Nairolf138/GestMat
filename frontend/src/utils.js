@@ -4,7 +4,7 @@ import {
   REGISSEUR_LUMIERE_ROLE,
   REGISSEUR_SON_ROLE,
   REGISSEUR_PLATEAU_ROLE
-} from '../../roles';
+} from '../roles';
 
 export const confirmDialog = (message) => window.confirm(message);
 

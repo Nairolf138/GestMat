@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import logo from './logo.png';
-import { ADMIN_ROLE } from '../../roles';
+import { ADMIN_ROLE } from '../roles';
 
 function NavBar() {
   const { t, i18n } = useTranslation();
