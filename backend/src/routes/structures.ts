@@ -16,6 +16,11 @@ const { MANAGE_STRUCTURES } = permissions;
 
 const router = express.Router();
 
+router.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 // Expose structures list without authentication so new users can select a
 // structure during registration. Other routes remain protected.
 router.get('/', async (req: Request, res: Response) => {
