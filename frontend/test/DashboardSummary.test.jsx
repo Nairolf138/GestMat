@@ -4,7 +4,7 @@ import { render, waitFor } from '@testing-library/react';
 import DashboardSummary from '../src/components/DashboardSummary.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
-import { ADMIN_ROLE, AUTRE_ROLE } from '../../roles';
+import { ADMIN_ROLE, AUTRE_ROLE } from '../roles';
 
 vi.mock('../src/api.js', () => ({ api: vi.fn() }));
 import { api } from '../src/api.js';

@@ -5,7 +5,7 @@ import ROLES, {
   REGISSEUR_SON_ROLE,
   REGISSEUR_PLATEAU_ROLE,
   AUTRE_ROLE,
-} from '../../../roles';
+} from '../../../frontend/roles';
 
 export {
   ADMIN_ROLE,

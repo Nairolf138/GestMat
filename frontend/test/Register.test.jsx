@@ -8,7 +8,7 @@ vi.mock('../src/api.js');
 import * as api from '../src/api.js';
 import { GlobalContext } from '../src/GlobalContext.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
-import { ADMIN_ROLE } from '../../roles';
+import { ADMIN_ROLE } from '../roles';
 
 describe('Register', () => {
   it('marks username invalid on server error', async () => {

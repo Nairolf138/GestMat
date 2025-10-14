@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Home from '../src/Home.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
-import { AUTRE_ROLE } from '../../roles';
+import { AUTRE_ROLE } from '../roles';
 
 vi.mock('../src/api.js', () => ({ api: vi.fn() }));
 import { api } from '../src/api.js';

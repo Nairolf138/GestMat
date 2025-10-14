@@ -13,7 +13,7 @@ import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
-import { REGISSEUR_SON_ROLE, AUTRE_ROLE } from '../../roles';
+import { REGISSEUR_SON_ROLE, AUTRE_ROLE } from '../roles';
 
 describe('Equipments', () => {
   let queryClient;
