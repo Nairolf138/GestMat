@@ -52,14 +52,18 @@ router.get(
         { $sort: { _id: 1 } },
       );
 
-      const agg = await db
+      type MonthlyCount = { _id: string; count: number };
+
+      const agg = (await db
         .collection('loanrequests')
         .aggregate(pipeline)
-        .toArray();
+        .toArray()) as MonthlyCount[];
 
       // ensure months with zero counts are included
-      const result: { _id: string; count: number }[] = [];
-      const counts = new Map(agg.map(({ _id, count }) => [_id, count]));
+      const result: MonthlyCount[] = [];
+      const counts = new Map<string, number>(
+        agg.map(({ _id, count }) => [_id, count] as const),
+      );
 
       const start = from
         ? new Date(from.getFullYear(), from.getMonth(), 1)
