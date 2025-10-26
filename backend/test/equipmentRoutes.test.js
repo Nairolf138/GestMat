@@ -9,6 +9,7 @@ process.env.JWT_SECRET = 'test';
 
 const equipmentRoutes = require('../src/routes/equipments').default;
 const { ADMIN_ROLE, REGISSEUR_SON_ROLE } = require('../src/config/roles');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -19,7 +20,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/equipments', equipmentRoutes);
+  app.use(withApiPrefix('/equipments'), equipmentRoutes);
   return { app, client, mongod };
 }
 
@@ -40,29 +41,29 @@ test('create, list, update and delete equipments', async () => {
     availableQty: 1,
   };
   const res = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send(newEq)
     .expect(200);
   assert.ok(res.body._id);
 
   const list1 = await request(app)
-    .get('/api/equipments')
+    .get(withApiPrefix('/equipments'))
     .set(auth())
     .expect(200);
   assert.strictEqual(list1.body.length, 1);
 
   const id = res.body._id;
   const upd = await request(app)
-    .put(`/api/equipments/${id}`)
+    .put(withApiPrefix(`/equipments/${id}`))
     .set(auth())
     .send({ location: 'store' })
     .expect(200);
   assert.strictEqual(upd.body.location, 'store');
 
-  await request(app).delete(`/api/equipments/${id}`).set(auth()).expect(200);
+  await request(app).delete(withApiPrefix(`/equipments/${id}`)).set(auth()).expect(200);
   const list2 = await request(app)
-    .get('/api/equipments')
+    .get(withApiPrefix('/equipments'))
     .set(auth())
     .expect(200);
   assert.strictEqual(list2.body.length, 0);
@@ -80,7 +81,7 @@ test('default availableQty to totalQty when missing', async () => {
     totalQty: 3,
   };
   const res = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send(newEq)
     .expect(200);
@@ -121,19 +122,19 @@ test('supports filtering and pagination', async () => {
     },
   ]);
   const filterRes = await request(app)
-    .get('/api/equipments?search=Mic&type=Sound&location=Studio')
+    .get(withApiPrefix('/equipments?search=Mic&type=Sound&location=Studio'))
     .set(auth())
     .expect(200);
   assert.strictEqual(filterRes.body.length, 1);
   assert.strictEqual(filterRes.body[0].name, 'Mic');
   const page1 = await request(app)
-    .get('/api/equipments?page=1&limit=2')
+    .get(withApiPrefix('/equipments?page=1&limit=2'))
     .set(auth())
     .expect(200);
   assert.strictEqual(page1.body.length, 2);
   assert.strictEqual(page1.body[0].name, 'Cam');
   const page2 = await request(app)
-    .get('/api/equipments?page=2&limit=2')
+    .get(withApiPrefix('/equipments?page=2&limit=2'))
     .set(auth())
     .expect(200);
   assert.strictEqual(page2.body.length, 1);
@@ -182,7 +183,7 @@ test('list excludes equipments from user structure', async () => {
     { expiresIn: '1h' },
   );
   const res = await request(app)
-    .get('/api/equipments')
+    .get(withApiPrefix('/equipments'))
     .set({ Authorization: `Bearer ${token1}` })
     .expect(200);
   assert.strictEqual(res.body.length, 1);
@@ -225,20 +226,20 @@ test('deny updates and deletes when structures differ', async () => {
     availableQty: 1,
   };
   const created = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send(newEq)
     .expect(200);
   const id = created.body._id;
 
   await request(app)
-    .put(`/api/equipments/${id}`)
+    .put(withApiPrefix(`/equipments/${id}`))
     .set({ Authorization: `Bearer ${token2}` })
     .send({ location: 'elsewhere' })
     .expect(403);
 
   await request(app)
-    .delete(`/api/equipments/${id}`)
+    .delete(withApiPrefix(`/equipments/${id}`))
     .set({ Authorization: `Bearer ${token2}` })
     .expect(403);
 
@@ -263,7 +264,9 @@ test('check availability endpoint', async () => {
 
   const res = await request(app)
     .get(
-      `/api/equipments/${eqId}/availability?start=2024-01-05&end=2024-01-06&quantity=3`,
+      withApiPrefix(
+        `/equipments/${eqId}/availability?start=2024-01-05&end=2024-01-06&quantity=3`,
+      ),
     )
     .set(auth())
     .expect(200);
@@ -271,7 +274,9 @@ test('check availability endpoint', async () => {
 
   const res2 = await request(app)
     .get(
-      `/api/equipments/${eqId}/availability?start=2024-02-01&end=2024-02-02&quantity=3`,
+      withApiPrefix(
+        `/equipments/${eqId}/availability?start=2024-02-01&end=2024-02-02&quantity=3`,
+      ),
     )
     .set(auth())
     .expect(200);
@@ -306,7 +311,7 @@ test('reject update on equipment from another structure', async () => {
   );
 
   const created = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send({
       name: 'Mic',
@@ -319,7 +324,7 @@ test('reject update on equipment from another structure', async () => {
   const eqId = created.body._id;
 
   await request(app)
-    .put(`/api/equipments/${eqId}`)
+    .put(withApiPrefix(`/equipments/${eqId}`))
     .set({ Authorization: `Bearer ${token2}` })
     .send({ location: 'elsewhere' })
     .expect(403);
@@ -343,7 +348,7 @@ test('regisseur can create equipment', async () => {
     availableQty: 1,
   };
   const res = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth(REGISSEUR_SON_ROLE))
     .send(newEq)
     .expect(200);

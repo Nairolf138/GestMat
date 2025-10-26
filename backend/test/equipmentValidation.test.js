@@ -9,6 +9,7 @@ process.env.JWT_SECRET = 'test';
 
 const equipmentRoutes = require('../src/routes/equipments').default;
 const { ADMIN_ROLE } = require('../src/config/roles');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -19,7 +20,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/equipments', equipmentRoutes);
+  app.use(withApiPrefix('/equipments'), equipmentRoutes);
   return { app, client, mongod };
 }
 
@@ -40,7 +41,7 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
     availableQty: 3,
   };
   const res1 = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send(payload)
     .expect(400);
@@ -49,7 +50,7 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
   }
 
   const valid = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send({
       name: 'Mic',
@@ -61,7 +62,7 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
     .expect(200);
 
   await request(app)
-    .put(`/api/equipments/${valid.body._id}`)
+    .put(withApiPrefix(`/equipments/${valid.body._id}`))
     .set(auth())
     .send({ totalQty: 2, availableQty: 3 })
     .expect(400);
@@ -75,7 +76,7 @@ test('reject invalid type values and normalize case/accents', async () => {
 
   // invalid type on create
   const res1 = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send({ name: 'Mic', type: 'Unknown', condition: 'Neuf', totalQty: 1 })
     .expect(400);
@@ -85,7 +86,7 @@ test('reject invalid type values and normalize case/accents', async () => {
 
   // valid type variation on create
   const res2 = await request(app)
-    .post('/api/equipments')
+    .post(withApiPrefix('/equipments'))
     .set(auth())
     .send({
       name: 'Light',
@@ -101,14 +102,14 @@ test('reject invalid type values and normalize case/accents', async () => {
 
   // invalid type on update
   await request(app)
-    .put(`/api/equipments/${id}`)
+    .put(withApiPrefix(`/equipments/${id}`))
     .set(auth())
     .send({ type: 'bad' })
     .expect(400);
 
   // valid type variation on update
   const res3 = await request(app)
-    .put(`/api/equipments/${id}`)
+    .put(withApiPrefix(`/equipments/${id}`))
     .set(auth())
     .send({ type: 'son' })
     .expect(200);

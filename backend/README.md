@@ -29,7 +29,8 @@ The API reads its configuration from the following variables:
 | `JWT_SECRET`     | **Required.** Secret key used to sign JSON Web Tokens.                                        |
 | `PORT`           | Port for the HTTP server. Defaults to `5000`.                                                 |
 | `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. If unset, the API reflects the requester origin. |
-| `API_URL`        | Public base URL of the API. Defaults to `http://localhost:<PORT>/api`.                        |
+| `API_PREFIX`     | Path prefix for mounting API routes. Defaults to `/api`; set to an empty string to serve at the domain root. |
+| `API_URL`        | Public base URL of the API, including the prefix. Defaults to `http://localhost:<PORT><API_PREFIX>`. |
 | `SMTP_URL`       | SMTP connection string to enable email notifications.                                         |
 | `NOTIFY_EMAIL`   | Optional recipient address for notification emails.                                           |
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
@@ -37,11 +38,13 @@ The API reads its configuration from the following variables:
 If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
 to a comma-separated whitelist to lock the API down to trusted origins.
 
-JWT tokens returned by the `/api/auth/login` endpoint now include an expiry
+All example routes below assume the default `API_PREFIX` of `/api`. If you set `API_PREFIX=''`, drop the `/api` prefix from each path.
+
+JWT tokens returned by the `POST <API_PREFIX>/auth/login` endpoint now include an expiry
 time of one hour.
 
 To obtain a new token when the current one expires, send a `POST` request to
-`/api/auth/refresh`. The endpoint expects a secure refresh token (for example
+`<API_PREFIX>/auth/refresh`. The endpoint expects a secure refresh token (for example
 stored in an HTTP-only cookie) and responds with `{ token }` containing a fresh
 JWT.
 
@@ -139,10 +142,10 @@ On startup the API ensures several indexes to optimize common lookups:
 The API provides aggregated statistics related to loans and equipment. All of
 these routes require authentication.
 
-- `GET /api/stats/loans` – count loan requests grouped by status.
-- `GET /api/stats/loans/monthly` – count loan requests grouped by month of the
+- `GET <API_PREFIX>/stats/loans` – count loan requests grouped by status.
+- `GET <API_PREFIX>/stats/loans/monthly` – count loan requests grouped by month of the
   `startDate` field.
-- `GET /api/stats/equipments/top?limit=5` – list the most requested equipment
+- `GET <API_PREFIX>/stats/equipments/top?limit=5` – list the most requested equipment
   sorted by total quantity, limited by the optional `limit` query parameter
   (default: `5`).
 

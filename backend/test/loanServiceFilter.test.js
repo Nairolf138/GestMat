@@ -23,13 +23,33 @@ test('listLoans filters documents by user structure', async () => {
   await db
     .collection('users')
     .insertOne({ _id: new ObjectId(userId), structure: struct1 });
+  const eq1 = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', structure: struct1, type: 'Son' })
+  ).insertedId;
+  const eq2 = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E2', structure: struct2, type: 'Son' })
+  ).insertedId;
 
   await db.collection('loanrequests').insertMany([
-    { owner: struct1, borrower: struct2 },
-    { owner: struct2, borrower: struct1 },
-    { owner: struct1, borrower: struct1 },
-    { owner: struct2, borrower: struct2 },
-    { owner: struct2, borrower: struct2 },
+    { owner: struct1, borrower: struct2, items: [{ equipment: eq1 }] },
+    {
+      owner: struct2,
+      borrower: struct1,
+      items: [{ equipment: eq2 }],
+      requestedBy: new ObjectId(userId),
+    },
+    {
+      owner: struct1,
+      borrower: struct1,
+      items: [{ equipment: eq1 }],
+      requestedBy: new ObjectId(userId),
+    },
+    { owner: struct2, borrower: struct2, items: [{ equipment: eq2 }] },
+    { owner: struct2, borrower: struct2, items: [{ equipment: eq2 }] },
   ]);
 
   const total = await db.collection('loanrequests').countDocuments();

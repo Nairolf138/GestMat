@@ -8,7 +8,7 @@ import csrf from 'csurf';
 import { connectDB, closeDB } from './config/db';
 import { ApiError } from './utils/errors';
 import logger from './utils/logger';
-import { PORT, CORS_ORIGIN, NODE_ENV, RATE_LIMIT_MAX } from './config';
+import { PORT, CORS_ORIGIN, NODE_ENV, RATE_LIMIT_MAX, API_PREFIX } from './config';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import structureRoutes from './routes/structures';
@@ -65,6 +65,14 @@ app.use(limiter);
 
 client.collectDefaultMetrics();
 
+const withApiPrefix = (path: string): string => {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  if (!API_PREFIX) {
+    return normalizedPath;
+  }
+  return `${API_PREFIX}${normalizedPath === '/' ? '' : normalizedPath}`;
+};
+
 export async function start(
   connect: () => Promise<Db> = connectDB,
 ): Promise<Server> {
@@ -85,13 +93,13 @@ export async function start(
     process.exit(1);
   }
 
-  app.use('/api/auth', authRoutes);
-  app.use('/api/users', userRoutes);
-  app.use('/api/structures', structureRoutes);
-  app.use('/api/equipments', equipmentRoutes);
-  app.use('/api/loans', loanRoutes);
-  app.use('/api/stats', statsRoutes);
-  app.use('/api/roles', rolesRoutes);
+  app.use(withApiPrefix('/auth'), authRoutes);
+  app.use(withApiPrefix('/users'), userRoutes);
+  app.use(withApiPrefix('/structures'), structureRoutes);
+  app.use(withApiPrefix('/equipments'), equipmentRoutes);
+  app.use(withApiPrefix('/loans'), loanRoutes);
+  app.use(withApiPrefix('/stats'), statsRoutes);
+  app.use(withApiPrefix('/roles'), rolesRoutes);
 
   app.get('/metrics', async (req: Request, res: Response) => {
     res.set('Content-Type', client.register.contentType);

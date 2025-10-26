@@ -19,6 +19,7 @@ mailer.sendMail = async () => {};
 const {
   checkEquipmentAvailability,
 } = require('../src/utils/checkAvailability');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -29,7 +30,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/loans', loanRoutes);
+  app.use(withApiPrefix('/loans'), loanRoutes);
   return { app, client, mongod };
 }
 
@@ -71,7 +72,7 @@ test('create, update and delete loan request', async () => {
   };
 
   const res = await request(app)
-    .post('/api/loans')
+    .post(withApiPrefix('/loans'))
     .set(auth())
     .send(payload)
     .expect(200);
@@ -88,12 +89,12 @@ test('create, update and delete loan request', async () => {
   );
   assert.strictEqual(availAfterCreate.availableQty, 0);
 
-  const list1 = await request(app).get('/api/loans').set(auth()).expect(200);
+  const list1 = await request(app).get(withApiPrefix('/loans')).set(auth()).expect(200);
   assert.strictEqual(list1.body.length, 1);
 
   const id = res.body._id;
   const single = await request(app)
-    .get(`/api/loans/${id}`)
+    .get(withApiPrefix(`/loans/${id}`))
     .set(auth())
     .expect(200);
   assert.strictEqual(single.body._id.toString(), id.toString());
@@ -112,14 +113,14 @@ test('create, update and delete loan request', async () => {
   );
 
   const upd = await request(app)
-    .put(`/api/loans/${id}`)
+    .put(withApiPrefix(`/loans/${id}`))
     .set({ Authorization: `Bearer ${ownerToken}` })
     .send({ status: 'accepted' })
     .expect(200);
   assert.strictEqual(upd.body.status, 'accepted');
   assert.strictEqual(upd.body.processedBy._id.toString(), ownerUser.toString());
 
-  await request(app).delete(`/api/loans/${id}`).set(auth()).expect(200);
+  await request(app).delete(withApiPrefix(`/loans/${id}`)).set(auth()).expect(200);
   const availAfterDelete = await checkEquipmentAvailability(
     db,
     eqId.toString(),
@@ -128,12 +129,12 @@ test('create, update and delete loan request', async () => {
     1,
   );
   assert.strictEqual(availAfterDelete.availableQty, 1);
-  const list2 = await request(app).get('/api/loans').set(auth()).expect(200);
+  const list2 = await request(app).get(withApiPrefix('/loans')).set(auth()).expect(200);
   assert.strictEqual(list2.body.length, 0);
 
   // loan can be created again after deletion (return scenario)
   const res2 = await request(app)
-    .post('/api/loans')
+    .post(withApiPrefix('/loans'))
     .set(auth())
     .send(payload)
     .expect(200);
@@ -147,7 +148,7 @@ test('get loan request returns 404 when not found', async () => {
   const { app, client, mongod } = await createApp();
 
   await request(app)
-    .get(`/api/loans/${new ObjectId().toString()}`)
+    .get(withApiPrefix(`/loans/${new ObjectId().toString()}`))
     .set(auth())
     .expect(404);
 
@@ -179,9 +180,9 @@ test('loan creation fails on quantity conflict', async () => {
     endDate: '2024-01-02',
   };
 
-  await request(app).post('/api/loans').set(auth()).send(payload).expect(200);
+  await request(app).post(withApiPrefix('/loans')).set(auth()).send(payload).expect(200);
 
-  await request(app).post('/api/loans').set(auth()).send(payload).expect(400);
+  await request(app).post(withApiPrefix('/loans')).set(auth()).send(payload).expect(400);
 
   await client.close();
   await mongod.stop();
@@ -209,7 +210,7 @@ test('reject loan request to own structure', async () => {
     endDate: '2024-01-02',
   };
 
-  await request(app).post('/api/loans').set(auth()).send(payload).expect(403);
+  await request(app).post(withApiPrefix('/loans')).set(auth()).send(payload).expect(403);
 
   await client.close();
   await mongod.stop();
@@ -231,7 +232,7 @@ test('delete loan request unauthorized returns 403', async () => {
       .insertOne({ owner: struct2, borrower: struct2 })
   ).insertedId;
   await request(app)
-    .delete(`/api/loans/${loanId}`)
+    .delete(withApiPrefix(`/loans/${loanId}`))
     .set(auth(AUTRE_ROLE))
     .expect(403);
   await client.close();
@@ -255,7 +256,7 @@ test('unauthorized delete does not remove loan', async () => {
   ).insertedId;
 
   await request(app)
-    .delete(`/api/loans/${loanId}`)
+    .delete(withApiPrefix(`/loans/${loanId}`))
     .set(auth(AUTRE_ROLE))
     .expect(403);
 
@@ -269,30 +270,40 @@ test('unauthorized delete does not remove loan', async () => {
 test('non-admin can create but cannot update or delete loan', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
-  const struct = (await db.collection('structures').insertOne({ name: 'S1' }))
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' }))
     .insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: borrower });
   const eqId = (
     await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
   ).insertedId;
   const payload = {
-    owner: struct.toString(),
-    borrower: struct.toString(),
+    owner: owner.toString(),
+    borrower: borrower.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
     endDate: '2024-01-02',
   };
   const created = await request(app)
-    .post('/api/loans')
+    .post(withApiPrefix('/loans'))
     .set(auth(AUTRE_ROLE))
     .send(payload)
     .expect(200);
   await request(app)
-    .put(`/api/loans/${created.body._id}`)
+    .put(withApiPrefix(`/loans/${created.body._id}`))
     .set(auth(AUTRE_ROLE))
     .send({ status: 'accepted' })
     .expect(403);
   await request(app)
-    .delete(`/api/loans/${created.body._id}`)
+    .put(withApiPrefix(`/loans/${created.body._id}`))
+    .set(auth())
+    .send({ status: 'accepted' })
+    .expect(200);
+  await request(app)
+    .delete(withApiPrefix(`/loans/${created.body._id}`))
     .set(auth(AUTRE_ROLE))
     .expect(403);
   await client.close();
@@ -322,17 +333,17 @@ test('Autre role can cancel and delete its own loan', async () => {
     endDate: '2099-01-02',
   };
   const created = await request(app)
-    .post('/api/loans')
+    .post(withApiPrefix('/loans'))
     .set(auth(AUTRE_ROLE))
     .send(payload)
     .expect(200);
   await request(app)
-    .put(`/api/loans/${created.body._id}`)
+    .put(withApiPrefix(`/loans/${created.body._id}`))
     .set(auth(AUTRE_ROLE))
     .send({ status: 'cancelled' })
     .expect(200);
   await request(app)
-    .delete(`/api/loans/${created.body._id}`)
+    .delete(withApiPrefix(`/loans/${created.body._id}`))
     .set(auth(AUTRE_ROLE))
     .expect(200);
   await client.close();
@@ -374,7 +385,7 @@ test('Autre role can accept and refuse loan for own structure', async () => {
     })
   ).insertedId.toString();
   const accepted = await request(app)
-    .put(`/api/loans/${loan1}`)
+    .put(withApiPrefix(`/loans/${loan1}`))
     .set({ Authorization: `Bearer ${ownerToken}` })
     .send({ status: 'accepted' })
     .expect(200);
@@ -391,7 +402,7 @@ test('Autre role can accept and refuse loan for own structure', async () => {
     })
   ).insertedId.toString();
   const refused = await request(app)
-    .put(`/api/loans/${loan2}`)
+    .put(withApiPrefix(`/loans/${loan2}`))
     .set({ Authorization: `Bearer ${ownerToken}` })
     .send({ status: 'refused' })
     .expect(200);
@@ -477,7 +488,7 @@ test('loan listing enforces requester visibility', async () => {
   );
 
   const resRegSon = await request(app)
-    .get('/api/loans')
+    .get(withApiPrefix('/loans'))
     .set({ Authorization: `Bearer ${regSonToken}` })
     .expect(200);
   assert.strictEqual(resRegSon.body.length, 4);
@@ -495,7 +506,7 @@ test('loan listing enforces requester visibility', async () => {
   );
 
   const resAutre = await request(app)
-    .get('/api/loans')
+    .get(withApiPrefix('/loans'))
     .set({ Authorization: `Bearer ${autreToken}` })
     .expect(200);
   assert.strictEqual(resAutre.body.length, 3);

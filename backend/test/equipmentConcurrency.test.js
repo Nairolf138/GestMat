@@ -9,6 +9,7 @@ process.env.JWT_SECRET = 'test';
 
 const equipmentRoutes = require('../src/routes/equipments').default;
 const { ADMIN_ROLE } = require('../src/config/roles');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -19,7 +20,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/equipments', equipmentRoutes);
+  app.use(withApiPrefix('/equipments'), equipmentRoutes);
   return { app, client, mongod };
 }
 
@@ -37,8 +38,8 @@ test('concurrent equipment creation enforces unique name', async () => {
 
   const payload = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1 };
   const results = await Promise.allSettled([
-    request(app).post('/api/equipments').set(auth()).send(payload),
-    request(app).post('/api/equipments').set(auth()).send(payload),
+    request(app).post(withApiPrefix('/equipments')).set(auth()).send(payload),
+    request(app).post(withApiPrefix('/equipments')).set(auth()).send(payload),
   ]);
   const statuses = results.map((r) => r.value?.statusCode || r.reason?.status);
   assert.ok(statuses.includes(200));

@@ -10,6 +10,7 @@ process.env.JWT_SECRET = 'test';
 
 const userRoutes = require('../src/routes/users').default;
 const { ADMIN_ROLE, AUTRE_ROLE } = require('../src/config/roles');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -20,7 +21,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/users', userRoutes);
+  app.use(withApiPrefix('/users'), userRoutes);
   return { app, client, mongod, db };
 }
 
@@ -32,19 +33,22 @@ function auth(id, role) {
   return { Authorization: `Bearer ${token(id, role)}` };
 }
 
-test('GET /api/users requires admin role', async () => {
+test('GET users requires admin role', async () => {
   const { app, client, mongod, db } = await createApp();
   await db.collection('users').insertOne({ username: 'bob', password: 'pw' });
 
   // no token
-  await request(app).get('/api/users').expect(401);
+  await request(app).get(withApiPrefix('/users')).expect(401);
 
   // non admin
-  await request(app).get('/api/users').set(auth('u1', AUTRE_ROLE)).expect(403);
+  await request(app)
+    .get(withApiPrefix('/users'))
+    .set(auth('u1', AUTRE_ROLE))
+    .expect(403);
 
   // admin
   const res = await request(app)
-    .get('/api/users')
+    .get(withApiPrefix('/users'))
     .set(auth('a1', ADMIN_ROLE))
     .expect(200);
   assert.strictEqual(Array.isArray(res.body), true);
@@ -52,7 +56,7 @@ test('GET /api/users requires admin role', async () => {
   await mongod.stop();
 });
 
-test('GET /api/users supports search and pagination', async () => {
+test('GET users supports search and pagination', async () => {
   const { app, client, mongod, db } = await createApp();
   await db.collection('users').insertMany([
     { username: 'alice', password: 'pw', firstName: 'Alice' },
@@ -61,7 +65,7 @@ test('GET /api/users supports search and pagination', async () => {
   ]);
 
   let res = await request(app)
-    .get('/api/users')
+    .get(withApiPrefix('/users'))
     .query({ search: 'ali' })
     .set(auth('a1', ADMIN_ROLE))
     .expect(200);
@@ -69,7 +73,7 @@ test('GET /api/users supports search and pagination', async () => {
   assert.strictEqual(res.body[0].username, 'alice');
 
   res = await request(app)
-    .get('/api/users')
+    .get(withApiPrefix('/users'))
     .query({ page: 2, limit: 1 })
     .set(auth('a1', ADMIN_ROLE))
     .expect(200);
@@ -80,7 +84,7 @@ test('GET /api/users supports search and pagination', async () => {
   await mongod.stop();
 });
 
-test('PUT /api/users/me updates user and checks auth failures', async () => {
+test('PUT users/me updates user and checks auth failures', async () => {
   const { app, client, mongod, db } = await createApp();
   const id = new ObjectId();
   await db
@@ -89,7 +93,7 @@ test('PUT /api/users/me updates user and checks auth failures', async () => {
 
   // success
   const up = await request(app)
-    .put('/api/users/me')
+    .put(withApiPrefix('/users/me'))
     .set(auth(id.toString(), AUTRE_ROLE))
     .send({ email: 'bob@example.com' })
     .expect(200);
@@ -97,17 +101,17 @@ test('PUT /api/users/me updates user and checks auth failures', async () => {
 
   // not found
   await request(app)
-    .put('/api/users/me')
+    .put(withApiPrefix('/users/me'))
     .set(auth(new ObjectId().toString(), AUTRE_ROLE))
     .send({ email: 'x@x.com' })
     .expect(404);
 
   // missing token
-  await request(app).put('/api/users/me').send({}).expect(401);
+  await request(app).put(withApiPrefix('/users/me')).send({}).expect(401);
 
   // invalid token
   await request(app)
-    .put('/api/users/me')
+    .put(withApiPrefix('/users/me'))
     .set({ Authorization: 'Bearer badtoken' })
     .send({})
     .expect(401);
@@ -116,7 +120,7 @@ test('PUT /api/users/me updates user and checks auth failures', async () => {
   await mongod.stop();
 });
 
-test('PUT /api/users/me ignores role and structure', async () => {
+test('PUT users/me ignores role and structure', async () => {
   const { app, client, mongod, db } = await createApp();
   const structure1 = (
     await db.collection('structures').insertOne({ name: 'S1' })
@@ -134,7 +138,7 @@ test('PUT /api/users/me ignores role and structure', async () => {
   ).insertedId;
 
   await request(app)
-    .put('/api/users/me')
+    .put(withApiPrefix('/users/me'))
     .set(auth(id.toString(), AUTRE_ROLE))
     .send({
       role: ADMIN_ROLE,
@@ -151,30 +155,30 @@ test('PUT /api/users/me ignores role and structure', async () => {
   await mongod.stop();
 });
 
-test('DELETE /api/users/:id respects authorization', async () => {
+test('DELETE users/:id respects authorization', async () => {
   const { app, client, mongod, db } = await createApp();
   const id = (
     await db.collection('users').insertOne({ username: 'bob', password: 'pw' })
   ).insertedId;
 
   // missing token
-  await request(app).delete(`/api/users/${id}`).expect(401);
+  await request(app).delete(withApiPrefix(`/users/${id}`)).expect(401);
 
   // invalid token
   await request(app)
-    .delete(`/api/users/${id}`)
+    .delete(withApiPrefix(`/users/${id}`))
     .set({ Authorization: 'Bearer badtoken' })
     .expect(401);
 
   // non admin
   await request(app)
-    .delete(`/api/users/${id}`)
+    .delete(withApiPrefix(`/users/${id}`))
     .set(auth('u1', AUTRE_ROLE))
     .expect(403);
 
   // admin success
   await request(app)
-    .delete(`/api/users/${id}`)
+    .delete(withApiPrefix(`/users/${id}`))
     .set(auth('a1', ADMIN_ROLE))
     .expect(200);
 
@@ -182,7 +186,7 @@ test('DELETE /api/users/:id respects authorization', async () => {
   await mongod.stop();
 });
 
-test('cannot change role via /api/users/me', async () => {
+test('cannot change role via users/me', async () => {
   const { app, client, mongod, db } = await createApp();
   const id = (
     await db
@@ -191,7 +195,7 @@ test('cannot change role via /api/users/me', async () => {
   ).insertedId;
 
   const res = await request(app)
-    .put('/api/users/me')
+    .put(withApiPrefix('/users/me'))
     .set(auth(id.toString(), AUTRE_ROLE))
     .send({ role: ADMIN_ROLE })
     .expect(200);
