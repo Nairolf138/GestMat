@@ -33,7 +33,7 @@ app.use(
 );
 const corsOptions = CORS_ORIGIN.length
   ? { origin: CORS_ORIGIN, credentials: true }
-  : { origin: false };
+  : { origin: true, credentials: true };
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
