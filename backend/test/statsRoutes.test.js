@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test';
 const statsRoutes = require('../src/routes/stats').default;
 const { ADMIN_ROLE, REGISSEUR_GENERAL_ROLE } = require('../src/config/roles');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -19,7 +20,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/stats', statsRoutes);
+  app.use(withApiPrefix('/stats'), statsRoutes);
   return { app, client, mongod, db };
 }
 
@@ -38,7 +39,7 @@ test('GET /api/stats/loans returns aggregated counts', async () => {
       { status: 'accepted' },
     ]);
   const res = await request(app)
-    .get('/api/stats/loans')
+    .get(withApiPrefix('/stats/loans'))
     .set(auth())
     .expect(200);
   const counts = Object.fromEntries(
@@ -52,13 +53,13 @@ test('GET /api/stats/loans returns aggregated counts', async () => {
 
 test('GET /api/stats/loans requires admin role', async () => {
   const { app, client, mongod } = await createApp();
-  await request(app).get('/api/stats/loans').expect(401);
+  await request(app).get(withApiPrefix('/stats/loans')).expect(401);
   await request(app)
-    .get('/api/stats/loans')
+    .get(withApiPrefix('/stats/loans'))
     .set({ Authorization: 'Bearer badtoken' })
     .expect(401);
   await request(app)
-    .get('/api/stats/loans')
+    .get(withApiPrefix('/stats/loans'))
     .set(auth(REGISSEUR_GENERAL_ROLE))
     .expect(403);
   await client.close();
@@ -75,7 +76,7 @@ test('GET /api/stats/loans/monthly aggregates by month', async () => {
       { startDate: new Date('2023-02-10') },
     ]);
   const res = await request(app)
-    .get('/api/stats/loans/monthly')
+    .get(withApiPrefix('/stats/loans/monthly'))
     .set(auth())
     .expect(200);
   const counts = Object.fromEntries(
@@ -98,7 +99,7 @@ test('GET /api/stats/loans/monthly applies date range and fills empty months', a
       { startDate: new Date('2023-05-01') },
     ]);
   const res = await request(app)
-    .get('/api/stats/loans/monthly?from=2023-01-01&to=2023-04-30')
+    .get(withApiPrefix('/stats/loans/monthly?from=2023-01-01&to=2023-04-30'))
     .set(auth())
     .expect(200);
   const labels = res.body.map((m) => m._id);
@@ -122,7 +123,7 @@ test('GET /api/stats/loans/duration computes average and median', async () => {
     { startDate: new Date('2023-01-01'), endDate: new Date('2023-01-31') }, // 30 days
   ]);
   const res = await request(app)
-    .get('/api/stats/loans/duration?median=true')
+    .get(withApiPrefix('/stats/loans/duration?median=true'))
     .set(auth())
     .expect(200);
   assert.strictEqual(res.body.average, 20);
@@ -149,7 +150,7 @@ test('GET /api/stats/equipments/top returns aggregated equipment counts', async 
     },
   ]);
   const res = await request(app)
-    .get('/api/stats/equipments/top?limit=1')
+    .get(withApiPrefix('/stats/equipments/top?limit=1'))
     .set(auth())
     .expect(200);
   assert.strictEqual(res.body.length, 1);
@@ -162,21 +163,21 @@ test('GET /api/stats/equipments/top returns aggregated equipment counts', async 
 
 test('stats routes are restricted to admins', async () => {
   const { app, client, mongod } = await createApp();
-  await request(app).get('/api/stats/loans/monthly').expect(401);
-  await request(app).get('/api/stats/equipments/top').expect(401);
-  await request(app).get('/api/stats/loans/duration').expect(401);
+  await request(app).get(withApiPrefix('/stats/loans/monthly')).expect(401);
+  await request(app).get(withApiPrefix('/stats/equipments/top')).expect(401);
+  await request(app).get(withApiPrefix('/stats/loans/duration')).expect(401);
 
   const nonAdmin = auth(REGISSEUR_GENERAL_ROLE);
   await request(app)
-    .get('/api/stats/loans/monthly')
+    .get(withApiPrefix('/stats/loans/monthly'))
     .set(nonAdmin)
     .expect(403);
   await request(app)
-    .get('/api/stats/equipments/top')
+    .get(withApiPrefix('/stats/equipments/top'))
     .set(nonAdmin)
     .expect(403);
   await request(app)
-    .get('/api/stats/loans/duration')
+    .get(withApiPrefix('/stats/loans/duration'))
     .set(nonAdmin)
     .expect(403);
 

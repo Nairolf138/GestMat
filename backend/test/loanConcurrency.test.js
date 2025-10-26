@@ -11,6 +11,7 @@ const loanRoutes = require('../src/routes/loans').default;
 const mailer = require('../src/utils/sendMail');
 mailer.sendMail = async () => {};
 const { ADMIN_ROLE } = require('../src/config/roles');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -21,7 +22,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/loans', loanRoutes);
+  app.use(withApiPrefix('/loans'), loanRoutes);
   return { app, client, mongod };
 }
 
@@ -36,23 +37,26 @@ test('concurrent loan creation only allows one reservation', async () => {
   const db = client.db();
   const structId = (await db.collection('structures').insertOne({ name: 'S1' }))
     .insertedId;
+  const borrowerId = (
+    await db.collection('structures').insertOne({ name: 'S2' })
+  ).insertedId;
   const eqId = (
     await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
   ).insertedId;
   await db
     .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: structId });
+    .insertOne({ _id: new ObjectId(userId), structure: borrowerId });
   const payload = {
     owner: structId.toString(),
-    borrower: structId.toString(),
+    borrower: borrowerId.toString(),
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
     endDate: '2024-01-02',
   };
 
   const results = await Promise.allSettled([
-    request(app).post('/api/loans').set(auth()).send(payload),
-    request(app).post('/api/loans').set(auth()).send(payload),
+    request(app).post(withApiPrefix('/loans')).set(auth()).send(payload),
+    request(app).post(withApiPrefix('/loans')).set(auth()).send(payload),
   ]);
   const statuses = results.map((r) => r.value?.statusCode || r.reason?.status);
   assert.ok(statuses.includes(400));

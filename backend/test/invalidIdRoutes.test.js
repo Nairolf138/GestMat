@@ -11,6 +11,7 @@ const loanRoutes = require('../src/routes/loans').default;
 const structureRoutes = require('../src/routes/structures').default;
 const userRoutes = require('../src/routes/users').default;
 const { ADMIN_ROLE } = require('../src/config/roles');
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 function auth(role = ADMIN_ROLE) {
   const token = jwt.sign({ id: 'u1', role }, 'test', { expiresIn: '1h' });
@@ -26,24 +27,24 @@ async function createApp(route, path) {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use(path, route);
+  app.use(withApiPrefix(path), route);
   return { app, client, mongod };
 }
 
 // Equipment
 test('equipment routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(
-    equipmentRoutes,
-    '/api/equipments',
-  );
+  const { app, client, mongod } = await createApp(equipmentRoutes, '/equipments');
   await request(app)
-    .put('/api/equipments/badid')
+    .put(withApiPrefix('/equipments/badid'))
     .set(auth())
     .send({})
     .expect(400);
-  await request(app).delete('/api/equipments/badid').set(auth()).expect(400);
   await request(app)
-    .get('/api/equipments/badid/availability')
+    .delete(withApiPrefix('/equipments/badid'))
+    .set(auth())
+    .expect(400);
+  await request(app)
+    .get(withApiPrefix('/equipments/badid/availability'))
     .set(auth())
     .expect(400);
   await client.close();
@@ -52,33 +53,43 @@ test('equipment routes return 400 for invalid id', async () => {
 
 // Loans
 test('loan routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(loanRoutes, '/api/loans');
-  await request(app).put('/api/loans/badid').set(auth()).send({}).expect(400);
-  await request(app).delete('/api/loans/badid').set(auth()).expect(400);
+  const { app, client, mongod } = await createApp(loanRoutes, '/loans');
+  await request(app)
+    .put(withApiPrefix('/loans/badid'))
+    .set(auth())
+    .send({})
+    .expect(400);
+  await request(app)
+    .delete(withApiPrefix('/loans/badid'))
+    .set(auth())
+    .expect(400);
   await client.close();
   await mongod.stop();
 });
 
 // Structures
 test('structure routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(
-    structureRoutes,
-    '/api/structures',
-  );
+  const { app, client, mongod } = await createApp(structureRoutes, '/structures');
   await request(app)
-    .put('/api/structures/badid')
+    .put(withApiPrefix('/structures/badid'))
     .set(auth())
     .send({ name: 's' })
     .expect(400);
-  await request(app).delete('/api/structures/badid').set(auth()).expect(400);
+  await request(app)
+    .delete(withApiPrefix('/structures/badid'))
+    .set(auth())
+    .expect(400);
   await client.close();
   await mongod.stop();
 });
 
 // Users
 test('user routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(userRoutes, '/api/users');
-  await request(app).delete('/api/users/badid').set(auth()).expect(400);
+  const { app, client, mongod } = await createApp(userRoutes, '/users');
+  await request(app)
+    .delete(withApiPrefix('/users/badid'))
+    .set(auth())
+    .expect(400);
   await client.close();
   await mongod.stop();
 });

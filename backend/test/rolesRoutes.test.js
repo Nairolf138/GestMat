@@ -6,6 +6,7 @@ const { MongoClient } = require('mongodb');
 const express = require('express');
 
 const rolesRoutes = require('../src/routes/roles').default;
+const { withApiPrefix } = require('./utils/apiPrefix');
 
 async function createApp() {
   const mongod = await MongoMemoryReplSet.create();
@@ -16,22 +17,22 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
-  app.use('/api/roles', rolesRoutes);
+  app.use(withApiPrefix('/roles'), rolesRoutes);
   return { app, client, mongod, db };
 }
 
-test('GET /api/roles returns sorted role names', async () => {
+test('GET roles returns sorted role names', async () => {
   const { app, client, mongod, db } = await createApp();
   await db.collection('roles').insertMany([{ name: 'B' }, { name: 'A' }]);
-  const res = await request(app).get('/api/roles').expect(200);
+  const res = await request(app).get(withApiPrefix('/roles')).expect(200);
   assert.deepStrictEqual(res.body, ['A', 'B']);
   await client.close();
   await mongod.stop();
 });
 
-test('GET /api/roles handles database errors', async () => {
+test('GET roles handles database errors', async () => {
   const { app, client, mongod } = await createApp();
   await client.close();
-  await request(app).get('/api/roles').expect(500);
+  await request(app).get(withApiPrefix('/roles')).expect(500);
   await mongod.stop();
 });
