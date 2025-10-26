@@ -11,7 +11,9 @@ const structureRoutes = require('../src/routes/structures').default;
 const { withApiPrefix } = require('./utils/apiPrefix');
 const { normalizeCorsOrigins } = require('../src/config');
 
-async function createApp(corsOriginSetting = 'http://allowed.test') {
+const SAMPLE_ALLOWED_ORIGIN = 'https://allowed.test';
+
+async function createApp(corsOriginSetting = SAMPLE_ALLOWED_ORIGIN) {
   const mongod = await MongoMemoryReplSet.create();
   const uri = mongod.getUri();
   const client = new MongoClient(uri);
@@ -39,15 +41,17 @@ test('GET structures is public', async () => {
   await mongod.stop();
 });
 
-test('GET structures includes normalized CORS header', async () => {
-  const { app, client, mongod, allowedOrigins } = await createApp('https://allowed.test/');
+test('GET structures echoes configured CORS origin', async () => {
+  const { app, client, mongod, allowedOrigins } = await createApp(
+    `${SAMPLE_ALLOWED_ORIGIN}/`,
+  );
   await dbSetup(client.db());
   const res = await request(app)
     .get(withApiPrefix('/structures'))
-    .set('Origin', 'https://allowed.test')
+    .set('Origin', SAMPLE_ALLOWED_ORIGIN)
     .expect(200);
-  assert.deepStrictEqual(allowedOrigins, ['https://allowed.test']);
-  assert.strictEqual(res.headers['access-control-allow-origin'], 'https://allowed.test');
+  assert.deepStrictEqual(allowedOrigins, [SAMPLE_ALLOWED_ORIGIN]);
+  assert.strictEqual(res.headers['access-control-allow-origin'], SAMPLE_ALLOWED_ORIGIN);
   await client.close();
   await mongod.stop();
 });
