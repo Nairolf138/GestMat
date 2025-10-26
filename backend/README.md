@@ -28,13 +28,14 @@ The API reads its configuration from the following variables:
 | `MONGODB_URI`    | MongoDB connection string. Defaults to `mongodb://localhost/gestmat`.                         |
 | `JWT_SECRET`     | **Required.** Secret key used to sign JSON Web Tokens.                                        |
 | `PORT`           | Port for the HTTP server. Defaults to `5000`.                                                 |
-| `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. If unset, cross-origin requests are denied. |
+| `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. If unset, the API reflects the requester origin. |
 | `API_URL`        | Public base URL of the API. Defaults to `http://localhost:<PORT>/api`.                        |
 | `SMTP_URL`       | SMTP connection string to enable email notifications.                                         |
 | `NOTIFY_EMAIL`   | Optional recipient address for notification emails.                                           |
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
 
-If `CORS_ORIGIN` is left unset, the API denies cross-origin requests.
+If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
+to a comma-separated whitelist to lock the API down to trusted origins.
 
 JWT tokens returned by the `/api/auth/login` endpoint now include an expiry
 time of one hour.
