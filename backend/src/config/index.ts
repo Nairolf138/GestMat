@@ -3,14 +3,33 @@ import { z } from 'zod';
 
 dotenv.config();
 
+const normalizeCorsOrigins = (value: string | undefined): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  const entries = value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
+  if (entries.some((origin) => origin.toLowerCase() === '*')) {
+    return [];
+  }
+
+  const normalized = entries
+    .map((origin) => origin.replace(/\/+$/u, '').trim())
+    .filter((origin) => origin.length > 0);
+
+  return Array.from(new Set(normalized));
+};
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
   CORS_ORIGIN: z
     .string()
     .optional()
-    .transform((val) =>
-      val ? val.split(',').map((origin) => origin.trim()).filter(Boolean) : ([] as string[])
-    ),
+    .transform((val) => normalizeCorsOrigins(val)),
   MONGODB_URI: z.string().default('mongodb://localhost/gestmat'),
   JWT_SECRET: z.string(),
   SMTP_URL: z.string().optional(),
@@ -52,6 +71,8 @@ export const NODE_ENV = env.NODE_ENV;
 export const API_PREFIX = normalizeApiPrefix(env.API_PREFIX);
 export const API_URL = env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX || ''}`;
 export const RATE_LIMIT_MAX = env.RATE_LIMIT_MAX;
+
+export { normalizeCorsOrigins };
 
 export default {
   PORT,

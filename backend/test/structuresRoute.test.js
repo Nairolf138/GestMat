@@ -9,8 +9,9 @@ const cors = require('cors');
 process.env.JWT_SECRET = 'test';
 const structureRoutes = require('../src/routes/structures').default;
 const { withApiPrefix } = require('./utils/apiPrefix');
+const { normalizeCorsOrigins } = require('../src/config');
 
-async function createApp(allowedOrigin = 'http://allowed.test') {
+async function createApp(corsOriginSetting = 'http://allowed.test') {
   const mongod = await MongoMemoryReplSet.create();
   const uri = mongod.getUri();
   const client = new MongoClient(uri);
@@ -18,10 +19,14 @@ async function createApp(allowedOrigin = 'http://allowed.test') {
   const db = client.db();
   const app = express();
   app.use(express.json());
-  app.use(cors({ origin: allowedOrigin }));
+  const allowedOrigins = normalizeCorsOrigins(corsOriginSetting);
+  const corsOptions = allowedOrigins.length
+    ? { origin: allowedOrigins, credentials: true }
+    : { origin: true, credentials: true };
+  app.use(cors(corsOptions));
   app.locals.db = db;
   app.use(withApiPrefix('/structures'), structureRoutes);
-  return { app, client, mongod, allowedOrigin };
+  return { app, client, mongod, allowedOrigins };
 }
 
 test('GET structures is public', async () => {
@@ -34,14 +39,30 @@ test('GET structures is public', async () => {
   await mongod.stop();
 });
 
-test('GET structures includes CORS header', async () => {
-  const { app, client, mongod, allowedOrigin } = await createApp();
+test('GET structures includes normalized CORS header', async () => {
+  const { app, client, mongod, allowedOrigins } = await createApp('https://allowed.test/');
   await dbSetup(client.db());
   const res = await request(app)
     .get(withApiPrefix('/structures'))
-    .set('Origin', allowedOrigin)
+    .set('Origin', 'https://allowed.test')
     .expect(200);
-  assert.strictEqual(res.headers['access-control-allow-origin'], allowedOrigin);
+  assert.deepStrictEqual(allowedOrigins, ['https://allowed.test']);
+  assert.strictEqual(res.headers['access-control-allow-origin'], 'https://allowed.test');
+  await client.close();
+  await mongod.stop();
+});
+
+test('GET structures allows any origin when CORS_ORIGIN is *', async () => {
+  const { app, client, mongod, allowedOrigins } = await createApp('*');
+  await dbSetup(client.db());
+  const arbitraryOrigin = 'https://another.test';
+  const res = await request(app)
+    .get(withApiPrefix('/structures'))
+    .set('Origin', arbitraryOrigin)
+    .expect(200);
+  assert.deepStrictEqual(allowedOrigins, []);
+  assert.strictEqual(res.headers['access-control-allow-origin'], arbitraryOrigin);
+  assert.strictEqual(res.headers['access-control-allow-credentials'], 'true');
   await client.close();
   await mongod.stop();
 });
