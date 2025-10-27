@@ -26,6 +26,10 @@ const normalizeCorsOrigins = (value: string | undefined): string[] => {
 
       try {
         const parsed = new URL(trimmed);
+        if (!parsed.protocol || !parsed.hostname) {
+          throw new Error('CORS origin must include a scheme and host');
+        }
+
         let port = parsed.port;
         if (
           (parsed.protocol === 'http:' && port === '80') ||
@@ -37,8 +41,12 @@ const normalizeCorsOrigins = (value: string | undefined): string[] => {
           ? `[${parsed.hostname}]`
           : parsed.hostname;
         return `${parsed.protocol}//${hostname}${port ? `:${port}` : ''}`;
-      } catch {
-        return trimmed;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'must be a valid absolute URL or *';
+        throw new Error(`Invalid CORS origin entry "${origin}": ${message}`);
       }
     })
     .filter((origin): origin is string => origin !== null && origin.length > 0);

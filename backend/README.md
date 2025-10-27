@@ -28,7 +28,7 @@ The API reads its configuration from the following variables:
 | `MONGODB_URI`    | MongoDB connection string. Defaults to `mongodb://localhost/gestmat`.                         |
 | `JWT_SECRET`     | **Required.** Secret key used to sign JSON Web Tokens.                                        |
 | `PORT`           | Port for the HTTP server. Defaults to `5000`.                                                 |
-| `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. If unset, the API reflects the requester origin. |
+| `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. Each entry must be an absolute URL (scheme + host) or `*`. If unset, the API reflects the requester origin. |
 | `API_PREFIX`     | Path prefix for mounting API routes. Defaults to `/api`; set to an empty string to serve at the domain root. |
 | `API_URL`        | Public base URL of the API, including the prefix. Defaults to `http://localhost:<PORT><API_PREFIX>`. |
 | `SMTP_URL`       | SMTP connection string to enable email notifications.                                         |
