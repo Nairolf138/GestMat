@@ -13,6 +13,22 @@ const { normalizeCorsOrigins } = require('../src/config');
 
 const SAMPLE_ALLOWED_ORIGIN = 'https://allowed.test';
 
+test('normalizeCorsOrigins rejects invalid origins', () => {
+  assert.throws(
+    () => normalizeCorsOrigins('example.com'),
+    /Invalid CORS origin entry "example.com"/,
+  );
+
+  assert.throws(
+    () => normalizeCorsOrigins(`${SAMPLE_ALLOWED_ORIGIN},invalid`),
+    /Invalid CORS origin entry "invalid"/,
+  );
+
+  assert.deepStrictEqual(normalizeCorsOrigins(`${SAMPLE_ALLOWED_ORIGIN}/`), [
+    SAMPLE_ALLOWED_ORIGIN,
+  ]);
+});
+
 async function createApp(corsOriginSetting = SAMPLE_ALLOWED_ORIGIN) {
   const mongod = await MongoMemoryReplSet.create();
   const uri = mongod.getUri();
