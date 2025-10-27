@@ -1,7 +1,15 @@
-import { it, expect, vi } from 'vitest';
-import { api } from '../src/api.js';
+import { it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+beforeEach(() => {
+  vi.resetModules();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 it('retries request after refresh on 401', async () => {
+  const { api } = await import('../src/api.js');
   vi.stubGlobal(
     'fetch',
     vi
@@ -10,6 +18,10 @@ it('retries request after refresh on 401', async () => {
         ok: false,
         status: 401,
         json: () => Promise.resolve({}),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: 'token' }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -28,18 +40,23 @@ it('retries request after refresh on 401', async () => {
   );
   expect(fetch).toHaveBeenNthCalledWith(
     2,
-    expect.stringContaining('/auth/refresh'),
+    expect.stringContaining('/auth/csrf'),
     expect.any(Object),
   );
   expect(fetch).toHaveBeenNthCalledWith(
     3,
+    expect.stringContaining('/auth/refresh'),
+    expect.any(Object),
+  );
+  expect(fetch).toHaveBeenNthCalledWith(
+    4,
     expect.stringContaining('/test'),
     expect.any(Object),
   );
-  vi.unstubAllGlobals();
 });
 
 it('throws when refresh fails', async () => {
+  const { api } = await import('../src/api.js');
   vi.stubGlobal(
     'fetch',
     vi
@@ -48,6 +65,10 @@ it('throws when refresh fails', async () => {
         ok: false,
         status: 401,
         json: () => Promise.resolve({}),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ csrfToken: 'token' }),
       })
       .mockResolvedValueOnce({
         ok: false,
@@ -62,8 +83,12 @@ it('throws when refresh fails', async () => {
   );
   expect(fetch).toHaveBeenNthCalledWith(
     2,
+    expect.stringContaining('/auth/csrf'),
+    expect.any(Object),
+  );
+  expect(fetch).toHaveBeenNthCalledWith(
+    3,
     expect.stringContaining('/auth/refresh'),
     expect.any(Object),
   );
-  vi.unstubAllGlobals();
 });
