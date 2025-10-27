@@ -104,12 +104,14 @@ async function refreshToken() {
  */
 export async function api(path, options = {}, retry = true) {
   const { timeout = 10000, signal, ...fetchOptions } = options;
+  const method = (fetchOptions.method || 'GET').toUpperCase();
   const headers = {
-    'Content-Type': 'application/json',
     ...(fetchOptions.headers || {}),
   };
-  const method = (fetchOptions.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    if (!headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
     let token = getCsrfTokenFromCookie();
     if (!token) {
       token = await ensureCsrfToken();
