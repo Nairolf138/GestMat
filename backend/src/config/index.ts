@@ -18,8 +18,30 @@ const normalizeCorsOrigins = (value: string | undefined): string[] => {
   }
 
   const normalized = entries
-    .map((origin) => origin.replace(/\/+$/u, '').trim())
-    .filter((origin) => origin.length > 0);
+    .map((origin) => {
+      const trimmed = origin.replace(/\/+$/u, '').trim();
+      if (!trimmed) {
+        return null;
+      }
+
+      try {
+        const parsed = new URL(trimmed);
+        let port = parsed.port;
+        if (
+          (parsed.protocol === 'http:' && port === '80') ||
+          (parsed.protocol === 'https:' && port === '443')
+        ) {
+          port = '';
+        }
+        const hostname = parsed.hostname.includes(':')
+          ? `[${parsed.hostname}]`
+          : parsed.hostname;
+        return `${parsed.protocol}//${hostname}${port ? `:${port}` : ''}`;
+      } catch {
+        return trimmed;
+      }
+    })
+    .filter((origin): origin is string => origin !== null && origin.length > 0);
 
   return Array.from(new Set(normalized));
 };
