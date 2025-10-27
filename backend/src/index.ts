@@ -1,4 +1,4 @@
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -8,7 +8,14 @@ import csrf from 'csurf';
 import { connectDB, closeDB } from './config/db';
 import { ApiError } from './utils/errors';
 import logger from './utils/logger';
-import { PORT, CORS_ORIGIN, NODE_ENV, RATE_LIMIT_MAX, API_PREFIX } from './config';
+import {
+  PORT,
+  CORS_ORIGIN,
+  NODE_ENV,
+  RATE_LIMIT_MAX,
+  API_PREFIX,
+  normalizeCorsOrigins,
+} from './config';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import structureRoutes from './routes/structures';
@@ -31,9 +38,29 @@ app.use(
     },
   }),
 );
-const corsOptions = CORS_ORIGIN.length
+const corsOptions: CorsOptions = CORS_ORIGIN.length
   ? { origin: CORS_ORIGIN, credentials: true }
-  : { origin: true, credentials: true };
+  : {
+      origin(origin, callback) {
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        try {
+          const normalizedOrigins = normalizeCorsOrigins(origin);
+          if (normalizedOrigins.length !== 1) {
+            callback(null, false);
+            return;
+          }
+
+          callback(null, normalizedOrigins[0]);
+        } catch {
+          callback(null, false);
+        }
+      },
+      credentials: true,
+    };
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
