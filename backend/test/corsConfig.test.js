@@ -34,6 +34,7 @@ test('CORS normalizes configured frontend origins with default ports', async (t)
     originWithoutPort,
     secureOrigin,
     customOrigin,
+    'https://gestmat.nairolfconcept.fr',
   ]);
 
   const mockDb = {
