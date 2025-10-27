@@ -1,7 +1,7 @@
 import { it, expect, vi } from 'vitest';
 import { api, ApiError } from '../src/api.js';
 
-it('uses JSON headers without Authorization', async () => {
+it('omits JSON headers for simple requests and avoids Authorization', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
@@ -12,6 +12,14 @@ it('uses JSON headers without Authorization', async () => {
   await api('/test');
   expect(fetch).toHaveBeenCalledWith(
     expect.stringContaining('/test'),
+    expect.objectContaining({
+      headers: expect.not.objectContaining({ 'Content-Type': expect.anything() }),
+      credentials: 'include',
+    }),
+  );
+  await api('/test', { method: 'POST' });
+  expect(fetch).toHaveBeenCalledWith(
+    expect.any(String),
     expect.objectContaining({
       headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       credentials: 'include',
