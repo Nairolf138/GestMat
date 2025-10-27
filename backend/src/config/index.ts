@@ -3,6 +3,10 @@ import { z } from 'zod';
 
 dotenv.config();
 
+const REQUIRED_CORS_ORIGINS = [
+  'https://gestmat.nairolfconcept.fr',
+] as const;
+
 const normalizeCorsOrigins = (value: string | undefined): string[] => {
   if (!value) {
     return [];
@@ -72,6 +76,36 @@ const envSchema = z.object({
 
 const env = envSchema.parse(process.env);
 
+const normalizeRequiredCorsOrigins = (): string[] => {
+  try {
+    return normalizeCorsOrigins(REQUIRED_CORS_ORIGINS.join(','));
+  } catch (error) {
+    throw new Error(
+      `Failed to normalize required CORS origins: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+};
+
+const requiredCorsOrigins = normalizeRequiredCorsOrigins();
+
+const mergeCorsOrigins = (
+  configuredOrigins: string[],
+  requiredOrigins: string[],
+): string[] => {
+  if (configuredOrigins.length === 0) {
+    return [];
+  }
+
+  const merged = new Set(configuredOrigins);
+  for (const origin of requiredOrigins) {
+    merged.add(origin);
+  }
+
+  return Array.from(merged);
+};
+
 const normalizeApiPrefix = (value: string | undefined): string => {
   if (value === undefined) {
     return '/api';
@@ -92,7 +126,7 @@ const normalizeApiPrefix = (value: string | undefined): string => {
 };
 
 export const PORT = env.PORT;
-export const CORS_ORIGIN = env.CORS_ORIGIN;
+export const CORS_ORIGIN = mergeCorsOrigins(env.CORS_ORIGIN, requiredCorsOrigins);
 export const MONGODB_URI = env.MONGODB_URI;
 export const JWT_SECRET = env.JWT_SECRET;
 export const SMTP_URL = env.SMTP_URL;
