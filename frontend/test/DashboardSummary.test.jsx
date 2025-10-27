@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import DashboardSummary from '../src/components/DashboardSummary.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
@@ -14,33 +14,25 @@ describe('DashboardSummary', () => {
     vi.clearAllMocks();
   });
 
-  const renderWithUser = (user) =>
+  const renderWithUser = (user, counts) =>
     render(
       <AuthContext.Provider value={{ user, setUser: vi.fn() }}>
-        <DashboardSummary />
+        <DashboardSummary counts={counts} />
       </AuthContext.Provider>,
     );
 
-  it('returns null for non-admin users without fetching stats', () => {
-    api.mockImplementation(() => Promise.reject(new Error('should not fetch')));
-    const { container } = renderWithUser({ role: AUTRE_ROLE });
-    expect(container.firstChild).toBeNull();
+  it('renders summary cards for any user without fetching stats', () => {
+    const { container, getByText } = renderWithUser({ role: AUTRE_ROLE });
+    expect(container.querySelector('.card-grid')).not.toBeNull();
+    expect(getByText('En attente')).toBeTruthy();
     expect(api).not.toHaveBeenCalled();
   });
 
-  it('loads stats for administrators', async () => {
-    api.mockResolvedValueOnce([
-      { _id: 'pending', count: 3 },
-      { _id: 'ongoing', count: 2 },
-      { _id: 'upcoming', count: 1 },
-    ]);
-
-    const { getByText } = renderWithUser({ role: ADMIN_ROLE });
-
-    await waitFor(() => {
-      expect(api).toHaveBeenCalled();
-      expect(api.mock.calls[0][0]).toBe('/stats/loans');
-    });
+  it('displays provided counts for administrators without triggering API calls', () => {
+    const { getByText } = renderWithUser(
+      { role: ADMIN_ROLE },
+      { pending: 3, ongoing: 2, upcoming: 1 },
+    );
 
     expect(getByText('En attente')).toBeTruthy();
     expect(getByText('3')).toBeTruthy();
@@ -48,5 +40,6 @@ describe('DashboardSummary', () => {
     expect(getByText('2')).toBeTruthy();
     expect(getByText('À venir')).toBeTruthy();
     expect(getByText('1')).toBeTruthy();
+    expect(api).not.toHaveBeenCalled();
   });
 });

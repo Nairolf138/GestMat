@@ -22,14 +22,56 @@ export class ApiError extends Error {
   }
 }
 
-function getCsrfToken() {
+function getCsrfTokenFromCookie() {
   const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
 }
 
+let cachedCsrfToken = '';
+let pendingCsrfRequest = null;
+
+async function requestCsrfToken() {
+  const res = await fetch(`${API_URL}/auth/csrf`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('Unable to fetch CSRF token');
+  }
+  const data = await res.json().catch(() => ({}));
+  const token = typeof data.csrfToken === 'string' ? data.csrfToken : '';
+  cachedCsrfToken = token;
+  return token;
+}
+
+async function ensureCsrfToken() {
+  const cookieToken = getCsrfTokenFromCookie();
+  if (cookieToken) {
+    cachedCsrfToken = cookieToken;
+    return cookieToken;
+  }
+  if (cachedCsrfToken) {
+    return cachedCsrfToken;
+  }
+  if (!pendingCsrfRequest) {
+    pendingCsrfRequest = requestCsrfToken().finally(() => {
+      pendingCsrfRequest = null;
+    });
+  }
+  try {
+    return await pendingCsrfRequest;
+  } catch (err) {
+    cachedCsrfToken = '';
+    throw err;
+  }
+}
+
 async function refreshToken() {
   try {
-    const token = getCsrfToken();
+    let token = getCsrfTokenFromCookie();
+    if (!token) {
+      token = await ensureCsrfToken();
+    }
     const res = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
@@ -68,7 +110,10 @@ export async function api(path, options = {}, retry = true) {
   };
   const method = (fetchOptions.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-    const token = getCsrfToken();
+    let token = getCsrfTokenFromCookie();
+    if (!token) {
+      token = await ensureCsrfToken();
+    }
     if (token) headers['CSRF-Token'] = token;
   }
   const controller = new AbortController();

@@ -56,7 +56,8 @@ if (NODE_ENV !== 'test') {
   const csrfProtection = csrf({ cookie: true }) as express.RequestHandler;
   app.use(csrfProtection);
   app.use((req: Request, res: Response, next: NextFunction) => {
-    res.cookie('XSRF-TOKEN', req.csrfToken());
+    const token = req.csrfToken();
+    res.cookie('XSRF-TOKEN', token);
     next();
   });
 }
@@ -72,6 +73,17 @@ const withApiPrefix = (path: string): string => {
   }
   return `${API_PREFIX}${normalizedPath === '/' ? '' : normalizedPath}`;
 };
+
+const csrfRouteHandler: express.RequestHandler =
+  NODE_ENV !== 'test'
+    ? (req: Request, res: Response) => {
+        res.json({ csrfToken: req.csrfToken() });
+      }
+    : (_req: Request, res: Response) => {
+        res.json({ csrfToken: '' });
+      };
+
+app.get(withApiPrefix('/auth/csrf'), csrfRouteHandler);
 
 export async function start(
   connect: () => Promise<Db> = connectDB,
