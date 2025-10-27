@@ -2,14 +2,22 @@ const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
 
-test('CORS allows configured frontend origin', async (t) => {
-  const origin = 'https://gestmat.nairolfconcept.fr';
+test('CORS normalizes configured frontend origins with default ports', async (t) => {
+  const configuredOrigins = [
+    'http://app.example.test:80',
+    'http://app.example.test',
+    'https://secure.example.test:443/',
+    'http://custom.example.test:3000',
+  ];
+  const originWithoutPort = 'http://app.example.test';
+  const secureOrigin = 'https://secure.example.test';
+  const customOrigin = 'http://custom.example.test:3000';
   const originalNodeEnv = process.env.NODE_ENV;
   const originalCorsOrigin = process.env.CORS_ORIGIN;
   const originalJwtSecret = process.env.JWT_SECRET;
   process.env.NODE_ENV = 'test';
   process.env.JWT_SECRET = 'test-secret';
-  process.env.CORS_ORIGIN = origin;
+  process.env.CORS_ORIGIN = configuredOrigins.join(', ');
 
   const client = require('prom-client');
   client.register.clear();
@@ -20,6 +28,13 @@ test('CORS allows configured frontend origin', async (t) => {
   delete require.cache[configPath];
 
   const { start } = require('../src/index');
+  const { CORS_ORIGIN: normalizedOrigins } = require('../src/config');
+
+  assert.deepStrictEqual(normalizedOrigins, [
+    originWithoutPort,
+    secureOrigin,
+    customOrigin,
+  ]);
 
   const mockDb = {
     collection: () => ({
@@ -59,12 +74,32 @@ test('CORS allows configured frontend origin', async (t) => {
     }),
   );
 
-  const response = await request(server)
+  const responseDefaultPort = await request(server)
     .get('/health')
-    .set('Origin', origin);
+    .set('Origin', originWithoutPort);
 
-  assert.strictEqual(response.statusCode, 200);
-  assert.strictEqual(response.headers['access-control-allow-origin'], origin);
+  assert.strictEqual(responseDefaultPort.statusCode, 200);
+  assert.strictEqual(
+    responseDefaultPort.headers['access-control-allow-origin'],
+    originWithoutPort,
+  );
+
+  const responseSecure = await request(server)
+    .get('/health')
+    .set('Origin', secureOrigin);
+
+  assert.strictEqual(responseSecure.statusCode, 200);
+  assert.strictEqual(responseSecure.headers['access-control-allow-origin'], secureOrigin);
+
+  const responseCustomPort = await request(server)
+    .get('/health')
+    .set('Origin', customOrigin);
+
+  assert.strictEqual(responseCustomPort.statusCode, 200);
+  assert.strictEqual(
+    responseCustomPort.headers['access-control-allow-origin'],
+    customOrigin,
+  );
 });
 
 test('CORS reflects request origin when no whitelist is configured', async (t) => {
