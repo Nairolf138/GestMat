@@ -5,6 +5,7 @@ import Alert from './Alert.jsx';
 import { GlobalContext } from './GlobalContext.jsx';
 import { useTranslation } from 'react-i18next';
 import FormCard from './components/FormCard.jsx';
+import { ADMIN_ROLE } from '../roles';
 
 function Register() {
   const { roles, structures } = useContext(GlobalContext);
@@ -200,11 +201,13 @@ function Register() {
             aria-describedby={errors.role ? 'role-error' : undefined}
           >
             <option value="">{t('common.choose')}</option>
-            {(Array.isArray(roles) ? roles : []).map((r) => (
-              <option key={r} value={r}>
-                {t(`roles.${r}`)}
-              </option>
-            ))}
+            {(Array.isArray(roles) ? roles : [])
+              .filter((r) => r !== ADMIN_ROLE)
+              .map((r) => (
+                <option key={r} value={r}>
+                  {t(`roles.${r}`)}
+                </option>
+              ))}
           </select>
           {errors.role && (
             <div
