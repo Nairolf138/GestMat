@@ -9,7 +9,7 @@ const cors = require('cors');
 process.env.JWT_SECRET = 'test';
 const structureRoutes = require('../src/routes/structures').default;
 const { withApiPrefix } = require('./utils/apiPrefix');
-const { normalizeCorsOrigins } = require('../src/config');
+const { normalizeCorsOrigins, CORS_ORIGIN } = require('../src/config');
 
 const SAMPLE_ALLOWED_ORIGIN = 'https://allowed.test';
 
@@ -29,7 +29,10 @@ test('normalizeCorsOrigins rejects invalid origins', () => {
   ]);
 });
 
-async function createApp(corsOriginSetting = SAMPLE_ALLOWED_ORIGIN) {
+async function createApp({
+  corsOriginSetting = SAMPLE_ALLOWED_ORIGIN,
+  useConfigCors = false,
+} = {}) {
   const mongod = await MongoMemoryReplSet.create();
   const uri = mongod.getUri();
   const client = new MongoClient(uri);
@@ -37,7 +40,9 @@ async function createApp(corsOriginSetting = SAMPLE_ALLOWED_ORIGIN) {
   const db = client.db();
   const app = express();
   app.use(express.json());
-  const allowedOrigins = normalizeCorsOrigins(corsOriginSetting);
+  const allowedOrigins = useConfigCors
+    ? CORS_ORIGIN
+    : normalizeCorsOrigins(corsOriginSetting);
   const corsOptions = allowedOrigins.length
     ? { origin: allowedOrigins, credentials: true }
     : { origin: true, credentials: true };
@@ -58,9 +63,9 @@ test('GET structures is public', async () => {
 });
 
 test('GET structures echoes configured CORS origin', async () => {
-  const { app, client, mongod, allowedOrigins } = await createApp(
-    `${SAMPLE_ALLOWED_ORIGIN}/`,
-  );
+  const { app, client, mongod, allowedOrigins } = await createApp({
+    corsOriginSetting: `${SAMPLE_ALLOWED_ORIGIN}/`,
+  });
   await dbSetup(client.db());
   const res = await request(app)
     .get(withApiPrefix('/structures'))
@@ -73,7 +78,9 @@ test('GET structures echoes configured CORS origin', async () => {
 });
 
 test('GET structures allows any origin when CORS_ORIGIN is *', async () => {
-  const { app, client, mongod, allowedOrigins } = await createApp('*');
+  const { app, client, mongod, allowedOrigins } = await createApp({
+    corsOriginSetting: '*',
+  });
   await dbSetup(client.db());
   const arbitraryOrigin = 'https://another.test';
   const res = await request(app)
@@ -104,6 +111,25 @@ test('structures routes respond when API_PREFIX is empty', async () => {
       process.env.API_PREFIX = originalPrefix;
     }
   }
+});
+
+test('GET structures allows the official frontend when CORS_ORIGIN is unset', async () => {
+  const { app, client, mongod, allowedOrigins } = await createApp({
+    useConfigCors: true,
+  });
+  await dbSetup(client.db());
+  const requiredOrigin = 'https://gestmat.nairolfconcept.fr';
+  const res = await request(app)
+    .get(withApiPrefix('/structures'))
+    .set('Origin', requiredOrigin)
+    .expect(200);
+  assert.ok(
+    allowedOrigins.includes(requiredOrigin),
+    'Required frontend origin must always be present',
+  );
+  assert.strictEqual(res.headers['access-control-allow-origin'], requiredOrigin);
+  await client.close();
+  await mongod.stop();
 });
 
 async function dbSetup(db) {

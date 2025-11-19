@@ -31,10 +31,10 @@ test('CORS normalizes configured frontend origins with default ports', async (t)
   const { CORS_ORIGIN: normalizedOrigins } = require('../src/config');
 
   assert.deepStrictEqual(normalizedOrigins, [
+    'https://gestmat.nairolfconcept.fr',
     originWithoutPort,
     secureOrigin,
     customOrigin,
-    'https://gestmat.nairolfconcept.fr',
   ]);
 
   const mockDb = {
@@ -103,8 +103,8 @@ test('CORS normalizes configured frontend origins with default ports', async (t)
   );
 });
 
-test('CORS reflects request origin when no whitelist is configured', async (t) => {
-  const origin = 'https://example.test';
+test('CORS allows the required frontend when no whitelist is configured', async (t) => {
+  const origin = 'https://gestmat.nairolfconcept.fr';
   const originalNodeEnv = process.env.NODE_ENV;
   const originalCorsOrigin = process.env.CORS_ORIGIN;
   const originalJwtSecret = process.env.JWT_SECRET;

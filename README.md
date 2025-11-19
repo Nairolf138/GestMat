@@ -29,7 +29,9 @@ features like `crypto.hash`, so older runtimes are not supported.
    **Make sure to set `JWT_SECRET`** or the API will refuse to start.
    Copy `frontend/.env.example` to `frontend/.env` as well.
    Set `SMTP_URL` and optionally `NOTIFY_EMAIL` if you want email notifications.
-   Use `CORS_ORIGIN` to specify one or more allowed origins separated by commas.
+   Use `CORS_ORIGIN` to specify extra allowed origins separated by commas; the
+   production frontend `https://gestmat.nairolfconcept.fr` is always whitelisted
+   automatically.
    `RATE_LIMIT_MAX` controls requests per 15-minute window (default `100`); raise this value in development if needed.
 2. Install dependencies and start the API (TypeScript runs via ts-node):
 
