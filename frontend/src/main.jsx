@@ -8,6 +8,7 @@ import './styles.css';
 import './i18n';
 import { GlobalProvider } from './GlobalContext.jsx';
 import { AuthProvider } from './AuthContext.jsx';
+import { BrowserRouter } from 'react-router-dom';
 // Apply saved theme preference
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'dark') {
@@ -19,11 +20,13 @@ if (savedTheme === 'dark') {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <GlobalProvider>
-          <App />
-        </GlobalProvider>
-      </AuthProvider>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AuthProvider>
+          <GlobalProvider>
+            <App />
+          </GlobalProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>,
 );
