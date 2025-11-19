@@ -6,6 +6,7 @@ import { GlobalContext } from './GlobalContext.jsx';
 import { useTranslation } from 'react-i18next';
 import FormCard from './components/FormCard.jsx';
 import { ADMIN_ROLE, normalizeRoleTranslationKey } from '../roles';
+import logo from './logo.png';
 
 function Register() {
   const { roles, structures } = useContext(GlobalContext);
@@ -89,6 +90,9 @@ function Register() {
   return (
     <main id="main-content">
       <FormCard onSubmit={handleSubmit} aria-labelledby="register-title">
+        <div className="auth-logo-wrapper">
+          <img src={logo} alt="GestMat" className="auth-logo" />
+        </div>
         <h1 id="register-title" className="h1">
           {t('register.title')}
         </h1>
