@@ -9,7 +9,6 @@ import {
 } from '../models/LoanRequest';
 import { sendMail } from '../utils/sendMail';
 import { getLoanRecipients } from '../utils/getLoanRecipients';
-import { getStructureEmails } from '../utils/getStructureEmails';
 import { findUserById } from '../models/User';
 import {
   ADMIN_ROLE,
@@ -24,6 +23,7 @@ import { checkEquipmentAvailability } from '../utils/checkAvailability';
 import logger from '../utils/logger';
 import { canModify } from '../utils/roleAccess';
 import type { AuthUser } from '../types';
+import { NOTIFY_EMAIL } from '../config';
 
 export async function listLoans(
   db: Db,
@@ -331,14 +331,32 @@ export async function updateLoanRequest(
     updated = await updateLoan(db, id, data, session);
     await session.commitTransaction();
 
+    const requesterId =
+      (loan.requestedBy as any)?._id?.toString?.() ||
+      (loan.requestedBy as any)?.toString?.();
+    const requester = requesterId ? await findUserById(db, requesterId) : null;
+
     if (status) {
       try {
-        const borrowerId = ((loan.borrower as any)?._id?.toString() ||
-          (loan.borrower as any)?.toString()) as string;
-        const emails = await getStructureEmails(db, borrowerId);
-        if (emails.length) {
+        const recipients = new Set<string>();
+
+        if (requester?.email) {
+          recipients.add(requester.email);
+        }
+
+        if (!requester?.email && NOTIFY_EMAIL) {
+          recipients.add(NOTIFY_EMAIL);
+        }
+
+        const to = Array.from(recipients).join(',');
+
+        if (!to) {
+          logger.warn(
+            'Loan status notification not sent: missing requester email and NOTIFY_EMAIL',
+          );
+        } else {
           await sendMail({
-            to: emails.join(','),
+            to,
             subject: `Demande ${status}`,
             text: `La demande ${updated?._id} est maintenant ${status}`,
           });
