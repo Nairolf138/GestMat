@@ -6,6 +6,26 @@ let transporter:
   | Transporter
   | { sendMail: (opts: SendMailOptions) => Promise<void> };
 
+let defaultSender: string | undefined;
+
+const deriveSenderFromSmtp = (smtpUrl: string | undefined): string | undefined => {
+  if (!smtpUrl) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(smtpUrl);
+    const hostname = url.hostname.replace(/^\[/u, '').replace(/\]$/u, '');
+    if (!hostname) {
+      return undefined;
+    }
+    return `no-reply@${hostname}`;
+  } catch (error) {
+    logger.warn('Unable to derive default sender from SMTP_URL: %o', error);
+    return undefined;
+  }
+};
+
 function getTransporter():
   | Transporter
   | { sendMail: (opts: SendMailOptions) => Promise<void> } {
@@ -28,9 +48,12 @@ function getTransporter():
                 }
               : undefined,
         });
+
+        defaultSender ??= NOTIFY_EMAIL ?? deriveSenderFromSmtp(SMTP_URL);
       } catch (error) {
         logger.warn('Invalid SMTP_URL, falling back to raw string: %o', error);
         transporter = nodemailer.createTransport(SMTP_URL);
+        defaultSender ??= NOTIFY_EMAIL ?? deriveSenderFromSmtp(SMTP_URL);
       }
     } else {
       transporter = {
@@ -38,6 +61,7 @@ function getTransporter():
           logger.info('Email disabled. Would send: %o', opts);
         },
       };
+      defaultSender ??= NOTIFY_EMAIL;
     }
   }
   return transporter;
@@ -45,9 +69,10 @@ function getTransporter():
 
 export async function sendMail(options: SendMailOptions): Promise<void> {
   const transport = getTransporter();
+  const sender = options.from ?? defaultSender;
   const resolved = {
-    from: options.from ?? NOTIFY_EMAIL,
     ...options,
+    from: sender,
   };
 
   if (!resolved.from) {

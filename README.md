@@ -8,8 +8,9 @@ filtered by name, type and location to quickly find the right items.
 
 Additional routes allow creating loan requests, accepting or refusing them and
 retrieving basic statistics. Email notifications can be sent if `SMTP_URL` is
-configured in the backend environment; the recipient address can be overridden
-with `NOTIFY_EMAIL`.
+configured in the backend environment. The sender defaults to `NOTIFY_EMAIL`
+when set, otherwise to `no-reply@<SMTP host>` derived from `SMTP_URL`; set
+`NOTIFY_EMAIL` to override both sender and recipient defaults.
 
 ## Folders
 
@@ -28,7 +29,8 @@ features like `crypto.hash`, so older runtimes are not supported.
 1. Copy `backend/.env.example` to `backend/.env` and edit values if needed.
    **Make sure to set `JWT_SECRET`** or the API will refuse to start.
    Copy `frontend/.env.example` to `frontend/.env` as well.
-   Set `SMTP_URL` and optionally `NOTIFY_EMAIL` if you want email notifications.
+   Set `SMTP_URL` and optionally `NOTIFY_EMAIL` if you want email notifications;
+   without `NOTIFY_EMAIL` the sender falls back to `no-reply@<SMTP host>`.
    Use `CORS_ORIGIN` to specify extra allowed origins separated by commas; the
    production frontend `https://gestmat.nairolfconcept.fr` is always whitelisted
    automatically.

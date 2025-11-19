@@ -31,8 +31,8 @@ The API reads its configuration from the following variables:
 | `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. Each entry must be an absolute URL (scheme + host) or `*`. If unset, the API reflects the requester origin. When a whitelist is provided, the production frontend `https://gestmat.nairolfconcept.fr` is automatically appended to the list. |
 | `API_PREFIX`     | Path prefix for mounting API routes. Defaults to `/api`; set to an empty string to serve at the domain root. |
 | `API_URL`        | Public base URL of the API, including the prefix. Defaults to `http://localhost:<PORT><API_PREFIX>`. |
-| `SMTP_URL`       | SMTP connection string to enable email notifications.                                         |
-| `NOTIFY_EMAIL`   | Optional recipient address for notification emails.                                           |
+| `SMTP_URL`       | SMTP connection string to enable email notifications and derive a default sender.             |
+| `NOTIFY_EMAIL`   | Optional sender/recipient address for notification emails (overrides the derived sender).     |
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
 
 If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
@@ -50,7 +50,9 @@ stored in an HTTP-only cookie) and responds with `{ token }` containing a fresh
 JWT.
 
 To enable email notifications, set `SMTP_URL` in `.env` with a valid SMTP
-connection string and optionally `NOTIFY_EMAIL` for the recipient address.
+connection string. When `NOTIFY_EMAIL` is provided, it becomes the sender and
+recipient by default; otherwise the sender falls back to `no-reply@<SMTP host>`
+derived from the configured SMTP URL.
 
 ## Initial administrator account
 
