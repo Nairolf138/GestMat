@@ -8,7 +8,7 @@ vi.mock('../src/api.js');
 import * as api from '../src/api.js';
 import { GlobalContext } from '../src/GlobalContext.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
-import { ADMIN_ROLE } from '../roles';
+import { ADMIN_ROLE, AUTRE_ROLE } from '../roles';
 
 describe('Register', () => {
   it('marks username invalid on server error', async () => {
@@ -18,7 +18,7 @@ describe('Register', () => {
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <GlobalContext.Provider
-          value={{ roles: [ADMIN_ROLE], structures: [] }}
+          value={{ roles: [ADMIN_ROLE, AUTRE_ROLE], structures: [] }}
         >
           <Register />
         </GlobalContext.Provider>
@@ -31,7 +31,7 @@ describe('Register', () => {
       target: { value: 'pw' },
     });
     fireEvent.change(container.querySelector('select[name="role"]'), {
-      target: { value: ADMIN_ROLE },
+      target: { value: AUTRE_ROLE },
     });
     fireEvent.submit(getByText("S'inscrire").closest('form'));
     await waitFor(() => expect(api.api).toHaveBeenCalled());
@@ -49,7 +49,7 @@ describe('Register', () => {
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
         <GlobalContext.Provider
-          value={{ roles: [ADMIN_ROLE], structures: [] }}
+          value={{ roles: [ADMIN_ROLE, AUTRE_ROLE], structures: [] }}
         >
           <Routes>
             <Route path="/register" element={<Register />} />
@@ -72,7 +72,7 @@ describe('Register', () => {
       target: { value: 'pw' },
     });
     fireEvent.change(screen.getByLabelText('Rôle'), {
-      target: { value: ADMIN_ROLE },
+      target: { value: AUTRE_ROLE },
     });
     fireEvent.submit(
       screen.getByRole('button', { name: "S'inscrire" }).closest('form'),
