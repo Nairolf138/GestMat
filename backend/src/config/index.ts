@@ -94,12 +94,9 @@ const mergeCorsOrigins = (
   configuredOrigins: string[],
   requiredOrigins: string[],
 ): string[] => {
-  if (configuredOrigins.length === 0) {
-    return [];
-  }
+  const merged = new Set(requiredOrigins);
 
-  const merged = new Set(configuredOrigins);
-  for (const origin of requiredOrigins) {
+  for (const origin of configuredOrigins) {
     merged.add(origin);
   }
 
