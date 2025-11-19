@@ -24,6 +24,9 @@ import {
 import { unauthorized, ApiError } from '../utils/errors';
 import { AuthUser } from '../types';
 import { normalizeRole } from '../utils/roleAccess';
+import { sendMail } from '../utils/sendMail';
+import logger from '../utils/logger';
+import { NOTIFY_EMAIL } from '../config';
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -45,11 +48,11 @@ router.post(
       if (!ALLOWED_ROLES.includes(role)) {
         role = DEFAULT_ROLE;
       }
-      if (structure) {
-        const exists = await findStructureById(db, structure);
-        if (!exists) {
-          return next(new ApiError(400, 'Structure not found'));
-        }
+      const structureData = structure
+        ? await findStructureById(db, structure)
+        : undefined;
+      if (structure && !structureData) {
+        return next(new ApiError(400, 'Structure not found'));
       }
       const hashed = await bcrypt.hash(password, 10);
       const user = await createUser(db, {
@@ -62,6 +65,23 @@ router.post(
         email,
       });
       const { password: _pw, ...userData } = user;
+      try {
+        const recipients = [email, NOTIFY_EMAIL].filter(
+          (value): value is string => Boolean(value),
+        );
+        if (recipients.length) {
+          const displayName = `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() ||
+            username;
+          const structureLabel = (structureData as any)?.name ?? structure ?? 'N/A';
+          await sendMail({
+            to: recipients.join(','),
+            subject: 'Nouvel utilisateur créé sur GestMat',
+            text: `Un nouvel utilisateur a été créé.\nNom: ${displayName}\nIdentifiant: ${username}\nStructure: ${structureLabel}\nRôle: ${role}`,
+          });
+        }
+      } catch (mailError) {
+        logger.error('Failed to send registration email: %o', mailError);
+      }
       res.json(userData);
     } catch (err: any) {
       if (err.message === 'Username already exists') {
