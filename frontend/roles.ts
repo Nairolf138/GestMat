@@ -15,3 +15,15 @@ export const ROLES = [
 ];
 
 export default ROLES;
+
+/**
+ * Normalize an incoming role value to a known translation key.
+ * Returns `undefined` when no matching role is found.
+ */
+export const normalizeRoleTranslationKey = (role?: string) => {
+  if (!role) return undefined;
+  const trimmedRole = role.trim();
+  return ROLES.find((knownRole) =>
+    knownRole.toLowerCase() === trimmedRole.toLowerCase(),
+  );
+};
