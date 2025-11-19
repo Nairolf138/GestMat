@@ -371,13 +371,18 @@ export async function updateLoanRequest(
 
     if (status) {
       try {
-        const recipients = new Set<string>();
+        const ownerId =
+          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+        const ownerContacts = ownerId
+          ? await getLoanRecipients(db, ownerId, (loan.items || []) as any)
+          : [];
+        const recipients = new Set<string>(ownerContacts);
 
         if (requester?.email) {
           recipients.add(requester.email);
         }
 
-        if (!requester?.email && NOTIFY_EMAIL) {
+        if (NOTIFY_EMAIL) {
           recipients.add(NOTIFY_EMAIL);
         }
 
@@ -385,7 +390,8 @@ export async function updateLoanRequest(
 
         if (!to) {
           logger.warn(
-            'Loan status notification not sent: missing requester email and NOTIFY_EMAIL',
+            'Loan status notification not sent: no recipient email found for loan %s',
+            loan._id,
           );
         } else {
           await sendMail({
