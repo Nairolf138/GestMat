@@ -26,6 +26,7 @@ import rolesRoutes from './routes/roles';
 import { Db } from 'mongodb';
 import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
+import { scheduleLoanReminders } from './services/reminderService';
 
 const normalizeAllowOriginHeader = (
   value: string | string[] | number | undefined,
@@ -161,6 +162,7 @@ export async function start(
   configureApp?: (app: express.Express) => void,
 ): Promise<Server> {
   let db: Db;
+  let reminderInterval: NodeJS.Timeout | undefined;
   try {
     db = await connect();
     app.locals.db = db;
@@ -172,6 +174,9 @@ export async function start(
       structure: 1,
     });
     await ensureSessionIndexes(db);
+    if (NODE_ENV !== 'test') {
+      reminderInterval = scheduleLoanReminders(db);
+    }
   } catch (err) {
     logger.error('Failed to start server: %o', err as Error);
     process.exit(1);
@@ -225,6 +230,9 @@ export async function start(
   });
 
   const shutdown = () => {
+    if (reminderInterval) {
+      clearInterval(reminderInterval);
+    }
     server.close(async () => {
       await closeDB();
       process.exit(0);
@@ -232,7 +240,12 @@ export async function start(
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
-  server.on('close', closeDB);
+  server.on('close', () => {
+    if (reminderInterval) {
+      clearInterval(reminderInterval);
+    }
+    closeDB();
+  });
 
   return server;
 }

@@ -14,6 +14,7 @@ export interface LoanRequest {
   items?: LoanItem[];
   startDate?: Date;
   endDate?: Date;
+  reminderSentAt?: Date;
   [key: string]: unknown;
 }
 
@@ -115,6 +116,7 @@ export async function createLoan(
   }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
+  if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
   const result = await db
     .collection<LoanRequest>('loanrequests')
     .insertOne(data, { session });
@@ -142,6 +144,7 @@ export async function updateLoan(
   }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
+  if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
   const res = await db
     .collection<LoanRequest>('loanrequests')
     .findOneAndUpdate(
