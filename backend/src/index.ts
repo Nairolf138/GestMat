@@ -38,6 +38,10 @@ app.use(
     },
   }),
 );
+app.use((_, res: Response, next: NextFunction) => {
+  res.removeHeader('Access-Control-Allow-Origin');
+  next();
+});
 const corsOptions: CorsOptions = CORS_ORIGIN.length
   ? { origin: CORS_ORIGIN, credentials: true }
   : {
