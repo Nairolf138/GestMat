@@ -8,6 +8,7 @@ export interface User {
   password?: string;
   structure?: ObjectId | Structure;
   role?: string;
+  email?: string;
   [key: string]: unknown;
 }
 
