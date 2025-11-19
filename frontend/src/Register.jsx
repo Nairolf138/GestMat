@@ -5,7 +5,7 @@ import Alert from './Alert.jsx';
 import { GlobalContext } from './GlobalContext.jsx';
 import { useTranslation } from 'react-i18next';
 import FormCard from './components/FormCard.jsx';
-import { ADMIN_ROLE } from '../roles';
+import { ADMIN_ROLE, normalizeRoleTranslationKey } from '../roles';
 
 function Register() {
   const { roles, structures } = useContext(GlobalContext);
@@ -25,6 +25,17 @@ function Register() {
   useEffect(() => {
     userRef.current?.focus();
   }, []);
+
+  const renderRoleLabel = (roleName) => {
+    const translationKey = normalizeRoleTranslationKey(roleName);
+    if (!translationKey) return roleName;
+
+    const translatedRole = t(`roles.${translationKey}`, {
+      defaultValue: roleName,
+    });
+
+    return translatedRole === `roles.${translationKey}` ? roleName : translatedRole;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -205,7 +216,7 @@ function Register() {
               .filter((r) => r !== ADMIN_ROLE)
               .map((r) => (
                 <option key={r} value={r}>
-                  {t(`roles.${r}`)}
+                  {renderRoleLabel(r)}
                 </option>
               ))}
           </select>
