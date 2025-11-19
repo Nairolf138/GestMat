@@ -27,6 +27,27 @@ import { Db } from 'mongodb';
 import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
 
+const normalizeAllowOriginHeader = (
+  value: string | string[] | number | undefined,
+): string | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const values = Array.isArray(value)
+    ? value
+    : String(value)
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0);
+
+  if (values.length === 0) {
+    return undefined;
+  }
+
+  return values[0];
+};
+
 const app = express();
 app.use(
   helmet({
@@ -40,6 +61,25 @@ app.use(
 );
 app.use((_, res: Response, next: NextFunction) => {
   res.removeHeader('Access-Control-Allow-Origin');
+  next();
+});
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const originalEnd = res.end.bind(res);
+
+  res.end = ((chunk?: unknown, encoding?: unknown, cb?: unknown) => {
+    const normalizedOrigin = normalizeAllowOriginHeader(
+      res.getHeader('Access-Control-Allow-Origin'),
+    );
+
+    if (normalizedOrigin === undefined) {
+      res.removeHeader('Access-Control-Allow-Origin');
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', normalizedOrigin);
+    }
+
+    return originalEnd(chunk as never, encoding as never, cb as never);
+  }) as typeof res.end;
+
   next();
 });
 const corsOptions: CorsOptions = CORS_ORIGIN.length
@@ -118,6 +158,7 @@ app.get(withApiPrefix('/auth/csrf'), csrfRouteHandler);
 
 export async function start(
   connect: () => Promise<Db> = connectDB,
+  configureApp?: (app: express.Express) => void,
 ): Promise<Server> {
   let db: Db;
   try {
@@ -135,6 +176,8 @@ export async function start(
     logger.error('Failed to start server: %o', err as Error);
     process.exit(1);
   }
+
+  configureApp?.(app);
 
   app.use(withApiPrefix('/auth'), authRoutes);
   app.use(withApiPrefix('/users'), userRoutes);
