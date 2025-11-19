@@ -5,6 +5,7 @@ import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from './AuthContext.jsx';
 import FormCard from './components/FormCard.jsx';
+import logo from './logo.png';
 
 function Login() {
   const { t } = useTranslation();
@@ -47,6 +48,9 @@ function Login() {
   return (
     <main id="main-content">
       <FormCard onSubmit={handleSubmit} aria-labelledby="login-title">
+        <div className="auth-logo-wrapper">
+          <img src={logo} alt="GestMat" className="auth-logo" />
+        </div>
         <h1 id="login-title" className="h1">
           {t('login.title')}
         </h1>
