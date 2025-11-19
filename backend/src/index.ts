@@ -27,6 +27,7 @@ import { Db } from 'mongodb';
 import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
 import { scheduleLoanReminders } from './services/reminderService';
+import { scheduleOverdueLoanNotifications } from './services/overdueService';
 
 const normalizeAllowOriginHeader = (
   value: string | string[] | number | undefined,
@@ -163,6 +164,7 @@ export async function start(
 ): Promise<Server> {
   let db: Db;
   let reminderInterval: NodeJS.Timeout | undefined;
+  let overdueInterval: NodeJS.Timeout | undefined;
   try {
     db = await connect();
     app.locals.db = db;
@@ -176,6 +178,7 @@ export async function start(
     await ensureSessionIndexes(db);
     if (NODE_ENV !== 'test') {
       reminderInterval = scheduleLoanReminders(db);
+      overdueInterval = scheduleOverdueLoanNotifications(db);
     }
   } catch (err) {
     logger.error('Failed to start server: %o', err as Error);
@@ -233,6 +236,9 @@ export async function start(
     if (reminderInterval) {
       clearInterval(reminderInterval);
     }
+    if (overdueInterval) {
+      clearInterval(overdueInterval);
+    }
     server.close(async () => {
       await closeDB();
       process.exit(0);
@@ -243,6 +249,9 @@ export async function start(
   server.on('close', () => {
     if (reminderInterval) {
       clearInterval(reminderInterval);
+    }
+    if (overdueInterval) {
+      clearInterval(overdueInterval);
     }
     closeDB();
   });
