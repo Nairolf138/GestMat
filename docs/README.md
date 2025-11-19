@@ -39,7 +39,9 @@ Tous les rôles peuvent consulter le catalogue des autres structures. Le rôle *
 2. L’emprunteur peut modifier ou annuler sa demande tant que la date de début n’est pas passée. Les demandes en attente ou programmées peuvent également être supprimées par l’emprunteur.
 3. La structure propriétaire (ou un administrateur) accepte ou refuse la demande.
 4. Lorsqu’une demande est acceptée, les quantités disponibles sont ajustées. Un refus rétablit les quantités initiales.
-5. Des notifications e‑mail peuvent être envoyées si `SMTP_URL` et `NOTIFY_EMAIL` sont configurés.
+5. Des notifications e‑mail peuvent être envoyées si `SMTP_URL` est configuré.
+   Si `NOTIFY_EMAIL` est renseigné, il sert d’expéditeur et de destinataire par
+   défaut ; sinon l’expéditeur devient `no-reply@<hôte SMTP>`.
 
 ## Installation et lancement
 
