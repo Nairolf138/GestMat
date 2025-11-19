@@ -36,7 +36,8 @@ The API reads its configuration from the following variables:
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
 
 If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
-to a comma-separated whitelist to lock the API down to trusted origins.
+to a comma-separated whitelist to lock the API down to trusted origins. The server always normalizes `Access-Control-Allow-Origin`
+to a single value even when upstream infrastructure appends its own headers.
 
 All example routes below assume the default `API_PREFIX` of `/api`. If you set `API_PREFIX=''`, drop the `/api` prefix from each path.
 
