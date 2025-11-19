@@ -13,8 +13,54 @@ import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import { updateUserValidator } from '../validators/userValidator';
 import { notFound } from '../utils/errors';
+import { sendMail } from '../utils/sendMail';
+import { NOTIFY_EMAIL } from '../config';
+import logger from '../utils/logger';
+import type { User } from '../models/User';
 
 const { MANAGE_USERS } = permissions;
+
+const ACCOUNT_UPDATE_SUBJECT = 'Votre compte GestMat a été mis à jour';
+
+const notifyAccountUpdate = async (
+  user: User,
+  changedFields: string[],
+): Promise<void> => {
+  if (!changedFields.length) return;
+
+  const recipients = [user.email, NOTIFY_EMAIL].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  if (!recipients.length) {
+    logger.info(
+      'Account update notification not sent: no recipient for user %s',
+      user.username,
+    );
+    return;
+  }
+
+  const displayName = `${user.firstName ? `${user.firstName} ` : ''}${
+    user.lastName ?? ''
+  }`.trim()
+    || user.username;
+  const formattedChanges = changedFields.join(', ');
+  const message = `Bonjour ${displayName},\n\nLes informations suivantes de votre compte GestMat ont été mises à jour : ${formattedChanges}.\n\nSi vous n'êtes pas à l'origine de ces modifications, merci de contacter un administrateur.`;
+
+  try {
+    await sendMail({
+      to: recipients.join(','),
+      subject: ACCOUNT_UPDATE_SUBJECT,
+      text: message,
+    });
+  } catch (error) {
+    logger.error(
+      'Failed to send account update notification for user %s: %o',
+      user.username,
+      error,
+    );
+  }
+};
 
 const router = express.Router();
 
@@ -70,6 +116,8 @@ router.put(
   validate,
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
+    const existingUser = await findUserById(db, req.user!.id);
+    if (!existingUser) return next(notFound('User not found'));
     const allowed = ['firstName', 'lastName', 'email', 'password'];
     const data: Record<string, any> = {};
     for (const key of allowed) {
@@ -80,11 +128,22 @@ router.put(
     }
     const updated = await updateUser(db, req.user!.id, data);
     if (!updated) return next(notFound('User not found'));
+    const changedFields: string[] = [];
+    if (data.email !== undefined && data.email !== existingUser.email) {
+      changedFields.push('adresse e-mail');
+    }
+    if (data.password !== undefined) {
+      changedFields.push('mot de passe');
+    }
+    if (data.role !== undefined && data.role !== existingUser.role) {
+      changedFields.push('rôle');
+    }
     if (updated.structure) {
       const struct = await findStructureById(db, updated.structure.toString());
       if (struct) updated.structure = struct;
     }
     delete updated.password;
+    await notifyAccountUpdate(updated, changedFields);
     res.json(updated);
   },
 );
