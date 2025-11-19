@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import Loading from './Loading.jsx';
+import { useLocation } from 'react-router-dom';
 
 export const AuthContext = createContext({ user: null, setUser: () => {} });
 
@@ -9,6 +10,9 @@ export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
   const timerRef = useRef(null);
   const INACTIVITY_LIMIT = 30 * 60 * 1000;
+  const location = useLocation();
+  const publicRoutes = ['/login', '/register'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
 
   const { data: user, status } = useQuery({
     queryKey: ['currentUser'],
@@ -20,6 +24,7 @@ export function AuthProvider({ children }) {
       }
     },
     staleTime: 5 * 60 * 1000,
+    enabled: !isPublicRoute,
   });
 
   const logout = async () => {
@@ -67,6 +72,14 @@ export function AuthProvider({ children }) {
       clearTimeout(timerRef.current);
     };
   }, [user]);
+
+  if (isPublicRoute) {
+    return (
+      <AuthContext.Provider value={{ user: null, setUser }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   if (status === 'pending') return <Loading />;
 

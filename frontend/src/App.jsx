@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Login from './Login';
 import Register from './Register';
 import Equipments from './Equipments';
@@ -24,8 +24,7 @@ function App() {
   }, []);
   return (
     <ErrorBoundary>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Routes>
+      <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
@@ -92,8 +91,7 @@ function App() {
               </AdminRoute>
             }
           />
-        </Routes>
-      </Router>
+      </Routes>
     </ErrorBoundary>
   );
 }
