@@ -74,6 +74,7 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOAN_REMINDER_OFFSET_HOURS: z.coerce.number().positive().default(24),
   LOAN_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
+  LOAN_OVERDUE_CHECK_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
 });
 
 const env = envSchema.parse(process.env);
@@ -136,6 +137,8 @@ export const API_URL = env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX 
 export const RATE_LIMIT_MAX = env.RATE_LIMIT_MAX;
 export const LOAN_REMINDER_OFFSET_HOURS = env.LOAN_REMINDER_OFFSET_HOURS;
 export const LOAN_REMINDER_INTERVAL_MINUTES = env.LOAN_REMINDER_INTERVAL_MINUTES;
+export const LOAN_OVERDUE_CHECK_INTERVAL_MINUTES =
+  env.LOAN_OVERDUE_CHECK_INTERVAL_MINUTES;
 
 export { normalizeCorsOrigins };
 
@@ -152,4 +155,5 @@ export default {
   RATE_LIMIT_MAX,
   LOAN_REMINDER_OFFSET_HOURS,
   LOAN_REMINDER_INTERVAL_MINUTES,
+  LOAN_OVERDUE_CHECK_INTERVAL_MINUTES,
 };
