@@ -154,19 +154,52 @@ export async function createLoanRequest(
       session.endSession();
 
       try {
-        const recipients = await getLoanRecipients(
+        const primaryRecipients = await getLoanRecipients(
           db,
           loan.owner as any,
           items as any,
         );
-        if (recipients.length) {
+
+        const fallbackRecipients: string[] = [];
+
+        if (NOTIFY_EMAIL) {
+          fallbackRecipients.push(NOTIFY_EMAIL);
+        }
+
+        const requesterEmail = (loan.requestedBy as any)?.email || (u as any)?.email;
+        if (requesterEmail) {
+          fallbackRecipients.push(requesterEmail);
+        }
+
+        const borrowerEmail = (loan.borrower as any)?.email;
+        if (borrowerEmail) {
+          fallbackRecipients.push(borrowerEmail);
+        }
+
+        const recipients = new Set<string>([...primaryRecipients, ...fallbackRecipients]);
+
+        if (!primaryRecipients.length && recipients.size) {
+          logger.warn(
+            'Loan creation notification falling back to secondary recipients: %o',
+            Array.from(recipients),
+          );
+        }
+
+        const to = Array.from(recipients).join(',');
+
+        if (to) {
           await sendMail({
-            to: recipients.join(','),
+            to,
             subject: 'Nouvelle demande de prêt',
             text: `Demande de prêt de ${(loan.borrower as any)?.name || ''} pour ${
               (loan.owner as any)?.name || ''
             }`,
           });
+        } else {
+          logger.warn(
+            'Loan creation notification not sent: no recipient email found for loan %s',
+            loan._id,
+          );
         }
       } catch (err) {
         logger.error('mail error %o', err);
