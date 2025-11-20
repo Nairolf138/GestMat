@@ -1,7 +1,7 @@
 import { Db, ObjectId } from 'mongodb';
 import { LoanRequest } from '../models/LoanRequest';
 import { getLoanRecipients } from '../utils/getLoanRecipients';
-import { sendMail } from '../utils/sendMail';
+import { formatSubject, sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import { LOAN_OVERDUE_CHECK_INTERVAL_MINUTES, NOTIFY_EMAIL } from '../config';
 
@@ -61,7 +61,7 @@ async function sendOverdueNotification(
 
   await sendMail({
     to,
-    subject: 'Prêt en retard',
+    subject: formatSubject('Prêt en retard'),
     text: endDate
       ? `Le prêt ${loan._id} est en retard (échéance ${endDate.toLocaleString('fr-FR')}).`
       : `Le prêt ${loan._id} est en retard.`,

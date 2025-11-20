@@ -70,9 +70,11 @@ function getTransporter():
 export async function sendMail(options: SendMailOptions): Promise<void> {
   const transport = getTransporter();
   const sender = options.from ?? defaultSender;
+  const subject = options.subject ? formatSubject(options.subject) : undefined;
   const resolved = {
     ...options,
     from: sender,
+    subject,
   };
 
   if (!resolved.from) {
@@ -81,4 +83,13 @@ export async function sendMail(options: SendMailOptions): Promise<void> {
   }
 
   await transport.sendMail(resolved);
+}
+
+const SUBJECT_PREFIX = 'GestMat: ';
+
+export function formatSubject(subject: string): string {
+  const trimmed = subject.trim();
+  return trimmed.startsWith(SUBJECT_PREFIX)
+    ? trimmed
+    : `${SUBJECT_PREFIX}${trimmed}`;
 }
