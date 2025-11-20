@@ -1,7 +1,7 @@
 import { Db, ObjectId } from 'mongodb';
 import { LoanRequest } from '../models/LoanRequest';
 import { getLoanRecipients } from '../utils/getLoanRecipients';
-import { sendMail } from '../utils/sendMail';
+import { formatSubject, sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import {
   LOAN_REMINDER_INTERVAL_MINUTES,
@@ -42,7 +42,7 @@ async function sendReminderMail(
 
   await sendMail({
     to,
-    subject: 'Rappel de fin de prêt',
+    subject: formatSubject('Rappel de fin de prêt'),
     text: endDate
       ? `Le prêt ${loan._id} arrive à échéance le ${endDate.toLocaleString('fr-FR')}.`
       : `Le prêt ${loan._id} approche de son échéance.`,

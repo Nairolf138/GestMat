@@ -13,14 +13,14 @@ import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import { updateUserValidator } from '../validators/userValidator';
 import { notFound } from '../utils/errors';
-import { sendMail } from '../utils/sendMail';
+import { formatSubject, sendMail } from '../utils/sendMail';
 import { NOTIFY_EMAIL } from '../config';
 import logger from '../utils/logger';
 import type { User } from '../models/User';
 
 const { MANAGE_USERS } = permissions;
 
-const ACCOUNT_UPDATE_SUBJECT = 'Votre compte GestMat a été mis à jour';
+const ACCOUNT_UPDATE_SUBJECT = formatSubject('Votre compte GestMat a été mis à jour');
 
 const notifyAccountUpdate = async (
   user: User,

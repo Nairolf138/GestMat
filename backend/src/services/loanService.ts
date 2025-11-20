@@ -7,7 +7,7 @@ import {
   LoanRequest,
   LoanItem,
 } from '../models/LoanRequest';
-import { sendMail } from '../utils/sendMail';
+import { formatSubject, sendMail } from '../utils/sendMail';
 import { getLoanRecipients } from '../utils/getLoanRecipients';
 import { findUserById } from '../models/User';
 import {
@@ -190,7 +190,7 @@ export async function createLoanRequest(
         if (to) {
           await sendMail({
             to,
-            subject: 'Nouvelle demande de prêt',
+            subject: formatSubject('Nouvelle demande de prêt'),
             text: `Demande de prêt de ${(loan.borrower as any)?.name || ''} pour ${
               (loan.owner as any)?.name || ''
             }`,
@@ -396,7 +396,7 @@ export async function updateLoanRequest(
         } else {
           await sendMail({
             to,
-            subject: `Demande ${status}`,
+            subject: formatSubject(`Demande ${status}`),
             text: `La demande ${updated?._id} est maintenant ${status}`,
           });
         }

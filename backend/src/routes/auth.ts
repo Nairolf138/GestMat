@@ -24,7 +24,7 @@ import {
 import { unauthorized, ApiError } from '../utils/errors';
 import { AuthUser } from '../types';
 import { normalizeRole } from '../utils/roleAccess';
-import { sendMail } from '../utils/sendMail';
+import { formatSubject, sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import { NOTIFY_EMAIL } from '../config';
 
@@ -75,7 +75,7 @@ router.post(
           const structureLabel = (structureData as any)?.name ?? structure ?? 'N/A';
           await sendMail({
             to: recipients.join(','),
-            subject: 'Nouvel utilisateur créé sur GestMat',
+            subject: formatSubject('Nouvel utilisateur créé sur GestMat'),
             text: `Un nouvel utilisateur a été créé.\nNom: ${displayName}\nIdentifiant: ${username}\nStructure: ${structureLabel}\nRôle: ${role}`,
           });
         }
