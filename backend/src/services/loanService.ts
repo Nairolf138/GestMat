@@ -158,11 +158,12 @@ export async function createLoanRequest(
       session.endSession();
 
       try {
-        const primaryRecipients = await getLoanRecipients(
-          db,
-          loan.owner as any,
-          items as any,
-        );
+        const ownerId =
+          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+
+        const primaryRecipients = ownerId
+          ? await getLoanRecipients(db, ownerId, items as any)
+          : [];
 
         const fallbackRecipients: string[] = [];
 
