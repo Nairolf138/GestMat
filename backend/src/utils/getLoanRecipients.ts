@@ -10,6 +10,8 @@ export async function getLoanRecipients(
   ownerId: string,
   items: LoanItemRef[],
 ): Promise<string[]> {
+  if (!ownerId) return [];
+
   const types = (
     await Promise.all(
       items.map(async (it) => {
