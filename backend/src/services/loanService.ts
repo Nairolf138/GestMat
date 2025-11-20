@@ -7,7 +7,7 @@ import {
   LoanRequest,
   LoanItem,
 } from '../models/LoanRequest';
-import { formatSubject, sendMail } from '../utils/sendMail';
+import { sendMail } from '../utils/sendMail';
 import { getLoanRecipients } from '../utils/getLoanRecipients';
 import { findUserById } from '../models/User';
 import {
@@ -24,6 +24,10 @@ import logger from '../utils/logger';
 import { canModify } from '../utils/roleAccess';
 import type { AuthUser } from '../types';
 import { NOTIFY_EMAIL } from '../config';
+import {
+  loanCreationTemplate,
+  loanStatusTemplate,
+} from '../utils/mailTemplates';
 
 export async function listLoans(
   db: Db,
@@ -188,12 +192,12 @@ export async function createLoanRequest(
         const to = Array.from(recipients).join(',');
 
         if (to) {
+          const { subject, text, html } = loanCreationTemplate({ loan });
           await sendMail({
             to,
-            subject: formatSubject('Nouvelle demande de prêt'),
-            text: `Demande de prêt de ${(loan.borrower as any)?.name || ''} pour ${
-              (loan.owner as any)?.name || ''
-            }`,
+            subject,
+            text,
+            html,
           });
         } else {
           logger.warn(
@@ -368,6 +372,9 @@ export async function updateLoanRequest(
       (loan.requestedBy as any)?._id?.toString?.() ||
       (loan.requestedBy as any)?.toString?.();
     const requester = requesterId ? await findUserById(db, requesterId) : null;
+    const actorName = `${u?.firstName ? `${u.firstName} ` : ''}${
+      u?.lastName ?? ''
+    }`.trim() || u?.username || undefined;
 
     if (status) {
       try {
@@ -394,10 +401,16 @@ export async function updateLoanRequest(
             loan._id,
           );
         } else {
+          const { subject, text, html } = loanStatusTemplate({
+            loan: updated ?? loan,
+            status,
+            actor: actorName,
+          });
           await sendMail({
             to,
-            subject: formatSubject(`Demande ${status}`),
-            text: `La demande ${updated?._id} est maintenant ${status}`,
+            subject,
+            text,
+            html,
           });
         }
       } catch (err) {

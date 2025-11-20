@@ -24,9 +24,10 @@ import {
 import { unauthorized, ApiError } from '../utils/errors';
 import { AuthUser } from '../types';
 import { normalizeRole } from '../utils/roleAccess';
-import { formatSubject, sendMail } from '../utils/sendMail';
+import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import { NOTIFY_EMAIL } from '../config';
+import { accountCreationTemplate } from '../utils/mailTemplates';
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -70,13 +71,20 @@ router.post(
           (value): value is string => Boolean(value),
         );
         if (recipients.length) {
-          const displayName = `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() ||
-            username;
+          const displayName =
+            `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() || username;
           const structureLabel = (structureData as any)?.name ?? structure ?? 'N/A';
+          const { subject, text, html } = accountCreationTemplate({
+            username,
+            displayName,
+            role,
+            structure: structureLabel,
+          });
           await sendMail({
             to: recipients.join(','),
-            subject: formatSubject('Nouvel utilisateur créé sur GestMat'),
-            text: `Un nouvel utilisateur a été créé.\nNom: ${displayName}\nIdentifiant: ${username}\nStructure: ${structureLabel}\nRôle: ${role}`,
+            subject,
+            text,
+            html,
           });
         }
       } catch (mailError) {
