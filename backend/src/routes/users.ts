@@ -13,14 +13,13 @@ import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import { updateUserValidator } from '../validators/userValidator';
 import { notFound } from '../utils/errors';
-import { formatSubject, sendMail } from '../utils/sendMail';
+import { sendMail } from '../utils/sendMail';
 import { NOTIFY_EMAIL } from '../config';
 import logger from '../utils/logger';
 import type { User } from '../models/User';
+import { accountUpdateTemplate } from '../utils/mailTemplates';
 
 const { MANAGE_USERS } = permissions;
-
-const ACCOUNT_UPDATE_SUBJECT = formatSubject('Votre compte GestMat a été mis à jour');
 
 const notifyAccountUpdate = async (
   user: User,
@@ -44,14 +43,18 @@ const notifyAccountUpdate = async (
     user.lastName ?? ''
   }`.trim()
     || user.username;
-  const formattedChanges = changedFields.join(', ');
-  const message = `Bonjour ${displayName},\n\nLes informations suivantes de votre compte GestMat ont été mises à jour : ${formattedChanges}.\n\nSi vous n'êtes pas à l'origine de ces modifications, merci de contacter un administrateur.`;
+
+  const { subject, text, html } = accountUpdateTemplate({
+    displayName,
+    changedFields,
+  });
 
   try {
     await sendMail({
       to: recipients.join(','),
-      subject: ACCOUNT_UPDATE_SUBJECT,
-      text: message,
+      subject,
+      text,
+      html,
     });
   } catch (error) {
     logger.error(
