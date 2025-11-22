@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { useTranslation } from 'react-i18next';
 import { confirmDialog } from '../utils';
@@ -21,7 +21,7 @@ function ManageUsers() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const load = () => {
+  const load = useCallback(() => {
     setError('');
     api(
       `/users?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
@@ -31,11 +31,11 @@ function ManageUsers() {
         setError(err.message);
         setUsers([]);
       });
-  };
+  }, [limit, page, search]);
 
   useEffect(() => {
     load();
-  }, [page]);
+  }, [load]);
 
   useEffect(() => {
     api('/roles')
@@ -49,7 +49,7 @@ function ManageUsers() {
       else load();
     }, 500);
     return () => clearTimeout(timeout);
-  }, [search]);
+  }, [load, page, search]);
 
   const doSearch = () => {
     if (page !== 1) setPage(1);

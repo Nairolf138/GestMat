@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useRef } from 'react';
+import React, { createContext, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import Loading from './Loading.jsx';
@@ -27,20 +27,20 @@ export function AuthProvider({ children }) {
     enabled: !isPublicRoute,
   });
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api('/auth/logout', { method: 'POST' });
     } catch {}
     localStorage.removeItem('lastActivity');
     queryClient.setQueryData(['currentUser'], null);
     window.location.href = '/login';
-  };
+  }, [queryClient]);
 
-  const resetTimer = () => {
+  const resetTimer = useCallback(() => {
     localStorage.setItem('lastActivity', Date.now().toString());
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(logout, INACTIVITY_LIMIT);
-  };
+  }, [INACTIVITY_LIMIT, logout]);
 
   const setUser = (newUser) => {
     queryClient.setQueryData(['currentUser'], newUser);
@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
       events.forEach((e) => window.removeEventListener(e, handler));
       clearTimeout(timerRef.current);
     };
-  }, [user]);
+  }, [INACTIVITY_LIMIT, logout, resetTimer, user]);
 
   if (isPublicRoute) {
     return (

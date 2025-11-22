@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { confirmDialog } from '../utils';
@@ -78,7 +78,7 @@ function ManageInventory() {
     };
   };
 
-  const load = () => {
+  const load = useCallback(() => {
     setError('');
     const params = new URLSearchParams({
       search: filters.name,
@@ -93,11 +93,11 @@ function ManageInventory() {
         setError(err.message);
         setItems([]);
       });
-  };
+  }, [filters, limit, page]);
 
   useEffect(() => {
     load();
-  }, [page]);
+  }, [load]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -105,7 +105,7 @@ function ManageInventory() {
       else load();
     }, 500);
     return () => clearTimeout(timeout);
-  }, [filters]);
+  }, [filters, load, page]);
 
   const doSearch = () => {
     if (page !== 1) setPage(1);
