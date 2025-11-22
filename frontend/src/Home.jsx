@@ -26,6 +26,20 @@ function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [runTour, setRunTour] = useState(false);
 
+  const structureId = useMemo(
+    () => user?.structure?._id || user?.structure,
+    [user],
+  );
+
+  const isOwnerLoan = useCallback(
+    (loan) =>
+      Boolean(
+        structureId &&
+          (loan.owner?._id === structureId || loan.owner === structureId),
+      ),
+    [structureId],
+  );
+
   const refreshLoans = useCallback(
     async (withLoader = false) => {
       if (withLoader) setLoading(true);
@@ -50,7 +64,10 @@ function Home() {
 
   const now = useMemo(() => new Date(), []);
 
-  const pending = useMemo(() => loans.filter((l) => l.status === 'pending'), [loans]);
+  const pending = useMemo(
+    () => loans.filter((l) => l.status === 'pending' && isOwnerLoan(l)),
+    [loans, isOwnerLoan],
+  );
 
   const updateLoanStatus = useCallback(
     async (loanId, status) => {
