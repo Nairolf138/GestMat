@@ -208,6 +208,8 @@ function Catalog() {
                   <div className="card-body">
                     <h5 className="card-title h5">{it.name}</h5>
                     <p className="card-text">
+                      <strong>{t('catalog.type')}:</strong> {it.type}
+                      <br />
                       <strong>{t('catalog.structure')}:</strong>{' '}
                       {it.structure?.name}
                       <br />
@@ -245,6 +247,7 @@ function Catalog() {
               <thead>
                 <tr>
                   <th>{t('catalog.equipment')}</th>
+                  <th>{t('catalog.type')}</th>
                   <th>{t('catalog.structure')}</th>
                   <th>{t('catalog.available_total')}</th>
                   <th>{t('catalog.quantity')}</th>
@@ -254,7 +257,7 @@ function Catalog() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="5">
+                    <td colSpan="6">
                       <Loading />
                     </td>
                   </tr>
@@ -262,6 +265,7 @@ function Catalog() {
                   items.map((it) => (
                     <tr key={it._id}>
                       <td>{it.name}</td>
+                      <td>{it.type}</td>
                       <td>{it.structure?.name}</td>
                       <td>{it.availability}</td>
                       <td>
