@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext';
@@ -29,7 +29,7 @@ function Catalog() {
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
 
-  const fetchItems = () => {
+  const fetchItems = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({
       search: filters.search,
@@ -43,11 +43,11 @@ function Catalog() {
       .then(setItems)
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
-  };
+  }, [filters.endDate, filters.search, filters.startDate, filters.structure, filters.type]);
 
   useEffect(() => {
     fetchItems();
-  }, [filters.search, filters.type, filters.structure]);
+  }, [fetchItems]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);

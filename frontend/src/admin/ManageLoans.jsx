@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import Loading from '../Loading.jsx';
@@ -25,7 +25,7 @@ function ManageLoans() {
   const [totalPages, setTotalPages] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const load = () => {
+  const load = useCallback(() => {
     setError('');
     setLoading(true);
     api(`/loans?page=${page}&limit=${limit}`)
@@ -46,11 +46,11 @@ function ManageLoans() {
         setTotalPages(null);
       })
       .finally(() => setLoading(false));
-  };
+  }, [limit, page]);
 
   useEffect(() => {
     load();
-  }, [page]);
+  }, [load]);
 
   const update = async (id, status) => {
     setError('');
