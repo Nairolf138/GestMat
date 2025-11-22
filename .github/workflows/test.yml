@@ -16,6 +16,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install root dev dependencies
+        if: ${{ matrix.project == 'frontend' }}
+        run: npm ci
       - run: cd ${{ matrix.project }} && npm ci
       - run: cd ${{ matrix.project }} && npm run lint
       - run: cd ${{ matrix.project }} && npm run format:check
