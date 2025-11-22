@@ -24,8 +24,11 @@ export async function checkEquipmentAvailability(
           {
             $match: {
               status: { $nin: ['refused', 'cancelled'] },
-              startDate: { $lte: end },
-              endDate: { $gte: start },
+              // Overlap check treats loan end dates as exclusive to allow
+              // back-to-back reservations without double counting the
+              // midnight boundary.
+              startDate: { $lt: end },
+              endDate: { $gt: start },
               items: { $elemMatch: { equipment: eq._id } },
             },
           },
