@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import Loading from './Loading.jsx';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useInRouterContext } from 'react-router-dom';
 
 export const AuthContext = createContext({ user: null, setUser: () => {} });
 
@@ -10,9 +10,10 @@ export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
   const timerRef = useRef(null);
   const INACTIVITY_LIMIT = 30 * 60 * 1000;
-  const location = useLocation();
+  const inRouter = useInRouterContext();
+  const location = inRouter ? useLocation() : { pathname: '/' };
   const publicRoutes = ['/login', '/register'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const isPublicRoute = inRouter && publicRoutes.includes(location.pathname);
 
   const { data: user, status } = useQuery({
     queryKey: ['currentUser'],

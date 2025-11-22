@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useMemo } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -97,22 +97,6 @@ function Equipments() {
     color: '#fff',
   };
 
-  const typeOptions = useMemo(() => {
-    const values = new Set(items.map((item) => item.type).filter(Boolean));
-    if (type && !values.has(type)) {
-      values.add(type);
-    }
-    return Array.from(values).sort((a, b) => a.localeCompare(b));
-  }, [items, type]);
-
-  const locationOptions = useMemo(() => {
-    const values = new Set(items.map((item) => item.location).filter(Boolean));
-    if (location && !values.has(location)) {
-      values.add(location);
-    }
-    return Array.from(values).sort((a, b) => a.localeCompare(b));
-  }, [items, location]);
-
   const toggleAddForm = () => {
     setShowForm((prev) => {
       const next = !prev;
@@ -164,39 +148,29 @@ function Equipments() {
             <label htmlFor="equip-type" className="visually-hidden">
               {t('equipments.type')}
             </label>
-            <select
+            <input
               id="equip-type"
               name="type"
-              className="form-select"
+              placeholder={t('equipments.type')}
+              className="form-control"
               value={type}
               onChange={(e) => setType(e.target.value)}
-            >
-              <option value="">{t('equipments.type')}</option>
-              {typeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+              autoComplete="off"
+            />
           </div>
           <div className="col-md">
             <label htmlFor="equip-location" className="visually-hidden">
               {t('equipments.location')}
             </label>
-            <select
+            <input
               id="equip-location"
               name="location"
-              className="form-select"
+              placeholder={t('equipments.location')}
+              className="form-control"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-            >
-              <option value="">{t('equipments.location')}</option>
-              {locationOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+              autoComplete="off"
+            />
           </div>
           <div className="col-md">
             <label htmlFor="equip-sort" className="visually-hidden">

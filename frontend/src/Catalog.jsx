@@ -29,7 +29,7 @@ function Catalog() {
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
 
-  const fetchItems = useCallback(() => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({
       search: filters.search,
@@ -39,15 +39,21 @@ function Catalog() {
     });
     if (filters.startDate) params.append('startDate', filters.startDate);
     if (filters.endDate) params.append('endDate', filters.endDate);
-    api(`/equipments?${params.toString()}`)
-      .then(setItems)
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
+    try {
+      const list = await api(`/equipments?${params.toString()}`);
+      setItems(Array.isArray(list) ? list : []);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, [filters.endDate, filters.search, filters.startDate, filters.structure, filters.type]);
 
   useEffect(() => {
     fetchItems();
-  }, [fetchItems]);
+    // fetch once on mount; subsequent searches are user-triggered
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -77,8 +83,8 @@ function Catalog() {
   };
 
   const addToCart = async (eq) => {
-    const qtyValue = quantities[eq._id];
-    const qty = qtyValue === '' || qtyValue === undefined ? NaN : Number(qtyValue);
+    const qtyValue = quantities[eq._id] ?? '1';
+    const qty = Number(qtyValue);
     if (!qty || qty < 1) return;
     if (!filters.startDate || !filters.endDate) {
       setError(t('catalog.select_period'));
