@@ -9,7 +9,7 @@ interface LoanStatusContext extends LoanMailContext {
   actor?: string;
 }
 
-interface ReminderContext extends LoanMailContext {}
+type ReminderContext = LoanMailContext;
 
 interface AccountCreationContext {
   username: string;
