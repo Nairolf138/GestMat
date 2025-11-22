@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useMemo } from 'react';
+import React, { useEffect, useState, useContext, useMemo, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import NavBar from './NavBar';
@@ -16,31 +16,64 @@ function Home() {
   const { user } = useContext(AuthContext);
   const [loans, setLoans] = useState([]);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const [message, setMessage] = useState(location.state?.message || '');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const [message] = useState(location.state?.message || '');
+  const [actionLoadingId, setActionLoadingId] = useState('');
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [runTour, setRunTour] = useState(false);
 
-  useEffect(() => {
-    api('/loans')
-      .then((data) => {
+  const refreshLoans = useCallback(
+    async (withLoader = false) => {
+      if (withLoader) setLoading(true);
+      setError('');
+      try {
+        const data = await api('/loans');
         if (Array.isArray(data)) setLoans(data);
         else setLoans([]);
-      })
-      .catch(() => {
+      } catch {
         setError(t('home.error_fetch'));
         setLoans([]);
-      })
-      .finally(() => setLoading(false));
-  }, [t]);
+      } finally {
+        if (withLoader) setLoading(false);
+      }
+    },
+    [t],
+  );
+
+  useEffect(() => {
+    refreshLoans(true);
+  }, [refreshLoans]);
 
   const now = useMemo(() => new Date(), []);
 
   const pending = useMemo(() => loans.filter((l) => l.status === 'pending'), [loans]);
+
+  const updateLoanStatus = useCallback(
+    async (loanId, status) => {
+      setActionLoadingId(loanId);
+      setError('');
+      setMessage('');
+      try {
+        await api(`/loans/${loanId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ status }),
+        });
+        setMessage(
+          t('home.status_update_success', { status: t(`loans.status.${status}`) }),
+        );
+        await refreshLoans();
+      } catch (err) {
+        setError(err.message || t('home.status_update_error'));
+      } finally {
+        setActionLoadingId('');
+      }
+    },
+    [refreshLoans, t],
+  );
 
   useEffect(() => {
     if (!query.trim()) {
@@ -187,6 +220,9 @@ function Home() {
             total: pending.length,
             category: t('home.recent_requests').toLowerCase(),
           })}
+          onAccept={(loanId) => updateLoanStatus(loanId, 'accepted')}
+          onDecline={(loanId) => updateLoanStatus(loanId, 'refused')}
+          actionInProgressId={actionLoadingId}
         />
         <LoanPreviewSection
           title={t('home.current_loans')}

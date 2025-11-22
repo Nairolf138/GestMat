@@ -94,7 +94,9 @@
     "view_all": "View all",
     "counter": "{{shown}} of {{total}} {{category}}",
     "search_placeholder": "Search equipment...",
-    "no_results": "No equipment found"
+    "no_results": "No equipment found",
+    "status_update_success": "Loan status updated to {{status}}",
+    "status_update_error": "Unable to update loan status"
   },
   "tour": {
     "help": "Help",
