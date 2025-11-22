@@ -33,7 +33,10 @@ async function createApp(route, path) {
 
 // Equipment
 test('equipment routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(equipmentRoutes, '/equipments');
+  const { app, client, mongod } = await createApp(
+    equipmentRoutes,
+    '/equipments',
+  );
   await request(app)
     .put(withApiPrefix('/equipments/badid'))
     .set(auth())
@@ -69,7 +72,10 @@ test('loan routes return 400 for invalid id', async () => {
 
 // Structures
 test('structure routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(structureRoutes, '/structures');
+  const { app, client, mongod } = await createApp(
+    structureRoutes,
+    '/structures',
+  );
   await request(app)
     .put(withApiPrefix('/structures/badid'))
     .set(auth())

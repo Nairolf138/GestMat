@@ -72,8 +72,10 @@ router.post(
         );
         if (recipients.length) {
           const displayName =
-            `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() || username;
-          const structureLabel = (structureData as any)?.name ?? structure ?? 'N/A';
+            `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() ||
+            username;
+          const structureLabel =
+            (structureData as any)?.name ?? structure ?? 'N/A';
           const { subject, text, html } = accountCreationTemplate({
             username,
             displayName,

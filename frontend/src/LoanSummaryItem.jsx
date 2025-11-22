@@ -19,7 +19,8 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
   );
 
   const showActions =
-    loan.status === 'pending' && (typeof onAccept === 'function' || typeof onDecline === 'function');
+    loan.status === 'pending' &&
+    (typeof onAccept === 'function' || typeof onDecline === 'function');
   const isProcessing = actionInProgressId === loan._id;
 
   return (

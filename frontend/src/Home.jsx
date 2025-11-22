@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useContext, useMemo, useCallback } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useMemo,
+  useCallback,
+} from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import NavBar from './NavBar';
@@ -50,7 +56,10 @@ function Home() {
 
   const now = useMemo(() => new Date(), []);
 
-  const pending = useMemo(() => loans.filter((l) => l.status === 'pending'), [loans]);
+  const pending = useMemo(
+    () => loans.filter((l) => l.status === 'pending'),
+    [loans],
+  );
 
   const updateLoanStatus = useCallback(
     async (loanId, status) => {
@@ -63,7 +72,9 @@ function Home() {
           body: JSON.stringify({ status }),
         });
         setMessage(
-          t('home.status_update_success', { status: t(`loans.status.${status}`) }),
+          t('home.status_update_success', {
+            status: t(`loans.status.${status}`),
+          }),
         );
         await refreshLoans();
       } catch (err) {

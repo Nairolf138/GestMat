@@ -162,7 +162,9 @@ test('DELETE users/:id respects authorization', async () => {
   ).insertedId;
 
   // missing token
-  await request(app).delete(withApiPrefix(`/users/${id}`)).expect(401);
+  await request(app)
+    .delete(withApiPrefix(`/users/${id}`))
+    .expect(401);
 
   // invalid token
   await request(app)

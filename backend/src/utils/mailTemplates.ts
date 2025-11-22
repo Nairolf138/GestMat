@@ -41,7 +41,11 @@ function formatDate(value?: string | Date | null): string {
 }
 
 function getStructureLabel(structure: any): string {
-  return (structure?.name as string) || (structure?._id as string) || 'Non renseignée';
+  return (
+    (structure?.name as string) ||
+    (structure?._id as string) ||
+    'Non renseignée'
+  );
 }
 
 function getUserLabel(user: any): string {
@@ -69,7 +73,10 @@ function translateStatus(status: string | undefined): string {
 
 function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   if (!items.length) {
-    return { text: '- Aucun matériel renseigné', html: '<li>Aucun matériel renseigné</li>' };
+    return {
+      text: '- Aucun matériel renseigné',
+      html: '<li>Aucun matériel renseigné</li>',
+    };
   }
   const textItems: string[] = [];
   const htmlItems: string[] = [];
@@ -78,7 +85,9 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
     const label = equipment?.name || equipment?.reference || 'Matériel';
     const quantity = item.quantity ?? 'N/A';
     textItems.push(`- ${label} (quantité : ${quantity})`);
-    htmlItems.push(`<li><strong>${label}</strong> — quantité : ${quantity}</li>`);
+    htmlItems.push(
+      `<li><strong>${label}</strong> — quantité : ${quantity}</li>`,
+    );
   }
   return { text: textItems.join('\n'), html: htmlItems.join('') };
 }
@@ -90,7 +99,9 @@ function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
   const status = translateStatus(loan.status as string);
   const start = formatDate(loan.startDate as any);
   const end = formatDate(loan.endDate as any);
-  const { text: itemsText, html: itemsHtml } = formatItems(loan.items as LoanItem[]);
+  const { text: itemsText, html: itemsHtml } = formatItems(
+    loan.items as LoanItem[],
+  );
 
   const text =
     `Prêteur : ${owner}\n` +
@@ -139,13 +150,18 @@ export function loanCreationTemplate({ loan }: LoanMailContext): MailTemplate {
   };
 }
 
-export function loanStatusTemplate({ loan, status, actor }: LoanStatusContext): MailTemplate {
+export function loanStatusTemplate({
+  loan,
+  status,
+  actor,
+}: LoanStatusContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const statusLabel = translateStatus(status);
   const actorLine = actor ? ` par ${actor}` : '';
   let action = "Vérifier l'état du prêt dans GestMat.";
   if (status === 'accepted') {
-    action = 'Préparer la mise à disposition et confirmer la remise du matériel.';
+    action =
+      'Préparer la mise à disposition et confirmer la remise du matériel.';
   } else if (status === 'refused') {
     action = 'Aucune action supplémentaire requise.';
   } else if (status === 'cancelled') {
@@ -247,7 +263,8 @@ export function accountUpdateTemplate({
   displayName,
   changedFields,
 }: AccountUpdateContext): MailTemplate {
-  const formattedChanges = changedFields.join(', ') || 'modifications de votre compte';
+  const formattedChanges =
+    changedFields.join(', ') || 'modifications de votre compte';
   return {
     subject: 'Mise à jour de votre compte GestMat',
     text:

@@ -107,7 +107,11 @@ export async function processOverdueLoans(db: Db): Promise<void> {
 
       await sendOverdueNotification(db, loan, Array.from(recipients));
     } catch (err) {
-      logger.error('Overdue loan notification error for loan %s: %o', loan._id, err);
+      logger.error(
+        'Overdue loan notification error for loan %s: %o',
+        loan._id,
+        err,
+      );
     }
   }
 }

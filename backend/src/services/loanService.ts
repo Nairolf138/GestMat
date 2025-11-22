@@ -76,14 +76,14 @@ export async function listLoans(
     }
 
     if (
-      [REGISSEUR_SON_ROLE, REGISSEUR_LUMIERE_ROLE, REGISSEUR_PLATEAU_ROLE].includes(
-        user.role,
-      )
+      [
+        REGISSEUR_SON_ROLE,
+        REGISSEUR_LUMIERE_ROLE,
+        REGISSEUR_PLATEAU_ROLE,
+      ].includes(user.role)
     ) {
       if (reqId === user.id) return true;
-      return (
-        reqRole === REGISSEUR_GENERAL_ROLE || reqRole === AUTRE_ROLE
-      );
+      return reqRole === REGISSEUR_GENERAL_ROLE || reqRole === AUTRE_ROLE;
     }
 
     return true;
@@ -159,7 +159,8 @@ export async function createLoanRequest(
 
       try {
         const ownerId =
-          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+          (loan.owner as any)?._id?.toString?.() ||
+          (loan.owner as any)?.toString?.();
 
         const primaryRecipients = ownerId
           ? await getLoanRecipients(db, ownerId, items as any)
@@ -171,7 +172,8 @@ export async function createLoanRequest(
           fallbackRecipients.push(NOTIFY_EMAIL);
         }
 
-        const requesterEmail = (loan.requestedBy as any)?.email || (u as any)?.email;
+        const requesterEmail =
+          (loan.requestedBy as any)?.email || (u as any)?.email;
         if (requesterEmail) {
           fallbackRecipients.push(requesterEmail);
         }
@@ -181,7 +183,10 @@ export async function createLoanRequest(
           fallbackRecipients.push(borrowerEmail);
         }
 
-        const recipients = new Set<string>([...primaryRecipients, ...fallbackRecipients]);
+        const recipients = new Set<string>([
+          ...primaryRecipients,
+          ...fallbackRecipients,
+        ]);
 
         if (!primaryRecipients.length && recipients.size) {
           logger.warn(
@@ -251,12 +256,13 @@ export async function updateLoanRequest(
     const status = (data as any).status;
     const types = await Promise.all(
       (loan.items || []).map(async (item: LoanItem) => {
-        const eq = await db
-          .collection('equipments')
-          .findOne({ _id: item.equipment as any }, {
+        const eq = await db.collection('equipments').findOne(
+          { _id: item.equipment as any },
+          {
             projection: { type: 1 },
             session,
-          });
+          },
+        );
         return (eq as any)?.type as string | undefined;
       }),
     );
@@ -272,7 +278,11 @@ export async function updateLoanRequest(
             if (status && status !== 'cancelled') {
               throw forbidden('Access denied');
             }
-            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
+            if (
+              !isBorrower ||
+              !isRequester ||
+              new Date(loan.startDate) <= now
+            ) {
               throw forbidden('Access denied');
             }
           }
@@ -293,7 +303,11 @@ export async function updateLoanRequest(
             if (status && status !== 'cancelled') {
               throw forbidden('Access denied');
             }
-            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
+            if (
+              !isBorrower ||
+              !isRequester ||
+              new Date(loan.startDate) <= now
+            ) {
               throw forbidden('Access denied');
             }
           }
@@ -373,14 +387,16 @@ export async function updateLoanRequest(
       (loan.requestedBy as any)?._id?.toString?.() ||
       (loan.requestedBy as any)?.toString?.();
     const requester = requesterId ? await findUserById(db, requesterId) : null;
-    const actorName = `${u?.firstName ? `${u.firstName} ` : ''}${
-      u?.lastName ?? ''
-    }`.trim() || u?.username || undefined;
+    const actorName =
+      `${u?.firstName ? `${u.firstName} ` : ''}${u?.lastName ?? ''}`.trim() ||
+      u?.username ||
+      undefined;
 
     if (status) {
       try {
         const ownerId =
-          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+          (loan.owner as any)?._id?.toString?.() ||
+          (loan.owner as any)?.toString?.();
         const ownerContacts = ownerId
           ? await getLoanRecipients(db, ownerId, (loan.items || []) as any)
           : [];

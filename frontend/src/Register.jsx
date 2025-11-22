@@ -35,7 +35,9 @@ function Register() {
       defaultValue: roleName,
     });
 
-    return translatedRole === `roles.${translationKey}` ? roleName : translatedRole;
+    return translatedRole === `roles.${translationKey}`
+      ? roleName
+      : translatedRole;
   };
 
   const handleSubmit = async (e) => {

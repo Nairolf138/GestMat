@@ -89,7 +89,10 @@ test('create, update and delete loan request', async () => {
   );
   assert.strictEqual(availAfterCreate.availableQty, 0);
 
-  const list1 = await request(app).get(withApiPrefix('/loans')).set(auth()).expect(200);
+  const list1 = await request(app)
+    .get(withApiPrefix('/loans'))
+    .set(auth())
+    .expect(200);
   assert.strictEqual(list1.body.length, 1);
 
   const id = res.body._id;
@@ -99,14 +102,8 @@ test('create, update and delete loan request', async () => {
     .expect(200);
   assert.strictEqual(single.body._id.toString(), id.toString());
   assert.strictEqual(single.body.owner._id.toString(), owner.toString());
-  assert.strictEqual(
-    single.body.borrower._id.toString(),
-    borrower.toString(),
-  );
-  assert.strictEqual(
-    single.body.requestedBy._id.toString(),
-    userId.toString(),
-  );
+  assert.strictEqual(single.body.borrower._id.toString(), borrower.toString());
+  assert.strictEqual(single.body.requestedBy._id.toString(), userId.toString());
   assert.strictEqual(
     single.body.items[0].equipment._id.toString(),
     eqId.toString(),
@@ -120,7 +117,10 @@ test('create, update and delete loan request', async () => {
   assert.strictEqual(upd.body.status, 'accepted');
   assert.strictEqual(upd.body.processedBy._id.toString(), ownerUser.toString());
 
-  await request(app).delete(withApiPrefix(`/loans/${id}`)).set(auth()).expect(200);
+  await request(app)
+    .delete(withApiPrefix(`/loans/${id}`))
+    .set(auth())
+    .expect(200);
   const availAfterDelete = await checkEquipmentAvailability(
     db,
     eqId.toString(),
@@ -129,7 +129,10 @@ test('create, update and delete loan request', async () => {
     1,
   );
   assert.strictEqual(availAfterDelete.availableQty, 1);
-  const list2 = await request(app).get(withApiPrefix('/loans')).set(auth()).expect(200);
+  const list2 = await request(app)
+    .get(withApiPrefix('/loans'))
+    .set(auth())
+    .expect(200);
   assert.strictEqual(list2.body.length, 0);
 
   // loan can be created again after deletion (return scenario)
@@ -180,9 +183,17 @@ test('loan creation fails on quantity conflict', async () => {
     endDate: '2024-01-02',
   };
 
-  await request(app).post(withApiPrefix('/loans')).set(auth()).send(payload).expect(200);
+  await request(app)
+    .post(withApiPrefix('/loans'))
+    .set(auth())
+    .send(payload)
+    .expect(200);
 
-  await request(app).post(withApiPrefix('/loans')).set(auth()).send(payload).expect(400);
+  await request(app)
+    .post(withApiPrefix('/loans'))
+    .set(auth())
+    .send(payload)
+    .expect(400);
 
   await client.close();
   await mongod.stop();
@@ -210,7 +221,11 @@ test('reject loan request to own structure', async () => {
     endDate: '2024-01-02',
   };
 
-  await request(app).post(withApiPrefix('/loans')).set(auth()).send(payload).expect(403);
+  await request(app)
+    .post(withApiPrefix('/loans'))
+    .set(auth())
+    .send(payload)
+    .expect(403);
 
   await client.close();
   await mongod.stop();

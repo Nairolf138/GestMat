@@ -341,9 +341,7 @@ function Equipments() {
             >
               {t('equipments.add.title')}
             </button>
-            {showForm && (
-              <AddEquipment onCreated={() => setShowForm(false)} />
-            )}
+            {showForm && <AddEquipment onCreated={() => setShowForm(false)} />}
           </>
         )}
         {editing && canManageEquipment(user?.role, editing.type) && (

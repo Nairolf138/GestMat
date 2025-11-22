@@ -74,7 +74,9 @@ export async function processLoanReminders(
     try {
       const ownerId = toObjectId(loan.owner);
       const items = (loan.items || []) as any;
-      const recipients = ownerId ? await getLoanRecipients(db, ownerId, items) : [];
+      const recipients = ownerId
+        ? await getLoanRecipients(db, ownerId, items)
+        : [];
       await sendReminderMail(db, loan, recipients);
     } catch (err) {
       logger.error('Loan reminder error for loan %s: %o', loan._id, err);

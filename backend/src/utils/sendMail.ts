@@ -8,7 +8,9 @@ let transporter:
 
 let defaultSender: string | undefined;
 
-const deriveSenderFromSmtp = (smtpUrl: string | undefined): string | undefined => {
+const deriveSenderFromSmtp = (
+  smtpUrl: string | undefined,
+): string | undefined => {
   if (!smtpUrl) {
     return undefined;
   }

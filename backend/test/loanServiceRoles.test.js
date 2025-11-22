@@ -3,7 +3,11 @@ const test = require('node:test');
 const assert = require('assert');
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
-const { listLoans, updateLoanRequest, deleteLoanRequest } = require('../src/services/loanService');
+const {
+  listLoans,
+  updateLoanRequest,
+  deleteLoanRequest,
+} = require('../src/services/loanService');
 const {
   AUTRE_ROLE,
   REGISSEUR_SON_ROLE,
@@ -95,46 +99,48 @@ test('role based loan service permissions', async (t) => {
     },
   ]);
 
-  await t.test('listLoans filters by equipment type and requester role', async () => {
-    const regSonLoans = await listLoans(db, {
-      id: userRegSon.toString(),
-      role: REGISSEUR_SON_ROLE,
-    });
-    assert.strictEqual(regSonLoans.length, 4);
-    assert.ok(
-      regSonLoans.every((l) =>
-        (l.items || []).every((it) => it.equipment.type !== 'Plateau'),
-      ),
-    );
-    assert.ok(
-      regSonLoans.every((l) => {
-        const req = l.requestedBy;
-        const reqId = req._id.toString();
-        const reqRole = req.role;
-        return (
-          reqId === userRegSon.toString() ||
-          reqRole === AUTRE_ROLE ||
-          reqRole === REGISSEUR_GENERAL_ROLE
-        );
-      }),
-    );
-    const autreLoans = await listLoans(db, {
-      id: userAutre.toString(),
-      role: AUTRE_ROLE,
-    });
-    assert.strictEqual(autreLoans.length, 4);
-    assert.ok(
-      autreLoans.every((l) => {
-        const borrowerId =
-          (l.borrower._id || l.borrower).toString();
-        const reqId = l.requestedBy._id.toString();
-        if (borrowerId === s1Id.toString()) {
-          return reqId === userAutre.toString();
-        }
-        return true;
-      }),
-    );
-  });
+  await t.test(
+    'listLoans filters by equipment type and requester role',
+    async () => {
+      const regSonLoans = await listLoans(db, {
+        id: userRegSon.toString(),
+        role: REGISSEUR_SON_ROLE,
+      });
+      assert.strictEqual(regSonLoans.length, 4);
+      assert.ok(
+        regSonLoans.every((l) =>
+          (l.items || []).every((it) => it.equipment.type !== 'Plateau'),
+        ),
+      );
+      assert.ok(
+        regSonLoans.every((l) => {
+          const req = l.requestedBy;
+          const reqId = req._id.toString();
+          const reqRole = req.role;
+          return (
+            reqId === userRegSon.toString() ||
+            reqRole === AUTRE_ROLE ||
+            reqRole === REGISSEUR_GENERAL_ROLE
+          );
+        }),
+      );
+      const autreLoans = await listLoans(db, {
+        id: userAutre.toString(),
+        role: AUTRE_ROLE,
+      });
+      assert.strictEqual(autreLoans.length, 4);
+      assert.ok(
+        autreLoans.every((l) => {
+          const borrowerId = (l.borrower._id || l.borrower).toString();
+          const reqId = l.requestedBy._id.toString();
+          if (borrowerId === s1Id.toString()) {
+            return reqId === userAutre.toString();
+          }
+          return true;
+        }),
+      );
+    },
+  );
 
   await t.test('Autre role permissions', async () => {
     // outgoing request owned by Autre user: can cancel but cannot accept
@@ -241,14 +247,13 @@ test('role based loan service permissions', async (t) => {
         items: [{ equipment: eqPlateauS1.insertedId }],
       })
     ).insertedId.toString();
-    await assert.rejects(
-      () =>
-        updateLoanRequest(
-          db,
-          { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
-          incomingPlateau,
-          { status: 'accepted' },
-        ),
+    await assert.rejects(() =>
+      updateLoanRequest(
+        db,
+        { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
+        incomingPlateau,
+        { status: 'accepted' },
+      ),
     );
     const ownOutgoing = (
       await db.collection('loanrequests').insertOne({
@@ -277,13 +282,12 @@ test('role based loan service permissions', async (t) => {
         endDate: new Date('2099-01-02'),
       })
     ).insertedId.toString();
-    await assert.rejects(
-      () =>
-        deleteLoanRequest(
-          db,
-          { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
-          otherOutgoing,
-        ),
+    await assert.rejects(() =>
+      deleteLoanRequest(
+        db,
+        { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
+        otherOutgoing,
+      ),
     );
   });
 

@@ -32,13 +32,13 @@ La fonction `api` disponible dans `src/api.js` accepte une option `timeout` (en 
 
 Tous les rôles peuvent consulter le catalogue des autres structures. Le comportement de l'application dépend du rôle de l'utilisateur :
 
-| Rôle | Permissions principales |
-| --- | --- |
-| Administrateur | accès complet aux équipements et aux prêts |
-| Régisseur(se) Général(e) | gère tous les équipements et prêts de sa structure |
-| Régisseur(se) Son | gère les équipements et prêts de Son ainsi que Vidéo et Autre |
-| Régisseur(se) Lumière | gère les équipements et prêts de Lumière ainsi que Vidéo et Autre |
-| Régisseur(se) Plateau | gère les équipements et prêts de Plateau ainsi que Vidéo et Autre |
-| Autre | consulte le catalogue, accepte ou refuse les demandes entrantes et peut uniquement créer, modifier ou annuler ses propres demandes |
+| Rôle                     | Permissions principales                                                                                                            |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Administrateur           | accès complet aux équipements et aux prêts                                                                                         |
+| Régisseur(se) Général(e) | gère tous les équipements et prêts de sa structure                                                                                 |
+| Régisseur(se) Son        | gère les équipements et prêts de Son ainsi que Vidéo et Autre                                                                      |
+| Régisseur(se) Lumière    | gère les équipements et prêts de Lumière ainsi que Vidéo et Autre                                                                  |
+| Régisseur(se) Plateau    | gère les équipements et prêts de Plateau ainsi que Vidéo et Autre                                                                  |
+| Autre                    | consulte le catalogue, accepte ou refuse les demandes entrantes et peut uniquement créer, modifier ou annuler ses propres demandes |
 
 Les prêts peuvent être sortants (emprunter) ou entrants (prêter). Chaque rôle peut créer ses propres demandes et valider celles adressées à sa structure selon son périmètre.

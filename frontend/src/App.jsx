@@ -25,72 +25,72 @@ function App() {
   return (
     <ErrorBoundary>
       <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/inventory"
-            element={
-              <PrivateRoute>
-                <Equipments />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/catalog"
-            element={
-              <PrivateRoute>
-                <Catalog />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/loans"
-            element={
-              <PrivateRoute>
-                <Loans />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/loans/:id"
-            element={
-              <PrivateRoute>
-                <LoanDetail />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/cart"
-            element={
-              <PrivateRoute>
-                <Cart />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            }
-          />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <PrivateRoute>
+              <Equipments />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/catalog"
+          element={
+            <PrivateRoute>
+              <Catalog />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/loans"
+          element={
+            <PrivateRoute>
+              <Loans />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/loans/:id"
+          element={
+            <PrivateRoute>
+              <LoanDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <PrivateRoute>
+              <Cart />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
       </Routes>
     </ErrorBoundary>
   );

@@ -39,10 +39,10 @@ const notifyAccountUpdate = async (
     return;
   }
 
-  const displayName = `${user.firstName ? `${user.firstName} ` : ''}${
-    user.lastName ?? ''
-  }`.trim()
-    || user.username;
+  const displayName =
+    `${user.firstName ? `${user.firstName} ` : ''}${
+      user.lastName ?? ''
+    }`.trim() || user.username;
 
   const { subject, text, html } = accountUpdateTemplate({
     displayName,

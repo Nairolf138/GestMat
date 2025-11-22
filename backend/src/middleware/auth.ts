@@ -23,8 +23,8 @@ export default function auth(requiredPermissions: Permissions = []) {
         : [requiredPermissions];
       if (perms.length) {
         const userRole = decoded.role;
-        const hasPermission = perms.some(
-          (perm) => PERMISSIONS[perm]?.includes(userRole),
+        const hasPermission = perms.some((perm) =>
+          PERMISSIONS[perm]?.includes(userRole),
         );
         if (!hasPermission) {
           return res.status(403).json({ message: 'Access denied' });

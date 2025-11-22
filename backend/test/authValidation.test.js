@@ -46,11 +46,13 @@ test('register validates fields, defaults role and prevents duplicates', async (
     .post(withApiPrefix('/auth/register'))
     .send({ username: 'bob', password: 'pw', structure: '123' })
     .expect(400);
-  const missingStruct = await request(app).post(withApiPrefix('/auth/register')).send({
-    username: 'bob',
-    password: 'pw',
-    structure: new ObjectId().toString(),
-  });
+  const missingStruct = await request(app)
+    .post(withApiPrefix('/auth/register'))
+    .send({
+      username: 'bob',
+      password: 'pw',
+      structure: new ObjectId().toString(),
+    });
   assert.strictEqual(missingStruct.status, 400);
   assert.strictEqual(missingStruct.body.message, 'Structure not found');
 

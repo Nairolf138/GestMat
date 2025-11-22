@@ -61,7 +61,10 @@ test('create, list, update and delete equipments', async () => {
     .expect(200);
   assert.strictEqual(upd.body.location, 'store');
 
-  await request(app).delete(withApiPrefix(`/equipments/${id}`)).set(auth()).expect(200);
+  await request(app)
+    .delete(withApiPrefix(`/equipments/${id}`))
+    .set(auth())
+    .expect(200);
   const list2 = await request(app)
     .get(withApiPrefix('/equipments'))
     .set(auth())
@@ -206,8 +209,18 @@ test('deny updates and deletes when structures differ', async () => {
   const u1 = new ObjectId();
   const u2 = new ObjectId();
   await db.collection('users').insertMany([
-    { _id: u1, username: 'user1', role: REGISSEUR_SON_ROLE, structure: struct1 },
-    { _id: u2, username: 'user2', role: REGISSEUR_SON_ROLE, structure: struct2 },
+    {
+      _id: u1,
+      username: 'user1',
+      role: REGISSEUR_SON_ROLE,
+      structure: struct1,
+    },
+    {
+      _id: u2,
+      username: 'user2',
+      role: REGISSEUR_SON_ROLE,
+      structure: struct2,
+    },
   ]);
 
   const token2 = jwt.sign(

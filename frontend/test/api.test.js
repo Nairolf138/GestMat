@@ -13,7 +13,9 @@ it('omits JSON headers for simple requests and avoids Authorization', async () =
   expect(fetch).toHaveBeenCalledWith(
     expect.stringContaining('/test'),
     expect.objectContaining({
-      headers: expect.not.objectContaining({ 'Content-Type': expect.anything() }),
+      headers: expect.not.objectContaining({
+        'Content-Type': expect.anything(),
+      }),
       credentials: 'include',
     }),
   );

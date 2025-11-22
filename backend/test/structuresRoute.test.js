@@ -72,7 +72,10 @@ test('GET structures echoes configured CORS origin', async () => {
     .set('Origin', SAMPLE_ALLOWED_ORIGIN)
     .expect(200);
   assert.deepStrictEqual(allowedOrigins, [SAMPLE_ALLOWED_ORIGIN]);
-  assert.strictEqual(res.headers['access-control-allow-origin'], SAMPLE_ALLOWED_ORIGIN);
+  assert.strictEqual(
+    res.headers['access-control-allow-origin'],
+    SAMPLE_ALLOWED_ORIGIN,
+  );
   await client.close();
   await mongod.stop();
 });
@@ -88,7 +91,10 @@ test('GET structures allows any origin when CORS_ORIGIN is *', async () => {
     .set('Origin', arbitraryOrigin)
     .expect(200);
   assert.deepStrictEqual(allowedOrigins, []);
-  assert.strictEqual(res.headers['access-control-allow-origin'], arbitraryOrigin);
+  assert.strictEqual(
+    res.headers['access-control-allow-origin'],
+    arbitraryOrigin,
+  );
   assert.strictEqual(res.headers['access-control-allow-credentials'], 'true');
   await client.close();
   await mongod.stop();
@@ -100,7 +106,9 @@ test('structures routes respond when API_PREFIX is empty', async () => {
   const { app, client, mongod } = await createApp();
   try {
     await dbSetup(client.db());
-    const res = await request(app).get(withApiPrefix('/structures')).expect(200);
+    const res = await request(app)
+      .get(withApiPrefix('/structures'))
+      .expect(200);
     assert.ok(Array.isArray(res.body));
   } finally {
     await client.close();
@@ -127,7 +135,10 @@ test('GET structures allows the official frontend when CORS_ORIGIN is unset', as
     allowedOrigins.includes(requiredOrigin),
     'Required frontend origin must always be present',
   );
-  assert.strictEqual(res.headers['access-control-allow-origin'], requiredOrigin);
+  assert.strictEqual(
+    res.headers['access-control-allow-origin'],
+    requiredOrigin,
+  );
   await client.close();
   await mongod.stop();
 });

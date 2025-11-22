@@ -35,9 +35,7 @@ function ManageLoans() {
           setTotalPages(null);
         } else {
           setLoans(data.loans || []);
-          setTotalPages(
-            data.total ? Math.ceil(data.total / limit) : null,
-          );
+          setTotalPages(data.total ? Math.ceil(data.total / limit) : null);
         }
       })
       .catch((err) => {
@@ -82,8 +80,10 @@ function ManageLoans() {
             return (
               <li key={l._id} className="list-group-item">
                 <div>
-                  <strong>{items || t('loans.items', { count: itemCount })}</strong> -{' '}
-                  {borrower} - {statusLabel}
+                  <strong>
+                    {items || t('loans.items', { count: itemCount })}
+                  </strong>{' '}
+                  - {borrower} - {statusLabel}
                 </div>
                 <select
                   className="form-select w-auto mt-2"
@@ -110,11 +110,7 @@ function ManageLoans() {
           Previous
         </button>
         <span>
-          {loading
-            ? '...'
-            : totalPages !== null
-            ? `${page}/${totalPages}`
-            : ''}
+          {loading ? '...' : totalPages !== null ? `${page}/${totalPages}` : ''}
         </span>
         <button
           className="btn btn-secondary ms-2"
@@ -131,4 +127,3 @@ function ManageLoans() {
 }
 
 export default ManageLoans;
-

@@ -23,7 +23,7 @@ export default ROLES;
 export const normalizeRoleTranslationKey = (role?: string) => {
   if (!role) return undefined;
   const trimmedRole = role.trim();
-  return ROLES.find((knownRole) =>
-    knownRole.toLowerCase() === trimmedRole.toLowerCase(),
+  return ROLES.find(
+    (knownRole) => knownRole.toLowerCase() === trimmedRole.toLowerCase(),
   );
 };

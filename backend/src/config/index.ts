@@ -3,9 +3,7 @@ import { z } from 'zod';
 
 dotenv.config();
 
-const REQUIRED_CORS_ORIGINS = [
-  'https://gestmat.nairolfconcept.fr',
-] as const;
+const REQUIRED_CORS_ORIGINS = ['https://gestmat.nairolfconcept.fr'] as const;
 
 const normalizeCorsOrigins = (value: string | undefined): string[] => {
   if (!value) {
@@ -126,17 +124,22 @@ const normalizeApiPrefix = (value: string | undefined): string => {
 };
 
 export const PORT = env.PORT;
-export const CORS_ORIGIN = mergeCorsOrigins(env.CORS_ORIGIN, requiredCorsOrigins);
+export const CORS_ORIGIN = mergeCorsOrigins(
+  env.CORS_ORIGIN,
+  requiredCorsOrigins,
+);
 export const MONGODB_URI = env.MONGODB_URI;
 export const JWT_SECRET = env.JWT_SECRET;
 export const SMTP_URL = env.SMTP_URL;
 export const NOTIFY_EMAIL = env.NOTIFY_EMAIL;
 export const NODE_ENV = env.NODE_ENV;
 export const API_PREFIX = normalizeApiPrefix(env.API_PREFIX);
-export const API_URL = env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX || ''}`;
+export const API_URL =
+  env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX || ''}`;
 export const RATE_LIMIT_MAX = env.RATE_LIMIT_MAX;
 export const LOAN_REMINDER_OFFSET_HOURS = env.LOAN_REMINDER_OFFSET_HOURS;
-export const LOAN_REMINDER_INTERVAL_MINUTES = env.LOAN_REMINDER_INTERVAL_MINUTES;
+export const LOAN_REMINDER_INTERVAL_MINUTES =
+  env.LOAN_REMINDER_INTERVAL_MINUTES;
 export const LOAN_OVERDUE_CHECK_INTERVAL_MINUTES =
   env.LOAN_OVERDUE_CHECK_INTERVAL_MINUTES;
 
