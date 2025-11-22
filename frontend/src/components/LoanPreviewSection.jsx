@@ -9,6 +9,9 @@ function LoanPreviewSection({
   emptyMessage,
   previewCount,
   counterLabel,
+  onAccept,
+  onDecline,
+  actionInProgressId,
 }) {
   const { t } = useTranslation();
 
@@ -17,7 +20,13 @@ function LoanPreviewSection({
       <h2 className="h2">{title}</h2>
       <div className="card-grid" style={{ marginBottom: 'var(--spacing-lg)' }}>
         {loans.slice(0, previewCount).map((l) => (
-          <LoanSummaryItem key={l._id} loan={l} />
+          <LoanSummaryItem
+            key={l._id}
+            loan={l}
+            onAccept={onAccept}
+            onDecline={onDecline}
+            actionInProgressId={actionInProgressId}
+          />
         ))}
         {!loans.length && <div className="card">{emptyMessage}</div>}
       </div>

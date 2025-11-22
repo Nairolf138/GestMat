@@ -94,7 +94,9 @@
     "view_all": "Tout voir",
     "counter": "{{shown}} sur {{total}} {{category}}",
     "search_placeholder": "Rechercher un équipement...",
-    "no_results": "Aucun équipement trouvé"
+    "no_results": "Aucun équipement trouvé",
+    "status_update_success": "Statut du prêt mis à jour vers {{status}}",
+    "status_update_error": "Impossible de mettre à jour le statut du prêt"
   },
   "tour": {
     "help": "Aide",
