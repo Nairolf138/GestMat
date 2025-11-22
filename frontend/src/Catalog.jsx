@@ -77,8 +77,9 @@ function Catalog() {
   };
 
   const addToCart = async (eq) => {
-    const qty = Number(quantities[eq._id] || 1);
-    if (!qty) return;
+    const qtyValue = quantities[eq._id];
+    const qty = qtyValue === '' || qtyValue === undefined ? NaN : Number(qtyValue);
+    if (!qty || qty < 1) return;
     if (!filters.startDate || !filters.endDate) {
       setError(t('catalog.select_period'));
       setSuccess('');
@@ -219,7 +220,7 @@ function Catalog() {
                         type="number"
                         min="1"
                         className="form-control form-control-sm"
-                        value={quantities[it._id] || 1}
+                        value={quantities[it._id] ?? '1'}
                         onChange={(e) =>
                           handleQtyChange(it._id, e.target.value)
                         }
@@ -269,7 +270,7 @@ function Catalog() {
                           type="number"
                           min="1"
                           className="form-control form-control-sm"
-                          value={quantities[it._id] || 1}
+                          value={quantities[it._id] ?? '1'}
                           onChange={(e) =>
                             handleQtyChange(it._id, e.target.value)
                           }
