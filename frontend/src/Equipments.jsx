@@ -113,6 +113,21 @@ function Equipments() {
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [items, location]);
 
+  const toggleAddForm = () => {
+    setShowForm((prev) => {
+      const next = !prev;
+      if (next) {
+        setEditing(null);
+      }
+      return next;
+    });
+  };
+
+  const handleEditSelect = (equipment) => {
+    setShowForm(false);
+    setEditing(equipment);
+  };
+
   return (
     <div className="container">
       <NavBar />
@@ -242,7 +257,7 @@ function Equipments() {
                           type="button"
                           className="btn btn-sm me-2"
                           style={secondaryBtnStyle}
-                          onClick={() => setEditing(e)}
+                          onClick={() => handleEditSelect(e)}
                         >
                           {t('equipments.edit.button')}
                         </button>
@@ -294,7 +309,7 @@ function Equipments() {
                               type="button"
                               className="btn btn-sm me-2"
                               style={secondaryBtnStyle}
-                              onClick={() => setEditing(e)}
+                              onClick={() => handleEditSelect(e)}
                             >
                               {t('equipments.edit.button')}
                             </button>
@@ -319,7 +334,7 @@ function Equipments() {
         {canManageEquipment(user?.role) && (
           <>
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={toggleAddForm}
               className="btn mb-3"
               style={secondaryBtnStyle}
               type="button"
