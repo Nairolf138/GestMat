@@ -79,24 +79,6 @@ function Equipments() {
     }
   };
 
-  const primaryBtnStyle = {
-    backgroundColor: 'var(--color-primary)',
-    borderColor: 'var(--color-primary)',
-    color: '#fff',
-  };
-
-  const secondaryBtnStyle = {
-    backgroundColor: 'var(--color-secondary)',
-    borderColor: 'var(--color-secondary)',
-    color: '#fff',
-  };
-
-  const dangerBtnStyle = {
-    backgroundColor: 'var(--color-danger)',
-    borderColor: 'var(--color-danger)',
-    color: '#fff',
-  };
-
   const typeOptions = useMemo(() => {
     const values = new Set(items.map((item) => item.type).filter(Boolean));
     if (type && !values.has(type)) {
@@ -215,13 +197,12 @@ function Equipments() {
             </select>
           </div>
           <div className="col-auto">
-            <button type="submit" className="btn me-2" style={primaryBtnStyle}>
+            <button type="submit" className="btn btn-primary me-2">
               {t('equipments.search_button')}
             </button>
             <button
               type="button"
-              className="btn"
-              style={secondaryBtnStyle}
+              className="btn btn-secondary"
               onClick={() => {
                 setSearch('');
                 setType('');
@@ -255,16 +236,14 @@ function Equipments() {
                       <div className="card-actions">
                         <button
                           type="button"
-                          className="btn btn-sm me-2"
-                          style={secondaryBtnStyle}
+                          className="btn btn-secondary btn-sm me-2"
                           onClick={() => handleEditSelect(e)}
                         >
                           {t('equipments.edit.button')}
                         </button>
                         <button
                           type="button"
-                          className="btn btn-sm"
-                          style={dangerBtnStyle}
+                          className="btn btn-danger btn-sm"
                           onClick={() => deleteEquipment(e._id)}
                         >
                           {t('equipments.delete.button')}
@@ -307,16 +286,14 @@ function Equipments() {
                           <>
                             <button
                               type="button"
-                              className="btn btn-sm me-2"
-                              style={secondaryBtnStyle}
+                              className="btn btn-secondary btn-sm me-2"
                               onClick={() => handleEditSelect(e)}
                             >
                               {t('equipments.edit.button')}
                             </button>
                             <button
                               type="button"
-                              className="btn btn-sm"
-                              style={dangerBtnStyle}
+                              className="btn btn-danger btn-sm"
                               onClick={() => deleteEquipment(e._id)}
                             >
                               {t('equipments.delete.button')}
@@ -335,8 +312,7 @@ function Equipments() {
           <>
             <button
               onClick={toggleAddForm}
-              className="btn mb-3"
-              style={secondaryBtnStyle}
+              className="btn btn-secondary mb-3"
               type="button"
             >
               {t('equipments.add.title')}

@@ -58,18 +58,6 @@ function Cart() {
     localStorage.setItem('cart', JSON.stringify(newCart));
   };
 
-  const outlineDangerStyle = {
-    color: 'var(--color-danger)',
-    borderColor: 'var(--color-danger)',
-    backgroundColor: 'transparent',
-  };
-
-  const primaryBtnStyle = {
-    backgroundColor: 'var(--color-primary)',
-    borderColor: 'var(--color-primary)',
-    color: '#fff',
-  };
-
   const validate = async () => {
     if (!cart.length) return;
     const groups = {};
@@ -134,8 +122,7 @@ function Cart() {
                   style={{ width: '6rem' }}
                 />
                 <button
-                  className="btn btn-sm"
-                  style={outlineDangerStyle}
+                  className="btn btn-outline-danger btn-sm"
                   onClick={() => removeItem(idx)}
                 >
                   {t('cart.remove')}
@@ -147,8 +134,7 @@ function Cart() {
         <button
           disabled={!cart.length}
           onClick={validate}
-          className="btn"
-          style={primaryBtnStyle}
+          className="btn btn-primary"
         >
           {t('cart.send_requests')}
         </button>

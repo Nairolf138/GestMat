@@ -200,15 +200,7 @@ function Profile() {
               />
             </div>
           </div>
-          <button
-            type="submit"
-            className="btn"
-            style={{
-              backgroundColor: 'var(--color-primary)',
-              borderColor: 'var(--color-primary)',
-              color: '#fff',
-            }}
-          >
+          <button type="submit" className="btn btn-primary">
             {t('profile.save')}
           </button>
         </FormCard>
