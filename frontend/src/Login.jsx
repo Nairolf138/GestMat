@@ -9,18 +9,23 @@ import logo from './logo.png';
 
 function Login() {
   const { t } = useTranslation();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
   const userRef = useRef(null);
   const { setUser } = useContext(AuthContext);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState(location.state?.message || '');
+  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     userRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    setMessage(location.state?.message || '');
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,8 +59,12 @@ function Login() {
         <h1 id="login-title" className="h1">
           {t('login.title')}
         </h1>
-        <Alert type="success" message={location.state?.message} />
-        <Alert message={error} />
+        <Alert type="success" message={message} onClose={() => setMessage('')} />
+        <Alert
+          message={error}
+          autoHideDuration={false}
+          onClose={() => setError('')}
+        />
         <div className="mb-3">
           <label className="form-label" htmlFor="username">
             {t('login.username')}

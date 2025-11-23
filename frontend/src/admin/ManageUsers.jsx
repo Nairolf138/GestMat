@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { useTranslation } from 'react-i18next';
 import { confirmDialog } from '../utils';
+import Alert from '../Alert.jsx';
 
 const roleKey = (r) => r.toLowerCase().replace(/\s+/g, '_');
 
@@ -94,8 +95,16 @@ function ManageUsers() {
 
   return (
     <div>
-      {error && <div className="alert alert-danger">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+      <Alert
+        message={error}
+        autoHideDuration={false}
+        onClose={() => setError('')}
+      />
+      <Alert
+        type="success"
+        message={message}
+        onClose={() => setMessage('')}
+      />
       <div className="input-group mb-3">
         <input
           className="form-control"
