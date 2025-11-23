@@ -348,6 +348,38 @@ body {
   overflow-x: auto;
 }
 
+.table {
+  --table-border-color: color-mix(in srgb, var(--color-text) 12%, transparent);
+  --table-stripe-color: color-mix(in srgb, var(--color-text) 6%, var(--color-navbar-bg));
+  --table-hover-color: color-mix(in srgb, var(--color-primary) 12%, var(--color-navbar-bg));
+  color: var(--color-text);
+  background-color: var(--color-navbar-bg);
+  border-color: var(--table-border-color);
+}
+
+.table thead {
+  background-color: color-mix(in srgb, var(--color-text) 4%, var(--color-navbar-bg));
+  color: var(--color-text);
+}
+
+.table tbody {
+  background-color: var(--color-navbar-bg);
+  color: var(--color-text);
+}
+
+.table th,
+.table td {
+  border-color: var(--table-border-color);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: var(--table-stripe-color);
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: var(--table-hover-color);
+}
+
 .card-grid {
   display: grid;
   gap: var(--spacing-lg);
