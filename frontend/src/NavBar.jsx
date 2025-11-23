@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
@@ -20,6 +20,7 @@ function NavBar() {
     JSON.parse(localStorage.getItem('cart') || '[]').length,
   );
   const [accountOpen, setAccountOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const isAdmin = user?.role === ADMIN_ROLE;
   const handleLogout = async () => {
     try {
@@ -50,6 +51,41 @@ function NavBar() {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  useEffect(() => {
+    if (!accountOpen) {
+      return undefined;
+    }
+
+    let inactivityTimer;
+
+    const closeAccount = () => setAccountOpen(false);
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(closeAccount, 10000);
+    };
+
+    const handleDocumentClick = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        closeAccount();
+      }
+    };
+
+    const handlePointerMove = () => {
+      resetInactivityTimer();
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    document.addEventListener('pointermove', handlePointerMove);
+    resetInactivityTimer();
+
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+      document.removeEventListener('pointermove', handlePointerMove);
+      clearTimeout(inactivityTimer);
+    };
+  }, [accountOpen]);
 
   return (
     <>
@@ -159,7 +195,7 @@ function NavBar() {
             </div>
             <div className="navbar-utils d-flex ms-auto align-items-center gap-3">
               {user && (
-                <div className="dropdown user-dropdown">
+                <div ref={dropdownRef} className="dropdown user-dropdown">
                   <button
                     className="btn dropdown-toggle d-flex align-items-center"
                     type="button"
