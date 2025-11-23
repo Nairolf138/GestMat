@@ -177,7 +177,15 @@
     "structure": "Structure",
     "save": "Enregistrer",
     "load_error": "Erreur de chargement",
-    "success": "Modifié"
+    "success": "Modifié",
+    "preferences": {
+      "title": "Préférences",
+      "language": "Langue",
+      "languages": {
+        "fr": "Français",
+        "en": "Anglais"
+      }
+    }
   },
   "cart": {
     "title": "Panier",

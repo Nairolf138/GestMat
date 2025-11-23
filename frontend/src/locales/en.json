@@ -177,7 +177,15 @@
     "structure": "Structure",
     "save": "Save",
     "load_error": "Loading error",
-    "success": "Updated"
+    "success": "Updated",
+    "preferences": {
+      "title": "Preferences",
+      "language": "Language",
+      "languages": {
+        "fr": "French",
+        "en": "English"
+      }
+    }
   },
   "cart": {
     "title": "Cart",

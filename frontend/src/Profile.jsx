@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import FormCard from './components/FormCard.jsx';
 
 function Profile() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { structures } = useContext(GlobalContext);
   const { user, setUser } = useContext(AuthContext);
   const [form, setForm] = useState({
@@ -23,6 +23,9 @@ function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [errors, setErrors] = useState({});
+  const [language, setLanguage] = useState(
+    () => localStorage.getItem('language') || i18n.language || 'fr',
+  );
 
   useEffect(() => {
     if (user) {
@@ -69,6 +72,19 @@ function Profile() {
       setSuccess('');
     }
   };
+
+  const handleLanguageChange = (event) => {
+    const newLanguage = event.target.value;
+    setLanguage(newLanguage);
+    i18n.changeLanguage(newLanguage);
+    localStorage.setItem('language', newLanguage);
+  };
+
+  useEffect(() => {
+    if (language && i18n.language !== language) {
+      i18n.changeLanguage(language);
+    }
+  }, [i18n, language]);
 
   return (
     <div className="container">
@@ -198,6 +214,24 @@ function Profile() {
                 value={structureName}
                 disabled
               />
+            </div>
+          </div>
+          <div className="mt-4">
+            <h2 className="h5">{t('profile.preferences.title')}</h2>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="language-select">
+                {t('profile.preferences.language')}
+              </label>
+              <select
+                id="language-select"
+                className="form-select"
+                value={language}
+                onChange={handleLanguageChange}
+                aria-label={t('profile.preferences.language')}
+              >
+                <option value="fr">{t('profile.preferences.languages.fr')}</option>
+                <option value="en">{t('profile.preferences.languages.en')}</option>
+              </select>
             </div>
           </div>
           <button type="submit" className="btn btn-primary">
