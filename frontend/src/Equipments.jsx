@@ -18,7 +18,6 @@ function Equipments() {
   const [message] = useState(routerLocation.state?.message || '');
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
-  const [location, setLocation] = useState('');
   const [sort, setSort] = useState('');
   const [userStructure, setUserStructure] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -31,12 +30,11 @@ function Equipments() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['equipments', { search, type, location, sort, userStructure }],
+    queryKey: ['equipments', { search, type, sort, userStructure }],
     queryFn: async () => {
       const params = new URLSearchParams({
         search,
         type,
-        location,
         structure: userStructure,
         sort,
       });
@@ -86,14 +84,6 @@ function Equipments() {
     }
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [items, type]);
-
-  const locationOptions = useMemo(() => {
-    const values = new Set(items.map((item) => item.location).filter(Boolean));
-    if (location && !values.has(location)) {
-      values.add(location);
-    }
-    return Array.from(values).sort((a, b) => a.localeCompare(b));
-  }, [items, location]);
 
   const toggleAddForm = () => {
     setShowForm((prev) => {
@@ -162,25 +152,6 @@ function Equipments() {
             </select>
           </div>
           <div className="col-md">
-            <label htmlFor="equip-location" className="visually-hidden">
-              {t('equipments.location')}
-            </label>
-            <select
-              id="equip-location"
-              name="location"
-              className="form-select"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            >
-              <option value="">{t('equipments.location')}</option>
-              {locationOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="col-md">
             <label htmlFor="equip-sort" className="visually-hidden">
               {t('equipments.sort')}
             </label>
@@ -206,7 +177,6 @@ function Equipments() {
               onClick={() => {
                 setSearch('');
                 setType('');
-                setLocation('');
                 setSort('');
                 setTimeout(() => refetch(), 0);
               }}
@@ -226,8 +196,6 @@ function Equipments() {
                     <h5 className="card-title h5">{e.name}</h5>
                     <p className="card-text">
                       <strong>{t('equipments.type')}:</strong> {e.type}
-                      <br />
-                      <strong>{t('equipments.location')}:</strong> {e.location}
                       <br />
                       <strong>{t('equipments.availability')}:</strong>{' '}
                       {e.availability}
@@ -259,18 +227,17 @@ function Equipments() {
           <div className="table-responsive mb-4">
             <table className="table mb-0">
               <thead>
-                <tr>
-                  <th>{t('equipments.name')}</th>
-                  <th>{t('equipments.type')}</th>
-                  <th>{t('equipments.location')}</th>
-                  <th>{t('equipments.availability')}</th>
-                  <th>{t('equipments.actions')}</th>
-                </tr>
+              <tr>
+                <th>{t('equipments.name')}</th>
+                <th>{t('equipments.type')}</th>
+                <th>{t('equipments.availability')}</th>
+                <th>{t('equipments.actions')}</th>
+              </tr>
               </thead>
               <tbody>
                 {isFetching ? (
                   <tr>
-                    <td colSpan="5">
+                    <td colSpan="4">
                       <Loading />
                     </td>
                   </tr>
@@ -279,7 +246,6 @@ function Equipments() {
                     <tr key={e._id}>
                       <td>{e.name}</td>
                       <td>{e.type}</td>
-                      <td>{e.location}</td>
                       <td>{e.availability}</td>
                       <td>
                         {canManageEquipment(user?.role, e.type) && (
