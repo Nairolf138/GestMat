@@ -28,6 +28,7 @@ import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import { NOTIFY_EMAIL } from '../config';
 import { accountCreationTemplate } from '../utils/mailTemplates';
+import { isNotificationEnabled } from '../utils/notificationPreferences';
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -67,9 +68,10 @@ router.post(
       });
       const { password: _pw, ...userData } = user;
       try {
-        const recipients = [email, NOTIFY_EMAIL].filter(
-          (value): value is string => Boolean(value),
-        );
+        const recipients = [
+          isNotificationEnabled(user, 'accountUpdates') ? email : undefined,
+          NOTIFY_EMAIL,
+        ].filter((value): value is string => Boolean(value));
         if (recipients.length) {
           const displayName =
             `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() || username;

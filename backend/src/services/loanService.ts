@@ -28,6 +28,7 @@ import {
   loanCreationTemplate,
   loanStatusTemplate,
 } from '../utils/mailTemplates';
+import { isNotificationEnabled } from '../utils/notificationPreferences';
 
 export async function listLoans(
   db: Db,
@@ -172,7 +173,7 @@ export async function createLoanRequest(
         }
 
         const requesterEmail = (loan.requestedBy as any)?.email || (u as any)?.email;
-        if (requesterEmail) {
+        if (requesterEmail && isNotificationEnabled(u, 'structureUpdates')) {
           fallbackRecipients.push(requesterEmail);
         }
 
@@ -386,7 +387,7 @@ export async function updateLoanRequest(
           : [];
         const recipients = new Set<string>(ownerContacts);
 
-        if (requester?.email) {
+        if (requester?.email && isNotificationEnabled(requester, 'structureUpdates')) {
           recipients.add(requester.email);
         }
 

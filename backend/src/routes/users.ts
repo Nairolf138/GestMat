@@ -19,18 +19,20 @@ import logger from '../utils/logger';
 import type { User } from '../models/User';
 import { DEFAULT_USER_PREFERENCES, mergePreferences } from '../models/User';
 import { accountUpdateTemplate } from '../utils/mailTemplates';
+import { isNotificationEnabled } from '../utils/notificationPreferences';
 
 const { MANAGE_USERS } = permissions;
 
-const notifyAccountUpdate = async (
+export const notifyAccountUpdate = async (
   user: User,
   changedFields: string[],
 ): Promise<void> => {
   if (!changedFields.length) return;
 
-  const recipients = [user.email, NOTIFY_EMAIL].filter(
-    (value): value is string => Boolean(value),
-  );
+  const recipients = [
+    isNotificationEnabled(user, 'accountUpdates') ? user.email : undefined,
+    NOTIFY_EMAIL,
+  ].filter((value): value is string => Boolean(value));
 
   if (!recipients.length) {
     logger.info(
