@@ -131,11 +131,24 @@ function AdminStats() {
     ],
   };
 
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxWidth: 12,
+        },
+      },
+    },
+  };
+
   return (
     <div>
       {error && <div className="alert alert-danger">{error}</div>}
-      <div className="d-flex mb-3">
-        <div className="me-2">
+      <div className="d-flex flex-wrap gap-3 mb-3">
+        <div className="flex-grow-1" style={{ minWidth: 200, maxWidth: 320 }}>
           <label htmlFor="from" className="form-label">
             From
           </label>
@@ -147,7 +160,7 @@ function AdminStats() {
             onChange={(e) => setFrom(e.target.value)}
           />
         </div>
-        <div>
+        <div className="flex-grow-1" style={{ minWidth: 200, maxWidth: 320 }}>
           <label htmlFor="to" className="form-label">
             To
           </label>
@@ -160,21 +173,43 @@ function AdminStats() {
           />
         </div>
       </div>
-      <div className="mb-4">
-        <h2>{t('admin_stats.monthly_loans')}</h2>
-        <Bar data={monthlyChart} />
+      <div className="card mb-4 shadow-sm">
+        <div className="card-body">
+          <h2 className="h4">{t('admin_stats.monthly_loans')}</h2>
+          <div className="mt-3 position-relative" style={{ minHeight: 320, maxHeight: 400 }}>
+            <Bar data={monthlyChart} options={commonOptions} />
+          </div>
+        </div>
       </div>
-      <div className="mb-4">
-        <h2>{t('admin_stats.loan_duration')}</h2>
-        <Bar data={durationChart} />
+      <div className="card mb-4 shadow-sm">
+        <div className="card-body">
+          <h2 className="h4">{t('admin_stats.loan_duration')}</h2>
+          <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+            <Bar data={durationChart} options={commonOptions} />
+          </div>
+        </div>
       </div>
-      <div className="mb-4">
-        <h2>{t('admin_stats.top_equipments')}</h2>
-        <Pie data={equipmentChart} />
-      </div>
-      <div>
-        <h2>{t('admin_stats.status_breakdown')}</h2>
-        <Pie data={statusChart} />
+      <div className="row g-4">
+        <div className="col-12 col-lg-6">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="h4">{t('admin_stats.top_equipments')}</h2>
+              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+                <Pie data={equipmentChart} options={commonOptions} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-lg-6">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="h4">{t('admin_stats.status_breakdown')}</h2>
+              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+                <Pie data={statusChart} options={commonOptions} />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
