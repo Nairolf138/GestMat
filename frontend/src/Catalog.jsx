@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext';
@@ -14,6 +14,7 @@ function Catalog() {
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(0);
   const [filters, setFilters] = useState({
     search: initialSearch,
     type: '',
@@ -26,28 +27,90 @@ function Catalog() {
   const [quantities, setQuantities] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const sentinelRef = useRef(null);
+  const PAGE_SIZE = 20;
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
 
-  const fetchItems = useCallback(() => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      search: filters.search,
-      type: filters.type,
-      structure: filters.structure,
-      all: 'true',
-    });
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
-    api(`/equipments?${params.toString()}`)
-      .then(setItems)
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
+  const fetchItems = useCallback(
+    (targetPage = page) => {
+      if ((!hasMore && targetPage !== 0) || loading || loadingMore) {
+        return;
+      }
+      const isFirstPage = targetPage === 0;
+      if (isFirstPage) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      const params = new URLSearchParams({
+        search: filters.search,
+        type: filters.type,
+        structure: filters.structure,
+        all: 'true',
+        limit: PAGE_SIZE.toString(),
+        offset: String(targetPage * PAGE_SIZE),
+      });
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      api(`/equipments?${params.toString()}`)
+        .then((data) => {
+          setItems((prev) => (isFirstPage ? data : [...prev, ...data]));
+          setHasMore(data.length === PAGE_SIZE);
+        })
+        .catch(() => {
+          if (isFirstPage) {
+            setItems([]);
+          }
+        })
+        .finally(() => {
+          if (isFirstPage) {
+            setLoading(false);
+          } else {
+            setLoadingMore(false);
+          }
+        });
+    },
+    [
+      filters.endDate,
+      filters.search,
+      filters.startDate,
+      filters.structure,
+      filters.type,
+      hasMore,
+      page,
+      loading,
+      loadingMore,
+    ],
+  );
+
+  useEffect(() => {
+    setItems([]);
+    setHasMore(true);
+    setPage(0);
   }, [filters.endDate, filters.search, filters.startDate, filters.structure, filters.type]);
 
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  useEffect(() => {
+    const current = sentinelRef.current;
+    if (!current) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore && !loading && !loadingMore) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -174,7 +237,12 @@ function Catalog() {
           </div>
           <div className="col-auto">
             <button
-              onClick={fetchItems}
+              onClick={() => {
+                setItems([]);
+                setHasMore(true);
+                setPage(0);
+                fetchItems(0);
+              }}
               className="btn btn-primary"
               disabled={isInvalidPeriod}
             >
@@ -281,6 +349,17 @@ function Catalog() {
             </table>
           </div>
         )}
+        {loadingMore && (
+          <div className="text-center" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <Loading />
+          </div>
+        )}
+        {!hasMore && items.length > 0 && (
+          <p className="text-center text-muted" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            {t('catalog.end_of_list') || '—'}
+          </p>
+        )}
+        <div ref={sentinelRef} style={{ height: 1 }} />
       </main>
     </div>
   );
