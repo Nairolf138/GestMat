@@ -101,12 +101,9 @@ function ManageInventory() {
   }, [load]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (page !== 1) setPage(1);
-      else load();
-    }, 500);
+    const timeout = setTimeout(() => setPage(1), 500);
     return () => clearTimeout(timeout);
-  }, [filters, load, page]);
+  }, [filters]);
 
   const doSearch = () => {
     if (page !== 1) setPage(1);
