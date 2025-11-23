@@ -114,9 +114,19 @@ body {
 
 .nav-link.active {
   text-decoration: underline;
-  background-color: var(--color-text);
-  color: var(--color-bg);
+  color: var(--color-primary);
   font-weight: bold;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 0.12em;
+}
+
+.nav-link.active:hover,
+.nav-link.active:focus {
+  background-color: transparent;
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 0.12em;
 }
 
 .cart-badge {
