@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext';
@@ -29,6 +29,7 @@ function Catalog() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const sentinelRef = useRef(null);
   const PAGE_SIZE = 20;
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
@@ -94,10 +95,32 @@ function Catalog() {
     setFilters({ ...filters, [name]: value });
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (loading || loadingMore || !hasMore) return;
     setPage((prev) => prev + 1);
-  };
+  }, [hasMore, loading, loadingMore]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore || loading) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.unobserve(sentinel);
+      observer.disconnect();
+    };
+  }, [handleLoadMore, hasMore, loading]);
 
   const handleQtyChange = (id, value) => {
     setQuantities({ ...quantities, [id]: value });
@@ -331,15 +354,11 @@ function Catalog() {
           </div>
         )}
         {hasMore && !loading && (
-          <div className="text-center" style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <button
-              className="btn btn-outline-primary"
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? t('catalog.loading_more') : t('catalog.load_more')}
-            </button>
-          </div>
+          <div
+            ref={sentinelRef}
+            style={{ height: '1px', marginBottom: 'var(--spacing-lg)' }}
+            aria-hidden="true"
+          />
         )}
         {!hasMore && items.length > 0 && (
           <p className="text-center text-muted" style={{ marginBottom: 'var(--spacing-lg)' }}>
