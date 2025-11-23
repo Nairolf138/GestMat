@@ -201,8 +201,7 @@ function Home() {
           />
           {showSuggestions && (suggestions.length > 0 || query.trim()) && (
             <ul
-              className="list-group position-absolute w-100"
-              style={{ zIndex: 1000 }}
+              className="list-group position-absolute w-100 search-suggestions"
             >
               {suggestions.length > 0 ? (
                 suggestions.map((s) => (
