@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { confirmDialog } from '../utils';
+import Alert from '../Alert.jsx';
 
 const CONDITION_OPTIONS = [
   { value: 'Neuf', labelKey: 'equipments.add.conditions.new' },
@@ -233,8 +234,16 @@ function ManageInventory() {
 
   return (
     <div>
-      {error && <div className="alert alert-danger">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+      <Alert
+        message={error}
+        autoHideDuration={false}
+        onClose={() => setError('')}
+      />
+      <Alert
+        type="success"
+        message={message}
+        onClose={() => setMessage('')}
+      />
       <form className="row g-2 mb-3" onSubmit={create}>
         <div className="col-md">
           <input
