@@ -19,6 +19,13 @@ function Profile() {
     password: '',
     role: '',
     structure: '',
+    preferences: {
+      emailNotifications: {
+        accountUpdates: true,
+        structureUpdates: true,
+        systemAlerts: true,
+      },
+    },
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -27,15 +34,40 @@ function Profile() {
     () => localStorage.getItem('language') || i18n.language || 'fr',
   );
 
+  const defaultPreferences = useMemo(
+    () => ({
+      emailNotifications: {
+        accountUpdates: true,
+        structureUpdates: true,
+        systemAlerts: true,
+      },
+    }),
+    [],
+  );
+
   useEffect(() => {
     if (user) {
       const structureId = user.structure?._id || user.structure || '';
-      setForm((f) => ({ ...f, ...user, structure: structureId, password: '' }));
+      const preferences = {
+        ...defaultPreferences,
+        ...(user.preferences || {}),
+        emailNotifications: {
+          ...defaultPreferences.emailNotifications,
+          ...(user.preferences?.emailNotifications || {}),
+        },
+      };
+      setForm((f) => ({
+        ...f,
+        ...user,
+        structure: structureId,
+        password: '',
+        preferences,
+      }));
       setError('');
     } else {
       setError(t('profile.load_error'));
     }
-  }, [user, t]);
+  }, [user, t, defaultPreferences]);
 
   const structureName = useMemo(() => {
     if (!form.structure) return '';
@@ -47,8 +79,23 @@ function Profile() {
   }, [structures, form.structure, user]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    const { name, value, type, checked } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
+    const path = name.split('.');
+
+    setForm((prevForm) => {
+      const updatedForm = { ...prevForm };
+      let cursor = updatedForm;
+      for (let i = 0; i < path.length - 1; i += 1) {
+        const key = path[i];
+        cursor[key] = { ...(cursor[key] || {}) };
+        cursor = cursor[key];
+      }
+    
+      cursor[path[path.length - 1]] = inputValue;
+      return updatedForm;
+    });
+
     if (errors[name]) setErrors({ ...errors, [name]: undefined });
   };
 
@@ -218,6 +265,48 @@ function Profile() {
           </div>
           <div className="mt-4">
             <h2 className="h5">{t('profile.preferences.title')}</h2>
+            <div className="mb-3">
+              <h3 className="h6">{t('profile.preferences.email_notifications.title')}</h3>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="account-updates"
+                  name="preferences.emailNotifications.accountUpdates"
+                  checked={form.preferences.emailNotifications.accountUpdates}
+                  onChange={handleChange}
+                />
+                <label className="form-check-label" htmlFor="account-updates">
+                  {t('profile.preferences.email_notifications.account_updates')}
+                </label>
+              </div>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="structure-updates"
+                  name="preferences.emailNotifications.structureUpdates"
+                  checked={form.preferences.emailNotifications.structureUpdates}
+                  onChange={handleChange}
+                />
+                <label className="form-check-label" htmlFor="structure-updates">
+                  {t('profile.preferences.email_notifications.structure_updates')}
+                </label>
+              </div>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="system-alerts"
+                  name="preferences.emailNotifications.systemAlerts"
+                  checked={form.preferences.emailNotifications.systemAlerts}
+                  onChange={handleChange}
+                />
+                <label className="form-check-label" htmlFor="system-alerts">
+                  {t('profile.preferences.email_notifications.system_alerts')}
+                </label>
+              </div>
+            </div>
             <div className="mb-3">
               <label className="form-label" htmlFor="language-select">
                 {t('profile.preferences.language')}

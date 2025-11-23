@@ -186,6 +186,12 @@
       "languages": {
         "fr": "French",
         "en": "English"
+      },
+      "email_notifications": {
+        "title": "Email notifications",
+        "account_updates": "Account updates",
+        "structure_updates": "Requests and loans",
+        "system_alerts": "Reminders and alerts"
       }
     }
   },
