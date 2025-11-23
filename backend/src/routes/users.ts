@@ -17,6 +17,7 @@ import { sendMail } from '../utils/sendMail';
 import { NOTIFY_EMAIL } from '../config';
 import logger from '../utils/logger';
 import type { User } from '../models/User';
+import { DEFAULT_USER_PREFERENCES, mergePreferences } from '../models/User';
 import { accountUpdateTemplate } from '../utils/mailTemplates';
 
 const { MANAGE_USERS } = permissions;
@@ -126,6 +127,20 @@ router.put(
     for (const key of allowed) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
+
+    const currentPreferences = existingUser.preferences
+      ? mergePreferences(undefined, existingUser.preferences)
+      : DEFAULT_USER_PREFERENCES;
+    const preferencesUpdate = req.body.preferences as
+      | Partial<User['preferences']>
+      | undefined;
+
+    if (preferencesUpdate !== undefined) {
+      data.preferences = mergePreferences(preferencesUpdate, existingUser.preferences);
+    } else if (!existingUser.preferences) {
+      data.preferences = currentPreferences;
+    }
+
     if (data.password) {
       data.password = await bcrypt.hash(data.password as string, 10);
     }
@@ -140,6 +155,12 @@ router.put(
     }
     if (data.role !== undefined && data.role !== existingUser.role) {
       changedFields.push('rôle');
+    }
+    if (
+      data.preferences !== undefined &&
+      JSON.stringify(data.preferences) !== JSON.stringify(currentPreferences)
+    ) {
+      changedFields.push('préférences');
     }
     if (updated.structure) {
       const struct = await findStructureById(db, updated.structure.toString());

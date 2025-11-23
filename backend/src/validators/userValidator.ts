@@ -18,4 +18,18 @@ export const updateUserValidator: ValidationChain[] = [
   body('lastName').optional().notEmpty(),
   body('email').optional().isEmail(),
   body('password').optional().notEmpty(),
+  body('preferences').optional().isObject(),
+  body('preferences.emailNotifications').optional().isObject(),
+  body('preferences.emailNotifications.accountUpdates')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.structureUpdates')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.systemAlerts')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
 ];

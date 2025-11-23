@@ -2,6 +2,24 @@ import { Db, ObjectId, WithId, DeleteResult } from 'mongodb';
 import { normalizeRole } from '../utils/roleAccess';
 import type { Structure } from './Structure';
 
+export interface EmailNotificationPreferences {
+  accountUpdates: boolean;
+  structureUpdates: boolean;
+  systemAlerts: boolean;
+}
+
+export interface UserPreferences {
+  emailNotifications: EmailNotificationPreferences;
+}
+
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+  emailNotifications: {
+    accountUpdates: true,
+    structureUpdates: true,
+    systemAlerts: true,
+  },
+};
+
 export interface User {
   _id?: ObjectId;
   username: string;
@@ -9,12 +27,25 @@ export interface User {
   structure?: ObjectId | Structure;
   role?: string;
   email?: string;
+  preferences?: UserPreferences;
   [key: string]: unknown;
 }
+
+export const mergePreferences = (
+  overrides?: Partial<UserPreferences>,
+  base?: UserPreferences,
+): UserPreferences => ({
+  emailNotifications: {
+    ...DEFAULT_USER_PREFERENCES.emailNotifications,
+    ...(base?.emailNotifications ?? {}),
+    ...(overrides?.emailNotifications ?? {}),
+  },
+});
 
 export async function createUser(db: Db, data: User): Promise<WithId<User>> {
   if (data.structure) data.structure = new ObjectId(data.structure as any);
   if (data.role) data.role = normalizeRole(data.role);
+  data.preferences = mergePreferences(data.preferences);
   const users = db.collection<User>('users');
   try {
     const result = await users.insertOne(data);
