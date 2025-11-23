@@ -132,52 +132,6 @@ function NavBar() {
                       {t('nav.admin')}
                     </NavLink>
                   )}
-                  <div className="dropdown user-dropdown">
-                    <button
-                      className="btn dropdown-toggle"
-                      type="button"
-                      aria-expanded={accountOpen}
-                      aria-label={t('nav.account')}
-                      onClick={() => setAccountOpen(!accountOpen)}
-                    >
-                      {user?.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.username}
-                          className="rounded-circle"
-                        />
-                      ) : (
-                        user?.username
-                      )}
-                    </button>
-                    <ul
-                      className={`dropdown-menu dropdown-menu-end${accountOpen ? ' show' : ''}`}
-                    >
-                      <li>
-                        <NavLink
-                          className="dropdown-item"
-                          to="/profile"
-                          onClick={() => {
-                            setAccountOpen(false);
-                            setIsOpen(false);
-                          }}
-                        >
-                          {t('nav.profile')}
-                        </NavLink>
-                      </li>
-                      <li>
-                        <button
-                          className="dropdown-item"
-                          onClick={() => {
-                            setAccountOpen(false);
-                            handleLogout();
-                          }}
-                        >
-                          {t('nav.logout')}
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
                 </>
               )}
               {!user && (
@@ -203,7 +157,55 @@ function NavBar() {
                 </>
               )}
             </div>
-            <div className="navbar-utils d-flex ms-auto align-items-center">
+            <div className="navbar-utils d-flex ms-auto align-items-center gap-3">
+              {user && (
+                <div className="dropdown user-dropdown">
+                  <button
+                    className="btn dropdown-toggle d-flex align-items-center"
+                    type="button"
+                    aria-expanded={accountOpen}
+                    aria-label={t('nav.account')}
+                    onClick={() => setAccountOpen(!accountOpen)}
+                  >
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.username}
+                        className="rounded-circle"
+                      />
+                    ) : (
+                      user?.username
+                    )}
+                  </button>
+                  <ul
+                    className={`dropdown-menu dropdown-menu-end${accountOpen ? ' show' : ''}`}
+                  >
+                    <li>
+                      <NavLink
+                        className="dropdown-item"
+                        to="/profile"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        {t('nav.profile')}
+                      </NavLink>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          handleLogout();
+                        }}
+                      >
+                        {t('nav.logout')}
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              )}
               <button
                 className="btn theme-toggle-btn"
                 style={{
