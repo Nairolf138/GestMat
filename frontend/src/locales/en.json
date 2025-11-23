@@ -138,7 +138,10 @@
     "invalid_period": "Invalid period",
     "unavailable": "Quantity unavailable for this period",
     "added": "Added to cart",
-    "error": "Error"
+    "error": "Error",
+    "load_more": "Load more",
+    "loading_more": "Loading...",
+    "end_of_list": "You have reached the end of the list"
   },
   "loans": {
     "title": "Loans",

@@ -138,7 +138,10 @@
     "invalid_period": "Période invalide",
     "unavailable": "Quantité indisponible pour cette période",
     "added": "Ajouté au panier",
-    "error": "Erreur"
+    "error": "Erreur",
+    "load_more": "Charger plus",
+    "loading_more": "Chargement...",
+    "end_of_list": "Vous avez atteint la fin de la liste"
   },
   "loans": {
     "title": "Prêts",
