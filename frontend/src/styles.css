@@ -161,6 +161,44 @@ body {
   cursor: not-allowed;
 }
 
+.form-control,
+.form-select {
+  background-color: var(--color-navbar-bg);
+  color: var(--color-text);
+  border: 1px solid color-mix(in srgb, var(--color-text) 18%, transparent);
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+}
+
+.form-control::placeholder {
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  opacity: 1;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--color-navbar-bg);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.form-control:focus::placeholder {
+  color: color-mix(in srgb, var(--color-text) 45%, transparent);
+}
+
+.form-control-sm,
+.form-control.form-control-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  background-color: var(--color-navbar-bg);
+  color: var(--color-text);
+  border-color: color-mix(in srgb, var(--color-text) 18%, transparent);
+}
+
 .btn-primary {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
