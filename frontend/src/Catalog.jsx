@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import NavBar from './NavBar';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext';
@@ -29,26 +29,17 @@ function Catalog() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const sentinelRef = useRef(null);
-  const loadingRef = useRef(false);
-  const loadingMoreRef = useRef(false);
-  const hasMoreRef = useRef(true);
   const PAGE_SIZE = 20;
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
 
   const fetchItems = useCallback(
-    (targetPage = page) => {
-      if ((!hasMoreRef.current && targetPage !== 0) || loadingRef.current || loadingMoreRef.current) {
-        return;
-      }
+    (targetPage) => {
       const isFirstPage = targetPage === 0;
       if (isFirstPage) {
         setLoading(true);
-        loadingRef.current = true;
       } else {
         setLoadingMore(true);
-        loadingMoreRef.current = true;
       }
       const params = new URLSearchParams({
         search: filters.search,
@@ -65,7 +56,6 @@ function Catalog() {
           setItems((prev) => (isFirstPage ? data : [...prev, ...data]));
           const moreAvailable = data.length === PAGE_SIZE;
           setHasMore(moreAvailable);
-          hasMoreRef.current = moreAvailable;
         })
         .catch(() => {
           if (isFirstPage) {
@@ -75,42 +65,23 @@ function Catalog() {
         .finally(() => {
           if (isFirstPage) {
             setLoading(false);
-            loadingRef.current = false;
           } else {
             setLoadingMore(false);
-            loadingMoreRef.current = false;
           }
         });
     },
-    [filters.endDate, filters.search, filters.startDate, filters.structure, filters.type, page],
+    [filters.endDate, filters.search, filters.startDate, filters.structure, filters.type],
   );
 
   useEffect(() => {
     setItems([]);
     setHasMore(true);
-    hasMoreRef.current = true;
     setPage(0);
   }, [filters.endDate, filters.search, filters.startDate, filters.structure, filters.type]);
 
   useEffect(() => {
     fetchItems(page);
   }, [page, filters.endDate, filters.search, filters.startDate, filters.structure, filters.type, fetchItems]);
-
-  useEffect(() => {
-    const current = sentinelRef.current;
-    if (!current) return undefined;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && hasMoreRef.current && !loadingRef.current && !loadingMoreRef.current) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { rootMargin: '200px' },
-    );
-    observer.observe(current);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -121,6 +92,11 @@ function Catalog() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilters({ ...filters, [name]: value });
+  };
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore || !hasMore) return;
+    setPage((prev) => prev + 1);
   };
 
   const handleQtyChange = (id, value) => {
@@ -354,12 +330,22 @@ function Catalog() {
             <Loading />
           </div>
         )}
+        {hasMore && !loading && (
+          <div className="text-center" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <button
+              className="btn btn-outline-primary"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? t('catalog.loading_more') : t('catalog.load_more')}
+            </button>
+          </div>
+        )}
         {!hasMore && items.length > 0 && (
           <p className="text-center text-muted" style={{ marginBottom: 'var(--spacing-lg)' }}>
             {t('catalog.end_of_list') || '—'}
           </p>
         )}
-        <div ref={sentinelRef} style={{ height: 1 }} />
       </main>
     </div>
   );
