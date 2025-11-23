@@ -200,15 +200,7 @@ function AddEquipment({ onCreated }) {
           </div>
         )}
       </div>
-      <button
-        type="submit"
-        className="btn mt-2"
-        style={{
-          backgroundColor: 'var(--color-primary)',
-          borderColor: 'var(--color-primary)',
-          color: '#fff',
-        }}
-      >
+      <button type="submit" className="btn btn-primary mt-2">
         {t('equipments.add.submit')}
       </button>
     </FormCard>

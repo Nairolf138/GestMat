@@ -213,26 +213,13 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
           </div>
         )}
       </div>
-      <button
-        type="submit"
-        className="btn mt-2"
-        style={{
-          backgroundColor: 'var(--color-primary)',
-          borderColor: 'var(--color-primary)',
-          color: '#fff',
-        }}
-      >
+      <button type="submit" className="btn btn-primary mt-2">
         {t('equipments.edit.submit')}
       </button>
       {onCancel && (
         <button
           type="button"
-          className="btn mt-2 ms-2"
-          style={{
-            backgroundColor: 'var(--color-secondary)',
-            borderColor: 'var(--color-secondary)',
-            color: '#fff',
-          }}
+          className="btn btn-secondary mt-2 ms-2"
           onClick={onCancel}
         >
           {t('equipments.edit.cancel')}

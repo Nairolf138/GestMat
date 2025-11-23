@@ -91,34 +91,19 @@ function LoanItem({ loan, isOwner, refresh }) {
         <div className="mt-2">
           <button
             onClick={() => changeStatus('accepted')}
-            className="btn btn-sm me-2"
-            style={{
-              backgroundColor: 'var(--color-success)',
-              borderColor: 'var(--color-success)',
-              color: '#fff',
-            }}
+            className="btn btn-success btn-sm me-2"
           >
             {t('loans.accept')}
           </button>
           <button
             onClick={() => changeStatus('refused')}
-            className="btn btn-sm me-2"
-            style={{
-              backgroundColor: 'var(--color-danger)',
-              borderColor: 'var(--color-danger)',
-              color: '#fff',
-            }}
+            className="btn btn-danger btn-sm me-2"
           >
             {t('loans.refuse')}
           </button>
           <button
             onClick={cancelLoan}
-            className="btn btn-sm"
-            style={{
-              backgroundColor: 'var(--color-secondary)',
-              borderColor: 'var(--color-secondary)',
-              color: '#fff',
-            }}
+            className="btn btn-secondary btn-sm"
           >
             {t('loans.cancel')}
           </button>
@@ -128,23 +113,13 @@ function LoanItem({ loan, isOwner, refresh }) {
         <div className="mt-2">
           <button
             onClick={modifyLoan}
-            className="btn btn-sm me-2"
-            style={{
-              backgroundColor: 'var(--color-primary)',
-              borderColor: 'var(--color-primary)',
-              color: '#fff',
-            }}
+            className="btn btn-primary btn-sm me-2"
           >
             {t('loans.modify')}
           </button>
           <button
             onClick={cancelLoan}
-            className="btn btn-sm"
-            style={{
-              backgroundColor: 'var(--color-danger)',
-              borderColor: 'var(--color-danger)',
-              color: '#fff',
-            }}
+            className="btn btn-danger btn-sm"
           >
             {t('loans.cancel')}
           </button>

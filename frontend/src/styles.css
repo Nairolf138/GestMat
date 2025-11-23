@@ -99,9 +99,89 @@ body {
   margin-right: var(--spacing-sm);
   border-radius: var(--radius-sm);
   font-weight: 500;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: inherit;
   transition:
     background-color 0.2s,
-    color 0.2s;
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-primary:focus-visible:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-primary) 85%, #000 15%);
+  border-color: color-mix(in srgb, var(--color-primary) 85%, #000 15%);
+  color: #fff;
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: #fff;
+}
+
+.btn-secondary:hover:not(:disabled),
+.btn-secondary:focus-visible:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-secondary) 85%, #000 15%);
+  border-color: color-mix(in srgb, var(--color-secondary) 85%, #000 15%);
+  color: #fff;
+}
+
+.btn-success {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+.btn-success:hover:not(:disabled),
+.btn-success:focus-visible:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-success) 85%, #000 15%);
+  border-color: color-mix(in srgb, var(--color-success) 85%, #000 15%);
+  color: #fff;
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
+.btn-danger:hover:not(:disabled),
+.btn-danger:focus-visible:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-danger) 85%, #000 15%);
+  border-color: color-mix(in srgb, var(--color-danger) 85%, #000 15%);
+  color: #fff;
+}
+
+.btn-outline-danger {
+  background-color: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-outline-danger:hover:not(:disabled),
+.btn-outline-danger:focus-visible:not(:disabled) {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
 }
 
 .nav-link {
@@ -144,8 +224,6 @@ body {
   text-align: center;
 }
 
-.btn:hover,
-.btn:focus,
 .nav-link:hover,
 .nav-link:focus {
   background-color: var(--color-text);
