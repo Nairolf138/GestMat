@@ -1,5 +1,6 @@
 import { Db, ObjectId } from 'mongodb';
 import { canModify } from './roleAccess';
+import { isNotificationEnabled } from './notificationPreferences';
 
 interface LoanItemRef {
   equipment: any;
@@ -27,7 +28,12 @@ export async function getLoanRecipients(
     .find({ structure: new ObjectId(ownerId) })
     .toArray();
   const emails = users
-    .filter((u: any) => u.email && types.some((t) => canModify(u.role, t)))
+    .filter(
+      (u: any) =>
+        u.email &&
+        isNotificationEnabled(u, 'structureUpdates') &&
+        types.some((t) => canModify(u.role, t)),
+    )
     .map((u: any) => u.email as string);
   return [...new Set(emails)];
 }
