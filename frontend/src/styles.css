@@ -92,6 +92,48 @@ body {
   margin-top: var(--spacing-sm);
 }
 
+.search-suggestions {
+  z-index: 1050;
+  margin: var(--spacing-xs) 0 0;
+  padding: var(--spacing-xs);
+  background-color: var(--color-navbar-bg);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  list-style: none;
+  border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+  overflow: hidden;
+}
+
+.search-suggestions .list-group-item {
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.search-suggestions .list-group-item + .list-group-item {
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.search-suggestions .list-group-item:hover,
+.search-suggestions .list-group-item:focus-visible {
+  background-color: color-mix(
+    in srgb,
+    var(--color-primary) 15%,
+    var(--color-navbar-bg) 85%
+  );
+  color: var(--color-text);
+}
+
+.search-suggestions .list-group-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  outline-offset: 0;
+}
+
 .btn {
   margin-top: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
