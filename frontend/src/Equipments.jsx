@@ -24,6 +24,15 @@ function Equipments() {
   const [editing, setEditing] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
   const queryClient = useQueryClient();
+  const conditionLabels = useMemo(
+    () => ({
+      Neuf: t('equipments.add.conditions.new'),
+      'Légèrement usé': t('equipments.add.conditions.used_lightly'),
+      'Usé': t('equipments.add.conditions.used'),
+      'Très usé': t('equipments.add.conditions.very_used'),
+    }),
+    [t],
+  );
   const {
     data: items = [],
     isFetching,
@@ -199,6 +208,9 @@ function Equipments() {
                       <br />
                       <strong>{t('equipments.availability')}:</strong>{' '}
                       {e.availability}
+                      <br />
+                      <strong>{t('equipments.add.condition')}:</strong>{' '}
+                      {conditionLabels[e.condition] || e.condition}
                     </p>
                     {canManageEquipment(user?.role, e.type) && (
                       <div className="card-actions">
@@ -231,13 +243,14 @@ function Equipments() {
                 <th>{t('equipments.name')}</th>
                 <th>{t('equipments.type')}</th>
                 <th>{t('equipments.availability')}</th>
+                <th>{t('equipments.add.condition')}</th>
                 <th>{t('equipments.actions')}</th>
               </tr>
               </thead>
               <tbody>
                 {isFetching ? (
                   <tr>
-                    <td colSpan="4">
+                    <td colSpan="5">
                       <Loading />
                     </td>
                   </tr>
@@ -247,6 +260,7 @@ function Equipments() {
                       <td>{e.name}</td>
                       <td>{e.type}</td>
                       <td>{e.availability}</td>
+                      <td>{conditionLabels[e.condition] || e.condition}</td>
                       <td>
                         {canManageEquipment(user?.role, e.type) && (
                           <>
