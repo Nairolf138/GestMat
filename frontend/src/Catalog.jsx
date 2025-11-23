@@ -14,7 +14,7 @@ function Catalog() {
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
   const [items, setItems] = useState([]);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     search: initialSearch,
     type: '',
@@ -36,7 +36,7 @@ function Catalog() {
 
   const fetchItems = useCallback(
     (targetPage) => {
-      const isFirstPage = targetPage === 0;
+      const isFirstPage = targetPage === 1;
       if (isFirstPage) {
         setLoading(true);
       } else {
@@ -48,7 +48,7 @@ function Catalog() {
         structure: filters.structure,
         all: 'true',
         limit: PAGE_SIZE.toString(),
-        offset: String(targetPage * PAGE_SIZE),
+        page: targetPage.toString(),
       });
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
@@ -77,7 +77,7 @@ function Catalog() {
   useEffect(() => {
     setItems([]);
     setHasMore(true);
-    setPage(0);
+    setPage(1);
   }, [filters.endDate, filters.search, filters.startDate, filters.structure, filters.type]);
 
   useEffect(() => {
