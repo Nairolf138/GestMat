@@ -7,7 +7,7 @@ import logo from './logo.png';
 import { ADMIN_ROLE } from '../roles';
 
 function NavBar() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, setUser } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
@@ -21,11 +21,6 @@ function NavBar() {
   );
   const [accountOpen, setAccountOpen] = useState(false);
   const isAdmin = user?.role === ADMIN_ROLE;
-  const handleLanguageChange = (event) => {
-    const newLang = event.target.value;
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('language', newLang);
-  };
   const handleLogout = async () => {
     try {
       await api('/auth/logout', { method: 'POST' });
@@ -230,15 +225,6 @@ function NavBar() {
                   aria-hidden="true"
                 ></i>
               </button>
-              <select
-                className="form-select form-select-sm"
-                value={i18n.language}
-                onChange={handleLanguageChange}
-                aria-label={t('nav.language')}
-              >
-                <option value="fr">fr</option>
-                <option value="en">en</option>
-              </select>
             </div>
           </div>
         </div>
