@@ -37,6 +37,7 @@ The API reads its configuration from the following variables:
 | `LOAN_ARCHIVE_MIN_AGE_DAYS` | Age in days before a finished loan is eligible for archiving. Defaults to `365`. |
 | `LOAN_ARCHIVE_INTERVAL_DAYS` | Interval in days between archive jobs. Defaults to `1` (daily). |
 | `LOAN_ARCHIVE_BATCH_SIZE` | Maximum number of loans processed per archive run. Defaults to `100`. |
+| `REPORT_CHECK_INTERVAL_HOURS` | Interval in hours between checks for the annual report job (default: `24`). |
 
 If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
 to a comma-separated whitelist to lock the API down to trusted origins. The server always normalizes `Access-Control-Allow-Origin`
@@ -169,6 +170,20 @@ these routes require authentication.
 - `GET <API_PREFIX>/stats/equipments/top?limit=5` – list the most requested equipment
   sorted by total quantity, limited by the optional `limit` query parameter
   (default: `5`).
+
+## Annual structure reports
+
+An automated job checks every `REPORT_CHECK_INTERVAL_HOURS` (default daily) and
+generates a yearly PDF report for each structure after 31 August covering the
+previous 12 months. Reports aggregate outgoing and incoming loans (including
+archived documents), status counts, average durations and the most requested
+equipment. Generated PDFs are stored in the `reports` collection, emailed to the
+structure contacts and can be downloaded via the secured routes under
+`<API_PREFIX>/reports`.
+
+Dependencies used for this feature:
+
+- [`pdfkit`](https://github.com/foliojs/pdfkit) to render the PDF summary.
 
 ## Health check
 
