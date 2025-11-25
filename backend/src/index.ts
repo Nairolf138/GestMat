@@ -28,6 +28,7 @@ import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
 import { scheduleLoanReminders } from './services/reminderService';
 import { scheduleOverdueLoanNotifications } from './services/overdueService';
+import { scheduleLoanArchiving } from './services/archiveService';
 
 const normalizeAllowOriginHeader = (
   value: string | string[] | number | undefined,
@@ -165,6 +166,7 @@ export async function start(
   let db: Db;
   let reminderInterval: NodeJS.Timeout | undefined;
   let overdueInterval: NodeJS.Timeout | undefined;
+  let archiveInterval: NodeJS.Timeout | undefined;
   try {
     db = await connect();
     app.locals.db = db;
@@ -179,6 +181,7 @@ export async function start(
     if (NODE_ENV !== 'test') {
       reminderInterval = scheduleLoanReminders(db);
       overdueInterval = scheduleOverdueLoanNotifications(db);
+      archiveInterval = scheduleLoanArchiving(db);
     }
   } catch (err) {
     logger.error('Failed to start server: %o', err as Error);
@@ -239,6 +242,9 @@ export async function start(
     if (overdueInterval) {
       clearInterval(overdueInterval);
     }
+    if (archiveInterval) {
+      clearInterval(archiveInterval);
+    }
     server.close(async () => {
       await closeDB();
       process.exit(0);
@@ -252,6 +258,9 @@ export async function start(
     }
     if (overdueInterval) {
       clearInterval(overdueInterval);
+    }
+    if (archiveInterval) {
+      clearInterval(archiveInterval);
     }
     closeDB();
   });

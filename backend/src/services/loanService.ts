@@ -35,9 +35,10 @@ export async function listLoans(
   user: AuthUser,
   page?: number,
   limit?: number,
+  includeArchived = false,
 ): Promise<LoanRequest[] | { loans: LoanRequest[]; total: number }> {
   if (user.role === ADMIN_ROLE) {
-    return findLoans(db, {}, page, limit);
+    return findLoans(db, {}, page, limit, { includeArchived });
   }
   const u = await findUserById(db, user.id);
   const structId = u?.structure?.toString();
@@ -54,7 +55,7 @@ export async function listLoans(
       { 'borrower._id': id },
     ],
   };
-  const res = await findLoans(db, filter, page, limit);
+  const res = await findLoans(db, filter, page, limit, { includeArchived });
   const structIdStr = structId;
   const filterFn = (loan: LoanRequest) => {
     const typeOk = (loan.items || []).some((item) =>
@@ -101,10 +102,13 @@ export async function getLoanRequestById(
   id: string,
 ): Promise<LoanRequest | null> {
   const result = await findLoans(db, { _id: new ObjectId(id) });
-  if (Array.isArray(result)) {
-    return result[0] || null;
-  }
-  return result.loans[0] || null;
+  const loan = Array.isArray(result) ? result[0] : result.loans[0];
+  if (loan) return loan;
+
+  const archived = await findLoans(db, { _id: new ObjectId(id) }, undefined, undefined, {
+    includeArchived: true,
+  });
+  return Array.isArray(archived) ? archived[0] || null : archived.loans[0] || null;
 }
 
 export async function createLoanRequest(

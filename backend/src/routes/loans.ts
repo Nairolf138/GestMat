@@ -32,7 +32,8 @@ router.get(
       const limit = req.query.limit
         ? parseInt(req.query.limit as string)
         : undefined;
-      const loans = await listLoans(db, req.user!, page, limit);
+      const includeArchived = req.query.includeArchived === 'true';
+      const loans = await listLoans(db, req.user!, page, limit, includeArchived);
       res.json(loans);
     } catch (err) {
       next(err);

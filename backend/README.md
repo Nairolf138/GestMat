@@ -34,6 +34,9 @@ The API reads its configuration from the following variables:
 | `SMTP_URL`       | SMTP connection string to enable email notifications and derive a default sender.             |
 | `NOTIFY_EMAIL`   | Optional sender/recipient address for notification emails (overrides the derived sender).     |
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
+| `LOAN_ARCHIVE_MIN_AGE_DAYS` | Age in days before a finished loan is eligible for archiving. Defaults to `365`. |
+| `LOAN_ARCHIVE_INTERVAL_DAYS` | Interval in days between archive jobs. Defaults to `1` (daily). |
+| `LOAN_ARCHIVE_BATCH_SIZE` | Maximum number of loans processed per archive run. Defaults to `100`. |
 
 If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
 to a comma-separated whitelist to lock the API down to trusted origins. The server always normalizes `Access-Control-Allow-Origin`
@@ -139,6 +142,21 @@ On startup the API ensures several indexes to optimize common lookups:
 - **Loan requests**: single-field indexes on `status`, `startDate` and
   `items.equipment` support filtering by request status, retrieving loans by
   their scheduled start date and querying by contained equipment items.
+
+## Loan retention and archives
+
+Completed loans remain in the main `loanrequests` collection for day-to-day
+operations. A background archive job runs every `LOAN_ARCHIVE_INTERVAL_DAYS`
+days (daily by default) and moves any loan whose `endDate` is older than
+`LOAN_ARCHIVE_MIN_AGE_DAYS` (default one year) into `loanrequests_archive`. Each
+archived document is marked with `archived: true`, an `archivedAt` timestamp and
+its `originalId`, then removed from the source collection inside a single
+transaction to prevent partial moves.
+
+Current loan listings exclude archives automatically. To show the archive in the
+History view, call `GET /loans?includeArchived=true`, which returns documents
+from the archive collection. Archived loans can also be fetched individually by
+their original identifier.
 
 ## Statistics endpoints
 
