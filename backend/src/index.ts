@@ -23,12 +23,14 @@ import equipmentRoutes from './routes/equipments';
 import loanRoutes from './routes/loans';
 import statsRoutes from './routes/stats';
 import rolesRoutes from './routes/roles';
+import reportRoutes from './routes/reports';
 import { Db } from 'mongodb';
 import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
 import { scheduleLoanReminders } from './services/reminderService';
 import { scheduleOverdueLoanNotifications } from './services/overdueService';
 import { scheduleLoanArchiving } from './services/archiveService';
+import { scheduleAnnualReports } from './services/reportService';
 
 const normalizeAllowOriginHeader = (
   value: string | string[] | number | undefined,
@@ -167,6 +169,7 @@ export async function start(
   let reminderInterval: NodeJS.Timeout | undefined;
   let overdueInterval: NodeJS.Timeout | undefined;
   let archiveInterval: NodeJS.Timeout | undefined;
+  let reportInterval: NodeJS.Timeout | undefined;
   try {
     db = await connect();
     app.locals.db = db;
@@ -182,6 +185,7 @@ export async function start(
       reminderInterval = scheduleLoanReminders(db);
       overdueInterval = scheduleOverdueLoanNotifications(db);
       archiveInterval = scheduleLoanArchiving(db);
+      reportInterval = scheduleAnnualReports(db);
     }
   } catch (err) {
     logger.error('Failed to start server: %o', err as Error);
@@ -197,6 +201,7 @@ export async function start(
   app.use(withApiPrefix('/loans'), loanRoutes);
   app.use(withApiPrefix('/stats'), statsRoutes);
   app.use(withApiPrefix('/roles'), rolesRoutes);
+  app.use(withApiPrefix('/reports'), reportRoutes);
 
   app.get('/metrics', async (req: Request, res: Response) => {
     res.set('Content-Type', client.register.contentType);
@@ -245,6 +250,9 @@ export async function start(
     if (archiveInterval) {
       clearInterval(archiveInterval);
     }
+    if (reportInterval) {
+      clearInterval(reportInterval);
+    }
     server.close(async () => {
       await closeDB();
       process.exit(0);
@@ -261,6 +269,9 @@ export async function start(
     }
     if (archiveInterval) {
       clearInterval(archiveInterval);
+    }
+    if (reportInterval) {
+      clearInterval(reportInterval);
     }
     closeDB();
   });
