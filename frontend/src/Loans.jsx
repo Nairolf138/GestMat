@@ -109,6 +109,11 @@ function Loans() {
       <NavBar />
       <main id="main-content">
         <h1 className="h1">{t('loans.title')}</h1>
+        <div className="d-flex justify-content-end mb-3">
+          <Link className="btn btn-outline-secondary" to="/loans/history">
+            {t('loans.history.view_all')}
+          </Link>
+        </div>
         {loading ? (
           <Loading />
         ) : error ? (
