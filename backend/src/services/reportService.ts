@@ -47,6 +47,13 @@ export interface StoredReport {
   errors?: string[];
 }
 
+export interface ReportJob {
+  _id: string;
+  lastRunAt?: Date;
+  periodEnd?: Date;
+  startedAt?: Date;
+}
+
 export interface GenerateReportsOptions {
   now?: Date;
   force?: boolean;
@@ -313,14 +320,14 @@ export async function generateAnnualReports(
   let emailed = 0;
 
   const jobKey = `annual-${period.key}`;
-  const meta = await db.collection('reportJobs').findOne({ _id: jobKey });
+  const meta = await db.collection<ReportJob>('reportJobs').findOne({ _id: jobKey });
   if (meta && !force) {
     logger.info('Annual reports already generated for %s, skipping', period.key);
     return { period, generated, skipped: filtered.length, emailed, errors };
   }
 
   await db
-    .collection('reportJobs')
+    .collection<ReportJob>('reportJobs')
     .updateOne(
       { _id: jobKey },
       { $set: { lastRunAt: now, periodEnd: period.end, startedAt: now } },
