@@ -5,6 +5,7 @@ import Register from './Register';
 import Equipments from './Equipments';
 import Home from './Home';
 import Loans from './Loans';
+import LoansHistory from './LoansHistory.jsx';
 import LoanDetail from './LoanDetail.jsx';
 import Profile from './Profile';
 import Catalog from './Catalog';
@@ -56,6 +57,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Loans />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/loans/history"
+            element={
+              <PrivateRoute>
+                <LoansHistory />
               </PrivateRoute>
             }
           />

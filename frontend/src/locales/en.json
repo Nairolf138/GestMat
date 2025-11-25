@@ -21,6 +21,7 @@
     "catalog": "Catalog",
     "inventory": "Local inventory",
     "loans": "Loans",
+    "loans_history": "History",
     "cart": "Cart",
     "admin": "Admin",
     "account": "Account",
@@ -158,6 +159,15 @@
     "finished": "Finished",
     "ongoing": "Ongoing",
     "upcoming": "Upcoming",
+    "history": {
+      "title": "Loan history",
+      "view_all": "View full history",
+      "status_filter": "Status",
+      "from": "From",
+      "to": "To",
+      "no_results": "No entries in the history",
+      "pagination": "Showing {{start}}–{{end}} of {{total}} loans"
+    },
     "status": {
       "pending": "Pending",
       "accepted": "Accepted",
@@ -261,7 +271,11 @@
     "choose": "Choose...",
     "required": "Required",
     "error": "Error",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "all": "All",
+    "reset": "Reset",
+    "previous": "Previous",
+    "next": "Next"
   },
   "roles": {
     "Administrateur": "Administrator",

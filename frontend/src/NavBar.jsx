@@ -149,6 +149,15 @@ function NavBar() {
                     className={({ isActive }) =>
                       'nav-link' + (isActive ? ' active' : '')
                     }
+                    to="/loans/history"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {t('nav.loans_history')}
+                  </NavLink>
+                  <NavLink
+                    className={({ isActive }) =>
+                      'nav-link' + (isActive ? ' active' : '')
+                    }
                     to="/cart"
                     onClick={() => setIsOpen(false)}
                   >
