@@ -21,6 +21,7 @@
     "catalog": "Catalogue",
     "inventory": "Inventaire local",
     "loans": "Prêts/Emprunts",
+    "loans_history": "Historique",
     "cart": "Panier",
     "admin": "Administration",
     "account": "Compte",
@@ -158,6 +159,15 @@
     "finished": "Terminés",
     "ongoing": "En cours",
     "upcoming": "À venir",
+    "history": {
+      "title": "Historique des prêts",
+      "view_all": "Voir tout l'historique",
+      "status_filter": "Statut",
+      "from": "Du",
+      "to": "Au",
+      "no_results": "Aucune entrée dans l'historique",
+      "pagination": "Affichage {{start}}–{{end}} sur {{total}} prêts"
+    },
     "status": {
       "pending": "En attente",
       "accepted": "Accepté",
@@ -261,7 +271,11 @@
     "choose": "Choisir...",
     "required": "Requis",
     "error": "Erreur",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "all": "Tous",
+    "reset": "Réinitialiser",
+    "previous": "Précédent",
+    "next": "Suivant"
   },
   "roles": {
     "Administrateur": "Administrateur",

@@ -6,6 +6,13 @@ import { useTranslation } from 'react-i18next';
 import LoanItem from './LoanItem.jsx';
 import Loading from './Loading.jsx';
 import CollapsibleSection from './CollapsibleSection.jsx';
+import { Link } from 'react-router-dom';
+
+const getLoanDate = (loan) =>
+  loan.endDate || loan.startDate || loan.createdAt || loan.updatedAt || new Date();
+
+const sortLoans = (list) =>
+  [...list].sort((a, b) => new Date(getLoanDate(b)) - new Date(getLoanDate(a)));
 
 function Loans() {
   const { t } = useTranslation();
@@ -62,7 +69,11 @@ function Loans() {
         ongoing.push(l);
       }
     });
-    return { finished, ongoing, upcoming };
+    return {
+      finished: sortLoans(finished),
+      ongoing: sortLoans(ongoing),
+      upcoming: sortLoans(upcoming),
+    };
   };
 
   const structureId = user?.structure?._id || user?.structure;
@@ -76,6 +87,11 @@ function Loans() {
       (l) => l.borrower?._id === structureId || l.borrower === structureId,
     ),
   );
+
+  const finishedList =
+    tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished;
+  const limitedFinished = finishedList.slice(0, 5);
+  const hasMoreFinished = finishedList.length > limitedFinished.length;
 
   const renderSection = (list, isOwner) => (
     <ul className="list-group mb-3">
@@ -123,11 +139,13 @@ function Loans() {
                 isOpen={sectionsOpen.finished}
                 onToggle={() => toggleSection('finished')}
               >
-                {renderSection(
-                  tab === 'owner'
-                    ? ownerLoans.finished
-                    : borrowerLoans.finished,
-                  tab === 'owner',
+                {renderSection(limitedFinished, tab === 'owner')}
+                {hasMoreFinished && (
+                  <div className="d-flex justify-content-end">
+                    <Link className="btn btn-link p-0" to="/loans/history">
+                      {t('loans.history.view_all')}
+                    </Link>
+                  </div>
                 )}
               </CollapsibleSection>
               <CollapsibleSection
