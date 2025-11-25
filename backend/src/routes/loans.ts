@@ -76,7 +76,7 @@ router.post(
 
 router.put(
   '/:id',
-  auth(MANAGE_LOANS),
+  auth(),
   checkId(),
   updateLoanValidator,
   validate,
