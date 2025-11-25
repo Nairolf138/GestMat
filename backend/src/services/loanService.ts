@@ -444,30 +444,38 @@ export async function deleteLoanRequest(
     if (user.role !== ADMIN_ROLE) {
       const u = await findUserById(db, user.id);
       const structId = u?.structure?.toString();
+      const ownerId =
+        (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
       const isBorrower = loan.borrower?.toString() === structId;
       const isRequester = loan.requestedBy?.toString() === user.id;
-      switch (user.role) {
-        case AUTRE_ROLE:
-        case REGISSEUR_SON_ROLE:
-        case REGISSEUR_LUMIERE_ROLE:
-        case REGISSEUR_PLATEAU_ROLE:
-          if (!isBorrower || !isRequester) {
-            throw forbidden('Access denied');
-          }
-          break;
-        case REGISSEUR_GENERAL_ROLE:
-          if (!isBorrower) {
-            throw forbidden('Access denied');
-          }
-          break;
-        default:
-          if (!isBorrower) {
-            throw forbidden('Access denied');
-          }
-      }
-      const start = new Date(loan.startDate);
-      if (loan.status !== 'pending' && start <= new Date()) {
-        throw forbidden('Access denied');
+      const isOwner = ownerId === structId;
+      const isCancelled = loan.status === 'cancelled';
+
+      // Allow the lending structure to remove cancelled requests
+      if (!(isCancelled && isOwner)) {
+        switch (user.role) {
+          case AUTRE_ROLE:
+          case REGISSEUR_SON_ROLE:
+          case REGISSEUR_LUMIERE_ROLE:
+          case REGISSEUR_PLATEAU_ROLE:
+            if (!isBorrower || !isRequester) {
+              throw forbidden('Access denied');
+            }
+            break;
+          case REGISSEUR_GENERAL_ROLE:
+            if (!isBorrower) {
+              throw forbidden('Access denied');
+            }
+            break;
+          default:
+            if (!isBorrower) {
+              throw forbidden('Access denied');
+            }
+        }
+        const start = new Date(loan.startDate);
+        if (loan.status !== 'pending' && start <= new Date()) {
+          throw forbidden('Access denied');
+        }
       }
     }
 
