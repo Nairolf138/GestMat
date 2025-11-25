@@ -75,6 +75,9 @@ const envSchema = z.object({
   LOAN_REMINDER_OFFSET_HOURS: z.coerce.number().positive().default(24),
   LOAN_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
   LOAN_OVERDUE_CHECK_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
+  LOAN_ARCHIVE_MIN_AGE_DAYS: z.coerce.number().positive().default(365),
+  LOAN_ARCHIVE_INTERVAL_DAYS: z.coerce.number().positive().default(1),
+  LOAN_ARCHIVE_BATCH_SIZE: z.coerce.number().int().positive().default(100),
 });
 
 const env = envSchema.parse(process.env);
@@ -139,6 +142,9 @@ export const LOAN_REMINDER_OFFSET_HOURS = env.LOAN_REMINDER_OFFSET_HOURS;
 export const LOAN_REMINDER_INTERVAL_MINUTES = env.LOAN_REMINDER_INTERVAL_MINUTES;
 export const LOAN_OVERDUE_CHECK_INTERVAL_MINUTES =
   env.LOAN_OVERDUE_CHECK_INTERVAL_MINUTES;
+export const LOAN_ARCHIVE_MIN_AGE_DAYS = env.LOAN_ARCHIVE_MIN_AGE_DAYS;
+export const LOAN_ARCHIVE_INTERVAL_DAYS = env.LOAN_ARCHIVE_INTERVAL_DAYS;
+export const LOAN_ARCHIVE_BATCH_SIZE = env.LOAN_ARCHIVE_BATCH_SIZE;
 
 export { normalizeCorsOrigins };
 
@@ -156,4 +162,7 @@ export default {
   LOAN_REMINDER_OFFSET_HOURS,
   LOAN_REMINDER_INTERVAL_MINUTES,
   LOAN_OVERDUE_CHECK_INTERVAL_MINUTES,
+  LOAN_ARCHIVE_MIN_AGE_DAYS,
+  LOAN_ARCHIVE_INTERVAL_DAYS,
+  LOAN_ARCHIVE_BATCH_SIZE,
 };

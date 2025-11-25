@@ -16,6 +16,8 @@ export interface LoanRequest {
   endDate?: Date;
   reminderSentAt?: Date;
   overdueNotifiedAt?: Date;
+   archived?: boolean;
+   archivedAt?: Date;
   [key: string]: unknown;
 }
 
@@ -79,21 +81,28 @@ export async function findLoans(
   filter: Record<string, unknown> = {},
   page?: number,
   limit?: number,
+  options: { includeArchived?: boolean } = {},
 ): Promise<LoanRequest[] | { loans: LoanRequest[]; total: number }> {
-  const collection = db.collection<LoanRequest>('loanrequests');
+  const collectionName = options.includeArchived
+    ? 'loanrequests_archive'
+    : 'loanrequests';
+  const collection = db.collection<LoanRequest>(collectionName);
+  const baseFilter = options.includeArchived
+    ? filter
+    : { $and: [{ archived: { $ne: true } }, filter] };
   if (page !== undefined && limit !== undefined) {
     const [loans, total] = await Promise.all([
       collection
-        .find(filter)
+        .find(baseFilter)
         .skip((page - 1) * limit)
         .limit(limit)
         .toArray(),
-      collection.countDocuments(filter),
+      collection.countDocuments(baseFilter),
     ]);
     await Promise.all(loans.map((loan) => _populate(db, loan)));
     return { loans, total };
   }
-  const loans = await collection.find(filter).toArray();
+  const loans = await collection.find(baseFilter).toArray();
   await Promise.all(loans.map((loan) => _populate(db, loan)));
   return loans;
 }
@@ -120,6 +129,7 @@ export async function createLoan(
   if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
   if (data.overdueNotifiedAt)
     data.overdueNotifiedAt = new Date(data.overdueNotifiedAt);
+  if (data.archivedAt) data.archivedAt = new Date(data.archivedAt);
   const result = await db
     .collection<LoanRequest>('loanrequests')
     .insertOne(data, { session });
@@ -150,6 +160,7 @@ export async function updateLoan(
   if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
   if (data.overdueNotifiedAt)
     data.overdueNotifiedAt = new Date(data.overdueNotifiedAt);
+  if (data.archivedAt) data.archivedAt = new Date(data.archivedAt);
   const res = await db
     .collection<LoanRequest>('loanrequests')
     .findOneAndUpdate(
