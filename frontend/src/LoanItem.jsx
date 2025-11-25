@@ -54,10 +54,7 @@ function LoanItem({ loan, isOwner, refresh }) {
   };
 
   const cancelLoan = async () => {
-    await api(`/loans/${loan._id}`, {
-      method: 'DELETE',
-    });
-    refresh();
+    await changeStatus('cancelled');
   };
 
   return (
