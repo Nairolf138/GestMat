@@ -50,7 +50,11 @@ function Loans() {
     list.forEach((l) => {
       const start = l.startDate ? new Date(l.startDate) : null;
       const end = l.endDate ? new Date(l.endDate) : null;
-      if (l.status === 'refused' || (end && end < now)) {
+      if (
+        l.status === 'refused' ||
+        l.status === 'cancelled' ||
+        (end && end < now)
+      ) {
         finished.push(l);
       } else if (start && start > now) {
         upcoming.push(l);
