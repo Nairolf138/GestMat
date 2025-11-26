@@ -94,7 +94,19 @@ export async function listLoans(
     return res.filter(filterFn);
   }
   const loans = res.loans.filter(filterFn);
-  return { loans, total: loans.length };
+
+  let total = loans.length;
+  if (page !== undefined && limit !== undefined) {
+    const fullResults = await findLoans(db, filter, undefined, undefined, {
+      includeArchived,
+    });
+    const allLoans = Array.isArray(fullResults)
+      ? fullResults
+      : fullResults.loans;
+    total = allLoans.filter(filterFn).length;
+  }
+
+  return { loans, total };
 }
 
 export async function getLoanRequestById(
