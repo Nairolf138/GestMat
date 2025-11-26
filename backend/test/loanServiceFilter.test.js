@@ -63,3 +63,35 @@ test('listLoans filters documents by user structure', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('listLoans returns filtered total when paginated for non-admin roles', async () => {
+  const { db, client, mongod } = await createDb();
+  const struct1 = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const struct2 = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
+  const userId = new ObjectId().toString();
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: struct1 });
+
+  const eq1 = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', structure: struct1, type: 'Son' })
+  ).insertedId;
+
+  await db.collection('loanrequests').insertMany([
+    { owner: struct1, borrower: struct2, items: [{ equipment: eq1 }] },
+    { owner: struct1, borrower: struct2, items: [{ equipment: eq1 }] },
+    { owner: struct1, borrower: struct2, items: [{ equipment: eq1 }] },
+  ]);
+
+  const result = await listLoans(db, { id: userId, role: AUTRE_ROLE }, 1, 2);
+
+  assert.strictEqual(result.total, 3);
+  assert.strictEqual(result.loans.length, 2);
+
+  await client.close();
+  await mongod.stop();
+});
