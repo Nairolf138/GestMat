@@ -6,7 +6,8 @@
     "submit": "Sign in",
     "missing_credentials": "Username and password required",
     "success": "Login successful",
-    "failed": "Login failed"
+    "failed": "Login failed",
+    "forgot_password": "Forgot password?"
   },
   "register": {
     "title": "Register",
@@ -16,6 +17,29 @@
     "invalid_structure": "Invalid structure",
     "failed": "Registration failed",
     "user_exists": "Username already exists"
+  },
+  "forgot_password": {
+    "title": "Forgot password",
+    "description": "Enter your username or email to receive a reset link.",
+    "identifier": "Username or email",
+    "submit": "Send link",
+    "success": "If an account matches, a reset link has been sent.",
+    "error": "Unable to send the reset link.",
+    "required": "Username or email is required.",
+    "back_to_login": "Back to login"
+  },
+  "reset_password": {
+    "title": "Set a new password",
+    "description": "Choose a new password to secure your account.",
+    "new_password": "New password",
+    "confirm_password": "Confirm password",
+    "submit": "Update password",
+    "success": "Your password has been reset. You will be redirected to login.",
+    "error": "Unable to reset the password.",
+    "missing_token": "Invalid or expired reset link.",
+    "required": "Password is required.",
+    "mismatch": "Passwords do not match.",
+    "back_to_forgot": "Back to reset request"
   },
   "nav": {
     "catalog": "Catalog",

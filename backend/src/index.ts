@@ -27,6 +27,7 @@ import reportRoutes from './routes/reports';
 import { Db } from 'mongodb';
 import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
+import { ensurePasswordResetIndexes } from './models/PasswordReset';
 import { scheduleLoanReminders } from './services/reminderService';
 import { scheduleOverdueLoanNotifications } from './services/overdueService';
 import { scheduleLoanArchiving } from './services/archiveService';
@@ -181,6 +182,7 @@ export async function start(
       structure: 1,
     });
     await ensureSessionIndexes(db);
+    await ensurePasswordResetIndexes(db);
     if (NODE_ENV !== 'test') {
       reminderInterval = scheduleLoanReminders(db);
       overdueInterval = scheduleOverdueLoanNotifications(db);

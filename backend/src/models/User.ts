@@ -65,6 +65,10 @@ export function findUserByUsername(
   return db.collection<User>('users').findOne({ username });
 }
 
+export function findUserByEmail(db: Db, email: string): Promise<User | null> {
+  return db.collection<User>('users').findOne({ email });
+}
+
 export function findUsers(
   db: Db,
   search?: string,

@@ -23,6 +23,12 @@ interface AccountUpdateContext {
   changedFields: string[];
 }
 
+interface PasswordResetContext {
+  displayName: string;
+  resetLink: string;
+  expiresInHours: number;
+}
+
 interface MailTemplate {
   subject: string;
   text: string;
@@ -259,6 +265,33 @@ export function accountUpdateTemplate({
       <p>Bonjour ${displayName},</p>
       <p>Les informations suivantes de votre compte GestMat ont été mises à jour : ${formattedChanges}.</p>
       <p>Si vous n'êtes pas à l'origine de ces modifications, merci de contacter un administrateur.</p>
+      <p>${SIGNATURE}</p>
+    `,
+  };
+}
+
+export function passwordResetTemplate({
+  displayName,
+  resetLink,
+  expiresInHours,
+}: PasswordResetContext): MailTemplate {
+  return {
+    subject: 'Réinitialisation de votre mot de passe GestMat',
+    text:
+      `Bonjour ${displayName},\n\n` +
+      `Une demande de réinitialisation de mot de passe a été effectuée.\n` +
+      `Pour définir un nouveau mot de passe, utilisez le lien ci-dessous (valable ${expiresInHours}h) :\n${resetLink}\n\n` +
+      `Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.\n\n` +
+      SIGNATURE,
+    html: `
+      <p>Bonjour ${displayName},</p>
+      <p>Une demande de réinitialisation de mot de passe a été effectuée.</p>
+      <p>
+        Pour définir un nouveau mot de passe, utilisez le lien ci-dessous (valable
+        <strong>${expiresInHours}h</strong>) :
+      </p>
+      <p><a href="${resetLink}">${resetLink}</a></p>
+      <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.</p>
       <p>${SIGNATURE}</p>
     `,
   };
