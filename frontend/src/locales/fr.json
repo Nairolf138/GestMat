@@ -7,7 +7,8 @@
     "missing_credentials": "Utilisateur et mot de passe requis",
     "success": "Connexion réussie",
     "failed": "Échec de la connexion",
-    "forgot_password": "Mot de passe oublié ?"
+    "forgot_password": "Mot de passe oublié ?",
+    "forgot_username": "Identifiant oublié ?"
   },
   "register": {
     "title": "Inscription",
@@ -26,6 +27,16 @@
     "success": "Si un compte correspond, un lien de réinitialisation a été envoyé.",
     "error": "Impossible d'envoyer le lien de réinitialisation.",
     "required": "L'identifiant ou l'e-mail est requis.",
+    "back_to_login": "Retour à la connexion"
+  },
+  "forgot_username": {
+    "title": "Identifiant oublié",
+    "description": "Saisissez votre e-mail pour recevoir un rappel de votre identifiant.",
+    "email": "Adresse e-mail",
+    "submit": "Envoyer le rappel",
+    "success": "Si un compte correspond, votre identifiant a été envoyé par e-mail.",
+    "error": "Impossible d'envoyer le rappel d'identifiant.",
+    "required": "L'e-mail est requis.",
     "back_to_login": "Retour à la connexion"
   },
   "reset_password": {

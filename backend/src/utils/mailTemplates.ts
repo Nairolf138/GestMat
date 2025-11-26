@@ -29,6 +29,11 @@ interface PasswordResetContext {
   expiresInHours: number;
 }
 
+interface UsernameReminderContext {
+  displayName: string;
+  username: string;
+}
+
 interface MailTemplate {
   subject: string;
   text: string;
@@ -291,6 +296,26 @@ export function passwordResetTemplate({
         <strong>${expiresInHours}h</strong>) :
       </p>
       <p><a href="${resetLink}">${resetLink}</a></p>
+      <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.</p>
+      <p>${SIGNATURE}</p>
+    `,
+  };
+}
+
+export function usernameReminderTemplate({
+  displayName,
+  username,
+}: UsernameReminderContext): MailTemplate {
+  return {
+    subject: "Rappel d'identifiant GestMat",
+    text:
+      `Bonjour ${displayName},\n\n` +
+      `Suite à votre demande, voici votre identifiant GestMat : ${username}.\n\n` +
+      `Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.\n\n` +
+      SIGNATURE,
+    html: `
+      <p>Bonjour ${displayName},</p>
+      <p>Suite à votre demande, voici votre identifiant GestMat : <strong>${username}</strong>.</p>
       <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.</p>
       <p>${SIGNATURE}</p>
     `,

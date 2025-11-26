@@ -8,6 +8,7 @@ import {
   registerValidator,
   loginValidator,
   forgotPasswordValidator,
+  forgotUsernameValidator,
   resetPasswordValidator,
 } from '../validators/userValidator';
 import ROLES, { ADMIN_ROLE, AUTRE_ROLE } from '../config/roles';
@@ -37,7 +38,11 @@ import { AuthUser } from '../types';
 import { normalizeRole } from '../utils/roleAccess';
 import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
-import { accountCreationTemplate, passwordResetTemplate } from '../utils/mailTemplates';
+import {
+  accountCreationTemplate,
+  passwordResetTemplate,
+  usernameReminderTemplate,
+} from '../utils/mailTemplates';
 import { isNotificationEnabled } from '../utils/notificationPreferences';
 import crypto from 'crypto';
 
@@ -52,6 +57,12 @@ const passwordResetLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: 'Too many password reset attempts, please try again later.',
+});
+
+const usernameReminderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many username reminder attempts, please try again later.',
 });
 
 const buildResetUrl = (token: string): string => {
@@ -277,6 +288,46 @@ router.post(
     } catch (err: any) {
       logger.error('Failed to handle password reset request: %o', err);
       next(new ApiError(500, 'Unable to process password reset'));
+    }
+  },
+);
+
+router.post(
+  '/forgot-username',
+  usernameReminderLimiter,
+  forgotUsernameValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    const { email } = req.body;
+    logger.info('Username reminder requested for email: %s', email);
+    try {
+      const user = await findUserByEmail(db, email);
+
+      if (user?.username && user.email) {
+        const displayName =
+          `${user.firstName ? `${user.firstName} ` : ''}${user.lastName ?? ''}`.trim() ||
+          user.username;
+        const { subject, text, html } = usernameReminderTemplate({
+          displayName,
+          username: user.username,
+        });
+
+        await sendMail({
+          to: user.email,
+          subject,
+          text,
+          html,
+        });
+        logger.info('Username reminder email sent to %s', email);
+      } else {
+        logger.info('Username reminder requested for unknown email: %s', email);
+      }
+
+      res.json({ message: 'If an account exists, username details will be sent.' });
+    } catch (err) {
+      logger.error('Failed to process username reminder: %o', err);
+      next(new ApiError(500, 'Unable to process username reminder'));
     }
   },
 );

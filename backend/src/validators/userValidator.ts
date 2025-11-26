@@ -17,6 +17,10 @@ export const forgotPasswordValidator: ValidationChain[] = [
   body('identifier').notEmpty().withMessage('Identifier is required'),
 ];
 
+export const forgotUsernameValidator: ValidationChain[] = [
+  body('email').isEmail().withMessage('Valid email is required'),
+];
+
 export const resetPasswordValidator: ValidationChain[] = [
   body('token').notEmpty().withMessage('Token is required'),
   body('password').notEmpty().withMessage('Password is required'),
