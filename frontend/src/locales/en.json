@@ -7,7 +7,8 @@
     "missing_credentials": "Username and password required",
     "success": "Login successful",
     "failed": "Login failed",
-    "forgot_password": "Forgot password?"
+    "forgot_password": "Forgot password?",
+    "forgot_username": "Forgot username?"
   },
   "register": {
     "title": "Register",
@@ -26,6 +27,16 @@
     "success": "If an account matches, a reset link has been sent.",
     "error": "Unable to send the reset link.",
     "required": "Username or email is required.",
+    "back_to_login": "Back to login"
+  },
+  "forgot_username": {
+    "title": "Forgot username",
+    "description": "Enter your email to receive a reminder of your username.",
+    "email": "Email address",
+    "submit": "Send reminder",
+    "success": "If an account matches, your username has been emailed.",
+    "error": "Unable to send username reminder.",
+    "required": "Email is required.",
     "back_to_login": "Back to login"
   },
   "reset_password": {

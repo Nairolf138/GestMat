@@ -132,6 +132,9 @@ function Login() {
         <p>
           <Link to="/forgot-password">{t('login.forgot_password')}</Link>
         </p>
+        <p>
+          <Link to="/forgot-username">{t('login.forgot_username')}</Link>
+        </p>
       </FormCard>
     </main>
   );

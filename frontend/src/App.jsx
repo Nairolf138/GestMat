@@ -4,6 +4,7 @@ import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword.jsx';
 import ResetPassword from './ResetPassword.jsx';
+import ForgotUsername from './ForgotUsername.jsx';
 import Equipments from './Equipments';
 import Home from './Home';
 import Loans from './Loans';
@@ -31,6 +32,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-username" element={<ForgotUsername />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/"
