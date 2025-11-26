@@ -4,15 +4,20 @@ import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 
 import validate from '../middleware/validate';
-import { registerValidator, loginValidator } from '../validators/userValidator';
+import {
+  registerValidator,
+  loginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+} from '../validators/userValidator';
 import ROLES, { ADMIN_ROLE, AUTRE_ROLE } from '../config/roles';
 
 const DEFAULT_ROLE = AUTRE_ROLE;
 const ALLOWED_ROLES = ROLES.filter((r) => r !== ADMIN_ROLE);
 
-import { JWT_SECRET } from '../config';
+import { API_PREFIX, API_URL, JWT_SECRET, NOTIFY_EMAIL } from '../config';
 import { cookieOptions } from '../utils/cookieOptions';
-import { createUser, findUserByUsername } from '../models/User';
+import { createUser, findUserByEmail, findUserById, findUserByUsername, updateUser } from '../models/User';
 import { findStructureById } from '../models/Structure';
 import {
   createSession,
@@ -21,14 +26,20 @@ import {
   deleteSessionsByUser,
   hashToken,
 } from '../models/Session';
+import {
+  createPasswordReset,
+  deletePasswordResetById,
+  deletePasswordResetsByUser,
+  findValidPasswordReset,
+} from '../models/PasswordReset';
 import { unauthorized, ApiError } from '../utils/errors';
 import { AuthUser } from '../types';
 import { normalizeRole } from '../utils/roleAccess';
 import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
-import { NOTIFY_EMAIL } from '../config';
-import { accountCreationTemplate } from '../utils/mailTemplates';
+import { accountCreationTemplate, passwordResetTemplate } from '../utils/mailTemplates';
 import { isNotificationEnabled } from '../utils/notificationPreferences';
+import crypto from 'crypto';
 
 const router = express.Router();
 const loginLimiter = rateLimit({
@@ -36,6 +47,27 @@ const loginLimiter = rateLimit({
   max: 5,
   message: 'Too many login attempts, please try again later.',
 });
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many password reset attempts, please try again later.',
+});
+
+const buildResetUrl = (token: string): string => {
+  try {
+    const url = new URL(API_URL);
+    if (API_PREFIX && url.pathname.endsWith(API_PREFIX)) {
+      url.pathname = url.pathname.slice(0, -API_PREFIX.length) || '/';
+    }
+    url.pathname = `${url.pathname.replace(/\/$/, '')}/reset-password`;
+    url.searchParams.set('token', token);
+    return url.toString();
+  } catch (error) {
+    logger.error('Failed to build reset URL: %o', error);
+    return `/reset-password?token=${encodeURIComponent(token)}`;
+  }
+};
 
 router.post(
   '/register',
@@ -193,6 +225,93 @@ router.post(
       res.json({});
     } catch (err: any) {
       next(new ApiError(500, 'Server error'));
+    }
+  },
+);
+
+router.post(
+  '/forgot-password',
+  passwordResetLimiter,
+  forgotPasswordValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    const { identifier } = req.body;
+    logger.info('Password reset requested: %s', identifier);
+    try {
+      const user =
+        (await findUserByUsername(db, identifier)) ||
+        (await findUserByEmail(db, identifier));
+
+      if (!user?._id || !user.email) {
+        return res.json({ message: 'If an account exists, a reset link will be sent.' });
+      }
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await deletePasswordResetsByUser(db, user._id.toString());
+      await createPasswordReset(db, {
+        token,
+        userId: user._id.toString(),
+        expiresAt,
+      });
+
+      const displayName =
+        `${user.firstName ? `${user.firstName} ` : ''}${user.lastName ?? ''}`.trim() || user.username;
+      const resetLink = buildResetUrl(token);
+      const { subject, text, html } = passwordResetTemplate({
+        displayName,
+        resetLink,
+        expiresInHours: 1,
+      });
+
+      await sendMail({
+        to: user.email,
+        subject,
+        text,
+        html,
+      });
+
+      res.json({ message: 'If an account exists, a reset link will be sent.' });
+    } catch (err: any) {
+      logger.error('Failed to handle password reset request: %o', err);
+      next(new ApiError(500, 'Unable to process password reset'));
+    }
+  },
+);
+
+router.post(
+  '/reset-password',
+  passwordResetLimiter,
+  resetPasswordValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { token, password } = req.body;
+    const db = req.app.locals.db;
+    try {
+      const resetRequest = await findValidPasswordReset(db, token);
+      if (!resetRequest) {
+        return next(new ApiError(400, 'Invalid or expired reset token'));
+      }
+
+      const userId = resetRequest.userId.toString();
+      const user = await findUserById(db, userId);
+      if (!user) {
+        await deletePasswordResetById(db, resetRequest._id!);
+        return next(new ApiError(400, 'Invalid or expired reset token'));
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await updateUser(db, userId, { password: hashedPassword });
+      await deletePasswordResetsByUser(db, userId);
+      await deleteSessionsByUser(db, userId);
+      logger.info('Password reset completed for user %s', userId);
+
+      res.json({ message: 'Password updated' });
+    } catch (err: any) {
+      logger.error('Failed to reset password: %o', err);
+      next(new ApiError(500, 'Unable to reset password'));
     }
   },
 );

@@ -13,6 +13,15 @@ export const loginValidator: ValidationChain[] = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
+export const forgotPasswordValidator: ValidationChain[] = [
+  body('identifier').notEmpty().withMessage('Identifier is required'),
+];
+
+export const resetPasswordValidator: ValidationChain[] = [
+  body('token').notEmpty().withMessage('Token is required'),
+  body('password').notEmpty().withMessage('Password is required'),
+];
+
 export const updateUserValidator: ValidationChain[] = [
   body('firstName').optional().notEmpty(),
   body('lastName').optional().notEmpty(),

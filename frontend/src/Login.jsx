@@ -129,6 +129,9 @@ function Login() {
         <p className="mt-3">
           <Link to="/register">{t('register.submit')}</Link>
         </p>
+        <p>
+          <Link to="/forgot-password">{t('login.forgot_password')}</Link>
+        </p>
       </FormCard>
     </main>
   );
