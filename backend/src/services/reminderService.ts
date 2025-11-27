@@ -9,7 +9,7 @@ import {
   LOAN_REMINDER_DAILY_SCHEDULE_ENABLED,
   LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED,
 } from '../config';
-import { loanReminderTemplate } from '../utils/mailTemplates';
+import { loanReminderTemplate, loanStartReminderTemplate } from '../utils/mailTemplates';
 
 const HOURS_IN_MS = 60 * 60 * 1000;
 const MINUTES_IN_MS = 60 * 1000;
@@ -42,6 +42,72 @@ function toObjectId(value: unknown): string | null {
   }
 }
 
+async function sendLoanReminder(
+  db: Db,
+  loan: LoanRequest,
+  field: 'reminderSentAt' | 'startReminderSentAt',
+  templateFactory: (context: { loan: LoanRequest; role: 'owner' | 'borrower' | 'requester' }) => {
+    subject: string;
+    text: string;
+    html: string;
+  },
+): Promise<void> {
+  try {
+    const ownerId = toObjectId(loan.owner);
+    const borrowerId = toObjectId(loan.borrower);
+    const requestedById = toObjectId(loan.requestedBy);
+    const items = (loan.items || []) as any;
+    const { ownerRecipients, borrowerRecipients, requesterRecipients } =
+      await getLoanRecipientsByRole(db, items, {
+        ownerId,
+        borrowerId,
+        borrower: loan.borrower,
+        requestedById,
+        requestedBy: loan.requestedBy,
+      });
+
+    const requesterSet = new Set(requesterRecipients);
+    const borrowerSet = new Set(
+      borrowerRecipients.filter((email) => !requesterSet.has(email)),
+    );
+    const ownerSet = new Set(
+      ownerRecipients.filter(
+        (email) => !requesterSet.has(email) && !borrowerSet.has(email),
+      ),
+    );
+
+    if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
+      logger.warn(
+        'Loan reminder not sent: no recipient email found for loan %s',
+        loan._id,
+      );
+      return;
+    }
+
+    const sendReminder = async (
+      recipients: Set<string>,
+      role: 'owner' | 'borrower' | 'requester',
+    ) => {
+      if (!recipients.size) return;
+      const to = Array.from(recipients).join(',');
+      const { subject, text, html } = templateFactory({ loan, role });
+      await sendMail({ to, subject, text, html });
+    };
+
+    await Promise.all([
+      sendReminder(ownerSet, 'owner'),
+      sendReminder(borrowerSet, 'borrower'),
+      sendReminder(requesterSet, 'requester'),
+    ]);
+
+    await db
+      .collection<LoanRequest>('loanrequests')
+      .updateOne({ _id: loan._id }, { $set: { [field]: new Date() } });
+  } catch (err) {
+    logger.error('Loan reminder error for loan %s: %o', loan._id, err);
+  }
+}
+
 export async function processLoanReminders(
   db: Db,
   reminderOffsetMs: number = defaultReminderOffsetMs,
@@ -49,85 +115,42 @@ export async function processLoanReminders(
   const now = new Date();
   const reminderThreshold = new Date(now.getTime() + reminderOffsetMs);
 
-  const [endLoans, startLoans] = await Promise.all([
-    db
-      .collection<LoanRequest>('loanrequests')
-      .find({
-        status: 'accepted',
-        endDate: { $gte: now, $lte: reminderThreshold },
-        reminderSentAt: { $exists: false },
-      })
-      .toArray(),
-    db
-      .collection<LoanRequest>('loanrequests')
-      .find({
-        status: 'accepted',
-        startDate: { $gte: now, $lte: reminderThreshold },
-        startReminderSentAt: { $exists: false },
-      })
-      .toArray(),
-  ]);
+  const endLoans = await db
+    .collection<LoanRequest>('loanrequests')
+    .find({
+      status: 'accepted',
+      endDate: { $gte: now, $lte: reminderThreshold },
+      reminderSentAt: { $exists: false },
+    })
+    .toArray();
 
-  const reminderJobs: { loan: LoanRequest; field: 'reminderSentAt' | 'startReminderSentAt' }[] = [
-    ...endLoans.map((loan) => ({ loan, field: 'reminderSentAt' as const })),
-    ...startLoans.map((loan) => ({ loan, field: 'startReminderSentAt' as const })),
-  ];
-
-  for (const { loan, field } of reminderJobs) {
+  for (const loan of endLoans) {
     try {
-      const ownerId = toObjectId(loan.owner);
-      const borrowerId = toObjectId(loan.borrower);
-      const requestedById = toObjectId(loan.requestedBy);
-      const items = (loan.items || []) as any;
-      const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-        await getLoanRecipientsByRole(db, items, {
-          ownerId,
-          borrowerId,
-          borrower: loan.borrower,
-          requestedById,
-          requestedBy: loan.requestedBy,
-        });
-
-      const requesterSet = new Set(requesterRecipients);
-      const borrowerSet = new Set(
-        borrowerRecipients.filter((email) => !requesterSet.has(email)),
-      );
-      const ownerSet = new Set(
-        ownerRecipients.filter(
-          (email) => !requesterSet.has(email) && !borrowerSet.has(email),
-        ),
-      );
-
-      if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
-        logger.warn(
-          'Loan reminder not sent: no recipient email found for loan %s',
-          loan._id,
-        );
-        continue;
-      }
-
-      const sendReminder = async (
-        recipients: Set<string>,
-        role: 'owner' | 'borrower' | 'requester',
-      ) => {
-        if (!recipients.size) return;
-        const to = Array.from(recipients).join(',');
-        const { subject, text, html } = loanReminderTemplate({ loan, role });
-        await sendMail({ to, subject, text, html });
-      };
-
-      await Promise.all([
-        sendReminder(ownerSet, 'owner'),
-        sendReminder(borrowerSet, 'borrower'),
-        sendReminder(requesterSet, 'requester'),
-      ]);
-
-      await db
-        .collection<LoanRequest>('loanrequests')
-        .updateOne({ _id: loan._id }, { $set: { [field]: new Date() } });
+      await sendLoanReminder(db, loan, 'reminderSentAt', loanReminderTemplate);
     } catch (err) {
       logger.error('Loan reminder error for loan %s: %o', loan._id, err);
     }
+  }
+}
+
+export async function processStartLoanReminders(
+  db: Db,
+  reminderOffsetMs: number = defaultReminderOffsetMs,
+): Promise<void> {
+  const now = new Date();
+  const reminderThreshold = new Date(now.getTime() + reminderOffsetMs);
+
+  const startLoans = await db
+    .collection<LoanRequest>('loanrequests')
+    .find({
+      status: 'accepted',
+      startDate: { $gte: now, $lte: reminderThreshold },
+      startReminderSentAt: { $exists: false },
+    })
+    .toArray();
+
+  for (const loan of startLoans) {
+    await sendLoanReminder(db, loan, 'startReminderSentAt', loanStartReminderTemplate);
   }
 }
 
@@ -149,9 +172,14 @@ export function scheduleLoanReminders(
   } = options;
 
   const run = () => {
-    processLoanReminders(db, reminderOffsetMs).catch((err) => {
-      logger.error('Loan reminder processing error: %o', err);
-    });
+    Promise.all([
+      processLoanReminders(db, reminderOffsetMs).catch((err) => {
+        logger.error('Loan reminder processing error: %o', err);
+      }),
+      processStartLoanReminders(db, reminderOffsetMs).catch((err) => {
+        logger.error('Loan start reminder processing error: %o', err);
+      }),
+    ]);
   };
 
   let dailyTimeout: NodeJS.Timeout | null = null;
