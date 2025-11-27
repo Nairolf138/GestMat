@@ -1,7 +1,10 @@
 import { LoanItem, LoanRequest } from '../models/LoanRequest';
 
+type LoanRecipientRole = 'owner' | 'borrower' | 'requester';
+
 interface LoanMailContext {
   loan: LoanRequest;
+  role?: LoanRecipientRole;
 }
 
 interface LoanStatusContext extends LoanMailContext {
@@ -129,50 +132,201 @@ function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
   return { text, html };
 }
 
-export function loanCreationTemplate({ loan }: LoanMailContext): MailTemplate {
+function creationRoleCopy(role: LoanRecipientRole): {
+  subject: string;
+  preamble: string;
+  action: string;
+} {
+  switch (role) {
+    case 'borrower':
+      return {
+        subject: 'Nouvelle demande de prêt concernant votre structure',
+        preamble:
+          'Votre structure est indiquée comme emprunteur pour la demande ci-dessous.',
+        action: 'Coordonner avec le prêteur et suivre la demande dans GestMat.',
+      };
+    case 'requester':
+      return {
+        subject: 'Votre demande de prêt a été créée',
+        preamble: 'Vous êtes le demandeur de ce prêt.',
+        action: 'Consulter GestMat pour suivre la décision du prêteur.',
+      };
+    case 'owner':
+    default:
+      return {
+        subject: 'Nouvelle demande de prêt à traiter',
+        preamble: 'Vous êtes indiqué comme prêteur pour cette demande.',
+        action: "Examiner la demande et l'accepter ou la refuser dans GestMat.",
+      };
+  }
+}
+
+function statusRoleCopy(role: LoanRecipientRole, status?: string): {
+  subject: string;
+  preamble: string;
+  action: string;
+} {
+  const statusLabel = translateStatus(status);
+  const actionByStatus = (roleAction: {
+    accepted: string;
+    refused: string;
+    cancelled: string;
+    default: string;
+  }) => {
+    if (status === 'accepted') return roleAction.accepted;
+    if (status === 'refused') return roleAction.refused;
+    if (status === 'cancelled') return roleAction.cancelled;
+    return roleAction.default;
+  };
+
+  switch (role) {
+    case 'borrower':
+      return {
+        subject: `Statut de prêt ${statusLabel} - emprunteur`,
+        preamble: 'Votre structure est emprunteur sur ce prêt.',
+        action: actionByStatus({
+          accepted:
+            'Préparer la réception du matériel et convenir des modalités avec le prêteur.',
+          refused: 'Aucune action nécessaire, la demande est refusée.',
+          cancelled: 'Aucune action, la demande a été annulée.',
+          default: "Suivre l'avancement dans GestMat.",
+        }),
+      };
+    case 'requester':
+      return {
+        subject: `Mise à jour de votre demande de prêt : ${statusLabel}`,
+        preamble: 'Vous êtes à l’origine de cette demande.',
+        action: actionByStatus({
+          accepted:
+            'Finaliser les détails avec le prêteur et vérifier les dates dans GestMat.',
+          refused: 'Aucune action supplémentaire requise.',
+          cancelled: 'La demande a été annulée ; aucune action requise.',
+          default: 'Suivre le statut dans GestMat.',
+        }),
+      };
+    case 'owner':
+    default:
+      return {
+        subject: `Demande de prêt ${statusLabel} - prêteur`,
+        preamble: 'Vous êtes le prêteur associé à ce prêt.',
+        action: actionByStatus({
+          accepted: 'Préparer la mise à disposition et confirmer la remise du matériel.',
+          refused: 'Aucune action supplémentaire requise.',
+          cancelled: 'La demande a été annulée ; aucune action requise.',
+          default: "Vérifier l'état du prêt dans GestMat.",
+        }),
+      };
+  }
+}
+
+function reminderRoleCopy(role: LoanRecipientRole): {
+  subject: string;
+  preamble: string;
+  action: string;
+} {
+  switch (role) {
+    case 'borrower':
+      return {
+        subject: 'Rappel : échéance de prêt à venir - emprunteur',
+        preamble: 'Votre structure doit préparer la fin du prêt.',
+        action:
+          'Planifier le retour du matériel avec le prêteur et mettre à jour GestMat si nécessaire.',
+      };
+    case 'requester':
+      return {
+        subject: 'Rappel : échéance de votre demande de prêt',
+        preamble: 'Vous avez initié ce prêt.',
+        action:
+          'Vérifier avec l’emprunteur que le retour du matériel est organisé et suivre GestMat.',
+      };
+    case 'owner':
+    default:
+      return {
+        subject: 'Rappel : échéance de prêt à venir - prêteur',
+        preamble: 'Votre structure prêteuse approche de la fin du prêt.',
+        action:
+          "Anticiper le retour du matériel avec l'emprunteur et mettre à jour GestMat si besoin.",
+      };
+  }
+}
+
+function overdueRoleCopy(role: LoanRecipientRole): {
+  subject: string;
+  preamble: string;
+  action: string;
+} {
+  switch (role) {
+    case 'borrower':
+      return {
+        subject: 'Prêt en retard - emprunteur',
+        preamble: 'Votre structure n’a pas restitué le matériel dans les délais.',
+        action: "Restituer le matériel au plus vite et prévenir le prêteur de l'avancement.",
+      };
+    case 'requester':
+      return {
+        subject: 'Prêt en retard - suivi de votre demande',
+        preamble: 'Vous êtes le demandeur de ce prêt.',
+        action:
+          "Relancer l'emprunteur sur la restitution du matériel et mettre à jour GestMat si nécessaire.",
+      };
+    case 'owner':
+    default:
+      return {
+        subject: 'Prêt en retard - prêteur',
+        preamble: 'Votre structure est prêteuse pour ce prêt.',
+        action:
+          "Contacter l'emprunteur et organiser le retour du matériel au plus vite.",
+      };
+  }
+}
+
+export function loanCreationTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
+  const { subject, preamble, action } = creationRoleCopy(role);
 
   return {
-    subject: 'Nouvelle demande de prêt',
+    subject,
     text:
       `Bonjour,\n\n` +
+      `${preamble}\n` +
       `Une nouvelle demande de prêt (${loan._id}) a été créée.\n\n` +
       `${text}\n\n` +
-      `Action à entreprendre : examiner la demande et l'accepter ou la refuser dans GestMat.\n\n` +
+      `Action à entreprendre : ${action}\n\n` +
       SIGNATURE,
     html: `
       <p>Bonjour,</p>
+      <p>${preamble}</p>
       <p>Une nouvelle demande de prêt (${loan._id}) a été créée.</p>
       ${html}
-      <p><strong>Action à entreprendre :</strong> examiner la demande et l'accepter ou la refuser dans GestMat.</p>
+      <p><strong>Action à entreprendre :</strong> ${action}</p>
       <p>${SIGNATURE}</p>
     `,
   };
 }
 
-export function loanStatusTemplate({ loan, status, actor }: LoanStatusContext): MailTemplate {
+export function loanStatusTemplate({
+  loan,
+  status,
+  actor,
+  role = 'owner',
+}: LoanStatusContext & { role?: LoanRecipientRole }): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const statusLabel = translateStatus(status);
   const actorLine = actor ? ` par ${actor}` : '';
-  let action = "Vérifier l'état du prêt dans GestMat.";
-  if (status === 'accepted') {
-    action = 'Préparer la mise à disposition et confirmer la remise du matériel.';
-  } else if (status === 'refused') {
-    action = 'Aucune action supplémentaire requise.';
-  } else if (status === 'cancelled') {
-    action = 'La demande a été annulée ; aucune action requise.';
-  }
+  const { subject, preamble, action } = statusRoleCopy(role, status);
 
   return {
-    subject: `Demande de prêt ${statusLabel}`,
+    subject,
     text:
       `Bonjour,\n\n` +
+      `${preamble}\n` +
       `La demande de prêt ${loan._id} est ${statusLabel}${actorLine}.\n\n` +
       `${text}\n\n` +
       `Action à entreprendre : ${action}\n\n` +
       SIGNATURE,
     html: `
       <p>Bonjour,</p>
+      <p>${preamble}</p>
       <p>La demande de prêt ${loan._id} est <strong>${statusLabel}</strong>${actorLine}.</p>
       ${html}
       <p><strong>Action à entreprendre :</strong> ${action}</p>
@@ -181,43 +335,49 @@ export function loanStatusTemplate({ loan, status, actor }: LoanStatusContext): 
   };
 }
 
-export function loanReminderTemplate({ loan }: ReminderContext): MailTemplate {
+export function loanReminderTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
+  const { subject, preamble, action } = reminderRoleCopy(role);
 
   return {
-    subject: 'Rappel : fin de prêt à venir',
+    subject,
     text:
       `Bonjour,\n\n` +
+      `${preamble}\n` +
       `Le prêt ${loan._id} approche de son échéance.\n\n` +
       `${text}\n\n` +
-      `Action à entreprendre : préparer le retour du matériel et mettre à jour GestMat si nécessaire.\n\n` +
+      `Action à entreprendre : ${action}\n\n` +
       SIGNATURE,
     html: `
       <p>Bonjour,</p>
+      <p>${preamble}</p>
       <p>Le prêt ${loan._id} approche de son échéance.</p>
       ${html}
-      <p><strong>Action à entreprendre :</strong> préparer le retour du matériel et mettre à jour GestMat si nécessaire.</p>
+      <p><strong>Action à entreprendre :</strong> ${action}</p>
       <p>${SIGNATURE}</p>
     `,
   };
 }
 
-export function loanOverdueTemplate({ loan }: LoanMailContext): MailTemplate {
+export function loanOverdueTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
+  const { subject, preamble, action } = overdueRoleCopy(role);
 
   return {
-    subject: 'Prêt en retard',
+    subject,
     text:
       `Bonjour,\n\n` +
+      `${preamble}\n` +
       `Le prêt ${loan._id} est en retard.\n\n` +
       `${text}\n\n` +
-      `Action à entreprendre : contacter l'emprunteur et organiser le retour du matériel au plus vite.\n\n` +
+      `Action à entreprendre : ${action}\n\n` +
       SIGNATURE,
     html: `
       <p>Bonjour,</p>
+      <p>${preamble}</p>
       <p>Le prêt ${loan._id} est en retard.</p>
       ${html}
-      <p><strong>Action à entreprendre :</strong> contacter l'emprunteur et organiser le retour du matériel au plus vite.</p>
+      <p><strong>Action à entreprendre :</strong> ${action}</p>
       <p>${SIGNATURE}</p>
     `,
   };

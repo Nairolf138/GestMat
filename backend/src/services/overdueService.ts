@@ -1,6 +1,6 @@
 import { Db, ObjectId } from 'mongodb';
 import { LoanRequest } from '../models/LoanRequest';
-import { getLoanRecipients } from '../utils/getLoanRecipients';
+import { getLoanRecipientsByRole } from '../utils/getLoanRecipients';
 import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import { LOAN_OVERDUE_CHECK_INTERVAL_MINUTES, NOTIFY_EMAIL } from '../config';
@@ -18,35 +18,6 @@ function toObjectIdString(value: unknown): string | null {
   } catch {
     return null;
   }
-}
-
-async function sendOverdueNotification(
-  db: Db,
-  loan: LoanRequest,
-  recipients: string[],
-): Promise<void> {
-  if (!recipients.length) {
-    logger.warn(
-      'Overdue loan notification not sent: no recipient email found for loan %s',
-      loan._id,
-    );
-    return;
-  }
-
-  const to = recipients.join(',');
-
-  const { subject, text, html } = loanOverdueTemplate({ loan });
-
-  await sendMail({
-    to,
-    subject,
-    text,
-    html,
-  });
-
-  await db
-    .collection<LoanRequest>('loanrequests')
-    .updateOne({ _id: loan._id }, { $set: { overdueNotifiedAt: new Date() } });
 }
 
 export async function processOverdueLoans(db: Db): Promise<void> {
@@ -67,21 +38,56 @@ export async function processOverdueLoans(db: Db): Promise<void> {
       const ownerId = toObjectIdString(loan.owner);
       const borrowerId = toObjectIdString(loan.borrower);
       const requestedById = toObjectIdString(loan.requestedBy);
-      const recipients = new Set<string>(
-        await getLoanRecipients(db, items, {
+      const { ownerRecipients, borrowerRecipients, requesterRecipients } =
+        await getLoanRecipientsByRole(db, items, {
           ownerId,
           borrowerId,
           borrower: loan.borrower,
           requestedById,
           requestedBy: loan.requestedBy,
-        }),
+        });
+
+      const requesterSet = new Set(requesterRecipients);
+      const borrowerSet = new Set(
+        borrowerRecipients.filter((email) => !requesterSet.has(email)),
+      );
+      const ownerSet = new Set(
+        ownerRecipients.filter(
+          (email) => !requesterSet.has(email) && !borrowerSet.has(email),
+        ),
       );
 
       if (NOTIFY_EMAIL) {
-        recipients.add(NOTIFY_EMAIL);
+        ownerSet.add(NOTIFY_EMAIL);
       }
 
-      await sendOverdueNotification(db, loan, Array.from(recipients));
+      if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
+        logger.warn(
+          'Overdue loan notification not sent: no recipient email found for loan %s',
+          loan._id,
+        );
+        continue;
+      }
+
+      const sendOverdueMail = async (
+        recipients: Set<string>,
+        role: 'owner' | 'borrower' | 'requester',
+      ) => {
+        if (!recipients.size) return;
+        const to = Array.from(recipients).join(',');
+        const { subject, text, html } = loanOverdueTemplate({ loan, role });
+        await sendMail({ to, subject, text, html });
+      };
+
+      await Promise.all([
+        sendOverdueMail(ownerSet, 'owner'),
+        sendOverdueMail(borrowerSet, 'borrower'),
+        sendOverdueMail(requesterSet, 'requester'),
+      ]);
+
+      await db
+        .collection<LoanRequest>('loanrequests')
+        .updateOne({ _id: loan._id }, { $set: { overdueNotifiedAt: new Date() } });
     } catch (err) {
       logger.error('Overdue loan notification error for loan %s: %o', loan._id, err);
     }

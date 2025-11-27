@@ -8,7 +8,7 @@ import {
   LoanItem,
 } from '../models/LoanRequest';
 import { sendMail } from '../utils/sendMail';
-import { getLoanRecipients } from '../utils/getLoanRecipients';
+import { getLoanRecipientsByRole } from '../utils/getLoanRecipients';
 import { findUserById } from '../models/User';
 import {
   ADMIN_ROLE,
@@ -183,46 +183,57 @@ export async function createLoanRequest(
           (loan.requestedBy as any)?.toString?.() ||
           (user.id as any)?.toString?.();
 
-        const ownerRecipients = ownerId
-          ? await getLoanRecipients(db, items as any, { ownerId })
-          : [];
-
-        const recipients = new Set<string>(
-          await getLoanRecipients(db, items as any, {
+        const { ownerRecipients, borrowerRecipients, requesterRecipients } =
+          await getLoanRecipientsByRole(db, items as any, {
             ownerId,
             borrowerId,
             borrower: loan.borrower,
             requestedById,
             requestedBy: loan.requestedBy,
-          }),
+          });
+
+        const requesterSet = new Set(requesterRecipients);
+        const borrowerSet = new Set(
+          borrowerRecipients.filter((email) => !requesterSet.has(email)),
+        );
+        const ownerSet = new Set(
+          ownerRecipients.filter(
+            (email) => !requesterSet.has(email) && !borrowerSet.has(email),
+          ),
         );
 
-        if (!ownerRecipients.length && recipients.size) {
+        if (!ownerSet.size && (borrowerSet.size || requesterSet.size)) {
           logger.warn(
             'Loan creation notification falling back to secondary recipients: %o',
-            Array.from(recipients),
+            Array.from(new Set([...borrowerSet, ...requesterSet])),
           );
         }
 
         if (NOTIFY_EMAIL) {
-          recipients.add(NOTIFY_EMAIL);
+          ownerSet.add(NOTIFY_EMAIL);
         }
 
-        const to = Array.from(recipients).join(',');
+        const sendCreationMail = async (
+          recipients: Set<string>,
+          role: 'owner' | 'borrower' | 'requester',
+        ) => {
+          if (!recipients.size) return;
+          const to = Array.from(recipients).join(',');
+          const { subject, text, html } = loanCreationTemplate({ loan, role });
+          await sendMail({ to, subject, text, html });
+        };
 
-        if (to) {
-          const { subject, text, html } = loanCreationTemplate({ loan });
-          await sendMail({
-            to,
-            subject,
-            text,
-            html,
-          });
-        } else {
+        if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
           logger.warn(
             'Loan creation notification not sent: no recipient email found for loan %s',
             loan._id,
           );
+        } else {
+          await Promise.all([
+            sendCreationMail(ownerSet, 'owner'),
+            sendCreationMail(borrowerSet, 'borrower'),
+            sendCreationMail(requesterSet, 'requester'),
+          ]);
         }
       } catch (err) {
         logger.error('mail error %o', err);
@@ -401,39 +412,55 @@ export async function updateLoanRequest(
           (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
         const borrowerId =
           (loan.borrower as any)?._id?.toString?.() || (loan.borrower as any)?.toString?.();
-        const recipients = new Set<string>(
-          await getLoanRecipients(db, (loan.items || []) as any, {
+        const { ownerRecipients, borrowerRecipients, requesterRecipients } =
+          await getLoanRecipientsByRole(db, (loan.items || []) as any, {
             ownerId,
             borrowerId,
             borrower: loan.borrower,
             requestedById: requesterId,
             requestedBy: requester ?? loan.requestedBy,
-          }),
+          });
+
+        const requesterSet = new Set(requesterRecipients);
+        const borrowerSet = new Set(
+          borrowerRecipients.filter((email) => !requesterSet.has(email)),
+        );
+        const ownerSet = new Set(
+          ownerRecipients.filter(
+            (email) => !requesterSet.has(email) && !borrowerSet.has(email),
+          ),
         );
 
         if (NOTIFY_EMAIL) {
-          recipients.add(NOTIFY_EMAIL);
+          ownerSet.add(NOTIFY_EMAIL);
         }
 
-        const to = Array.from(recipients).join(',');
+        const sendStatusMail = async (
+          recipients: Set<string>,
+          role: 'owner' | 'borrower' | 'requester',
+        ) => {
+          if (!recipients.size) return;
+          const to = Array.from(recipients).join(',');
+          const { subject, text, html } = loanStatusTemplate({
+            loan: updated ?? loan,
+            status,
+            actor: actorName,
+            role,
+          });
+          await sendMail({ to, subject, text, html });
+        };
 
-        if (!to) {
+        if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
           logger.warn(
             'Loan status notification not sent: no recipient email found for loan %s',
             loan._id,
           );
         } else {
-          const { subject, text, html } = loanStatusTemplate({
-            loan: updated ?? loan,
-            status,
-            actor: actorName,
-          });
-          await sendMail({
-            to,
-            subject,
-            text,
-            html,
-          });
+          await Promise.all([
+            sendStatusMail(ownerSet, 'owner'),
+            sendStatusMail(borrowerSet, 'borrower'),
+            sendStatusMail(requesterSet, 'requester'),
+          ]);
         }
       } catch (err) {
         logger.error('mail error %o', err);

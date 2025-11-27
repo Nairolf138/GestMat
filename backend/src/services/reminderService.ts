@@ -1,6 +1,6 @@
 import { Db, ObjectId } from 'mongodb';
 import { LoanRequest } from '../models/LoanRequest';
-import { getLoanRecipients } from '../utils/getLoanRecipients';
+import { getLoanRecipientsByRole } from '../utils/getLoanRecipients';
 import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import {
@@ -23,36 +23,6 @@ function toObjectId(value: unknown): string | null {
   } catch {
     return null;
   }
-}
-
-async function sendReminderMail(
-  db: Db,
-  loan: LoanRequest,
-  recipients: string[],
-  reminderField: 'reminderSentAt' | 'startReminderSentAt',
-): Promise<void> {
-  if (!recipients.length) {
-    logger.warn(
-      'Loan reminder not sent: no recipient email found for loan %s',
-      loan._id,
-    );
-    return;
-  }
-
-  const to = recipients.join(',');
-
-  const { subject, text, html } = loanReminderTemplate({ loan });
-
-  await sendMail({
-    to,
-    subject,
-    text,
-    html,
-  });
-
-  await db
-    .collection<LoanRequest>('loanrequests')
-    .updateOne({ _id: loan._id }, { $set: { [reminderField]: new Date() } });
 }
 
 export async function processLoanReminders(
@@ -92,14 +62,52 @@ export async function processLoanReminders(
       const borrowerId = toObjectId(loan.borrower);
       const requestedById = toObjectId(loan.requestedBy);
       const items = (loan.items || []) as any;
-      const recipients = await getLoanRecipients(db, items, {
-        ownerId,
-        borrowerId,
-        borrower: loan.borrower,
-        requestedById,
-        requestedBy: loan.requestedBy,
-      });
-      await sendReminderMail(db, loan, recipients, field);
+      const { ownerRecipients, borrowerRecipients, requesterRecipients } =
+        await getLoanRecipientsByRole(db, items, {
+          ownerId,
+          borrowerId,
+          borrower: loan.borrower,
+          requestedById,
+          requestedBy: loan.requestedBy,
+        });
+
+      const requesterSet = new Set(requesterRecipients);
+      const borrowerSet = new Set(
+        borrowerRecipients.filter((email) => !requesterSet.has(email)),
+      );
+      const ownerSet = new Set(
+        ownerRecipients.filter(
+          (email) => !requesterSet.has(email) && !borrowerSet.has(email),
+        ),
+      );
+
+      if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
+        logger.warn(
+          'Loan reminder not sent: no recipient email found for loan %s',
+          loan._id,
+        );
+        continue;
+      }
+
+      const sendReminder = async (
+        recipients: Set<string>,
+        role: 'owner' | 'borrower' | 'requester',
+      ) => {
+        if (!recipients.size) return;
+        const to = Array.from(recipients).join(',');
+        const { subject, text, html } = loanReminderTemplate({ loan, role });
+        await sendMail({ to, subject, text, html });
+      };
+
+      await Promise.all([
+        sendReminder(ownerSet, 'owner'),
+        sendReminder(borrowerSet, 'borrower'),
+        sendReminder(requesterSet, 'requester'),
+      ]);
+
+      await db
+        .collection<LoanRequest>('loanrequests')
+        .updateOne({ _id: loan._id }, { $set: { [field]: new Date() } });
     } catch (err) {
       logger.error('Loan reminder error for loan %s: %o', loan._id, err);
     }
