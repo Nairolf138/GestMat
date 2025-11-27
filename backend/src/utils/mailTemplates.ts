@@ -13,6 +13,7 @@ interface LoanStatusContext extends LoanMailContext {
 }
 
 type ReminderContext = LoanMailContext;
+type StartReminderContext = LoanMailContext;
 
 interface AccountCreationContext {
   username: string;
@@ -250,6 +251,37 @@ function reminderRoleCopy(role: LoanRecipientRole): {
   }
 }
 
+function startReminderRoleCopy(role: LoanRecipientRole): {
+  subject: string;
+  preamble: string;
+  action: string;
+} {
+  switch (role) {
+    case 'borrower':
+      return {
+        subject: 'Rappel : début de prêt imminent - emprunteur',
+        preamble: 'Votre structure est sur le point de commencer un prêt.',
+        action:
+          'Préparer la réception du matériel et vérifier les modalités avec le prêteur.',
+      };
+    case 'requester':
+      return {
+        subject: 'Rappel : début de votre demande de prêt',
+        preamble: 'Vous avez initié ce prêt et son début approche.',
+        action:
+          'Coordonner avec l’emprunteur et le prêteur pour assurer la disponibilité du matériel.',
+      };
+    case 'owner':
+    default:
+      return {
+        subject: 'Rappel : début de prêt imminent - prêteur',
+        preamble: 'Votre structure va bientôt prêter du matériel.',
+        action:
+          'Organiser la remise du matériel avec l’emprunteur et confirmer la disponibilité.',
+      };
+  }
+}
+
 function overdueRoleCopy(role: LoanRecipientRole): {
   subject: string;
   preamble: string;
@@ -352,6 +384,33 @@ export function loanReminderTemplate({ loan, role = 'owner' }: LoanMailContext):
       <p>Bonjour,</p>
       <p>${preamble}</p>
       <p>Le prêt ${loan._id} approche de son échéance.</p>
+      ${html}
+      <p><strong>Action à entreprendre :</strong> ${action}</p>
+      <p>${SIGNATURE}</p>
+    `,
+  };
+}
+
+export function loanStartReminderTemplate({
+  loan,
+  role = 'owner',
+}: StartReminderContext & { role?: LoanRecipientRole }): MailTemplate {
+  const { text, html } = buildLoanSummary(loan);
+  const { subject, preamble, action } = startReminderRoleCopy(role);
+
+  return {
+    subject,
+    text:
+      `Bonjour,\n\n` +
+      `${preamble}\n` +
+      `Le prêt ${loan._id} va bientôt commencer.\n\n` +
+      `${text}\n\n` +
+      `Action à entreprendre : ${action}\n\n` +
+      SIGNATURE,
+    html: `
+      <p>Bonjour,</p>
+      <p>${preamble}</p>
+      <p>Le prêt ${loan._id} va bientôt commencer.</p>
       ${html}
       <p><strong>Action à entreprendre :</strong> ${action}</p>
       <p>${SIGNATURE}</p>
