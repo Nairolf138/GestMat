@@ -28,7 +28,6 @@ import {
   loanCreationTemplate,
   loanStatusTemplate,
 } from '../utils/mailTemplates';
-import { isNotificationEnabled } from '../utils/notificationPreferences';
 
 export async function listLoans(
   db: Db,
@@ -177,34 +176,36 @@ export async function createLoanRequest(
       try {
         const ownerId =
           (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+        const borrowerId =
+          (loan.borrower as any)?._id?.toString?.() || (loan.borrower as any)?.toString?.();
+        const requestedById =
+          (loan.requestedBy as any)?._id?.toString?.() ||
+          (loan.requestedBy as any)?.toString?.() ||
+          (user.id as any)?.toString?.();
 
-        const primaryRecipients = ownerId
-          ? await getLoanRecipients(db, ownerId, items as any)
+        const ownerRecipients = ownerId
+          ? await getLoanRecipients(db, items as any, { ownerId })
           : [];
 
-        const fallbackRecipients: string[] = [];
+        const recipients = new Set<string>(
+          await getLoanRecipients(db, items as any, {
+            ownerId,
+            borrowerId,
+            borrower: loan.borrower,
+            requestedById,
+            requestedBy: loan.requestedBy,
+          }),
+        );
 
-        if (NOTIFY_EMAIL) {
-          fallbackRecipients.push(NOTIFY_EMAIL);
-        }
-
-        const requesterEmail = (loan.requestedBy as any)?.email || (u as any)?.email;
-        if (requesterEmail && isNotificationEnabled(u, 'structureUpdates')) {
-          fallbackRecipients.push(requesterEmail);
-        }
-
-        const borrowerEmail = (loan.borrower as any)?.email;
-        if (borrowerEmail) {
-          fallbackRecipients.push(borrowerEmail);
-        }
-
-        const recipients = new Set<string>([...primaryRecipients, ...fallbackRecipients]);
-
-        if (!primaryRecipients.length && recipients.size) {
+        if (!ownerRecipients.length && recipients.size) {
           logger.warn(
             'Loan creation notification falling back to secondary recipients: %o',
             Array.from(recipients),
           );
+        }
+
+        if (NOTIFY_EMAIL) {
+          recipients.add(NOTIFY_EMAIL);
         }
 
         const to = Array.from(recipients).join(',');
@@ -398,14 +399,17 @@ export async function updateLoanRequest(
       try {
         const ownerId =
           (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
-        const ownerContacts = ownerId
-          ? await getLoanRecipients(db, ownerId, (loan.items || []) as any)
-          : [];
-        const recipients = new Set<string>(ownerContacts);
-
-        if (requester?.email && isNotificationEnabled(requester, 'structureUpdates')) {
-          recipients.add(requester.email);
-        }
+        const borrowerId =
+          (loan.borrower as any)?._id?.toString?.() || (loan.borrower as any)?.toString?.();
+        const recipients = new Set<string>(
+          await getLoanRecipients(db, (loan.items || []) as any, {
+            ownerId,
+            borrowerId,
+            borrower: loan.borrower,
+            requestedById: requesterId,
+            requestedBy: requester ?? loan.requestedBy,
+          }),
+        );
 
         if (NOTIFY_EMAIL) {
           recipients.add(NOTIFY_EMAIL);

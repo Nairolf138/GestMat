@@ -29,6 +29,7 @@ async function sendReminderMail(
   db: Db,
   loan: LoanRequest,
   recipients: string[],
+  reminderField: 'reminderSentAt' | 'startReminderSentAt',
 ): Promise<void> {
   if (!recipients.length) {
     logger.warn(
@@ -51,7 +52,7 @@ async function sendReminderMail(
 
   await db
     .collection<LoanRequest>('loanrequests')
-    .updateOne({ _id: loan._id }, { $set: { reminderSentAt: new Date() } });
+    .updateOne({ _id: loan._id }, { $set: { [reminderField]: new Date() } });
 }
 
 export async function processLoanReminders(
@@ -61,21 +62,44 @@ export async function processLoanReminders(
   const now = new Date();
   const reminderThreshold = new Date(now.getTime() + reminderOffsetMs);
 
-  const loans = await db
-    .collection<LoanRequest>('loanrequests')
-    .find({
-      status: 'accepted',
-      endDate: { $gte: now, $lte: reminderThreshold },
-      reminderSentAt: { $exists: false },
-    })
-    .toArray();
+  const [endLoans, startLoans] = await Promise.all([
+    db
+      .collection<LoanRequest>('loanrequests')
+      .find({
+        status: 'accepted',
+        endDate: { $gte: now, $lte: reminderThreshold },
+        reminderSentAt: { $exists: false },
+      })
+      .toArray(),
+    db
+      .collection<LoanRequest>('loanrequests')
+      .find({
+        status: 'accepted',
+        startDate: { $gte: now, $lte: reminderThreshold },
+        startReminderSentAt: { $exists: false },
+      })
+      .toArray(),
+  ]);
 
-  for (const loan of loans) {
+  const reminderJobs: { loan: LoanRequest; field: 'reminderSentAt' | 'startReminderSentAt' }[] = [
+    ...endLoans.map((loan) => ({ loan, field: 'reminderSentAt' as const })),
+    ...startLoans.map((loan) => ({ loan, field: 'startReminderSentAt' as const })),
+  ];
+
+  for (const { loan, field } of reminderJobs) {
     try {
       const ownerId = toObjectId(loan.owner);
+      const borrowerId = toObjectId(loan.borrower);
+      const requestedById = toObjectId(loan.requestedBy);
       const items = (loan.items || []) as any;
-      const recipients = ownerId ? await getLoanRecipients(db, ownerId, items) : [];
-      await sendReminderMail(db, loan, recipients);
+      const recipients = await getLoanRecipients(db, items, {
+        ownerId,
+        borrowerId,
+        borrower: loan.borrower,
+        requestedById,
+        requestedBy: loan.requestedBy,
+      });
+      await sendReminderMail(db, loan, recipients, field);
     } catch (err) {
       logger.error('Loan reminder error for loan %s: %o', loan._id, err);
     }
