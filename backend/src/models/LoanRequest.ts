@@ -15,6 +15,7 @@ export interface LoanRequest {
   startDate?: Date;
   endDate?: Date;
   reminderSentAt?: Date;
+  startReminderSentAt?: Date;
   overdueNotifiedAt?: Date;
    archived?: boolean;
    archivedAt?: Date;
@@ -127,6 +128,8 @@ export async function createLoan(
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
   if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
+  if (data.startReminderSentAt)
+    data.startReminderSentAt = new Date(data.startReminderSentAt);
   if (data.overdueNotifiedAt)
     data.overdueNotifiedAt = new Date(data.overdueNotifiedAt);
   if (data.archivedAt) data.archivedAt = new Date(data.archivedAt);
@@ -158,6 +161,8 @@ export async function updateLoan(
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
   if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
+  if (data.startReminderSentAt)
+    data.startReminderSentAt = new Date(data.startReminderSentAt);
   if (data.overdueNotifiedAt)
     data.overdueNotifiedAt = new Date(data.overdueNotifiedAt);
   if (data.archivedAt) data.archivedAt = new Date(data.archivedAt);

@@ -20,30 +20,6 @@ function toObjectIdString(value: unknown): string | null {
   }
 }
 
-async function resolveBorrowerEmail(
-  db: Db,
-  borrower: LoanRequest['borrower'],
-): Promise<string | null> {
-  const inlineEmail = (borrower as any)?.email;
-  if (typeof inlineEmail === 'string' && inlineEmail.trim()) {
-    return inlineEmail;
-  }
-
-  const borrowerId = toObjectIdString(borrower);
-  if (!borrowerId) {
-    return null;
-  }
-
-  const borrowerStructure = await db
-    .collection<{ email?: string }>('structures')
-    .findOne({ _id: new ObjectId(borrowerId) });
-
-  const structureEmail = borrowerStructure?.email;
-  return typeof structureEmail === 'string' && structureEmail.trim()
-    ? structureEmail
-    : null;
-}
-
 async function sendOverdueNotification(
   db: Db,
   loan: LoanRequest,
@@ -89,17 +65,17 @@ export async function processOverdueLoans(db: Db): Promise<void> {
     try {
       const items = (loan.items || []) as any[];
       const ownerId = toObjectIdString(loan.owner);
-      const ownerRecipients = ownerId
-        ? await getLoanRecipients(db, ownerId, items)
-        : [];
-
-      const borrowerEmail = await resolveBorrowerEmail(db, loan.borrower);
-
-      const recipients = new Set<string>(ownerRecipients);
-
-      if (borrowerEmail) {
-        recipients.add(borrowerEmail);
-      }
+      const borrowerId = toObjectIdString(loan.borrower);
+      const requestedById = toObjectIdString(loan.requestedBy);
+      const recipients = new Set<string>(
+        await getLoanRecipients(db, items, {
+          ownerId,
+          borrowerId,
+          borrower: loan.borrower,
+          requestedById,
+          requestedBy: loan.requestedBy,
+        }),
+      );
 
       if (NOTIFY_EMAIL) {
         recipients.add(NOTIFY_EMAIL);
