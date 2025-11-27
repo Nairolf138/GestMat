@@ -34,6 +34,10 @@ The API reads its configuration from the following variables:
 | `SMTP_URL`       | SMTP connection string to enable email notifications and derive a default sender.             |
 | `NOTIFY_EMAIL`   | Optional sender/recipient address for notification emails (overrides the derived sender).     |
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
+| `LOAN_REMINDER_OFFSET_HOURS` | Hours before the start or end date to trigger reminder emails. Defaults to `24`. |
+| `LOAN_REMINDER_DAILY_SCHEDULE_ENABLED` | When `true` (default), runs reminder checks every day at 9:00 local time. |
+| `LOAN_REMINDER_INTERVAL_MINUTES` | Interval used for reminder retries when the fallback scheduler is enabled. Defaults to `60`. |
+| `LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED` | Enable interval-based reminder retries alongside or instead of the daily 9:00 schedule. Defaults to `false`. |
 | `LOAN_ARCHIVE_MIN_AGE_DAYS` | Age in days before a finished loan is eligible for archiving. Defaults to `365`. |
 | `LOAN_ARCHIVE_INTERVAL_DAYS` | Interval in days between archive jobs. Defaults to `1` (daily). |
 | `LOAN_ARCHIVE_BATCH_SIZE` | Maximum number of loans processed per archive run. Defaults to `100`. |

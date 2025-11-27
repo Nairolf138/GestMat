@@ -167,7 +167,7 @@ export async function start(
   configureApp?: (app: express.Express) => void,
 ): Promise<Server> {
   let db: Db;
-  let reminderInterval: NodeJS.Timeout | undefined;
+  let reminderSchedule: { cancel: () => void } | undefined;
   let overdueInterval: NodeJS.Timeout | undefined;
   let archiveInterval: NodeJS.Timeout | undefined;
   let reportInterval: NodeJS.Timeout | undefined;
@@ -184,7 +184,7 @@ export async function start(
     await ensureSessionIndexes(db);
     await ensurePasswordResetIndexes(db);
     if (NODE_ENV !== 'test') {
-      reminderInterval = scheduleLoanReminders(db);
+      reminderSchedule = scheduleLoanReminders(db);
       overdueInterval = scheduleOverdueLoanNotifications(db);
       archiveInterval = scheduleLoanArchiving(db);
       reportInterval = scheduleAnnualReports(db);
@@ -243,9 +243,7 @@ export async function start(
   });
 
   const shutdown = () => {
-    if (reminderInterval) {
-      clearInterval(reminderInterval);
-    }
+    reminderSchedule?.cancel();
     if (overdueInterval) {
       clearInterval(overdueInterval);
     }
@@ -263,9 +261,7 @@ export async function start(
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
   server.on('close', () => {
-    if (reminderInterval) {
-      clearInterval(reminderInterval);
-    }
+    reminderSchedule?.cancel();
     if (overdueInterval) {
       clearInterval(overdueInterval);
     }

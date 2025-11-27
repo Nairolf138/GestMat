@@ -6,6 +6,8 @@ import logger from '../utils/logger';
 import {
   LOAN_REMINDER_INTERVAL_MINUTES,
   LOAN_REMINDER_OFFSET_HOURS,
+  LOAN_REMINDER_DAILY_SCHEDULE_ENABLED,
+  LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED,
 } from '../config';
 import { loanReminderTemplate } from '../utils/mailTemplates';
 
@@ -14,6 +16,21 @@ const MINUTES_IN_MS = 60 * 1000;
 
 const defaultReminderOffsetMs = LOAN_REMINDER_OFFSET_HOURS * HOURS_IN_MS;
 const defaultIntervalMs = LOAN_REMINDER_INTERVAL_MINUTES * MINUTES_IN_MS;
+const DAILY_REMINDER_HOUR = 9;
+
+type ReminderSchedule = {
+  cancel: () => void;
+};
+
+function getNextReminderDate(targetHour: number): Date {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(targetHour, 0, 0, 0);
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
+  return next;
+}
 
 function toObjectId(value: unknown): string | null {
   const str = (value as any)?._id?.toString?.() || (value as any)?.toString?.();
@@ -116,15 +133,57 @@ export async function processLoanReminders(
 
 export function scheduleLoanReminders(
   db: Db,
-  intervalMs: number = defaultIntervalMs,
   reminderOffsetMs: number = defaultReminderOffsetMs,
-): NodeJS.Timeout {
+  options: {
+    enableDailySchedule?: boolean;
+    enableFallbackInterval?: boolean;
+    fallbackIntervalMs?: number;
+    dailyReminderHour?: number;
+  } = {},
+): ReminderSchedule {
+  const {
+    enableDailySchedule = LOAN_REMINDER_DAILY_SCHEDULE_ENABLED,
+    enableFallbackInterval = LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED,
+    fallbackIntervalMs = defaultIntervalMs,
+    dailyReminderHour = DAILY_REMINDER_HOUR,
+  } = options;
+
   const run = () => {
     processLoanReminders(db, reminderOffsetMs).catch((err) => {
       logger.error('Loan reminder processing error: %o', err);
     });
   };
 
+  let dailyTimeout: NodeJS.Timeout | null = null;
+  let fallbackInterval: NodeJS.Timeout | null = null;
+
+  const scheduleNextDailyRun = () => {
+    const nextRun = getNextReminderDate(dailyReminderHour);
+    const delay = Math.max(nextRun.getTime() - Date.now(), 0);
+    dailyTimeout = setTimeout(() => {
+      run();
+      scheduleNextDailyRun();
+    }, delay);
+  };
+
   run();
-  return setInterval(run, intervalMs);
+
+  if (enableDailySchedule) {
+    scheduleNextDailyRun();
+  }
+
+  if (enableFallbackInterval && fallbackIntervalMs > 0) {
+    fallbackInterval = setInterval(run, fallbackIntervalMs);
+  }
+
+  return {
+    cancel: () => {
+      if (dailyTimeout) {
+        clearTimeout(dailyTimeout);
+      }
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+      }
+    },
+  };
 }
