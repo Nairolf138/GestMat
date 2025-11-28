@@ -1,4 +1,4 @@
-# GestMat S&C
+# GestMat
 
 Skeleton application for managing stage equipment sharing among theatres.
 
