@@ -29,6 +29,55 @@ import {
   loanStatusTemplate,
 } from '../utils/mailTemplates';
 
+const CLOSED_STATUSES = ['refused', 'cancelled'];
+const DUE_SOON_DAYS = 7;
+
+function filterLoansForUser(
+  loans: LoanRequest[],
+  user: AuthUser,
+  structId: string,
+): LoanRequest[] {
+  const filterFn = (loan: LoanRequest) => {
+    const typeOk = (loan.items || []).some((item) =>
+      canModify(user.role, (item.equipment as any)?.type),
+    );
+    if (!typeOk) return false;
+
+    const req: any = loan.requestedBy;
+    const reqId = req?._id?.toString?.() || req?.toString?.();
+    const reqRole = req?.role;
+
+    if (user.role === AUTRE_ROLE) {
+      const borrowerId =
+        (loan.borrower as any)?._id?.toString?.() ||
+        (loan.borrower as any)?.toString?.();
+      if (borrowerId === structId) {
+        return reqId === user.id;
+      }
+      return true;
+    }
+
+    if (
+      [REGISSEUR_SON_ROLE, REGISSEUR_LUMIERE_ROLE, REGISSEUR_PLATEAU_ROLE].includes(
+        user.role,
+      )
+    ) {
+      if (reqId === user.id) return true;
+      return reqRole === REGISSEUR_GENERAL_ROLE || reqRole === AUTRE_ROLE;
+    }
+
+    return true;
+  };
+
+  return loans.filter(filterFn);
+}
+
+function normalizeLoanResults(
+  result: LoanRequest[] | { loans: LoanRequest[]; total?: number },
+): LoanRequest[] {
+  return Array.isArray(result) ? result : result.loans;
+}
+
 export async function listLoans(
   db: Db,
   user: AuthUser,
@@ -55,57 +104,57 @@ export async function listLoans(
     ],
   };
   const res = await findLoans(db, filter, page, limit, { includeArchived });
-  const structIdStr = structId;
-  const filterFn = (loan: LoanRequest) => {
-    const typeOk = (loan.items || []).some((item) =>
-      canModify(user.role, (item.equipment as any)?.type),
-    );
-    if (!typeOk) return false;
-
-    const req: any = loan.requestedBy;
-    const reqId = req?._id?.toString?.() || req?.toString?.();
-    const reqRole = req?.role;
-
-    if (user.role === AUTRE_ROLE) {
-      const borrowerId =
-        (loan.borrower as any)?._id?.toString?.() ||
-        (loan.borrower as any)?.toString?.();
-      if (borrowerId === structIdStr) {
-        return reqId === user.id;
-      }
-      return true;
-    }
-
-    if (
-      [REGISSEUR_SON_ROLE, REGISSEUR_LUMIERE_ROLE, REGISSEUR_PLATEAU_ROLE].includes(
-        user.role,
-      )
-    ) {
-      if (reqId === user.id) return true;
-      return (
-        reqRole === REGISSEUR_GENERAL_ROLE || reqRole === AUTRE_ROLE
-      );
-    }
-
-    return true;
-  };
   if (Array.isArray(res)) {
-    return res.filter(filterFn);
+    return filterLoansForUser(res, user, structId);
   }
-  const loans = res.loans.filter(filterFn);
+  const loans = filterLoansForUser(res.loans, user, structId);
 
   let total = loans.length;
   if (page !== undefined && limit !== undefined) {
     const fullResults = await findLoans(db, filter, undefined, undefined, {
       includeArchived,
     });
-    const allLoans = Array.isArray(fullResults)
-      ? fullResults
-      : fullResults.loans;
-    total = allLoans.filter(filterFn).length;
+    const allLoans = normalizeLoanResults(fullResults);
+    total = filterLoansForUser(allLoans, user, structId).length;
   }
 
   return { loans, total };
+}
+
+export async function listDueSoonLoans(
+  db: Db,
+  user: AuthUser,
+): Promise<LoanRequest[]> {
+  const now = new Date();
+  const soon = new Date(now.getTime() + DUE_SOON_DAYS * 24 * 60 * 60 * 1000);
+  const baseFilter = {
+    endDate: { $gte: now, $lte: soon },
+    status: { $nin: CLOSED_STATUSES },
+  } as const;
+
+  if (user.role === ADMIN_ROLE) {
+    const result = await findLoans(db, baseFilter);
+    return normalizeLoanResults(result);
+  }
+
+  const u = await findUserById(db, user.id);
+  const structId = u?.structure?.toString();
+  if (!structId) return [];
+
+  const id = new ObjectId(structId);
+  const filter = {
+    ...baseFilter,
+    $or: [
+      { owner: id },
+      { 'owner._id': id },
+      { borrower: id },
+      { 'borrower._id': id },
+    ],
+  };
+
+  const result = await findLoans(db, filter);
+  const loans = normalizeLoanResults(result);
+  return filterLoansForUser(loans, user, structId);
 }
 
 export async function getLoanRequestById(

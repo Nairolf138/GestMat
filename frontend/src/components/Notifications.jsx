@@ -23,14 +23,19 @@ function Notifications() {
 
   if (error) return <div className="alert alert-danger">{error}</div>;
 
-  if (!loans.length)
+  const activeStatuses = ['accepted', 'ongoing'];
+  const activeLoans = loans.filter((loan) =>
+    activeStatuses.includes(loan.status),
+  );
+
+  if (!activeLoans.length)
     return <div className="alert alert-info">{t('notifications.none')}</div>;
 
   return (
     <div className="alert alert-warning">
       <h5 className="alert-heading">{t('notifications.title')}</h5>
       <ul className="mb-0">
-        {loans.map((loan) => {
+        {activeLoans.map((loan) => {
           const end = loan.endDate
             ? new Date(loan.endDate).toLocaleDateString(i18n.language)
             : '';
