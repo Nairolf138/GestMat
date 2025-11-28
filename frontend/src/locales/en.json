@@ -261,8 +261,10 @@
     "delete": "Delete",
     "delete_confirm": "Delete this user?",
     "delete_success": "User deleted",
+    "username": "Username",
     "first_name": "First name",
     "last_name": "Last name",
+    "structure": "Structure",
     "role": "Role",
     "role_autre": "Other",
     "role_administrateur": "Administrator",
@@ -270,6 +272,7 @@
     "role_regisseur_lumiere": "Light manager",
     "role_regisseur_plateau": "Stage manager",
     "role_regisseur_general": "General manager",
+    "select_structure": "Select a structure",
     "save": "Save",
     "cancel": "Cancel",
     "edit": "Edit"

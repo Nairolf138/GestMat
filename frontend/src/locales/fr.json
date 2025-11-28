@@ -261,8 +261,10 @@
     "delete": "Supprimer",
     "delete_confirm": "Supprimer cet utilisateur ?",
     "delete_success": "Utilisateur supprimé",
+    "username": "Identifiant",
     "first_name": "Prénom",
     "last_name": "Nom",
+    "structure": "Structure",
     "role": "Rôle",
     "role_autre": "Autre",
     "role_administrateur": "Administrateur",
@@ -270,6 +272,7 @@
     "role_regisseur_lumiere": "Régisseur Lumière",
     "role_regisseur_plateau": "Régisseur Plateau",
     "role_regisseur_general": "Régisseur Général",
+    "select_structure": "Sélectionner une structure",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "edit": "Éditer"
