@@ -330,7 +330,18 @@
     "status_breakdown": "Loans by status",
     "loan_duration": "Loan duration",
     "average": "Average",
-    "median": "Median"
+    "median": "Median",
+    "loan_count_label": "Loan count",
+    "loan_duration_days": "Duration (days)",
+    "month": "Month",
+    "count": "Count",
+    "days": "Days",
+    "statistic": "Statistic",
+    "structure": "Structure",
+    "top_lenders": "Top lending structures",
+    "top_borrowers": "Top requesting structures",
+    "monthly_logins": "Logins per month",
+    "login_count_label": "Login count"
   },
   "common": {
     "choose": "Choose...",
