@@ -4,6 +4,14 @@ import { api } from '../api';
 import { confirmDialog } from '../utils';
 import Alert from '../Alert.jsx';
 
+const TYPE_OPTIONS = [
+  { value: 'Son', labelKey: 'equipments.add.types.sound' },
+  { value: 'Lumière', labelKey: 'equipments.add.types.light' },
+  { value: 'Plateau', labelKey: 'equipments.add.types.stage' },
+  { value: 'Vidéo', labelKey: 'equipments.add.types.video' },
+  { value: 'Autre', labelKey: 'equipments.add.types.other' },
+];
+
 const CONDITION_OPTIONS = [
   { value: 'Neuf', labelKey: 'equipments.add.conditions.new' },
   {
@@ -43,6 +51,7 @@ function ManageInventory() {
   const [message, setMessage] = useState('');
   const [form, setForm] = useState(createEmptyFormState);
   const [filters, setFilters] = useState({ name: '', type: '', location: '' });
+  const [structures, setStructures] = useState([]);
   const [page, setPage] = useState(1);
   const limit = 10;
   const [editing, setEditing] = useState(null);
@@ -71,11 +80,17 @@ function ManageInventory() {
       availableQty !== undefined && totalQty !== undefined
         ? `${availableQty}/${totalQty}`
         : item.availability || '';
+    const structureName =
+      typeof item.structure === 'object' && item.structure?.name
+        ? item.structure.name
+        : '';
+    const location = item.location || structureName || '';
     return {
       ...item,
       availableQty,
       totalQty,
       availability,
+      location,
     };
   };
 
@@ -99,6 +114,12 @@ function ManageInventory() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    api('/structures')
+      .then((fetchedStructures) => setStructures(fetchedStructures || []))
+      .catch(() => setStructures([]));
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => setPage(1), 500);
@@ -251,20 +272,32 @@ function ManageInventory() {
           />
         </div>
         <div className="col-md">
-          <input
-            className="form-control"
-            placeholder={t('inventory.type')}
+          <select
+            className="form-select"
             value={form.type}
             onChange={(e) => setForm({ ...form, type: e.target.value })}
-          />
+          >
+            <option value="">{t('common.choose')}</option>
+            {TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {t(option.labelKey)}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-md">
-          <input
-            className="form-control"
-            placeholder={t('inventory.location')}
+          <select
+            className="form-select"
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
-          />
+          >
+            <option value="">{t('common.choose')}</option>
+            {structures.map((structure) => (
+              <option key={structure._id} value={structure.name}>
+                {structure.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-md">
           <input
@@ -319,22 +352,34 @@ function ManageInventory() {
           />
         </div>
         <div className="col-md">
-          <input
-            className="form-control"
-            placeholder={t('inventory.type')}
+          <select
+            className="form-select"
             value={filters.type}
             onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-          />
+          >
+            <option value="">{t('common.choose')}</option>
+            {TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {t(option.labelKey)}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-md">
-          <input
-            className="form-control"
-            placeholder={t('inventory.location')}
+          <select
+            className="form-select"
             value={filters.location}
             onChange={(e) =>
               setFilters({ ...filters, location: e.target.value })
             }
-          />
+          >
+            <option value="">{t('common.choose')}</option>
+            {structures.map((structure) => (
+              <option key={structure._id} value={structure.name}>
+                {structure.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="col-md-auto">
           <button className="btn btn-primary" type="button" onClick={doSearch}>
@@ -355,22 +400,34 @@ function ManageInventory() {
                     setEditForm({ ...editForm, name: e.target.value })
                   }
                 />
-                <input
-                  className="form-control mb-2"
-                  placeholder={t('inventory.type')}
+                <select
+                  className="form-select mb-2"
                   value={editForm.type}
                   onChange={(e) =>
                     setEditForm({ ...editForm, type: e.target.value })
                   }
-                />
-                <input
-                  className="form-control mb-2"
-                  placeholder={t('inventory.location')}
+                >
+                  <option value="">{t('common.choose')}</option>
+                  {TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="form-select mb-2"
                   value={editForm.location}
                   onChange={(e) =>
                     setEditForm({ ...editForm, location: e.target.value })
                   }
-                />
+                >
+                  <option value="">{t('common.choose')}</option>
+                  {structures.map((structure) => (
+                    <option key={structure._id} value={structure.name}>
+                      {structure.name}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="number"
                   className="form-control mb-2"
