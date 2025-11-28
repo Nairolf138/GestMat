@@ -308,6 +308,12 @@
       "stats": "Statistics"
     }
   },
+  "admin_filters": {
+    "status": "Status",
+    "borrower": "Borrower",
+    "from": "From",
+    "to": "To"
+  },
   "admin_loans": {
     "pagination": {
       "page_total": "{{page}}/{{total}}"

@@ -99,7 +99,7 @@ function ManageLoans() {
           <div className="row g-2 align-items-end">
             <div className="col-md-3">
               <label className="form-label" htmlFor="loan-filter-status">
-                {t('loans.status._', { defaultValue: 'Status' })}
+                {t('admin_filters.status')}
               </label>
               <select
                 id="loan-filter-status"
@@ -119,7 +119,7 @@ function ManageLoans() {
             </div>
             <div className="col-md-3">
               <label className="form-label" htmlFor="loan-filter-borrower">
-                {t('loans.borrower', { defaultValue: 'Borrower' })}
+                {t('admin_filters.borrower')}
               </label>
               <input
                 id="loan-filter-borrower"
@@ -134,7 +134,7 @@ function ManageLoans() {
             </div>
             <div className="col-md-2">
               <label className="form-label" htmlFor="loan-filter-from">
-                {t('common.from', { defaultValue: 'From' })}
+                {t('admin_filters.from')}
               </label>
               <input
                 id="loan-filter-from"
@@ -148,7 +148,7 @@ function ManageLoans() {
             </div>
             <div className="col-md-2">
               <label className="form-label" htmlFor="loan-filter-to">
-                {t('common.to', { defaultValue: 'To' })}
+                {t('admin_filters.to')}
               </label>
               <input
                 id="loan-filter-to"
