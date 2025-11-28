@@ -23,11 +23,27 @@ interface LoanItemRef {
   equipment: any;
 }
 
+interface RecipientFilterOptions {
+  requireSystemAlerts?: boolean;
+}
+
+function shouldNotify(
+  user: any,
+  preference: NotificationPreference,
+  { requireSystemAlerts = false }: RecipientFilterOptions = {},
+): boolean {
+  return (
+    isNotificationEnabled(user, preference) &&
+    (!requireSystemAlerts || isNotificationEnabled(user, 'systemAlerts'))
+  );
+}
+
 async function findOwnerRecipients(
   db: Db,
   items: LoanItemRef[],
   ownerId?: string | null,
   preference: NotificationPreference = 'loanStatusChanges',
+  options: RecipientFilterOptions = {},
 ): Promise<string[]> {
   if (!ownerId) return [];
 
@@ -51,7 +67,7 @@ async function findOwnerRecipients(
     .filter(
       (u: any) =>
         u.email &&
-        isNotificationEnabled(u, preference) &&
+        shouldNotify(u, preference, options) &&
         (!types.length || types.some((t) => canModify(u.role, t))),
     )
     .map((u: any) => u.email as string);
@@ -61,6 +77,7 @@ async function findRequesterRecipients(
   db: Db,
   { requestedById, requestedBy }: LoanRecipientContext,
   preference: NotificationPreference = 'loanStatusChanges',
+  options: RecipientFilterOptions = {},
 ): Promise<string[]> {
   const requesterEmail = (requestedBy as any)?.email;
   if (typeof requesterEmail === 'string' && requesterEmail.trim()) {
@@ -73,7 +90,7 @@ async function findRequesterRecipients(
     .collection('users')
     .findOne<{ email?: string; preferences?: any }>({ _id: new ObjectId(requestedById) });
 
-  if (requester?.email && isNotificationEnabled(requester, preference)) {
+  if (requester?.email && shouldNotify(requester, preference, options)) {
     return [requester.email];
   }
 
@@ -84,6 +101,7 @@ async function findBorrowerRecipients(
   db: Db,
   { borrowerId, borrower }: LoanRecipientContext,
   preference: NotificationPreference = 'loanStatusChanges',
+  options: RecipientFilterOptions = {},
 ): Promise<string[]> {
   const recipients: string[] = [];
 
@@ -108,7 +126,7 @@ async function findBorrowerRecipients(
     .toArray();
 
   borrowerUsers
-    .filter((u: any) => u.email && isNotificationEnabled(u, preference))
+    .filter((u: any) => u.email && shouldNotify(u, preference, options))
     .forEach((u: any) => recipients.push(u.email as string));
 
   return recipients;
@@ -119,15 +137,17 @@ export async function getLoanRecipientsByRole(
   items: LoanItemRef[],
   context: LoanRecipientContext,
   preference: NotificationPreference = 'loanStatusChanges',
+  options: RecipientFilterOptions = {},
 ): Promise<LoanRecipientGroups> {
   const ownerRecipients = await findOwnerRecipients(
     db,
     items,
     context.ownerId,
     preference,
+    options,
   );
-  const borrowerRecipients = await findBorrowerRecipients(db, context, preference);
-  const requesterRecipients = await findRequesterRecipients(db, context, preference);
+  const borrowerRecipients = await findBorrowerRecipients(db, context, preference, options);
+  const requesterRecipients = await findRequesterRecipients(db, context, preference, options);
 
   return { ownerRecipients, borrowerRecipients, requesterRecipients };
 }
@@ -137,9 +157,10 @@ export async function getLoanRecipients(
   items: LoanItemRef[],
   context: LoanRecipientContext,
   preference: NotificationPreference = 'loanStatusChanges',
+  options: RecipientFilterOptions = {},
 ): Promise<string[]> {
   const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-    await getLoanRecipientsByRole(db, items, context, preference);
+    await getLoanRecipientsByRole(db, items, context, preference, options);
 
   return Array.from(
     new Set([...ownerRecipients, ...borrowerRecipients, ...requesterRecipients]),

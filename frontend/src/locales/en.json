@@ -242,7 +242,8 @@
         "loan_status_changes_help": "Get updates when a loan request is accepted, refused or modified.",
         "return_reminders": "Loan reminders",
         "return_reminders_help": "Receive reminders before start and end dates for your loans.",
-        "system_alerts": "System alerts"
+        "system_alerts": "System alerts",
+        "system_alerts_help": "Receive automatic alerts (scheduled reminders, expiration notices, annual reports)."
       }
     }
   },

@@ -349,7 +349,9 @@ export async function generateAnnualReports(
       if (typeof structureEmail === 'string' && structureEmail.trim()) {
         recipients.add(structureEmail.trim());
       }
-      const memberEmails = await getStructureEmails(db, structureId.toString());
+      const memberEmails = await getStructureEmails(db, structureId.toString(), {
+        requireSystemAlerts: true,
+      });
       memberEmails.forEach((e) => recipients.add(e));
 
       const stored = await persistReport(db, {
