@@ -150,7 +150,7 @@ function AdminStats() {
       <div className="d-flex flex-wrap gap-3 mb-3">
         <div className="flex-grow-1" style={{ minWidth: 200, maxWidth: 320 }}>
           <label htmlFor="from" className="form-label">
-            From
+            {t('admin_filters.from')}
           </label>
           <input
             id="from"
@@ -162,7 +162,7 @@ function AdminStats() {
         </div>
         <div className="flex-grow-1" style={{ minWidth: 200, maxWidth: 320 }}>
           <label htmlFor="to" className="form-label">
-            To
+            {t('admin_filters.to')}
           </label>
           <input
             id="to"

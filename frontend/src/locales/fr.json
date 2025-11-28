@@ -308,6 +308,12 @@
       "stats": "Statistiques"
     }
   },
+  "admin_filters": {
+    "status": "Statut",
+    "borrower": "Emprunteur", 
+    "from": "De",
+    "to": "À"
+  },
   "admin_loans": {
     "pagination": {
       "page_total": "{{page}}/{{total}}"
