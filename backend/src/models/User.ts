@@ -45,11 +45,17 @@ export const mergePreferences = (
   base?: UserPreferences,
 ): UserPreferences => ({
   emailNotifications: (() => {
-    const combined = {
+    type MutableEmailPreferences = Record<
+      Exclude<keyof EmailNotificationPreferences, 'structureUpdates'>,
+      boolean | undefined
+    > &
+      Partial<Pick<EmailNotificationPreferences, 'structureUpdates'>>;
+
+    const combined: MutableEmailPreferences = {
       ...DEFAULT_USER_PREFERENCES.emailNotifications,
       ...(base?.emailNotifications ?? {}),
       ...(overrides?.emailNotifications ?? {}),
-    } as EmailNotificationPreferences;
+    };
 
     const { structureUpdates, ...rest } = combined;
 
@@ -67,7 +73,7 @@ export const mergePreferences = (
       }
     }
 
-    return rest;
+    return rest as EmailNotificationPreferences;
   })(),
 });
 
