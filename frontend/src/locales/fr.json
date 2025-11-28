@@ -292,6 +292,20 @@
   "structures": {
     "title": "Structures"
   },
+  "admin_dashboard": {
+    "title": "Tableau d'administration",
+    "tabs": {
+      "users": "Utilisateurs",
+      "loans": "Prêts",
+      "inventory": "Inventaire",
+      "stats": "Statistiques"
+    }
+  },
+  "admin_loans": {
+    "pagination": {
+      "page_total": "{{page}}/{{total}}"
+    }
+  },
   "admin_stats": {
     "monthly_loans": "Prêts par mois",
     "top_equipments": "Équipements les plus empruntés",

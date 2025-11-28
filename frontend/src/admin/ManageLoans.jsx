@@ -107,13 +107,16 @@ function ManageLoans() {
           disabled={page <= 1}
           onClick={() => setPage(page - 1)}
         >
-          Previous
+          {t('common.previous')}
         </button>
         <span>
           {loading
-            ? '...'
+            ? t('common.loading')
             : totalPages !== null
-            ? `${page}/${totalPages}`
+            ? t('admin_loans.pagination.page_total', {
+                page,
+                total: totalPages,
+              })
             : ''}
         </span>
         <button
@@ -123,7 +126,7 @@ function ManageLoans() {
           }
           onClick={() => setPage(page + 1)}
         >
-          Next
+          {t('common.next')}
         </button>
       </div>
     </div>
