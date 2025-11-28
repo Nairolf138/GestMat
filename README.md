@@ -1,6 +1,6 @@
 # GestMat
 
-GestMat S&C est une solution de partage et de gestion de matériel de scène destinée aux structures culturelles. Elle centralise l’inventaire, les demandes de prêt et les notifications afin de fluidifier la circulation du matériel entre théâtres.
+GestMat est une solution de partage et de gestion de matériel de scène destinée aux structures culturelles. Elle centralise l’inventaire, les demandes de prêt et les notifications afin de fluidifier la circulation du matériel entre théâtres.
 
 ## Fonctionnalités clés
 
