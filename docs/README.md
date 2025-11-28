@@ -2,16 +2,25 @@
 
 ## Architecture
 
-GestMat S&C est composé de deux applications distinctes :
+GestMat S&C repose sur deux applications distinctes :
 
-- **Backend** – API REST construite avec [Express](https://expressjs.com/) et une base de données MongoDB. Elle gère l’authentification, les rôles des utilisateurs, les prêts et l’inventaire.
-- **Frontend** – Application [React](https://react.dev/) construite avec [Vite](https://vitejs.dev/). Elle consomme l’API et propose une interface de gestion des équipements et des demandes de prêt.
+- **Backend** – API REST Express (TypeScript) et MongoDB. Elle gère l’authentification JWT, les rôles, les prêts, l’inventaire, les notifications et les tâches planifiées (rappels, archivage, rapports annuels).
+- **Frontend** – Application React/Vite qui consomme l’API et propose une interface pour gérer les équipements et les demandes.
 
-Les deux services communiquent via HTTP ; par défaut l’API écoute sur le port `5000` et le frontend sur `3000`.
+Les deux services communiquent en HTTP ; par défaut l’API écoute sur le port `5000` et le frontend sur `3000`.
+
+## Flux fonctionnels
+
+1. Une structure ajoute ou met à jour son matériel (nom, type, localisation, quantités totale et disponible).
+2. Un·e régisseur·se sélectionne des équipements et crée une demande de prêt vers une autre structure.
+3. Tant que la date de début n’est pas passée, l’emprunteur peut modifier ou annuler sa demande. Les demandes en attente ou programmées restent supprimables par l’emprunteur.
+4. La structure propriétaire (ou un administrateur) accepte ou refuse la demande.
+5. En cas d’acceptation, les quantités disponibles sont ajustées ; un refus rétablit les stocks initiaux.
+6. Des notifications e‑mail peuvent être envoyées si `SMTP_URL` est configuré. Si `NOTIFY_EMAIL` est renseigné, il devient l’expéditeur et le destinataire par défaut ; sinon le système utilise `no-reply@<hôte SMTP>`.
 
 ## Rôles
 
-Tous les rôles peuvent consulter le catalogue des autres structures. Le rôle *Autre* peut accepter ou refuser les demandes adressées à sa structure, mais il ne peut créer, modifier ou annuler que ses propres demandes. L'ajout ou la modification d'équipements est limitée selon le rôle :
+Tous les rôles peuvent consulter le catalogue des autres structures. Le rôle *Autre* peut accepter ou refuser les demandes adressées à sa structure, mais il ne peut créer, modifier ou annuler que ses propres demandes. L'ajout ou la modification d'équipements est limitée selon le rôle :
 
 | Rôle | Types d’équipement modifiables |
 | --- | --- |
@@ -33,22 +42,21 @@ Tous les rôles peuvent consulter le catalogue des autres structures. Le rôle *
 | Régisseur(se) Plateau | créer et annuler des demandes pour les équipements Plateau, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
 | Autre | créer, modifier et annuler ses propres demandes | accepter ou refuser les demandes pour sa structure |
 
-## Processus de prêt
+## Configurations essentielles
 
-1. Un·e régisseur·se sélectionne des équipements et soumet une demande de prêt à une autre structure.
-2. L’emprunteur peut modifier ou annuler sa demande tant que la date de début n’est pas passée. Les demandes en attente ou programmées peuvent également être supprimées par l’emprunteur.
-3. La structure propriétaire (ou un administrateur) accepte ou refuse la demande.
-4. Lorsqu’une demande est acceptée, les quantités disponibles sont ajustées. Un refus rétablit les quantités initiales.
-5. Des notifications e‑mail peuvent être envoyées si `SMTP_URL` est configuré.
-   Si `NOTIFY_EMAIL` est renseigné, il sert d’expéditeur et de destinataire par
-   défaut ; sinon l’expéditeur devient `no-reply@<hôte SMTP>`.
+- **Environnements** : Node.js 22 minimum pour le frontend et l’API.
+- **Backend** : voir la liste détaillée des variables dans [`backend/.env.example`](../backend/.env.example). `JWT_SECRET` est obligatoire. `SMTP_URL` et `NOTIFY_EMAIL` activent les notifications.
+- **Frontend** : ajuster `VITE_API_URL` dans [`frontend/.env.example`](../frontend/.env.example) pour pointer vers l’API souhaitée.
+- **Seed initial** : des scripts `npm run create-admin`, `npm run create-structures` et `npm run create-roles` (dans `backend`) facilitent la création du premier compte administrateur, des structures et des rôles prédéfinis.
 
-## Installation et lancement
+## Maintenance et qualité
 
-Assurez-vous d’utiliser Node.js 22 ou plus récent pour exécuter le backend et le frontend.
+- Tests backend : `cd backend && npm test`
+- Tests frontend (Vitest) : `cd frontend && npm test`
+- Lint global : `npm run lint` à la racine du dépôt.
+- Surveiller les métriques exposées par l’API sur `/metrics` et intégrer à Prometheus/Grafana.
 
-Les instructions détaillées se trouvent dans les fichiers README de chaque sous-projet :
+## Références complémentaires
 
-- [backend/README.md](../backend/README.md)
-- [frontend/README.md](../frontend/README.md)
-- [STYLE_GUIDE.md](STYLE_GUIDE.md)
+- Guide de style CSS : [`STYLE_GUIDE.md`](STYLE_GUIDE.md)
+- Planning d’évolution : [`ROADMAP.md`](ROADMAP.md)
