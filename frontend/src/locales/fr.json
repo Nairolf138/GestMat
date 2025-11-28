@@ -330,7 +330,18 @@
     "status_breakdown": "Prêts par statut",
     "loan_duration": "Durée des prêts",
     "average": "Moyenne",
-    "median": "Médiane"
+    "median": "Médiane",
+    "loan_count_label": "Nombre de prêts",
+    "loan_duration_days": "Durée (jours)",
+    "month": "Mois",
+    "count": "Nombre",
+    "days": "Jours",
+    "statistic": "Statistique",
+    "structure": "Structure",
+    "top_lenders": "Structures les plus prêteuses",
+    "top_borrowers": "Structures les plus demandeuses",
+    "monthly_logins": "Connexions par mois",
+    "login_count_label": "Nombre de connexions"
   },
   "common": {
     "choose": "Choisir...",
