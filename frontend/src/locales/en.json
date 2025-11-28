@@ -292,6 +292,20 @@
   "structures": {
     "title": "Structures"
   },
+  "admin_dashboard": {
+    "title": "Admin Dashboard",
+    "tabs": {
+      "users": "Users",
+      "loans": "Loans",
+      "inventory": "Inventory",
+      "stats": "Statistics"
+    }
+  },
+  "admin_loans": {
+    "pagination": {
+      "page_total": "{{page}}/{{total}}"
+    }
+  },
   "admin_stats": {
     "monthly_loans": "Loans per month",
     "top_equipments": "Most borrowed equipments",
