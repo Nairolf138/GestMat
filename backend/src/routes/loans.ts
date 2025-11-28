@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import {
   listLoans,
+  listDueSoonLoans,
   getLoanRequestById,
   createLoanRequest,
   updateLoanRequest,
@@ -26,6 +27,11 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const db = req.app.locals.db;
+      const dueSoon = req.query.dueSoon === 'true';
+      if (dueSoon) {
+        const loans = await listDueSoonLoans(db, req.user!);
+        return res.json(loans);
+      }
       const page = req.query.page
         ? parseInt(req.query.page as string)
         : undefined;
