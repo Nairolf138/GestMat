@@ -142,6 +142,7 @@ function Home() {
       loans.filter((l) => {
         if (l.borrower?._id !== (user?.structure?._id || user?.structure))
           return false;
+        if (['pending', 'cancelled', 'refused'].includes(l.status)) return false;
         const start = l.startDate ? new Date(l.startDate) : null;
         return start && start > now;
       }),
