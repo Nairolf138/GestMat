@@ -45,7 +45,7 @@ export async function processOverdueLoans(db: Db): Promise<void> {
           borrower: loan.borrower,
           requestedById,
           requestedBy: loan.requestedBy,
-        });
+        }, 'loanStatusChanges', { requireSystemAlerts: true });
 
       const requesterSet = new Set(requesterRecipients);
       const borrowerSet = new Set(

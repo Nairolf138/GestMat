@@ -362,6 +362,9 @@ function Profile() {
                 <label className="form-check-label" htmlFor="system-alerts">
                   {t('profile.preferences.email_notifications.system_alerts')}
                 </label>
+                <div className="form-text">
+                  {t('profile.preferences.email_notifications.system_alerts_help')}
+                </div>
               </div>
             </div>
             <div className="mb-3">

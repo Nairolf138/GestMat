@@ -64,7 +64,7 @@ async function sendLoanReminder(
         borrower: loan.borrower,
         requestedById,
         requestedBy: loan.requestedBy,
-      }, 'returnReminders');
+      }, 'returnReminders', { requireSystemAlerts: true });
 
     const requesterSet = new Set(requesterRecipients);
     const borrowerSet = new Set(
