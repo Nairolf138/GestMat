@@ -309,6 +309,15 @@
       "loans": "Prêts",
       "inventory": "Inventaire",
       "stats": "Statistiques"
+    },
+    "summary": {
+      "title": "Résumé",
+      "active_users": "Utilisateurs actifs",
+      "ongoing_loans": "Prêts/emprunts en cours",
+      "completed_loans": "Prêts terminés cette année",
+      "total_equipment": "Équipement total",
+      "refresh": "Rafraîchir",
+      "refreshing": "Actualisation..."
     }
   },
   "admin_filters": {

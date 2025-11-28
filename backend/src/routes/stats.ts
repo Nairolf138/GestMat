@@ -24,6 +24,44 @@ router.get(
 );
 
 router.get(
+  '/summary',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    try {
+      const [activeUsers, ongoingLoans, completedLoansThisYear, totalEquipment] =
+        await Promise.all([
+          db.collection('sessions').distinct('userId').then((users) => users.length),
+          db.collection('loanrequests').countDocuments({
+            status: 'accepted',
+            startDate: { $lte: now },
+            endDate: { $gte: now },
+            archived: { $ne: true },
+          }),
+          db.collection('loanrequests').countDocuments({
+            status: 'accepted',
+            endDate: { $gte: startOfYear, $lte: now },
+            archived: { $ne: true },
+          }),
+          db.collection('equipments').countDocuments(),
+        ]);
+
+      res.json({
+        activeUsers,
+        ongoingLoans,
+        completedLoansThisYear,
+        totalEquipment,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
   '/loans/monthly',
   auth(MANAGE_STATS),
   async (req: Request, res: Response, next: NextFunction) => {

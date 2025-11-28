@@ -309,6 +309,15 @@
       "loans": "Loans",
       "inventory": "Inventory",
       "stats": "Statistics"
+    },
+    "summary": {
+      "title": "Summary",
+      "active_users": "Active users",
+      "ongoing_loans": "Ongoing loans/borrows",
+      "completed_loans": "Completed loans this year",
+      "total_equipment": "Total equipment",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing..."
     }
   },
   "admin_filters": {
