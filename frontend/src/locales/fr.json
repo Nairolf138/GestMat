@@ -235,8 +235,14 @@
       "email_notifications": {
         "title": "Notifications e-mail",
         "account_updates": "Mises à jour du compte",
-        "structure_updates": "Demandes et prêts",
-        "system_alerts": "Rappels et alertes"
+        "account_updates_help": "Recevoir un message lors de la modification de vos informations de connexion.",
+        "loan_requests": "Nouvelles demandes de prêt",
+        "loan_requests_help": "Être averti lorsqu'une demande de prêt implique votre structure.",
+        "loan_status_changes": "Changements de statut des prêts",
+        "loan_status_changes_help": "Recevoir les mises à jour lors de l'acceptation, du refus ou de la modification d'une demande.",
+        "return_reminders": "Rappels de prêt",
+        "return_reminders_help": "Recevoir des rappels avant les dates de début et de fin des prêts.",
+        "system_alerts": "Alertes système"
       }
     }
   },

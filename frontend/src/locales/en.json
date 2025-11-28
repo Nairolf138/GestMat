@@ -235,8 +235,14 @@
       "email_notifications": {
         "title": "Email notifications",
         "account_updates": "Account updates",
-        "structure_updates": "Requests and loans",
-        "system_alerts": "Reminders and alerts"
+        "account_updates_help": "Receive messages when your account details change.",
+        "loan_requests": "New loan requests",
+        "loan_requests_help": "Get notified when a loan request involving your structure is created.",
+        "loan_status_changes": "Loan status updates",
+        "loan_status_changes_help": "Get updates when a loan request is accepted, refused or modified.",
+        "return_reminders": "Loan reminders",
+        "return_reminders_help": "Receive reminders before start and end dates for your loans.",
+        "system_alerts": "System alerts"
       }
     }
   },

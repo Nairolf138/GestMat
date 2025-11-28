@@ -1,6 +1,9 @@
 import { Db, ObjectId } from 'mongodb';
 import { canModify } from './roleAccess';
-import { isNotificationEnabled } from './notificationPreferences';
+import {
+  NotificationPreference,
+  isNotificationEnabled,
+} from './notificationPreferences';
 
 interface LoanRecipientContext {
   ownerId?: string | null;
@@ -24,6 +27,7 @@ async function findOwnerRecipients(
   db: Db,
   items: LoanItemRef[],
   ownerId?: string | null,
+  preference: NotificationPreference = 'loanStatusChanges',
 ): Promise<string[]> {
   if (!ownerId) return [];
 
@@ -47,7 +51,7 @@ async function findOwnerRecipients(
     .filter(
       (u: any) =>
         u.email &&
-        isNotificationEnabled(u, 'structureUpdates') &&
+        isNotificationEnabled(u, preference) &&
         (!types.length || types.some((t) => canModify(u.role, t))),
     )
     .map((u: any) => u.email as string);
@@ -56,6 +60,7 @@ async function findOwnerRecipients(
 async function findRequesterRecipients(
   db: Db,
   { requestedById, requestedBy }: LoanRecipientContext,
+  preference: NotificationPreference = 'loanStatusChanges',
 ): Promise<string[]> {
   const requesterEmail = (requestedBy as any)?.email;
   if (typeof requesterEmail === 'string' && requesterEmail.trim()) {
@@ -68,7 +73,7 @@ async function findRequesterRecipients(
     .collection('users')
     .findOne<{ email?: string; preferences?: any }>({ _id: new ObjectId(requestedById) });
 
-  if (requester?.email && isNotificationEnabled(requester, 'structureUpdates')) {
+  if (requester?.email && isNotificationEnabled(requester, preference)) {
     return [requester.email];
   }
 
@@ -78,6 +83,7 @@ async function findRequesterRecipients(
 async function findBorrowerRecipients(
   db: Db,
   { borrowerId, borrower }: LoanRecipientContext,
+  preference: NotificationPreference = 'loanStatusChanges',
 ): Promise<string[]> {
   const recipients: string[] = [];
 
@@ -102,7 +108,7 @@ async function findBorrowerRecipients(
     .toArray();
 
   borrowerUsers
-    .filter((u: any) => u.email && isNotificationEnabled(u, 'structureUpdates'))
+    .filter((u: any) => u.email && isNotificationEnabled(u, preference))
     .forEach((u: any) => recipients.push(u.email as string));
 
   return recipients;
@@ -112,10 +118,16 @@ export async function getLoanRecipientsByRole(
   db: Db,
   items: LoanItemRef[],
   context: LoanRecipientContext,
+  preference: NotificationPreference = 'loanStatusChanges',
 ): Promise<LoanRecipientGroups> {
-  const ownerRecipients = await findOwnerRecipients(db, items, context.ownerId);
-  const borrowerRecipients = await findBorrowerRecipients(db, context);
-  const requesterRecipients = await findRequesterRecipients(db, context);
+  const ownerRecipients = await findOwnerRecipients(
+    db,
+    items,
+    context.ownerId,
+    preference,
+  );
+  const borrowerRecipients = await findBorrowerRecipients(db, context, preference);
+  const requesterRecipients = await findRequesterRecipients(db, context, preference);
 
   return { ownerRecipients, borrowerRecipients, requesterRecipients };
 }
@@ -124,9 +136,10 @@ export async function getLoanRecipients(
   db: Db,
   items: LoanItemRef[],
   context: LoanRecipientContext,
+  preference: NotificationPreference = 'loanStatusChanges',
 ): Promise<string[]> {
   const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-    await getLoanRecipientsByRole(db, items, context);
+    await getLoanRecipientsByRole(db, items, context, preference);
 
   return Array.from(
     new Set([...ownerRecipients, ...borrowerRecipients, ...requesterRecipients]),

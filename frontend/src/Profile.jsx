@@ -22,8 +22,11 @@ function Profile() {
     preferences: {
       emailNotifications: {
         accountUpdates: true,
-        structureUpdates: true,
+        loanRequests: true,
+        loanStatusChanges: true,
+        returnReminders: true,
         systemAlerts: true,
+        structureUpdates: true,
       },
     },
   });
@@ -38,8 +41,11 @@ function Profile() {
     () => ({
       emailNotifications: {
         accountUpdates: true,
-        structureUpdates: true,
+        loanRequests: true,
+        loanStatusChanges: true,
+        returnReminders: true,
         systemAlerts: true,
+        structureUpdates: true,
       },
     }),
     [],
@@ -56,6 +62,19 @@ function Profile() {
           ...(user.preferences?.emailNotifications || {}),
         },
       };
+
+      const { structureUpdates, ...emailNotifications } =
+        preferences.emailNotifications;
+
+      if (structureUpdates !== undefined) {
+        ['loanRequests', 'loanStatusChanges', 'returnReminders'].forEach((key) => {
+          if (emailNotifications[key] === undefined) {
+            emailNotifications[key] = structureUpdates;
+          }
+        });
+      }
+
+      preferences.emailNotifications = emailNotifications;
       setForm((f) => ({
         ...f,
         ...user,
@@ -279,19 +298,57 @@ function Profile() {
                 <label className="form-check-label" htmlFor="account-updates">
                   {t('profile.preferences.email_notifications.account_updates')}
                 </label>
+                <div className="form-text">
+                  {t('profile.preferences.email_notifications.account_updates_help')}
+                </div>
               </div>
               <div className="form-check">
                 <input
                   className="form-check-input"
                   type="checkbox"
-                  id="structure-updates"
-                  name="preferences.emailNotifications.structureUpdates"
-                  checked={form.preferences.emailNotifications.structureUpdates}
+                  id="loan-requests"
+                  name="preferences.emailNotifications.loanRequests"
+                  checked={form.preferences.emailNotifications.loanRequests}
                   onChange={handleChange}
                 />
-                <label className="form-check-label" htmlFor="structure-updates">
-                  {t('profile.preferences.email_notifications.structure_updates')}
+                <label className="form-check-label" htmlFor="loan-requests">
+                  {t('profile.preferences.email_notifications.loan_requests')}
                 </label>
+                <div className="form-text">
+                  {t('profile.preferences.email_notifications.loan_requests_help')}
+                </div>
+              </div>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="loan-status-changes"
+                  name="preferences.emailNotifications.loanStatusChanges"
+                  checked={form.preferences.emailNotifications.loanStatusChanges}
+                  onChange={handleChange}
+                />
+                <label className="form-check-label" htmlFor="loan-status-changes">
+                  {t('profile.preferences.email_notifications.loan_status_changes')}
+                </label>
+                <div className="form-text">
+                  {t('profile.preferences.email_notifications.loan_status_changes_help')}
+                </div>
+              </div>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="return-reminders"
+                  name="preferences.emailNotifications.returnReminders"
+                  checked={form.preferences.emailNotifications.returnReminders}
+                  onChange={handleChange}
+                />
+                <label className="form-check-label" htmlFor="return-reminders">
+                  {t('profile.preferences.email_notifications.return_reminders')}
+                </label>
+                <div className="form-text">
+                  {t('profile.preferences.email_notifications.return_reminders_help')}
+                </div>
               </div>
               <div className="form-check">
                 <input

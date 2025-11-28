@@ -37,6 +37,18 @@ export const updateUserValidator: ValidationChain[] = [
     .optional()
     .isBoolean()
     .toBoolean(),
+  body('preferences.emailNotifications.loanRequests')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.loanStatusChanges')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.returnReminders')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
   body('preferences.emailNotifications.structureUpdates')
     .optional()
     .isBoolean()
