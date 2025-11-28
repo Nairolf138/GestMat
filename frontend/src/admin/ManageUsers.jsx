@@ -3,17 +3,39 @@ import { api } from '../api';
 import { useTranslation } from 'react-i18next';
 import { confirmDialog } from '../utils';
 import Alert from '../Alert.jsx';
+import { normalizeRoleTranslationKey } from '../../roles';
 
-const roleKey = (r) => r.toLowerCase().replace(/\s+/g, '_');
+const normalizeRoleValue = (role = '') => {
+  const cleanedRole = role
+    .replace(/^(role[_-]?|ROLE[_-]?)/i, '')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+  return (
+    normalizeRoleTranslationKey(cleanedRole) ||
+    normalizeRoleTranslationKey(role) ||
+    cleanedRole ||
+    role
+  );
+};
+
+const roleKey = (r) => normalizeRoleValue(r).toLowerCase().replace(/\s+/g, '_');
+
+const roleTranslationKey = (role) => {
+  const normalizedRole = normalizeRoleValue(role);
+  return normalizedRole ? `users.role_${roleKey(normalizedRole)}` : 'users.role';
+};
 
 function ManageUsers() {
   const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [structures, setStructures] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
+    username: '',
     firstName: '',
     lastName: '',
+    structure: '',
     role: '',
   });
   const [error, setError] = useState('');
@@ -40,8 +62,19 @@ function ManageUsers() {
 
   useEffect(() => {
     api('/roles')
-      .then(setRoles)
+      .then((fetchedRoles) => {
+        const normalizedRoles = Array.from(
+          new Set((fetchedRoles || []).map(normalizeRoleValue).filter(Boolean)),
+        );
+        setRoles(normalizedRoles);
+      })
       .catch(() => setRoles([]));
+  }, []);
+
+  useEffect(() => {
+    api('/structures')
+      .then((fetchedStructures) => setStructures(fetchedStructures || []))
+      .catch(() => setStructures([]));
   }, []);
 
   useEffect(() => {
@@ -73,9 +106,14 @@ function ManageUsers() {
   const startEdit = (u) => {
     setEditing(u._id);
     setForm({
+      username: u.username || '',
       firstName: u.firstName || '',
       lastName: u.lastName || '',
-      role: u.role || roles[0] || '',
+      structure:
+        (u.structure && typeof u.structure === 'object'
+          ? u.structure?._id
+          : u.structure) || '',
+      role: normalizeRoleValue(u.role || roles[0] || ''),
     });
   };
 
@@ -84,7 +122,10 @@ function ManageUsers() {
     try {
       await api(`/users/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          role: normalizeRoleValue(form.role),
+        }),
       });
       setEditing(null);
       load();
@@ -123,6 +164,12 @@ function ManageUsers() {
               <>
                 <input
                   className="form-control mb-2"
+                  placeholder={t('users.username')}
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                />
+                <input
+                  className="form-control mb-2"
                   placeholder={t('users.first_name')}
                   value={form.firstName}
                   onChange={(e) =>
@@ -139,12 +186,26 @@ function ManageUsers() {
                 />
                 <select
                   className="form-select mb-2"
+                  value={form.structure}
+                  onChange={(e) => setForm({ ...form, structure: e.target.value })}
+                >
+                  <option value="">{t('users.select_structure')}</option>
+                  {structures.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="form-select mb-2"
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                 >
                   {roles.map((r) => (
                     <option key={r} value={r}>
-                      {t(`users.role_${roleKey(r)}`)}
+                      {t(roleTranslationKey(r), {
+                        defaultValue: normalizeRoleValue(r),
+                      })}
                     </option>
                   ))}
                 </select>
@@ -167,7 +228,10 @@ function ManageUsers() {
                 {u.firstName || u.lastName
                   ? ` - ${u.firstName || ''} ${u.lastName || ''}`
                   : ''}
-                {' - ' + t(`users.role_${roleKey(u.role)}`)}
+                {' - ' +
+                  t(roleTranslationKey(u.role), {
+                    defaultValue: normalizeRoleValue(u.role),
+                  })}
                 <button
                   className="btn btn-sm btn-secondary float-end ms-2"
                   onClick={() => startEdit(u)}

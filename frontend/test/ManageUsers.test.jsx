@@ -10,9 +10,14 @@ import { canManageEquipment } from '../src/utils.js';
 describe('ManageUsers', () => {
   it('loads roles and saves selected role', async () => {
     api.api.mockImplementation((url, opts = {}) => {
-      if (url === '/roles') return Promise.resolve(['Autre', 'Administrateur']);
+      if (url === '/roles')
+        return Promise.resolve(['role_autre', 'ROLE_ADMINISTRATEUR']);
+      if (url === '/structures')
+        return Promise.resolve([{ _id: 's1', name: 'Structure 1' }]);
       if (url.startsWith('/users') && (!opts.method || opts.method === 'GET')) {
-        return Promise.resolve([{ _id: '1', username: 'u1', role: 'Autre' }]);
+        return Promise.resolve([
+          { _id: '1', username: 'u1', role: 'role_autre', structure: 's1' },
+        ]);
       }
       if (url === '/users/1' && opts.method === 'PUT') {
         return Promise.resolve({});
@@ -27,7 +32,9 @@ describe('ManageUsers', () => {
 
     await screen.findByRole('option', { name: 'Administrateur' });
 
-    fireEvent.change(screen.getByRole('combobox'), {
+    const [, roleSelect] = screen.getAllByRole('combobox');
+
+    fireEvent.change(roleSelect, {
       target: { value: 'Administrateur' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
@@ -38,7 +45,13 @@ describe('ManageUsers', () => {
       );
       expect(call).toBeTruthy();
       expect(call[1].body).toBe(
-        JSON.stringify({ firstName: '', lastName: '', role: 'Administrateur' }),
+        JSON.stringify({
+          username: 'u1',
+          firstName: '',
+          lastName: '',
+          structure: 's1',
+          role: 'Administrateur',
+        }),
       );
     });
   });
