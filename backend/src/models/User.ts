@@ -4,8 +4,14 @@ import type { Structure } from './Structure';
 
 export interface EmailNotificationPreferences {
   accountUpdates: boolean;
-  structureUpdates: boolean;
+  loanRequests: boolean;
+  loanStatusChanges: boolean;
+  returnReminders: boolean;
   systemAlerts: boolean;
+  /**
+   * @deprecated Utilisé pour les anciens profils ; les nouvelles préférences explicites doivent être utilisées.
+   */
+  structureUpdates?: boolean;
 }
 
 export interface UserPreferences {
@@ -15,8 +21,11 @@ export interface UserPreferences {
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   emailNotifications: {
     accountUpdates: true,
-    structureUpdates: true,
+    loanRequests: true,
+    loanStatusChanges: true,
+    returnReminders: true,
     systemAlerts: true,
+    structureUpdates: true,
   },
 };
 
@@ -35,11 +44,31 @@ export const mergePreferences = (
   overrides?: Partial<UserPreferences>,
   base?: UserPreferences,
 ): UserPreferences => ({
-  emailNotifications: {
-    ...DEFAULT_USER_PREFERENCES.emailNotifications,
-    ...(base?.emailNotifications ?? {}),
-    ...(overrides?.emailNotifications ?? {}),
-  },
+  emailNotifications: (() => {
+    const combined = {
+      ...DEFAULT_USER_PREFERENCES.emailNotifications,
+      ...(base?.emailNotifications ?? {}),
+      ...(overrides?.emailNotifications ?? {}),
+    } as EmailNotificationPreferences;
+
+    const { structureUpdates, ...rest } = combined;
+
+    if (structureUpdates !== undefined) {
+      const mappedPreferences: (keyof EmailNotificationPreferences)[] = [
+        'loanRequests',
+        'loanStatusChanges',
+        'returnReminders',
+      ];
+
+      for (const key of mappedPreferences) {
+        if (rest[key] === undefined) {
+          rest[key] = structureUpdates;
+        }
+      }
+    }
+
+    return rest;
+  })(),
 });
 
 export async function createUser(db: Db, data: User): Promise<WithId<User>> {

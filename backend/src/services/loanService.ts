@@ -190,7 +190,7 @@ export async function createLoanRequest(
             borrower: loan.borrower,
             requestedById,
             requestedBy: loan.requestedBy,
-          });
+          }, 'loanRequests');
 
         const requesterSet = new Set(requesterRecipients);
         const borrowerSet = new Set(
@@ -419,7 +419,7 @@ export async function updateLoanRequest(
             borrower: loan.borrower,
             requestedById: requesterId,
             requestedBy: requester ?? loan.requestedBy,
-          });
+          }, 'loanStatusChanges');
 
         const requesterSet = new Set(requesterRecipients);
         const borrowerSet = new Set(

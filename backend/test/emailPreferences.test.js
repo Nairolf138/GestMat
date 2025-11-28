@@ -62,7 +62,9 @@ test('email notification preferences', async (t) => {
         preferences: {
           emailNotifications: {
             accountUpdates: false,
-            structureUpdates: true,
+            loanRequests: true,
+            loanStatusChanges: true,
+            returnReminders: true,
             systemAlerts: true,
           },
         },
@@ -93,7 +95,9 @@ test('email notification preferences', async (t) => {
         preferences: {
           emailNotifications: {
             accountUpdates: false,
-            structureUpdates: true,
+            loanRequests: true,
+            loanStatusChanges: true,
+            returnReminders: true,
             systemAlerts: true,
           },
         },
