@@ -155,6 +155,7 @@ router.post(
     const db = req.app.locals.db;
     try {
       const { username, password } = req.body;
+      const stayLoggedIn: boolean = req.body.stayLoggedIn ?? true;
       const user = await findUserByUsername(db, username);
       if (!user) return next(unauthorized('Invalid credentials'));
 
@@ -170,12 +171,14 @@ router.post(
         expiresIn: '1h',
       });
       const refreshToken = jwt.sign(
-        { id: user._id, role: user.role },
+        { id: user._id, role: user.role, stayLoggedIn },
         JWT_SECRET,
-        { expiresIn: '7d' },
+        { expiresIn: stayLoggedIn ? '7d' : '1d' },
       );
       const hashedRefreshToken = hashToken(refreshToken);
-      await deleteSessionsByUser(db, user._id!.toString());
+      if (stayLoggedIn) {
+        await deleteSessionsByUser(db, user._id!.toString());
+      }
       await createSession(db, {
         token: hashedRefreshToken,
         userId: user._id!.toString(),
@@ -183,7 +186,7 @@ router.post(
       res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
       res.cookie('refreshToken', refreshToken, {
         ...cookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        ...(stayLoggedIn ? { maxAge: 7 * 24 * 60 * 60 * 1000 } : {}),
       });
       const { password: _pw, ...userData } = user;
       res.json({ user: userData });
@@ -212,17 +215,21 @@ router.post(
       const session = await findSessionByToken(db, hashedRefreshToken);
       if (!session) return next(unauthorized('Invalid refresh token'));
 
+      const stayLoggedIn = (payload as AuthUser).stayLoggedIn ?? true;
       const token = jwt.sign(
         { id: payload.id, role: payload.role },
         JWT_SECRET,
         { expiresIn: '1h' },
       );
       const newRefreshToken = jwt.sign(
-        { id: payload.id, role: payload.role },
+        { id: payload.id, role: payload.role, stayLoggedIn },
         JWT_SECRET,
-        { expiresIn: '7d' },
+        { expiresIn: stayLoggedIn ? '7d' : '1d' },
       );
       const hashedNewRefreshToken = hashToken(newRefreshToken);
+      if (stayLoggedIn) {
+        await deleteSessionsByUser(db, String(payload.id));
+      }
       await createSession(db, {
         token: hashedNewRefreshToken,
         userId: String(payload.id),
@@ -231,7 +238,7 @@ router.post(
       res.cookie('token', token, { ...cookieOptions, maxAge: 60 * 60 * 1000 });
       res.cookie('refreshToken', newRefreshToken, {
         ...cookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        ...(stayLoggedIn ? { maxAge: 7 * 24 * 60 * 60 * 1000 } : {}),
       });
       res.json({});
     } catch (err: any) {

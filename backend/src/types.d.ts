@@ -18,6 +18,7 @@ export interface AuthUser {
   id: string;
   role: string;
   structure?: string;
+  stayLoggedIn?: boolean;
 }
 
 declare global {
