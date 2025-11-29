@@ -15,6 +15,8 @@ function Login() {
   const { setUser } = useContext(AuthContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberUsername, setRememberUsername] = useState(false);
+  const [stayLoggedIn, setStayLoggedIn] = useState(false);
   const [message, setMessage] = useState(location.state?.message || '');
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
@@ -22,6 +24,22 @@ function Login() {
   useEffect(() => {
     userRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('savedUsername');
+    if (saved) {
+      setUsername(saved);
+      setRememberUsername(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (rememberUsername && username) {
+      localStorage.setItem('savedUsername', username);
+    } else {
+      localStorage.removeItem('savedUsername');
+    }
+  }, [rememberUsername, username]);
 
   useEffect(() => {
     setMessage(location.state?.message || '');
@@ -40,7 +58,7 @@ function Login() {
     try {
       const data = await api('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, stayLoggedIn }),
       });
       setUser(data.user);
       navigate('/', { state: { message: t('login.success') } });
@@ -122,6 +140,38 @@ function Login() {
               {errors.password}
             </div>
           )}
+        </div>
+        <div className="form-check mb-3">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="remember-username"
+            checked={rememberUsername}
+            onChange={(e) => setRememberUsername(e.target.checked)}
+            aria-describedby="remember-username-help"
+          />
+          <label className="form-check-label" htmlFor="remember-username">
+            {t('login.remember_username')}
+          </label>
+          <div className="form-text" id="remember-username-help">
+            {t('login.remember_username_help')}
+          </div>
+        </div>
+        <div className="form-check mb-3">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="stay-logged-in"
+            checked={stayLoggedIn}
+            onChange={(e) => setStayLoggedIn(e.target.checked)}
+            aria-describedby="stay-logged-in-help"
+          />
+          <label className="form-check-label" htmlFor="stay-logged-in">
+            {t('login.stay_logged_in')}
+          </label>
+          <div className="form-text" id="stay-logged-in-help">
+            {t('login.stay_logged_in_help')}
+          </div>
         </div>
         <button type="submit" className="btn btn-primary">
           {t('login.submit')}
