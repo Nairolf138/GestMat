@@ -34,7 +34,10 @@ router.get(
     try {
       const [activeUsers, ongoingLoans, completedLoansThisYear, totalEquipment] =
         await Promise.all([
-          db.collection('sessions').distinct('userId').then((users) => users.length),
+          db
+            .collection('sessions')
+            .distinct('userId')
+            .then((users: string[]) => users.length),
           db.collection('loanrequests').countDocuments({
             status: 'accepted',
             startDate: { $lte: now },
