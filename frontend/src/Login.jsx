@@ -34,6 +34,13 @@ function Login() {
   }, []);
 
   useEffect(() => {
+    const storedStayLoggedIn = localStorage.getItem('stayLoggedIn');
+    if (storedStayLoggedIn === 'true') {
+      setStayLoggedIn(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (rememberUsername && username) {
       localStorage.setItem('savedUsername', username);
     } else {
@@ -44,6 +51,14 @@ function Login() {
   useEffect(() => {
     setMessage(location.state?.message || '');
   }, [location.state]);
+
+  useEffect(() => {
+    if (stayLoggedIn) {
+      localStorage.setItem('stayLoggedIn', 'true');
+    } else {
+      localStorage.removeItem('stayLoggedIn');
+    }
+  }, [stayLoggedIn]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,7 +75,7 @@ function Login() {
         method: 'POST',
         body: JSON.stringify({ username, password, stayLoggedIn }),
       });
-      setUser(data.user);
+      setUser(data.user, { stayLoggedIn });
       navigate('/', { state: { message: t('login.success') } });
     } catch (err) {
       setErrors(err.fieldErrors || {});
