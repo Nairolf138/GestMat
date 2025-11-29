@@ -11,6 +11,7 @@ export const registerValidator: ValidationChain[] = [
 export const loginValidator: ValidationChain[] = [
   body('username').notEmpty().withMessage('Username is required'),
   body('password').notEmpty().withMessage('Password is required'),
+  body('stayLoggedIn').optional().isBoolean().toBoolean(),
 ];
 
 export const forgotPasswordValidator: ValidationChain[] = [
