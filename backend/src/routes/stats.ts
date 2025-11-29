@@ -6,6 +6,21 @@ const { MANAGE_STATS } = permissions;
 
 const router = express.Router();
 
+const normalizeDateQueryParam = (
+  param: unknown,
+): string | string[] | undefined => {
+  if (typeof param === 'string') return param;
+  if (Array.isArray(param) && param.every((value) => typeof value === 'string')) {
+    return param as string[];
+  }
+  return undefined;
+};
+
+const extractDateValue = (value?: string | string[]): string | undefined => {
+  if (!value) return undefined;
+  return Array.isArray(value) ? value[0] : value;
+};
+
 router.get(
   '/loans',
   auth(MANAGE_STATS),
@@ -137,8 +152,10 @@ const buildDateMatch = (
   field = 'startDate',
 ): Record<string, unknown> | undefined => {
   const match: Record<string, Date> = {};
-  const fromDate = from ? new Date(from as string) : undefined;
-  const toDate = to ? new Date(to as string) : undefined;
+  const fromDateValue = extractDateValue(from);
+  const toDateValue = extractDateValue(to);
+  const fromDate = fromDateValue ? new Date(fromDateValue) : undefined;
+  const toDate = toDateValue ? new Date(toDateValue) : undefined;
 
   if (fromDate) match.$gte = fromDate;
   if (toDate) match.$lte = toDate;
@@ -273,7 +290,9 @@ router.get(
     const db = req.app.locals.db;
     const limit = parseInt(req.query.limit as string, 10) || 5;
     try {
-      const match = buildDateMatch(req.query.from, req.query.to);
+      const from = normalizeDateQueryParam(req.query.from);
+      const to = normalizeDateQueryParam(req.query.to);
+      const match = buildDateMatch(from, to);
       const pipeline: any[] = [];
       if (match) pipeline.push({ $match: match });
 
@@ -308,7 +327,9 @@ router.get(
     const db = req.app.locals.db;
     const limit = parseInt(req.query.limit as string, 10) || 5;
     try {
-      const match = buildDateMatch(req.query.from, req.query.to);
+      const from = normalizeDateQueryParam(req.query.from);
+      const to = normalizeDateQueryParam(req.query.to);
+      const match = buildDateMatch(from, to);
       const pipeline: any[] = [];
       if (match) pipeline.push({ $match: match });
 
@@ -342,7 +363,9 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
-      const match = buildDateMatch(req.query.from, req.query.to, 'createdAt');
+      const from = normalizeDateQueryParam(req.query.from);
+      const to = normalizeDateQueryParam(req.query.to);
+      const match = buildDateMatch(from, to, 'createdAt');
 
       const pipeline: any[] = [];
       if (match) pipeline.push({ $match: match });
@@ -368,8 +391,10 @@ router.get(
         agg.map(({ _id, count }) => [_id, count] as const),
       );
 
-      const fromDate = req.query.from ? new Date(req.query.from as string) : undefined;
-      const toDate = req.query.to ? new Date(req.query.to as string) : undefined;
+      const fromDateValue = extractDateValue(from);
+      const toDateValue = extractDateValue(to);
+      const fromDate = fromDateValue ? new Date(fromDateValue) : undefined;
+      const toDate = toDateValue ? new Date(toDateValue) : undefined;
 
       const start = fromDate
         ? new Date(fromDate.getFullYear(), fromDate.getMonth(), 1)
