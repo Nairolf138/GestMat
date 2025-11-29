@@ -9,8 +9,10 @@
     "failed": "Login failed",
     "remember_username": "Remember username",
     "remember_username_help": "Store this username on this device for next time.",
+    "remember_username_error": "Unable to save the username on this device.",
     "stay_logged_in": "Stay signed in",
     "stay_logged_in_help": "Keep me signed in longer on this device.",
+    "stay_logged_in_error": "Unable to enable the extended session on this device.",
     "forgot_password": "Forgot password?",
     "forgot_username": "Forgot username?"
   },
