@@ -67,8 +67,23 @@ export function AuthProvider({ children }) {
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
     const handler = () => user && resetTimer();
     events.forEach((e) => window.addEventListener(e, handler));
+
+    const onStorage = (event) => {
+      if (event.key !== 'lastActivity' || !event.newValue || !user) return;
+      const lastActivityTime = Number(event.newValue);
+      const elapsed = Date.now() - lastActivityTime;
+      clearTimeout(timerRef.current);
+      if (elapsed >= INACTIVITY_LIMIT) {
+        logout();
+      } else {
+        timerRef.current = setTimeout(logout, INACTIVITY_LIMIT - elapsed);
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
     return () => {
       events.forEach((e) => window.removeEventListener(e, handler));
+      window.removeEventListener('storage', onStorage);
       clearTimeout(timerRef.current);
     };
   }, [INACTIVITY_LIMIT, logout, resetTimer, user]);
