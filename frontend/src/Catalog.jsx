@@ -234,20 +234,6 @@ function Catalog() {
               onChange={handleChange}
             />
           </div>
-          <div className="col-auto">
-              <button
-              onClick={() => {
-                setItems([]);
-                setHasMore(true);
-                setPage(1);
-                fetchItems(1);
-              }}
-              className="btn btn-primary"
-              disabled={isInvalidPeriod}
-            >
-              {t('catalog.search_button')}
-            </button>
-          </div>
         </div>
         {isMobile ? (
           <div
