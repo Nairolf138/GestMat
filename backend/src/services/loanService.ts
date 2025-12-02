@@ -45,7 +45,6 @@ function filterLoansForUser(
 
     const req: any = loan.requestedBy;
     const reqId = req?._id?.toString?.() || req?.toString?.();
-    const reqRole = req?.role;
 
     if (user.role === AUTRE_ROLE) {
       const borrowerId =
@@ -62,8 +61,7 @@ function filterLoansForUser(
         user.role,
       )
     ) {
-      if (reqId === user.id) return true;
-      return reqRole === REGISSEUR_GENERAL_ROLE || reqRole === AUTRE_ROLE;
+      return true;
     }
 
     return true;

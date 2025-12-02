@@ -8,6 +8,7 @@ const {
   AUTRE_ROLE,
   REGISSEUR_SON_ROLE,
   REGISSEUR_GENERAL_ROLE,
+  REGISSEUR_PLATEAU_ROLE,
 } = require('../src/config/roles');
 
 async function createDb() {
@@ -25,7 +26,7 @@ test('role based loan service permissions', async (t) => {
   ]);
   const s1Id = s1.insertedId;
   const s2Id = s2.insertedId;
-  const [eqSonS1, eqPlateauS1, eqSonS2] = await Promise.all([
+  const [eqSonS1, eqPlateauS1, eqSonS2, eqPlateauS2] = await Promise.all([
     db
       .collection('equipments')
       .insertOne({ name: 'ES1', type: 'Son', structure: s1Id }),
@@ -35,18 +36,23 @@ test('role based loan service permissions', async (t) => {
     db
       .collection('equipments')
       .insertOne({ name: 'ES2', type: 'Son', structure: s2Id }),
+    db
+      .collection('equipments')
+      .insertOne({ name: 'EP2', type: 'Plateau', structure: s2Id }),
   ]);
   const userAutre = new ObjectId();
   const userRegSon = new ObjectId();
   const userRegGen = new ObjectId();
   const userRegGenS2 = new ObjectId();
   const userRegSonS2 = new ObjectId();
+  const userRegPlateau = new ObjectId();
   await db.collection('users').insertMany([
     { _id: userAutre, structure: s1Id, role: AUTRE_ROLE },
     { _id: userRegSon, structure: s1Id, role: REGISSEUR_SON_ROLE },
     { _id: userRegGen, structure: s1Id, role: REGISSEUR_GENERAL_ROLE },
     { _id: userRegGenS2, structure: s2Id, role: REGISSEUR_GENERAL_ROLE },
     { _id: userRegSonS2, structure: s2Id, role: REGISSEUR_SON_ROLE },
+    { _id: userRegPlateau, structure: s1Id, role: REGISSEUR_PLATEAU_ROLE },
   ]);
 
   // seed loans for listLoans test
@@ -93,30 +99,52 @@ test('role based loan service permissions', async (t) => {
       startDate: new Date('2099-01-01'),
       endDate: new Date('2099-01-02'),
     },
+    {
+      owner: s2Id,
+      borrower: s1Id,
+      items: [{ equipment: eqPlateauS2.insertedId }],
+      requestedBy: userRegGenS2,
+      startDate: new Date('2099-01-01'),
+      endDate: new Date('2099-01-02'),
+    },
   ]);
 
-  await t.test('listLoans filters by equipment type and requester role', async () => {
+  await t.test('listLoans filters by equipment type while allowing specialized requester roles', async () => {
     const regSonLoans = await listLoans(db, {
       id: userRegSon.toString(),
       role: REGISSEUR_SON_ROLE,
     });
-    assert.strictEqual(regSonLoans.length, 4);
+    assert.strictEqual(regSonLoans.length, 5);
     assert.ok(
       regSonLoans.every((l) =>
         (l.items || []).every((it) => it.equipment.type !== 'Plateau'),
       ),
     );
     assert.ok(
-      regSonLoans.every((l) => {
-        const req = l.requestedBy;
-        const reqId = req._id.toString();
-        const reqRole = req.role;
-        return (
-          reqId === userRegSon.toString() ||
-          reqRole === AUTRE_ROLE ||
-          reqRole === REGISSEUR_GENERAL_ROLE
-        );
-      }),
+      regSonLoans.some(
+        (l) => l.requestedBy._id.toString() === userRegSonS2.toString(),
+      ),
+    );
+
+    const regPlateauLoans = await listLoans(db, {
+      id: userRegPlateau.toString(),
+      role: REGISSEUR_PLATEAU_ROLE,
+    });
+    assert.strictEqual(regPlateauLoans.length, 2);
+    assert.ok(
+      regPlateauLoans.every((l) =>
+        (l.items || []).every((it) => it.equipment.type === 'Plateau'),
+      ),
+    );
+    assert.ok(
+      regPlateauLoans.some(
+        (l) => (l.owner._id || l.owner).toString() === s1Id.toString(),
+      ),
+    );
+    assert.ok(
+      regPlateauLoans.some(
+        (l) => (l.borrower._id || l.borrower).toString() === s1Id.toString(),
+      ),
     );
     const autreLoans = await listLoans(db, {
       id: userAutre.toString(),
