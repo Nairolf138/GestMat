@@ -235,12 +235,12 @@ function Catalog() {
             />
           </div>
           <div className="col-auto">
-            <button
+              <button
               onClick={() => {
                 setItems([]);
                 setHasMore(true);
-                setPage(0);
-                fetchItems(0);
+                setPage(1);
+                fetchItems(1);
               }}
               className="btn btn-primary"
               disabled={isInvalidPeriod}
