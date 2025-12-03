@@ -30,7 +30,8 @@ The API reads its configuration from the following variables:
 | `PORT`           | Port for the HTTP server. Defaults to `5000`.                                                 |
 | `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. Each entry must be an absolute URL (scheme + host) or `*`. If unset, the API reflects the requester origin. When a whitelist is provided, the production frontend `https://gestmat.nairolfconcept.fr` is automatically appended to the list. |
 | `API_PREFIX`     | Path prefix for mounting API routes. Defaults to `/api`; set to an empty string to serve at the domain root. |
-| `API_URL`        | Public base URL of the API, including the prefix. Defaults to `http://localhost:<PORT><API_PREFIX>`. |
+| `API_URL`        | Public base URL of the API, including the prefix. Defaults to `http://localhost:<PORT><API_PREFIX>`. The cookie `secure` flag follows the protocol of this URL (`https` → `secure=true`). |
+| `COOKIE_SAME_SITE` | SameSite policy for authentication cookies. Accepts `lax`, `strict` or `none`; defaults to `lax`. Use `none` for cross-domain or webview/mobile clients and combine it with an HTTPS `API_URL` so browsers accept the cookie. |
 | `SMTP_URL`       | SMTP connection string to enable email notifications and derive a default sender.             |
 | `NOTIFY_EMAIL`   | Optional sender/recipient address for notification emails (overrides the derived sender).     |
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
@@ -56,6 +57,12 @@ To obtain a new token when the current one expires, send a `POST` request to
 `<API_PREFIX>/auth/refresh`. The endpoint expects a secure refresh token (for example
 stored in an HTTP-only cookie) and responds with `{ token }` containing a fresh
 JWT.
+
+### Authentication cookie configuration
+
+- **Secure flag**: The `secure` attribute is enabled automatically when `API_URL` starts with `https://`. When the API is served over plain HTTP (local development), cookies are sent without the `secure` flag so browsers will accept them.
+- **SameSite policy**: `COOKIE_SAME_SITE` defaults to `lax`. Set it to `none` when the frontend and backend use different domains or when embedding the app inside a mobile/webview context where cross-site requests must carry authentication cookies.
+- **Recommended cross-domain/mobile setup**: Serve the API over HTTPS, set `API_URL` to its public HTTPS URL and set `COOKIE_SAME_SITE=none`. Also ensure `CORS_ORIGIN` lists the consuming origins and that requests are sent with credentials enabled so refresh tokens are transmitted.
 
 To enable email notifications, set `SMTP_URL` in `.env` with a valid SMTP
 connection string. When `NOTIFY_EMAIL` is provided, it becomes the sender and

@@ -58,6 +58,22 @@ const normalizeCorsOrigins = (value: string | undefined): string[] => {
   return Array.from(new Set(normalized));
 };
 
+const normalizeSameSite = (
+  value: string | undefined,
+): 'lax' | 'strict' | 'none' => {
+  if (!value) {
+    return 'lax';
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized !== 'lax' && normalized !== 'strict' && normalized !== 'none') {
+    throw new Error('COOKIE_SAME_SITE must be one of lax, strict or none');
+  }
+
+  return normalized;
+};
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
   CORS_ORIGIN: z
@@ -71,6 +87,7 @@ const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   API_PREFIX: z.string().optional(),
   API_URL: z.string().optional(),
+  COOKIE_SAME_SITE: z.string().optional().transform((val) => normalizeSameSite(val)),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOAN_REMINDER_OFFSET_HOURS: z.coerce.number().positive().default(24),
   LOAN_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
@@ -131,6 +148,19 @@ const normalizeApiPrefix = (value: string | undefined): string => {
   return `/${withoutLeading}`;
 };
 
+const deriveCookieSecure = (apiUrl: string): boolean => {
+  try {
+    const parsed = new URL(apiUrl);
+    return parsed.protocol === 'https:';
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Invalid API_URL "${apiUrl}": ${error.message}`);
+    }
+
+    throw error;
+  }
+};
+
 export const PORT = env.PORT;
 export const CORS_ORIGIN = mergeCorsOrigins(env.CORS_ORIGIN, requiredCorsOrigins);
 export const MONGODB_URI = env.MONGODB_URI;
@@ -140,6 +170,8 @@ export const NOTIFY_EMAIL = env.NOTIFY_EMAIL;
 export const NODE_ENV = env.NODE_ENV;
 export const API_PREFIX = normalizeApiPrefix(env.API_PREFIX);
 export const API_URL = env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX || ''}`;
+export const COOKIE_SAME_SITE = env.COOKIE_SAME_SITE;
+export const COOKIE_SECURE = deriveCookieSecure(API_URL);
 export const RATE_LIMIT_MAX = env.RATE_LIMIT_MAX;
 export const LOAN_REMINDER_OFFSET_HOURS = env.LOAN_REMINDER_OFFSET_HOURS;
 export const LOAN_REMINDER_INTERVAL_MINUTES = env.LOAN_REMINDER_INTERVAL_MINUTES;
@@ -165,6 +197,8 @@ export default {
   NODE_ENV,
   API_PREFIX,
   API_URL,
+  COOKIE_SAME_SITE,
+  COOKIE_SECURE,
   RATE_LIMIT_MAX,
   LOAN_REMINDER_OFFSET_HOURS,
   LOAN_REMINDER_INTERVAL_MINUTES,

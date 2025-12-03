@@ -1,9 +1,9 @@
-import { NODE_ENV } from '../config';
+import { COOKIE_SAME_SITE, COOKIE_SECURE } from '../config';
 
 export const cookieOptions = {
   httpOnly: true,
-  secure: NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  secure: COOKIE_SECURE,
+  sameSite: COOKIE_SAME_SITE,
 };
 
 export default cookieOptions;
