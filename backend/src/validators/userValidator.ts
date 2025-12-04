@@ -27,6 +27,16 @@ export const resetPasswordValidator: ValidationChain[] = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
+export const adminCreateUserValidator: ValidationChain[] = [
+  body('username').notEmpty().withMessage('Username is required'),
+  body('password').notEmpty().withMessage('Password is required'),
+  body('role').optional().isString(),
+  body('structure').optional().isMongoId(),
+  body('email').optional().isEmail(),
+  body('firstName').optional().notEmpty(),
+  body('lastName').optional().notEmpty(),
+];
+
 export const updateUserValidator: ValidationChain[] = [
   body('firstName').optional().notEmpty(),
   body('lastName').optional().notEmpty(),
