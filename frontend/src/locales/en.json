@@ -268,6 +268,7 @@
     "delete_confirm": "Delete this user?",
     "delete_success": "User deleted",
     "username": "Username",
+    "email": "Email",
     "first_name": "First name",
     "last_name": "Last name",
     "structure": "Structure",
