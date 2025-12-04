@@ -233,7 +233,11 @@ function ManageUsers() {
       setShowCreateForm(false);
       load();
     } catch (err) {
-      setError(err.message);
+      setError(
+        err.message
+          ? `${t('users.create_error')}: ${err.message}`
+          : t('users.create_error'),
+      );
     }
   };
 
@@ -263,7 +267,7 @@ function ManageUsers() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="mb-0">{t('users.list')}</h4>
         <button className="btn btn-success" onClick={toggleCreateForm}>
-          {showCreateForm ? t('users.cancel') : t('users.new_user')}
+          {showCreateForm ? t('users.cancel') : t('users.add')}
         </button>
       </div>
 
@@ -370,7 +374,7 @@ function ManageUsers() {
               <div className="col-md-6">
                 <input
                   className="form-control"
-                  placeholder={t('users.password_confirm')}
+                  placeholder={t('users.confirm_password')}
                   type="password"
                   value={newUserForm.passwordConfirm}
                   onChange={(e) =>
