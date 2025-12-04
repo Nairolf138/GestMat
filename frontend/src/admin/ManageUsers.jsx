@@ -39,6 +39,17 @@ function ManageUsers() {
     structure: '',
     role: '',
   });
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    username: '',
+    email: '',
+    firstName: '',
+    lastName: '',
+    structure: '',
+    role: '',
+    password: '',
+    passwordConfirm: '',
+  });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
@@ -77,6 +88,20 @@ function ManageUsers() {
       .then((fetchedStructures) => setStructures(fetchedStructures || []))
       .catch(() => setStructures([]));
   }, []);
+
+  useEffect(() => {
+    setNewUserForm((prev) => ({
+      ...prev,
+      structure: prev.structure || structures[0]?._id || '',
+    }));
+  }, [structures]);
+
+  useEffect(() => {
+    setNewUserForm((prev) => ({
+      ...prev,
+      role: prev.role || roles[0] || '',
+    }));
+  }, [roles]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -136,6 +161,82 @@ function ManageUsers() {
     }
   };
 
+  const resetNewUserForm = useCallback(
+    () =>
+      setNewUserForm({
+        username: '',
+        email: '',
+        firstName: '',
+        lastName: '',
+        structure: structures[0]?._id || '',
+        role: roles[0] || '',
+        password: '',
+        passwordConfirm: '',
+      }),
+    [roles, structures],
+  );
+
+  const toggleCreateForm = () => {
+    if (!showCreateForm) {
+      resetNewUserForm();
+    }
+    setShowCreateForm((prev) => !prev);
+  };
+
+  const createUser = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+
+    const requiredFields = [
+      'username',
+      'firstName',
+      'lastName',
+      'email',
+      'structure',
+      'role',
+      'password',
+    ];
+
+    const missingField = requiredFields.find((field) => !newUserForm[field]);
+    if (missingField) {
+      setError(t('users.field_required'));
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUserForm.email)) {
+      setError(t('users.invalid_email'));
+      return;
+    }
+
+    if (newUserForm.password !== newUserForm.passwordConfirm) {
+      setError(t('users.password_mismatch'));
+      return;
+    }
+
+    try {
+      await api('/users', {
+        method: 'POST',
+        body: JSON.stringify({
+          username: newUserForm.username,
+          email: newUserForm.email,
+          firstName: newUserForm.firstName,
+          lastName: newUserForm.lastName,
+          structure: newUserForm.structure,
+          role: normalizeRoleValue(newUserForm.role),
+          password: newUserForm.password,
+        }),
+      });
+      setMessage(t('users.create_success'));
+      resetNewUserForm();
+      setShowCreateForm(false);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
     <div>
       <Alert
@@ -159,6 +260,145 @@ function ManageUsers() {
           {t('users.search')}
         </button>
       </div>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="mb-0">{t('users.list')}</h4>
+        <button className="btn btn-success" onClick={toggleCreateForm}>
+          {showCreateForm ? t('users.cancel') : t('users.new_user')}
+        </button>
+      </div>
+
+      {showCreateForm && (
+        <form className="card mb-3" onSubmit={createUser}>
+          <div className="card-body">
+            <div className="row g-3 mb-2">
+              <div className="col-md-4">
+                <input
+                  className="form-control"
+                  placeholder={t('users.username')}
+                  value={newUserForm.username}
+                  onChange={(e) =>
+                    setNewUserForm({ ...newUserForm, username: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  className="form-control"
+                  placeholder={t('users.first_name')}
+                  value={newUserForm.firstName}
+                  onChange={(e) =>
+                    setNewUserForm({ ...newUserForm, firstName: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="col-md-4">
+                <input
+                  className="form-control"
+                  placeholder={t('users.last_name')}
+                  value={newUserForm.lastName}
+                  onChange={(e) =>
+                    setNewUserForm({ ...newUserForm, lastName: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <div className="row g-3 mb-2">
+              <div className="col-md-6">
+                <input
+                  className="form-control"
+                  placeholder={t('users.email')}
+                  type="email"
+                  value={newUserForm.email}
+                  onChange={(e) =>
+                    setNewUserForm({ ...newUserForm, email: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="col-md-3">
+                <select
+                  className="form-select"
+                  value={newUserForm.structure}
+                  onChange={(e) =>
+                    setNewUserForm({ ...newUserForm, structure: e.target.value })
+                  }
+                  required
+                >
+                  <option value="">{t('users.select_structure')}</option>
+                  {structures.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-3">
+                <select
+                  className="form-select"
+                  value={newUserForm.role}
+                  onChange={(e) =>
+                    setNewUserForm({ ...newUserForm, role: e.target.value })
+                  }
+                  required
+                >
+                  {roles.map((r) => (
+                    <option key={r} value={r}>
+                      {t(roleTranslationKey(r), {
+                        defaultValue: normalizeRoleValue(r),
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="row g-3 mb-3">
+              <div className="col-md-6">
+                <input
+                  className="form-control"
+                  placeholder={t('users.password')}
+                  type="password"
+                  value={newUserForm.password}
+                  onChange={(e) =>
+                    setNewUserForm({ ...newUserForm, password: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <input
+                  className="form-control"
+                  placeholder={t('users.password_confirm')}
+                  type="password"
+                  value={newUserForm.passwordConfirm}
+                  onChange={(e) =>
+                    setNewUserForm({
+                      ...newUserForm,
+                      passwordConfirm: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-secondary"
+                type="button"
+                onClick={toggleCreateForm}
+              >
+                {t('users.cancel')}
+              </button>
+              <button className="btn btn-primary" type="submit">
+                {t('users.create')}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
       <ul className="list-group">
         {users.map((u) => (
           <li key={u._id} className="list-group-item">
