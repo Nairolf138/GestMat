@@ -59,3 +59,10 @@ export const updateUserValidator: ValidationChain[] = [
     .isBoolean()
     .toBoolean(),
 ];
+
+export const adminUpdateUserValidator: ValidationChain[] = [
+  body('username').optional().notEmpty(),
+  ...updateUserValidator,
+  body('role').optional().isString(),
+  body('structure').optional().isMongoId(),
+];
