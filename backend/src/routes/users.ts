@@ -12,10 +12,11 @@ import permissions from '../config/permissions';
 import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import {
+  adminCreateUserValidator,
   adminUpdateUserValidator,
   updateUserValidator,
 } from '../validators/userValidator';
-import { notFound } from '../utils/errors';
+import { ApiError, notFound } from '../utils/errors';
 import { sendMail } from '../utils/sendMail';
 import { NOTIFY_EMAIL } from '../config';
 import logger from '../utils/logger';
@@ -23,8 +24,13 @@ import type { User } from '../models/User';
 import { DEFAULT_USER_PREFERENCES, mergePreferences } from '../models/User';
 import { accountUpdateTemplate } from '../utils/mailTemplates';
 import { isNotificationEnabled } from '../utils/notificationPreferences';
+import { createUser } from '../models/User';
+import { normalizeRole } from '../utils/roleAccess';
+import ROLES, { ADMIN_ROLE, AUTRE_ROLE } from '../config/roles';
 
 const { MANAGE_USERS } = permissions;
+const DEFAULT_ROLE = AUTRE_ROLE;
+const ALLOWED_ROLES = ROLES.filter((r) => r !== ADMIN_ROLE);
 
 export const notifyAccountUpdate = async (
   user: User,
@@ -72,6 +78,47 @@ export const notifyAccountUpdate = async (
 };
 
 const router = express.Router();
+
+router.post(
+  '/',
+  auth(MANAGE_USERS),
+  adminCreateUserValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      let { username, password, role, structure, email, firstName, lastName } =
+        req.body;
+      role = normalizeRole(role);
+      if (!ALLOWED_ROLES.includes(role)) {
+        role = DEFAULT_ROLE;
+      }
+      const structureData = structure
+        ? await findStructureById(db, structure)
+        : undefined;
+      if (structure && !structureData) {
+        return next(new ApiError(400, 'Structure not found'));
+      }
+      const hashed = await bcrypt.hash(password, 10);
+      const user = await createUser(db, {
+        username,
+        password: hashed,
+        role,
+        structure,
+        email,
+        firstName,
+        lastName,
+      });
+      const { password: _pw, ...userData } = user;
+      res.status(201).json(userData);
+    } catch (err: any) {
+      if (err.message === 'Username already exists') {
+        return next(new ApiError(409, err.message));
+      }
+      next(new ApiError(400, err.message || 'User creation failed'));
+    }
+  },
+);
 
 router.get('/', auth(MANAGE_USERS), async (req: Request, res: Response) => {
   const db = req.app.locals.db;

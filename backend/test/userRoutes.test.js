@@ -5,6 +5,7 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 process.env.JWT_SECRET = 'test';
 
@@ -79,6 +80,39 @@ test('GET users supports search and pagination', async () => {
     .expect(200);
   assert.strictEqual(res.body.length, 1);
   assert.strictEqual(res.body[0].username, 'bob');
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('POST /users allows admins to create accounts', async () => {
+  const { app, client, mongod, db } = await createApp();
+  const structureId = (
+    await db.collection('structures').insertOne({ name: 'Structure' })
+  ).insertedId;
+
+  const res = await request(app)
+    .post(withApiPrefix('/users'))
+    .set(auth('admin', ADMIN_ROLE))
+    .send({
+      username: 'newuser',
+      password: 'secret',
+      role: 'Regisseur Son',
+      structure: structureId.toString(),
+      email: 'new@example.com',
+      firstName: 'New',
+      lastName: 'User',
+    })
+    .expect(201);
+
+  assert.strictEqual(res.body.username, 'newuser');
+  assert.strictEqual(res.body.password, undefined);
+  assert.strictEqual(res.body.role, 'Regisseur Son');
+
+  const saved = await db.collection('users').findOne({ username: 'newuser' });
+  assert(saved);
+  assert.strictEqual(saved.structure.toString(), structureId.toString());
+  assert.strictEqual(await bcrypt.compare('secret', saved.password), true);
 
   await client.close();
   await mongod.stop();
