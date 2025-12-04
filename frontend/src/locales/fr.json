@@ -268,6 +268,7 @@
     "delete_confirm": "Supprimer cet utilisateur ?",
     "delete_success": "Utilisateur supprimé",
     "username": "Identifiant",
+    "email": "Email",
     "first_name": "Prénom",
     "last_name": "Nom",
     "structure": "Structure",

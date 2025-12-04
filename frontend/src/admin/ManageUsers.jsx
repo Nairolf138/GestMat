@@ -33,6 +33,7 @@ function ManageUsers() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
     username: '',
+    email: '',
     firstName: '',
     lastName: '',
     structure: '',
@@ -107,6 +108,7 @@ function ManageUsers() {
     setEditing(u._id);
     setForm({
       username: u.username || '',
+      email: u.email || '',
       firstName: u.firstName || '',
       lastName: u.lastName || '',
       structure:
@@ -167,6 +169,13 @@ function ManageUsers() {
                   placeholder={t('users.username')}
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
+                />
+                <input
+                  className="form-control mb-2"
+                  placeholder={t('users.email')}
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
                 <input
                   className="form-control mb-2"
