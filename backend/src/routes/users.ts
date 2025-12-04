@@ -11,7 +11,10 @@ import auth from '../middleware/auth';
 import permissions from '../config/permissions';
 import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
-import { updateUserValidator } from '../validators/userValidator';
+import {
+  adminUpdateUserValidator,
+  updateUserValidator,
+} from '../validators/userValidator';
 import { notFound } from '../utils/errors';
 import { sendMail } from '../utils/sendMail';
 import { NOTIFY_EMAIL } from '../config';
@@ -164,6 +167,93 @@ router.put(
     ) {
       changedFields.push('préférences');
     }
+    if (updated.structure) {
+      const struct = await findStructureById(db, updated.structure.toString());
+      if (struct) updated.structure = struct;
+    }
+    delete updated.password;
+    await notifyAccountUpdate(updated, changedFields);
+    res.json(updated);
+  },
+);
+
+router.put(
+  '/:id',
+  auth(MANAGE_USERS),
+  checkId(),
+  adminUpdateUserValidator,
+  validate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    const existingUser = await findUserById(db, req.params.id);
+    if (!existingUser) return next(notFound('User not found'));
+
+    const allowed = [
+      'username',
+      'firstName',
+      'lastName',
+      'email',
+      'password',
+      'role',
+      'structure',
+    ];
+    const data: Record<string, any> = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
+
+    const currentPreferences = existingUser.preferences
+      ? mergePreferences(undefined, existingUser.preferences)
+      : DEFAULT_USER_PREFERENCES;
+    const preferencesUpdate = req.body.preferences as
+      | Partial<User['preferences']>
+      | undefined;
+
+    if (preferencesUpdate !== undefined) {
+      data.preferences = mergePreferences(preferencesUpdate, existingUser.preferences);
+    } else if (!existingUser.preferences) {
+      data.preferences = currentPreferences;
+    }
+
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password as string, 10);
+    }
+
+    const updated = await updateUser(db, req.params.id, data);
+    if (!updated) return next(notFound('User not found'));
+
+    const changedFields: string[] = [];
+    if (data.username !== undefined && data.username !== existingUser.username) {
+      changedFields.push("nom d'utilisateur");
+    }
+    if (data.firstName !== undefined && data.firstName !== existingUser.firstName) {
+      changedFields.push('prénom');
+    }
+    if (data.lastName !== undefined && data.lastName !== existingUser.lastName) {
+      changedFields.push('nom');
+    }
+    if (data.email !== undefined && data.email !== existingUser.email) {
+      changedFields.push('adresse e-mail');
+    }
+    if (data.password !== undefined) {
+      changedFields.push('mot de passe');
+    }
+    if (data.role !== undefined && data.role !== existingUser.role) {
+      changedFields.push('rôle');
+    }
+    if (
+      data.structure !== undefined &&
+      data.structure?.toString() !== existingUser.structure?.toString()
+    ) {
+      changedFields.push('structure');
+    }
+    if (
+      data.preferences !== undefined &&
+      JSON.stringify(data.preferences) !== JSON.stringify(currentPreferences)
+    ) {
+      changedFields.push('préférences');
+    }
+
     if (updated.structure) {
       const struct = await findStructureById(db, updated.structure.toString());
       if (struct) updated.structure = struct;
