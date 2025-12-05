@@ -99,3 +99,44 @@ test('login without stayLoggedIn uses session refresh cookie and keeps other ses
   await client.close();
   await mongod.stop();
 });
+
+test('multiple persistent logins retain independent refresh tokens', async () => {
+  const { app, client, mongod, db } = await createApp();
+
+  const agentA = request.agent(app);
+  const agentB = request.agent(app);
+
+  await agentA
+    .post(withApiPrefix('/auth/register'))
+    .send({ username: 'carol', password: 'pw12345' })
+    .expect(200);
+
+  await agentA
+    .post(withApiPrefix('/auth/login'))
+    .send({ username: 'carol', password: 'pw12345', stayLoggedIn: true })
+    .expect(200);
+
+  await agentB
+    .post(withApiPrefix('/auth/login'))
+    .send({ username: 'carol', password: 'pw12345', stayLoggedIn: true })
+    .expect(200);
+
+  const sessionCountAfterLogin = await db.collection('sessions').countDocuments();
+  assert.strictEqual(sessionCountAfterLogin, 2);
+
+  const refreshResponseA = await agentA
+    .post(withApiPrefix('/auth/refresh'))
+    .expect(200);
+  assert.deepStrictEqual(refreshResponseA.body, {});
+
+  const refreshResponseB = await agentB
+    .post(withApiPrefix('/auth/refresh'))
+    .expect(200);
+  assert.deepStrictEqual(refreshResponseB.body, {});
+
+  const sessionCountAfterRefresh = await db.collection('sessions').countDocuments();
+  assert.strictEqual(sessionCountAfterRefresh, 2);
+
+  await client.close();
+  await mongod.stop();
+});
