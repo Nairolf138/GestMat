@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { Filter } from 'mongodb';
+import { Filter, ObjectId } from 'mongodb';
 import auth from '../middleware/auth';
 import checkId from '../middleware/checkObjectId';
 import validate from '../middleware/validate';
@@ -20,7 +20,20 @@ import {
   updateVehicleValidator,
 } from '../validators/vehicleValidator';
 
-const { MANAGE_VEHICLES } = permissions;
+const { VEHICLES_CREATE, VEHICLES_UPDATE, VEHICLES_ASSIGN, VEHICLES_ARCHIVE } = permissions;
+
+const extractVehicleStructure = (req: Request): string | undefined => {
+  if (typeof req.body?.structure === 'string') return req.body.structure;
+  if (typeof req.query?.structure === 'string') return req.query.structure;
+  return undefined;
+};
+
+const extractVehicleUsage = (req: Request): string | undefined => {
+  if (typeof req.body?.usage === 'string') return req.body.usage;
+  if (typeof req.body?.type === 'string') return req.body.type;
+  if (typeof req.query?.usage === 'string') return req.query.usage;
+  return undefined;
+};
 
 const router = express.Router();
 
@@ -40,6 +53,12 @@ function buildVehicleFilter(query: any): Filter<Vehicle> {
   }
   if (query.location) {
     filter.location = query.location as string;
+  }
+  if (query.structure && ObjectId.isValid(query.structure as string)) {
+    filter.structure = new ObjectId(query.structure as string);
+  }
+  if (query.usage) {
+    filter.usage = (query.usage as string).toLowerCase();
   }
   if (query.availableStart && query.availableEnd) {
     const start = new Date(query.availableStart as string);
@@ -83,7 +102,12 @@ router.get(
 
 router.post(
   '/',
-  auth({ permissions: MANAGE_VEHICLES, action: 'vehicles:create' }),
+  auth({
+    permissions: VEHICLES_CREATE,
+    action: 'vehicles:create',
+    getStructureId: extractVehicleStructure,
+    getUsageType: extractVehicleUsage,
+  }),
   createVehicleValidator,
   validate,
   async (req: Request, res: Response, next: NextFunction) => {
@@ -100,7 +124,12 @@ router.post(
 
 router.put(
   '/:id',
-  auth({ permissions: MANAGE_VEHICLES, action: 'vehicles:update' }),
+  auth({
+    permissions: [VEHICLES_UPDATE, VEHICLES_ASSIGN],
+    action: 'vehicles:update',
+    getStructureId: extractVehicleStructure,
+    getUsageType: extractVehicleUsage,
+  }),
   checkId(),
   updateVehicleValidator,
   validate,
@@ -119,7 +148,11 @@ router.put(
 
 router.delete(
   '/:id',
-  auth({ permissions: MANAGE_VEHICLES, action: 'vehicles:delete' }),
+  auth({
+    permissions: VEHICLES_ARCHIVE,
+    action: 'vehicles:delete',
+    getStructureId: extractVehicleStructure,
+  }),
   checkId(),
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;

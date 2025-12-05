@@ -7,7 +7,15 @@ import {
   AUTRE_ROLE,
 } from './roles';
 
-export const PERMISSIONS = {
+export type PermissionRule = {
+  roles: string[];
+  structureScoped?: boolean;
+  usageTypes?: string[];
+};
+
+export const VEHICLE_USAGE_TYPES = ['technique', 'logistique'];
+
+export const PERMISSIONS: Record<string, PermissionRule | string[]> = {
   MANAGE_STRUCTURES: [ADMIN_ROLE],
   MANAGE_USERS: [ADMIN_ROLE],
   MANAGE_STATS: [ADMIN_ROLE],
@@ -26,13 +34,35 @@ export const PERMISSIONS = {
     REGISSEUR_PLATEAU_ROLE,
     ADMIN_ROLE,
   ],
-  MANAGE_VEHICLES: [
-    REGISSEUR_GENERAL_ROLE,
-    REGISSEUR_LUMIERE_ROLE,
-    REGISSEUR_SON_ROLE,
-    REGISSEUR_PLATEAU_ROLE,
-    ADMIN_ROLE,
-  ],
+  VEHICLES_CREATE: {
+    roles: [
+      REGISSEUR_GENERAL_ROLE,
+      REGISSEUR_LUMIERE_ROLE,
+      REGISSEUR_SON_ROLE,
+      REGISSEUR_PLATEAU_ROLE,
+      ADMIN_ROLE,
+    ],
+    usageTypes: VEHICLE_USAGE_TYPES,
+  },
+  VEHICLES_UPDATE: {
+    roles: [
+      REGISSEUR_GENERAL_ROLE,
+      REGISSEUR_LUMIERE_ROLE,
+      REGISSEUR_SON_ROLE,
+      REGISSEUR_PLATEAU_ROLE,
+      ADMIN_ROLE,
+    ],
+    structureScoped: true,
+  },
+  VEHICLES_ASSIGN: {
+    roles: [REGISSEUR_GENERAL_ROLE, ADMIN_ROLE],
+    structureScoped: true,
+    usageTypes: VEHICLE_USAGE_TYPES,
+  },
+  VEHICLES_ARCHIVE: {
+    roles: [REGISSEUR_GENERAL_ROLE, ADMIN_ROLE],
+    structureScoped: true,
+  },
 };
 
 export const MANAGE_STRUCTURES = 'MANAGE_STRUCTURES';
@@ -40,7 +70,10 @@ export const MANAGE_USERS = 'MANAGE_USERS';
 export const MANAGE_STATS = 'MANAGE_STATS';
 export const MANAGE_LOANS = 'MANAGE_LOANS';
 export const MANAGE_EQUIPMENTS = 'MANAGE_EQUIPMENTS';
-export const MANAGE_VEHICLES = 'MANAGE_VEHICLES';
+export const VEHICLES_CREATE = 'VEHICLES_CREATE';
+export const VEHICLES_UPDATE = 'VEHICLES_UPDATE';
+export const VEHICLES_ASSIGN = 'VEHICLES_ASSIGN';
+export const VEHICLES_ARCHIVE = 'VEHICLES_ARCHIVE';
 
 export default {
   PERMISSIONS,
@@ -49,5 +82,8 @@ export default {
   MANAGE_STATS,
   MANAGE_LOANS,
   MANAGE_EQUIPMENTS,
-  MANAGE_VEHICLES,
+  VEHICLES_CREATE,
+  VEHICLES_UPDATE,
+  VEHICLES_ASSIGN,
+  VEHICLES_ARCHIVE,
 };

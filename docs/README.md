@@ -42,6 +42,17 @@ Tous les rôles peuvent consulter le catalogue des autres structures. Le rôle *
 | Régisseur(se) Plateau | créer et annuler des demandes pour les équipements Plateau, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
 | Autre | créer, modifier et annuler ses propres demandes | accepter ou refuser les demandes pour sa structure |
 
+### Permissions véhicules
+
+Les véhicules sont soumis à des autorisations plus fines :
+
+- **Création** : Administrateur et régisseurs (général, son, lumière, plateau) peuvent créer des véhicules, quel que soit le type d’usage (transport **technique** ou **logistique**).
+- **Mise à jour** : mêmes rôles, mais l’opération est limitée aux véhicules rattachés à leur structure lorsque le champ `structure` est renseigné.
+- **Affectation** (réservation/attribution) : Administrateur et Régisseur·se Général·e peuvent affecter un véhicule, uniquement si son usage correspond à ceux autorisés (technique/logistique) et si la structure ciblée correspond à leur propre structure.
+- **Archivage** : Administrateur et Régisseur·se Général·e peuvent archiver/supprimer un véhicule de leur structure.
+
+Les middlewares d’accès contrôlent désormais le rôle **et** le contexte (structure cible ou type d’usage) lorsqu’ils sont fournis dans la requête (`structure`, `usage` ou `type`).
+
 ## Configurations essentielles
 
 - **Environnements** : Node.js 22 minimum pour le frontend et l’API.

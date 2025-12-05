@@ -1,5 +1,6 @@
 import { body, ValidationChain } from 'express-validator';
 import { VEHICLE_STATUSES } from '../models/Vehicle';
+import { VEHICLE_USAGE_TYPES } from '../config/permissions';
 
 const reservationValidator = body('reservations')
   .optional()
@@ -26,6 +27,8 @@ const reservationValidator = body('reservations')
 export const createVehicleValidator: ValidationChain[] = [
   body('name').notEmpty().withMessage('name is required'),
   body('type').optional().isString().trim().notEmpty(),
+  body('usage').optional().isIn(VEHICLE_USAGE_TYPES),
+  body('structure').optional().isMongoId(),
   body('brand').optional().isString().trim(),
   body('model').optional().isString().trim(),
   body('registrationNumber').optional().isString().trim(),
@@ -55,6 +58,8 @@ export const createVehicleValidator: ValidationChain[] = [
 export const updateVehicleValidator: ValidationChain[] = [
   body('name').optional().notEmpty(),
   body('type').optional().isString().trim().notEmpty(),
+  body('usage').optional().isIn(VEHICLE_USAGE_TYPES),
+  body('structure').optional().isMongoId(),
   body('brand').optional().isString().trim(),
   body('model').optional().isString().trim(),
   body('registrationNumber').optional().isString().trim(),
