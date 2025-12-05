@@ -59,6 +59,8 @@ export interface VehicleCharacteristics {
   [key: string]: unknown;
 }
 
+export type NewVehicle = Pick<Vehicle, 'name'> & Partial<Omit<Vehicle, '_id' | 'name'>>;
+
 export interface Vehicle {
   _id?: ObjectId;
   name: string;
@@ -93,8 +95,8 @@ function normalizeReservations(
   }));
 }
 
-function normalizeVehicleDates(vehicle: Partial<Vehicle>): Partial<Vehicle> {
-  const normalized: Partial<Vehicle> = { ...vehicle };
+function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
+  const normalized: T = { ...vehicle };
   if (normalized.structure) {
     normalized.structure = new ObjectId(normalized.structure as any);
   }
@@ -205,7 +207,7 @@ export function findVehicles(
 
 export async function createVehicle(
   db: Db,
-  data: Vehicle,
+  data: NewVehicle,
 ): Promise<WithId<Vehicle>> {
   const vehicle: Vehicle = {
     status: 'available',
