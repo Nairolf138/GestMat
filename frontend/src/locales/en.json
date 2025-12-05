@@ -55,6 +55,7 @@
     "error": "Unable to reset the password.",
     "missing_token": "Invalid or expired reset link.",
     "required": "Password is required.",
+    "requirements": "Password must be at least 12 characters and include uppercase, lowercase, and a number.",
     "mismatch": "Passwords do not match.",
     "back_to_forgot": "Back to reset request"
   },
