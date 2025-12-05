@@ -37,7 +37,7 @@ function checkStructureScope(
   if (!rule.structureScoped) return true;
   const userStructure = normalizeId(req.user?.structure);
   const targetStructure = normalizeId(getStructureId?.(req));
-  if (targetStructure === undefined) return true;
+  if (!targetStructure) return false;
   return Boolean(userStructure) && userStructure === targetStructure;
 }
 
