@@ -15,6 +15,8 @@ import {
   RATE_LIMIT_MAX,
   API_PREFIX,
   normalizeCorsOrigins,
+  COOKIE_SAME_SITE,
+  COOKIE_SECURE,
 } from './config';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
@@ -134,7 +136,14 @@ if (NODE_ENV !== 'test') {
   app.use(csrfProtection);
   app.use((req: Request, res: Response, next: NextFunction) => {
     const token = req.csrfToken();
-    res.cookie('XSRF-TOKEN', token);
+    const isSecure = NODE_ENV === 'production' ? COOKIE_SECURE : false;
+    const sameSite = COOKIE_SAME_SITE === 'strict' ? 'strict' : 'lax';
+
+    res.cookie('XSRF-TOKEN', token, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite,
+    });
     next();
   });
 }
