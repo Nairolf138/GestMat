@@ -1,4 +1,6 @@
 import { Db, Filter, ObjectId, WithId } from 'mongodb';
+import { Structure } from './Structure';
+import { VEHICLE_USAGE_TYPES } from '../config/permissions';
 
 export const VEHICLE_STATUSES = [
   'available',
@@ -40,6 +42,8 @@ export interface Vehicle {
   _id?: ObjectId;
   name: string;
   type?: string;
+  usage?: (typeof VEHICLE_USAGE_TYPES)[number];
+  structure?: ObjectId | Structure | string;
   brand?: string;
   model?: string;
   registrationNumber?: string;
@@ -65,6 +69,12 @@ function normalizeReservations(
 
 function normalizeVehicleDates(vehicle: Partial<Vehicle>): Partial<Vehicle> {
   const normalized: Partial<Vehicle> = { ...vehicle };
+  if (normalized.structure) {
+    normalized.structure = new ObjectId(normalized.structure as any);
+  }
+  if (normalized.usage) {
+    normalized.usage = normalized.usage.toString().toLowerCase() as any;
+  }
   if (normalized.reservations) {
     normalized.reservations = normalizeReservations(normalized.reservations);
   }
