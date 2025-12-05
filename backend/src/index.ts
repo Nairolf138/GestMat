@@ -56,9 +56,22 @@ const normalizeAllowOriginHeader = (
   return values[0];
 };
 
+const DEFAULT_CACHE_CONTROL = 'private, no-store';
+
 const applyNoCacheHeaders = (res: Response): void => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Cache-Control', DEFAULT_CACHE_CONTROL);
   res.removeHeader('Expires');
+};
+
+const setDefaultCacheControl: express.RequestHandler = (
+  _req,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!res.getHeader('Cache-Control')) {
+    res.setHeader('Cache-Control', DEFAULT_CACHE_CONTROL);
+  }
+  next();
 };
 
 const app = express();
@@ -74,9 +87,9 @@ app.use(
 );
 app.use((_, res: Response, next: NextFunction) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  applyNoCacheHeaders(res);
   next();
 });
+app.use(setDefaultCacheControl);
 app.use((_, res: Response, next: NextFunction) => {
   res.removeHeader('Access-Control-Allow-Origin');
   next();
@@ -85,6 +98,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const originalEnd = res.end.bind(res);
 
   res.end = ((chunk?: unknown, encoding?: unknown, cb?: unknown) => {
+    if (res.headersSent) {
+      return originalEnd(chunk as never, encoding as never, cb as never);
+    }
+
     const normalizedOrigin = normalizeAllowOriginHeader(
       res.getHeader('Access-Control-Allow-Origin'),
     );
