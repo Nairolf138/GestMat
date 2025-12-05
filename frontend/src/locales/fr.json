@@ -61,6 +61,7 @@
   },
   "nav": {
     "catalog": "Catalogue",
+    "vehicles": "Véhicules",
     "inventory": "Inventaire local",
     "loans": "Prêts/Emprunts",
     "loans_history": "Historique",
@@ -122,6 +123,109 @@
     "delete": {
       "button": "Supprimer",
       "confirm": "Supprimer cet équipement ?"
+    }
+  },
+  "vehicles": {
+    "title": "Parc véhicules",
+    "subtitle": "Consultez la disponibilité, les documents et l'historique.",
+    "empty": "Aucun véhicule ne correspond aux filtres.",
+    "filters": {
+      "title": "Filtres véhicules",
+      "search": "Recherche",
+      "status": "Statut",
+      "usage": "Usage",
+      "location": "Emplacement",
+      "availableStart": "Début de période",
+      "availableEnd": "Fin de période",
+      "structure": "Structure",
+      "apply": "Appliquer",
+      "reset": "Réinitialiser"
+    },
+    "status": {
+      "available": "Disponible",
+      "unavailable": "Indisponible",
+      "maintenance": "Maintenance",
+      "retired": "Retiré"
+    },
+    "columns": {
+      "name": "Nom",
+      "registration": "Immatriculation",
+      "location": "Emplacement",
+      "status": "Statut",
+      "availability": "Disponibilité"
+    },
+    "availability": {
+      "available_range": "Disponible sur cette période",
+      "unavailable_range": "Réservé sur cette période",
+      "no_reservations": "Aucune réservation programmée",
+      "next_reservation": "Prochain créneau le {{date}}"
+    },
+    "form": {
+      "create_title": "Nouveau véhicule",
+      "edit_title": "Modifier le véhicule",
+      "name": "Nom",
+      "status": "Statut",
+      "type": "Type",
+      "type_placeholder": "Fourgon, utilitaire...",
+      "usage": "Usage",
+      "usage_placeholder": "Transport, logistique...",
+      "usage_option": {
+        "technique": "Technique",
+        "logistique": "Logistique"
+      },
+      "structure": "Structure",
+      "location": "Emplacement",
+      "location_placeholder": "Parc, dépôt...",
+      "brand": "Marque",
+      "brand_placeholder": "Renault, Peugeot...",
+      "model": "Modèle",
+      "model_placeholder": "Trafic, Boxer...",
+      "registrationNumber": "Immatriculation",
+      "registration_placeholder": "AA-123-BB",
+      "seats": "Places assises",
+      "fuelType": "Carburant",
+      "transmission": "Transmission",
+      "color": "Couleur",
+      "lastServiceDate": "Dernier contrôle",
+      "nextServiceDate": "Prochain contrôle",
+      "maintenanceNotes": "Notes de maintenance",
+      "insuranceProvider": "Assureur",
+      "policyNumber": "Numéro de police",
+      "insuranceExpiry": "Expiration de l'assurance",
+      "notes": "Notes complémentaires",
+      "submit": "Enregistrer",
+      "create_success": "Véhicule créé",
+      "update_success": "Véhicule mis à jour",
+      "submit_error": "Impossible d'enregistrer le véhicule"
+    },
+    "detail": {
+      "registration": "Immatriculation",
+      "status": "Statut",
+      "location": "Emplacement",
+      "usage": "Usage",
+      "structure": "Structure",
+      "documents": "Documents",
+      "insurance": "Assurance",
+      "provider": "Assureur",
+      "policy": "Numéro de police",
+      "expiry": "Expiration",
+      "technical": "Contrôle technique",
+      "last_service": "Dernier contrôle",
+      "next_service": "Prochain contrôle",
+      "notes": "Notes",
+      "notes_title": "Notes complémentaires",
+      "characteristics": "Caractéristiques",
+      "seats": "{{count}} places",
+      "fuel": "Carburant : {{value}}",
+      "transmission": "Transmission : {{value}}",
+      "color": "Couleur : {{value}}",
+      "history": "Historique",
+      "back_to_list": "Retour à la liste",
+      "no_history": "Aucun historique disponible",
+      "status_pending": "Statut non renseigné",
+      "edit_title": "Mettre à jour",
+      "edit_hint": "Cliquez sur \"Modifier le véhicule\" pour mettre à jour les informations.",
+      "not_provided": "Non renseigné"
     }
   },
   "home": {
@@ -379,7 +483,9 @@
     "all": "Tous",
     "reset": "Réinitialiser",
     "previous": "Précédent",
-    "next": "Suivant"
+    "next": "Suivant",
+    "close": "Fermer",
+    "back": "Retour"
   },
   "roles": {
     "Administrateur": "Administrateur",

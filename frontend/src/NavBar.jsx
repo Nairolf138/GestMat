@@ -125,6 +125,15 @@ function NavBar() {
               >
                 {t('nav.catalog')}
               </NavLink>
+              <NavLink
+                className={({ isActive }) =>
+                  'nav-link' + (isActive ? ' active' : '')
+                }
+                to="/vehicles"
+                onClick={() => setIsOpen(false)}
+              >
+                {t('nav.vehicles')}
+              </NavLink>
               {user && (
                 <>
                   <NavLink

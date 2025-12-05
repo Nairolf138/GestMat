@@ -13,6 +13,8 @@ import LoanDetail from './LoanDetail.jsx';
 import Profile from './Profile';
 import Catalog from './Catalog';
 import Cart from './Cart';
+import Vehicles from './pages/Vehicles/Vehicles.jsx';
+import VehicleDetail from './pages/Vehicles/VehicleDetail.jsx';
 import PrivateRoute from './PrivateRoute';
 import AdminRoute from './AdminRoute';
 import AdminDashboard from './AdminDashboard';
@@ -55,6 +57,22 @@ function App() {
             element={
               <PrivateRoute>
                 <Catalog />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/vehicles"
+            element={
+              <PrivateRoute>
+                <Vehicles />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/vehicles/:id"
+            element={
+              <PrivateRoute>
+                <VehicleDetail />
               </PrivateRoute>
             }
           />
