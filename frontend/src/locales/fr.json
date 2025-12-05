@@ -55,6 +55,7 @@
     "error": "Impossible de réinitialiser le mot de passe.",
     "missing_token": "Lien de réinitialisation invalide ou expiré.",
     "required": "Le mot de passe est requis.",
+    "requirements": "Le mot de passe doit contenir au moins 12 caractères dont des majuscules, des minuscules et un chiffre.",
     "mismatch": "Les mots de passe ne correspondent pas.",
     "back_to_forgot": "Retour à la demande de réinitialisation"
   },

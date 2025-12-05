@@ -18,21 +18,27 @@ function ResetPassword() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
     setStatus('');
+    const fieldErrors = {};
     if (!token) {
       setError(t('reset_password.missing_token'));
       return;
     }
     if (!password) {
-      setError(t('reset_password.required'));
-      return;
+      fieldErrors.password = t('reset_password.required');
+    } else if (!/^.*(?=.{12,})(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/.test(password)) {
+      fieldErrors.password = t('reset_password.requirements');
     }
     if (password !== confirmPassword) {
-      setError(t('reset_password.mismatch'));
+      fieldErrors.confirmPassword = t('reset_password.mismatch');
+    }
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) {
       return;
     }
     setLoading(true);
@@ -44,6 +50,7 @@ function ResetPassword() {
       setStatus(data.message || t('reset_password.success'));
       setTimeout(() => navigate('/login', { state: { message: t('reset_password.success') } }), 3000);
     } catch (err) {
+      setErrors(err.fieldErrors || {});
       setError(err.message || t('reset_password.error'));
     } finally {
       setLoading(false);
@@ -66,11 +73,26 @@ function ResetPassword() {
           <input
             id="new-password"
             type="password"
-            className="form-control"
+            className={`form-control${errors.password ? ' is-invalid' : ''}`}
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              if (errors.password) setErrors({ ...errors, password: undefined });
+            }}
             autoComplete="new-password"
+            aria-invalid={errors.password ? 'true' : undefined}
+            aria-describedby={errors.password ? 'new-password-error' : undefined}
           />
+          {errors.password && (
+            <div
+              className="invalid-feedback"
+              id="new-password-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.password}
+            </div>
+          )}
         </div>
         <div className="mb-3">
           <label className="form-label" htmlFor="confirm-password">
@@ -79,11 +101,29 @@ function ResetPassword() {
           <input
             id="confirm-password"
             type="password"
-            className="form-control"
+            className={`form-control${errors.confirmPassword ? ' is-invalid' : ''}`}
             value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value);
+              if (errors.confirmPassword)
+                setErrors({ ...errors, confirmPassword: undefined });
+            }}
             autoComplete="new-password"
+            aria-invalid={errors.confirmPassword ? 'true' : undefined}
+            aria-describedby={
+              errors.confirmPassword ? 'confirm-password-error' : undefined
+            }
           />
+          {errors.confirmPassword && (
+            <div
+              className="invalid-feedback"
+              id="confirm-password-error"
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.confirmPassword}
+            </div>
+          )}
         </div>
         <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? t('common.loading') : t('reset_password.submit')}
