@@ -51,7 +51,7 @@ Les véhicules sont soumis à des autorisations plus fines :
 - **Affectation** (réservation/attribution) : Administrateur et Régisseur·se Général·e peuvent affecter un véhicule, uniquement si son usage correspond à ceux autorisés (technique/logistique) et si la structure ciblée correspond à leur propre structure.
 - **Archivage** : Administrateur et Régisseur·se Général·e peuvent archiver/supprimer un véhicule de leur structure.
 
-Les middlewares d’accès contrôlent désormais le rôle **et** le contexte (structure cible ou type d’usage) lorsqu’ils sont fournis dans la requête (`structure`, `usage` ou `type`).
+Les middlewares d’accès contrôlent désormais le rôle **et** le contexte (structure cible ou type d’usage) lorsqu’ils sont fournis dans la requête (`structure`, `usage` ou `type`). Si aucun usage ou type n’est renseigné, le contrôle par usage est ignoré.
 
 ## Configurations essentielles
 

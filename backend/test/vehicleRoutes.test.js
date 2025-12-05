@@ -89,6 +89,43 @@ test('create, list, update and delete vehicles', async () => {
   await mongod.stop();
 });
 
+test('allows vehicle creation without usage or type', async () => {
+  const { app, client, mongod } = await createApp();
+  const newVehicle = {
+    name: 'Van without usage',
+    brand: 'Renault',
+  };
+
+  const res = await request(app)
+    .post(withApiPrefix('/vehicles'))
+    .set(auth(REGISSEUR_PLATEAU_ROLE))
+    .send(newVehicle)
+    .expect(200);
+
+  assert.strictEqual(res.body.name, newVehicle.name);
+  assert.strictEqual(res.body.usage, undefined);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('rejects vehicle creation with invalid usage type', async () => {
+  const { app, client, mongod } = await createApp();
+  const newVehicle = {
+    name: 'Van invalid usage',
+    usage: 'invalid',
+  };
+
+  await request(app)
+    .post(withApiPrefix('/vehicles'))
+    .set(auth(REGISSEUR_PLATEAU_ROLE))
+    .send(newVehicle)
+    .expect(403);
+
+  await client.close();
+  await mongod.stop();
+});
+
 test('allows structure-scoped updates and deletes without target structure', async () => {
   const { app, client, mongod } = await createApp();
   const newVehicle = {
@@ -115,6 +152,48 @@ test('allows structure-scoped updates and deletes without target structure', asy
     .delete(withApiPrefix(`/vehicles/${body._id}`))
     .set(auth(REGISSEUR_GENERAL_ROLE, 'structure-1'))
     .expect(200);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('allows vehicle assignment without usage or type', async () => {
+  const { app, client, mongod } = await createApp();
+  const structureId = new ObjectId().toString();
+
+  const { body: created } = await request(app)
+    .post(withApiPrefix('/vehicles'))
+    .set(auth(REGISSEUR_GENERAL_ROLE, structureId))
+    .send({ name: 'Assignable Van', structure: structureId, usage: 'technique' })
+    .expect(200);
+
+  const { body } = await request(app)
+    .put(withApiPrefix(`/vehicles/${created._id}`))
+    .set(auth(REGISSEUR_GENERAL_ROLE, structureId))
+    .send({ status: 'unavailable', structure: structureId })
+    .expect(200);
+
+  assert.strictEqual(body.status, 'unavailable');
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('rejects vehicle assignment with invalid usage type', async () => {
+  const { app, client, mongod } = await createApp();
+  const structureId = new ObjectId().toString();
+
+  const { body: created } = await request(app)
+    .post(withApiPrefix('/vehicles'))
+    .set(auth(REGISSEUR_GENERAL_ROLE, structureId))
+    .send({ name: 'Van to assign', structure: structureId, usage: 'technique' })
+    .expect(200);
+
+  await request(app)
+    .put(withApiPrefix(`/vehicles/${created._id}`))
+    .set(auth(REGISSEUR_GENERAL_ROLE, structureId))
+    .send({ usage: 'invalid', structure: structureId })
+    .expect(400);
 
   await client.close();
   await mongod.stop();
