@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next';
 import FormCard from './components/FormCard.jsx';
 import Alert from './Alert.jsx';
 import { api } from './api';
+import {
+  PASSWORD_REQUIREMENT_KEY,
+  isPasswordValid,
+} from './utils/passwordPolicy.js';
 
 function ResetPassword() {
   const { t } = useTranslation();
@@ -31,8 +35,8 @@ function ResetPassword() {
     }
     if (!password) {
       fieldErrors.password = t('reset_password.required');
-    } else if (!/^.*(?=.{12,})(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$/.test(password)) {
-      fieldErrors.password = t('reset_password.requirements');
+    } else if (!isPasswordValid(password)) {
+      fieldErrors.password = t(PASSWORD_REQUIREMENT_KEY);
     }
     if (password !== confirmPassword) {
       fieldErrors.confirmPassword = t('reset_password.mismatch');
