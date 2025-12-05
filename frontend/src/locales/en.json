@@ -61,6 +61,7 @@
   },
   "nav": {
     "catalog": "Catalog",
+    "vehicles": "Vehicles",
     "inventory": "Local inventory",
     "loans": "Loans",
     "loans_history": "History",
@@ -122,6 +123,105 @@
     "delete": {
       "button": "Delete",
       "confirm": "Delete this equipment?"
+    }
+  },
+  "vehicles": {
+    "title": "Fleet",
+    "subtitle": "Review availability, documents, and vehicle history.",
+    "empty": "No vehicles match your filters.",
+    "filters": {
+      "title": "Vehicle filters",
+      "search": "Search",
+      "status": "Status",
+      "usage": "Usage",
+      "location": "Location",
+      "availableStart": "Start date",
+      "availableEnd": "End date",
+      "structure": "Structure",
+      "apply": "Apply",
+      "reset": "Reset"
+    },
+    "status": {
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "maintenance": "Maintenance",
+      "retired": "Retired"
+    },
+    "columns": {
+      "name": "Name",
+      "registration": "Registration",
+      "location": "Location",
+      "status": "Status",
+      "availability": "Availability"
+    },
+    "availability": {
+      "available_range": "Available for this period",
+      "unavailable_range": "Reserved during this period",
+      "no_reservations": "No scheduled reservations",
+      "next_reservation": "Next slot on {{date}}"
+    },
+    "form": {
+      "create_title": "New vehicle",
+      "edit_title": "Edit vehicle",
+      "name": "Name",
+      "status": "Status",
+      "type": "Type",
+      "type_placeholder": "Van, utility...",
+      "usage": "Usage",
+      "usage_placeholder": "Transport, logistics...",
+      "structure": "Structure",
+      "location": "Location",
+      "location_placeholder": "Depot, parking...",
+      "brand": "Brand",
+      "brand_placeholder": "Renault, Peugeot...",
+      "model": "Model",
+      "model_placeholder": "Trafic, Boxer...",
+      "registrationNumber": "Registration",
+      "registration_placeholder": "AA-123-BB",
+      "seats": "Seats",
+      "fuelType": "Fuel type",
+      "transmission": "Transmission",
+      "color": "Color",
+      "lastServiceDate": "Last inspection",
+      "nextServiceDate": "Next inspection",
+      "maintenanceNotes": "Maintenance notes",
+      "insuranceProvider": "Insurance provider",
+      "policyNumber": "Policy number",
+      "insuranceExpiry": "Insurance expiry",
+      "notes": "Notes",
+      "submit": "Save",
+      "create_success": "Vehicle created",
+      "update_success": "Vehicle updated",
+      "submit_error": "Unable to save vehicle"
+    },
+    "detail": {
+      "registration": "Registration",
+      "status": "Status",
+      "location": "Location",
+      "usage": "Usage",
+      "structure": "Structure",
+      "documents": "Documents",
+      "insurance": "Insurance",
+      "provider": "Provider",
+      "policy": "Policy number",
+      "expiry": "Expiry",
+      "technical": "Technical control",
+      "last_service": "Last inspection",
+      "next_service": "Next inspection",
+      "notes": "Notes",
+      "notes_title": "Additional notes",
+      "characteristics": "Characteristics",
+      "seats": "{{count}} seats",
+      "fuel": "Fuel: {{value}}",
+      "transmission": "Transmission: {{value}}",
+      "color": "Color: {{value}}",
+      "history": "History",
+      "back_to_list": "Back to list",
+      "no_history": "No history available",
+      "status_pending": "Status not provided",
+      "edit_title": "Update",
+      "edit_hint": "Use \"Edit vehicle\" to update this record.",
+      "not_provided": "Not provided"
     }
   },
   "home": {
@@ -379,7 +479,9 @@
     "all": "All",
     "reset": "Reset",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "close": "Close",
+    "back": "Back"
   },
   "roles": {
     "Administrateur": "Administrator",
