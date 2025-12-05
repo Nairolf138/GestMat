@@ -1,36 +1,53 @@
 import { Db } from 'mongodb';
 import client from 'prom-client';
 
+const VEHICLE_OCCUPANCY_METRIC_NAME = 'gestmat_vehicle_occupancy_ratio';
+const VEHICLE_KILOMETERS_METRIC_NAME = 'gestmat_vehicle_kilometers_total';
+const VEHICLE_DOWNTIME_METRIC_NAME = 'gestmat_vehicle_downtime_days_total';
+
 const vehicleOccupancyGauge = new client.Gauge({
-  name: 'gestmat_vehicle_occupancy_ratio',
+  name: VEHICLE_OCCUPANCY_METRIC_NAME,
   help: 'Proportion de véhicules actuellement réservés',
 });
 
 const vehicleKilometersGauge = new client.Gauge({
-  name: 'gestmat_vehicle_kilometers_total',
+  name: VEHICLE_KILOMETERS_METRIC_NAME,
   help: 'Kilomètres cumulés enregistrés sur l’ensemble du parc de véhicules',
 });
 
 const vehicleDowntimeGauge = new client.Gauge({
-  name: 'gestmat_vehicle_downtime_days_total',
+  name: VEHICLE_DOWNTIME_METRIC_NAME,
   help: "Nombre cumulé de journées d'indisponibilité déclarées pour les véhicules",
 });
 
 export function registerMonitoringMetrics(): void {
-  if (!client.register.getSingleMetric(vehicleOccupancyGauge.name)) {
+  if (!client.register.getSingleMetric(VEHICLE_OCCUPANCY_METRIC_NAME)) {
     client.register.registerMetric(vehicleOccupancyGauge);
   }
-  if (!client.register.getSingleMetric(vehicleKilometersGauge.name)) {
+  if (!client.register.getSingleMetric(VEHICLE_KILOMETERS_METRIC_NAME)) {
     client.register.registerMetric(vehicleKilometersGauge);
   }
-  if (!client.register.getSingleMetric(vehicleDowntimeGauge.name)) {
+  if (!client.register.getSingleMetric(VEHICLE_DOWNTIME_METRIC_NAME)) {
     client.register.registerMetric(vehicleDowntimeGauge);
   }
 }
 
+type VehicleTotals = {
+  kilometers?: number;
+  downtime?: number;
+};
+
+type VehicleAggregateResult = {
+  occupied?: number;
+  totals?: VehicleTotals;
+};
+
 export async function refreshMonitoringMetrics(db: Db): Promise<void> {
   const now = new Date();
-  const [totalVehicles, aggregates] = await Promise.all<[number, any[]]>([
+  const [totalVehicles, aggregates] = await Promise.all<[
+    number,
+    VehicleAggregateResult[],
+  ]>([
     db.collection('vehicles').countDocuments({}),
     db
       .collection('vehicles')
@@ -68,9 +85,9 @@ export async function refreshMonitoringMetrics(db: Db): Promise<void> {
       .toArray(),
   ]);
 
-  const aggregate = aggregates[0] || {};
+  const aggregate: VehicleAggregateResult = aggregates[0] ?? {};
   const occupiedVehicles = aggregate.occupied || 0;
-  const totals = aggregate.totals || {};
+  const totals: VehicleTotals = aggregate.totals || {};
 
   vehicleOccupancyGauge.set(
     totalVehicles ? occupiedVehicles / totalVehicles : 0,
