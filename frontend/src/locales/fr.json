@@ -160,6 +160,8 @@
       "no_reservations": "Aucune réservation programmée",
       "next_reservation": "Prochain créneau le {{date}}"
     },
+    "delete_confirm": "Supprimer ce véhicule ?",
+    "delete_success": "Véhicule supprimé",
     "form": {
       "create_title": "Nouveau véhicule",
       "edit_title": "Modifier le véhicule",
@@ -428,11 +430,12 @@
   "admin_dashboard": {
     "title": "Tableau d'administration",
     "tabs": {
-      "users": "Utilisateurs",
-      "loans": "Prêts",
-      "inventory": "Inventaire",
-      "stats": "Statistiques"
-    },
+    "users": "Utilisateurs",
+    "loans": "Prêts",
+    "inventory": "Inventaire",
+    "vehicles": "Véhicules",
+    "stats": "Statistiques"
+  },
     "summary": {
       "title": "Résumé",
       "active_users": "Utilisateurs actifs",

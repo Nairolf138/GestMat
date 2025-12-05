@@ -160,6 +160,8 @@
       "no_reservations": "No scheduled reservations",
       "next_reservation": "Next slot on {{date}}"
     },
+    "delete_confirm": "Delete this vehicle?",
+    "delete_success": "Vehicle deleted",
     "form": {
       "create_title": "New vehicle",
       "edit_title": "Edit vehicle",
@@ -428,11 +430,12 @@
   "admin_dashboard": {
     "title": "Admin Dashboard",
     "tabs": {
-      "users": "Users",
-      "loans": "Loans",
-      "inventory": "Inventory",
-      "stats": "Statistics"
-    },
+    "users": "Users",
+    "loans": "Loans",
+    "inventory": "Inventory",
+    "vehicles": "Vehicles",
+    "stats": "Statistics"
+  },
     "summary": {
       "title": "Summary",
       "active_users": "Active users",
