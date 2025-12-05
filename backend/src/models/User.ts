@@ -8,6 +8,7 @@ export interface EmailNotificationPreferences {
   loanStatusChanges: boolean;
   returnReminders: boolean;
   systemAlerts: boolean;
+  vehicleReminders: boolean;
   /**
    * @deprecated Utilisé pour les anciens profils ; les nouvelles préférences explicites doivent être utilisées.
    */
@@ -25,6 +26,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     loanStatusChanges: true,
     returnReminders: true,
     systemAlerts: true,
+    vehicleReminders: true,
     structureUpdates: true,
   },
 };
@@ -66,6 +68,7 @@ export const mergePreferences = (
         'loanRequests',
         'loanStatusChanges',
         'returnReminders',
+        'vehicleReminders',
       ];
 
       for (const key of mappedPreferences) {
