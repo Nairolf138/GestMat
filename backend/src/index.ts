@@ -26,6 +26,7 @@ import loanRoutes from './routes/loans';
 import statsRoutes from './routes/stats';
 import rolesRoutes from './routes/roles';
 import reportRoutes from './routes/reports';
+import vehicleRoutes from './routes/vehicles';
 import { Db } from 'mongodb';
 import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
@@ -217,6 +218,12 @@ export async function start(
       location: 1,
       structure: 1,
     });
+    await db.collection('vehicles').createIndex({
+      name: 1,
+      registrationNumber: 1,
+      status: 1,
+      location: 1,
+    });
     await ensureSessionIndexes(db);
     await ensurePasswordResetIndexes(db);
     if (NODE_ENV !== 'test') {
@@ -236,6 +243,7 @@ export async function start(
   app.use(withApiPrefix('/users'), userRoutes);
   app.use(withApiPrefix('/structures'), structureRoutes);
   app.use(withApiPrefix('/equipments'), equipmentRoutes);
+  app.use(withApiPrefix('/vehicles'), vehicleRoutes);
   app.use(withApiPrefix('/loans'), loanRoutes);
   app.use(withApiPrefix('/stats'), statsRoutes);
   app.use(withApiPrefix('/roles'), rolesRoutes);

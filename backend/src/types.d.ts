@@ -10,6 +10,7 @@ declare module './routes/auth';
 declare module './routes/users';
 declare module './routes/structures';
 declare module './routes/equipments';
+declare module './routes/vehicles';
 declare module './routes/loans';
 declare module './routes/stats';
 declare module './routes/roles';
