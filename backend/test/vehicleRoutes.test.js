@@ -10,6 +10,7 @@ process.env.JWT_SECRET = 'test';
 const vehicleRoutes = require('../src/routes/vehicles').default;
 const {
   ADMIN_ROLE,
+  REGISSEUR_GENERAL_ROLE,
   REGISSEUR_PLATEAU_ROLE,
   AUTRE_ROLE,
 } = require('../src/config/roles');
@@ -28,8 +29,10 @@ async function createApp() {
   return { app, client, mongod };
 }
 
-function auth(role = ADMIN_ROLE) {
-  const token = jwt.sign({ id: 'u1', role }, 'test', {
+function auth(role = ADMIN_ROLE, structure) {
+  const payload = { id: 'u1', role };
+  if (structure) payload.structure = structure;
+  const token = jwt.sign(payload, 'test', {
     expiresIn: '1h',
   });
   return { Authorization: `Bearer ${token}` };
@@ -42,6 +45,7 @@ test('create, list, update and delete vehicles', async () => {
     brand: 'Ford',
     model: 'Transit',
     registrationNumber: 'AB-123-CD',
+    usage: 'technique',
     characteristics: { seats: 3, fuelType: 'Diesel' },
   };
   const res = await request(app)
@@ -73,13 +77,70 @@ test('create, list, update and delete vehicles', async () => {
 
   await request(app)
     .delete(withApiPrefix(`/vehicles/${id}`))
-    .set(auth(REGISSEUR_PLATEAU_ROLE))
+    .set(auth(REGISSEUR_GENERAL_ROLE, 'structure-1'))
     .expect(200);
   const listAfterDelete = await request(app)
     .get(withApiPrefix('/vehicles'))
     .set(auth())
     .expect(200);
   assert.strictEqual(listAfterDelete.body.length, 0);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('allows structure-scoped updates and deletes without target structure', async () => {
+  const { app, client, mongod } = await createApp();
+  const newVehicle = {
+    name: 'Structureless Van',
+    brand: 'Citroën',
+    model: 'Jumpy',
+    registrationNumber: 'EF-789-GH',
+    usage: 'technique',
+  };
+
+  const { body } = await request(app)
+    .post(withApiPrefix('/vehicles'))
+    .set(auth(REGISSEUR_GENERAL_ROLE, 'structure-1'))
+    .send(newVehicle)
+    .expect(200);
+
+  await request(app)
+    .put(withApiPrefix(`/vehicles/${body._id}`))
+    .set(auth(REGISSEUR_GENERAL_ROLE, 'structure-1'))
+    .send({ status: 'maintenance' })
+    .expect(200);
+
+  await request(app)
+    .delete(withApiPrefix(`/vehicles/${body._id}`))
+    .set(auth(REGISSEUR_GENERAL_ROLE, 'structure-1'))
+    .expect(200);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('denies structure-scoped updates when structure differs', async () => {
+  const { app, client, mongod } = await createApp();
+  const newVehicle = {
+    name: 'Scoped Van',
+    brand: 'Renault',
+    model: 'Trafic',
+    registrationNumber: 'IJ-012-KL',
+    usage: 'logistique',
+  };
+
+  const { body } = await request(app)
+    .post(withApiPrefix('/vehicles'))
+    .set(auth(REGISSEUR_GENERAL_ROLE, 'structure-1'))
+    .send(newVehicle)
+    .expect(200);
+
+  await request(app)
+    .put(withApiPrefix(`/vehicles/${body._id}?structure=structure-2`))
+    .set(auth(REGISSEUR_GENERAL_ROLE, 'structure-1'))
+    .send({ status: 'available' })
+    .expect(403);
 
   await client.close();
   await mongod.stop();

@@ -58,6 +58,14 @@ To obtain a new token when the current one expires, send a `POST` request to
 stored in an HTTP-only cookie) and responds with `{ token }` containing a fresh
 JWT.
 
+### Authorization scopes
+
+Some permissions are marked as structure-scoped, meaning they compare the requesting
+user's `structure` to the structure provided in the request body or query string.
+When the target structure is omitted, the rule falls back to role-based access
+only; when a structure is supplied, it must match the user's structure for the
+permission to be granted.
+
 ### Authentication cookie configuration
 
 - **Secure flag**: The `secure` attribute is enabled automatically when `API_URL` starts with `https://`. When the API is served over plain HTTP (local development), cookies are sent without the `secure` flag so browsers will accept them.
