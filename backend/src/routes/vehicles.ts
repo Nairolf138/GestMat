@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { Filter, ObjectId } from 'mongodb';
+import { Condition, Filter, ObjectId } from 'mongodb';
 import auth from '../middleware/auth';
 import checkId from '../middleware/checkObjectId';
 import validate from '../middleware/validate';
@@ -8,6 +8,8 @@ import logger from '../utils/logger';
 import { badRequest, notFound } from '../utils/errors';
 import {
   Vehicle,
+  VehicleStatus,
+  VEHICLE_STATUSES,
   buildAvailabilityFilter,
   createVehicle,
   deleteVehicle,
@@ -48,8 +50,11 @@ function buildVehicleFilter(query: any): Filter<Vehicle> {
       { registrationNumber: searchRegex },
     ];
   }
-  if (query.status) {
-    filter.status = query.status as string;
+  if (typeof query.status === 'string') {
+    const status = query.status.toLowerCase();
+    if (VEHICLE_STATUSES.includes(status as VehicleStatus)) {
+      filter.status = status as Condition<VehicleStatus>;
+    }
   }
   if (query.location) {
     filter.location = query.location as string;
