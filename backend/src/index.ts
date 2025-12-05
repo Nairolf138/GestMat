@@ -56,6 +56,11 @@ const normalizeAllowOriginHeader = (
   return values[0];
 };
 
+const applyNoCacheHeaders = (res: Response): void => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.removeHeader('Expires');
+};
+
 const app = express();
 app.use(
   helmet({
@@ -67,6 +72,11 @@ app.use(
     },
   }),
 );
+app.use((_, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  applyNoCacheHeaders(res);
+  next();
+});
 app.use((_, res: Response, next: NextFunction) => {
   res.removeHeader('Access-Control-Allow-Origin');
   next();
@@ -215,11 +225,13 @@ export async function start(
   app.use(withApiPrefix('/reports'), reportRoutes);
 
   app.get('/metrics', async (req: Request, res: Response) => {
+    applyNoCacheHeaders(res);
     res.set('Content-Type', client.register.contentType);
     res.end(await client.register.metrics());
   });
 
   app.get('/health', async (req: Request, res: Response) => {
+    applyNoCacheHeaders(res);
     try {
       const db: Db = req.app.locals.db;
       await db.command({ ping: 1 });
