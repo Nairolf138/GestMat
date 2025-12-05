@@ -74,6 +74,12 @@ const normalizeSameSite = (
   return normalized;
 };
 
+const strictBoolean = (defaultValue: boolean) =>
+  z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .transform((value) => (typeof value === 'boolean' ? value : value === 'true'))
+    .default(defaultValue);
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
   CORS_ORIGIN: z
@@ -91,8 +97,8 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOAN_REMINDER_OFFSET_HOURS: z.coerce.number().positive().default(24),
   LOAN_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
-  LOAN_REMINDER_DAILY_SCHEDULE_ENABLED: z.coerce.boolean().default(true),
-  LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: z.coerce.boolean().default(false),
+  LOAN_REMINDER_DAILY_SCHEDULE_ENABLED: strictBoolean(true),
+  LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: strictBoolean(false),
   LOAN_OVERDUE_CHECK_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
   LOAN_ARCHIVE_MIN_AGE_DAYS: z.coerce.number().positive().default(365),
   LOAN_ARCHIVE_INTERVAL_DAYS: z.coerce.number().positive().default(1),
@@ -100,7 +106,7 @@ const envSchema = z.object({
   REPORT_CHECK_INTERVAL_HOURS: z.coerce.number().positive().default(24),
   VEHICLE_COMPLIANCE_REMINDER_OFFSET_DAYS: z.coerce.number().positive().default(30),
   VEHICLE_COMPLIANCE_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(720),
-  VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED: z.coerce.boolean().default(true),
+  VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED: strictBoolean(true),
 });
 
 const env = envSchema.parse(process.env);
