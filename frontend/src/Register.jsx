@@ -7,6 +7,10 @@ import { useTranslation } from 'react-i18next';
 import FormCard from './components/FormCard.jsx';
 import { ADMIN_ROLE, normalizeRoleTranslationKey } from '../roles';
 import logo from './logo.png';
+import {
+  PASSWORD_REQUIREMENT_KEY,
+  isPasswordValid,
+} from './utils/passwordPolicy.js';
 
 function Register() {
   const { roles, structures } = useContext(GlobalContext);
@@ -43,10 +47,13 @@ function Register() {
     const fieldErrors = {};
     if (!username) fieldErrors.username = t('common.required');
     if (!password) fieldErrors.password = t('common.required');
+    if (password && !isPasswordValid(password)) {
+      fieldErrors.password = t(PASSWORD_REQUIREMENT_KEY);
+    }
     if (!role) fieldErrors.role = t('common.required');
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) {
-      setError(t('register.fields_required'));
+      setError(fieldErrors.password || t('register.fields_required'));
       return;
     }
     const payload = { username, password, role };

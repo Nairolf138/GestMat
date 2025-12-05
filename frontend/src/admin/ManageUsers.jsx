@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { confirmDialog } from '../utils';
 import Alert from '../Alert.jsx';
 import { normalizeRoleTranslationKey } from '../../roles';
+import {
+  PASSWORD_REQUIREMENT_KEY,
+  isPasswordValid,
+} from '../utils/passwordPolicy.js';
 
 const normalizeRoleValue = (role = '') => {
   const cleanedRole = role
@@ -50,6 +54,7 @@ function ManageUsers() {
     password: '',
     passwordConfirm: '',
   });
+  const [newUserErrors, setNewUserErrors] = useState({});
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
@@ -179,6 +184,7 @@ function ManageUsers() {
   const toggleCreateForm = () => {
     if (!showCreateForm) {
       resetNewUserForm();
+      setNewUserErrors({});
     }
     setShowCreateForm((prev) => !prev);
   };
@@ -187,6 +193,7 @@ function ManageUsers() {
     e.preventDefault();
     setError('');
     setMessage('');
+    setNewUserErrors({});
 
     const requiredFields = [
       'username',
@@ -215,6 +222,13 @@ function ManageUsers() {
       return;
     }
 
+    if (!isPasswordValid(newUserForm.password)) {
+      const requirementMessage = t(PASSWORD_REQUIREMENT_KEY);
+      setNewUserErrors({ password: requirementMessage });
+      setError(requirementMessage);
+      return;
+    }
+
     try {
       await api('/users', {
         method: 'POST',
@@ -229,6 +243,7 @@ function ManageUsers() {
         }),
       });
       setMessage(t('users.create_success'));
+      setNewUserErrors({});
       resetNewUserForm();
       setShowCreateForm(false);
       load();
@@ -361,15 +376,22 @@ function ManageUsers() {
             <div className="row g-3 mb-3">
               <div className="col-md-6">
                 <input
-                  className="form-control"
+                  className={`form-control${newUserErrors.password ? ' is-invalid' : ''}`}
                   placeholder={t('users.password')}
                   type="password"
                   value={newUserForm.password}
-                  onChange={(e) =>
-                    setNewUserForm({ ...newUserForm, password: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setNewUserForm({ ...newUserForm, password: e.target.value });
+                    if (newUserErrors.password)
+                      setNewUserErrors({ ...newUserErrors, password: undefined });
+                  }}
                   required
                 />
+                {newUserErrors.password && (
+                  <div className="invalid-feedback" role="alert">
+                    {newUserErrors.password}
+                  </div>
+                )}
               </div>
               <div className="col-md-6">
                 <input
