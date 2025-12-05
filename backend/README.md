@@ -36,13 +36,16 @@ The API reads its configuration from the following variables:
 | `NOTIFY_EMAIL`   | Optional sender/recipient address for notification emails (overrides the derived sender).     |
 | `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
 | `LOAN_REMINDER_OFFSET_HOURS` | Hours before the start or end date to trigger reminder emails. Defaults to `24`. |
-| `LOAN_REMINDER_DAILY_SCHEDULE_ENABLED` | When `true` (default), runs reminder checks every day at 9:00 local time. |
+| `LOAN_REMINDER_DAILY_SCHEDULE_ENABLED` | Enable the daily 9:00 reminder sweep. Accepts lowercase `true`/`false`; set to `false` to disable this schedule. |
 | `LOAN_REMINDER_INTERVAL_MINUTES` | Interval used for reminder retries when the fallback scheduler is enabled. Defaults to `60`. |
-| `LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED` | Enable interval-based reminder retries alongside or instead of the daily 9:00 schedule. Defaults to `false`. |
+| `LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED` | Toggle interval-based reminder retries alongside or instead of the daily 9:00 schedule. Accepts lowercase `true`/`false`; set to `false` to disable the job. Defaults to `false`. |
 | `LOAN_ARCHIVE_MIN_AGE_DAYS` | Age in days before a finished loan is eligible for archiving. Defaults to `365`. |
 | `LOAN_ARCHIVE_INTERVAL_DAYS` | Interval in days between archive jobs. Defaults to `1` (daily). |
 | `LOAN_ARCHIVE_BATCH_SIZE` | Maximum number of loans processed per archive run. Defaults to `100`. |
 | `REPORT_CHECK_INTERVAL_HOURS` | Interval in hours between checks for the annual report job (default: `24`). |
+| `VEHICLE_COMPLIANCE_REMINDER_OFFSET_DAYS` | Days before a vehicle compliance expiry to trigger reminder emails. Defaults to `30`. |
+| `VEHICLE_COMPLIANCE_REMINDER_INTERVAL_MINUTES` | Interval used for compliance reminder retries. Defaults to `720` (12 hours). |
+| `VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED` | Enable the daily 08:00 vehicle compliance sweep. Accepts lowercase `true`/`false`; set to `false` to disable the job. |
 
 If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
 to a comma-separated whitelist to lock the API down to trusted origins. The server always normalizes `Access-Control-Allow-Origin`
