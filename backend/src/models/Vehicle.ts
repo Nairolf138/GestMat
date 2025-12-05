@@ -30,6 +30,27 @@ export interface VehicleInsurance {
   expiryDate?: Date;
 }
 
+export interface VehicleTechnicalInspection {
+  lastInspectionDate?: Date;
+  expiryDate?: Date;
+  documentUrl?: string;
+  notes?: string;
+}
+
+export interface VehicleComplianceDocument {
+  title: string;
+  type?: 'insurance' | 'technicalInspection' | 'other';
+  url?: string;
+  uploadedAt?: Date;
+  expiresAt?: Date;
+  notes?: string;
+}
+
+export interface VehicleComplianceReminders {
+  insuranceReminderSentAt?: Date;
+  technicalInspectionReminderSentAt?: Date;
+}
+
 export interface VehicleCharacteristics {
   seats?: number;
   fuelType?: string;
@@ -53,6 +74,11 @@ export interface Vehicle {
   reservations?: VehicleReservation[];
   maintenance?: VehicleMaintenance;
   insurance?: VehicleInsurance;
+  technicalInspection?: VehicleTechnicalInspection;
+  complianceDocuments?: VehicleComplianceDocument[];
+  complianceReminders?: VehicleComplianceReminders;
+  kilometersTraveled?: number;
+  downtimeDays?: number;
   notes?: string;
   [key: string]: unknown;
 }
@@ -94,6 +120,47 @@ function normalizeVehicleDates(vehicle: Partial<Vehicle>): Partial<Vehicle> {
     normalized.insurance = {
       ...normalized.insurance,
       expiryDate: new Date(normalized.insurance.expiryDate),
+    };
+  }
+  if (normalized.kilometersTraveled !== undefined) {
+    normalized.kilometersTraveled = Number(normalized.kilometersTraveled);
+  }
+  if (normalized.downtimeDays !== undefined) {
+    normalized.downtimeDays = Number(normalized.downtimeDays);
+  }
+  if (normalized.technicalInspection?.lastInspectionDate) {
+    normalized.technicalInspection = {
+      ...normalized.technicalInspection,
+      lastInspectionDate: new Date(normalized.technicalInspection.lastInspectionDate),
+    };
+  }
+  if (normalized.technicalInspection?.expiryDate) {
+    normalized.technicalInspection = {
+      ...normalized.technicalInspection,
+      expiryDate: new Date(normalized.technicalInspection.expiryDate),
+    };
+  }
+  if (normalized.complianceDocuments) {
+    normalized.complianceDocuments = normalized.complianceDocuments.map((doc) => ({
+      ...doc,
+      uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
+      expiresAt: doc.expiresAt ? new Date(doc.expiresAt) : undefined,
+    }));
+  }
+  if (normalized.complianceReminders?.insuranceReminderSentAt) {
+    normalized.complianceReminders = {
+      ...normalized.complianceReminders,
+      insuranceReminderSentAt: new Date(
+        normalized.complianceReminders.insuranceReminderSentAt,
+      ),
+    };
+  }
+  if (normalized.complianceReminders?.technicalInspectionReminderSentAt) {
+    normalized.complianceReminders = {
+      ...normalized.complianceReminders,
+      technicalInspectionReminderSentAt: new Date(
+        normalized.complianceReminders.technicalInspectionReminderSentAt,
+      ),
     };
   }
   return normalized;
@@ -143,6 +210,9 @@ export async function createVehicle(
   const vehicle: Vehicle = {
     status: 'available',
     reservations: [],
+    complianceDocuments: [],
+    kilometersTraveled: 0,
+    downtimeDays: 0,
     ...normalizeVehicleDates(data),
   };
   const result = await db.collection<Vehicle>('vehicles').insertOne(vehicle);
@@ -155,11 +225,25 @@ export async function updateVehicle(
   data: Partial<Vehicle>,
 ): Promise<Vehicle | null> {
   const updates = normalizeVehicleDates(data);
+  const unset: Record<string, ''> = {};
+
+  if (data.insurance?.expiryDate !== undefined) {
+    unset['complianceReminders.insuranceReminderSentAt'] = '';
+  }
+  if (data.technicalInspection?.expiryDate !== undefined) {
+    unset['complianceReminders.technicalInspectionReminderSentAt'] = '';
+  }
+
+  const updateDoc: Record<string, unknown> = { $set: updates };
+  if (Object.keys(unset).length) {
+    updateDoc.$unset = unset;
+  }
+
   const res = await db
     .collection<Vehicle>('vehicles')
     .findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: updates },
+      updateDoc,
       { returnDocument: 'after' },
     );
   return res.value;

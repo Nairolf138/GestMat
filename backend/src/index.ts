@@ -35,6 +35,8 @@ import { scheduleLoanReminders } from './services/reminderService';
 import { scheduleOverdueLoanNotifications } from './services/overdueService';
 import { scheduleLoanArchiving } from './services/archiveService';
 import { scheduleAnnualReports } from './services/reportService';
+import { scheduleVehicleComplianceReminders } from './services/vehicleComplianceService';
+import { registerMonitoringMetrics, refreshMonitoringMetrics } from './utils/monitoring';
 
 const normalizeAllowOriginHeader = (
   value: string | string[] | number | undefined,
@@ -179,6 +181,7 @@ const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: RATE_LIMIT_MAX });
 app.use(limiter);
 
 client.collectDefaultMetrics();
+registerMonitoringMetrics();
 
 const withApiPrefix = (path: string): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
@@ -208,6 +211,7 @@ export async function start(
   let overdueInterval: NodeJS.Timeout | undefined;
   let archiveInterval: NodeJS.Timeout | undefined;
   let reportInterval: NodeJS.Timeout | undefined;
+  let vehicleComplianceSchedule: { cancel: () => void } | undefined;
   try {
     db = await connect();
     app.locals.db = db;
@@ -231,6 +235,7 @@ export async function start(
       overdueInterval = scheduleOverdueLoanNotifications(db);
       archiveInterval = scheduleLoanArchiving(db);
       reportInterval = scheduleAnnualReports(db);
+      vehicleComplianceSchedule = scheduleVehicleComplianceReminders(db);
     }
   } catch (err) {
     logger.error('Failed to start server: %o', err as Error);
@@ -252,6 +257,7 @@ export async function start(
   app.get('/metrics', async (req: Request, res: Response) => {
     applyNoCacheHeaders(res);
     res.set('Content-Type', client.register.contentType);
+    await refreshMonitoringMetrics(req.app.locals.db);
     res.end(await client.register.metrics());
   });
 
@@ -290,6 +296,7 @@ export async function start(
 
   const shutdown = () => {
     reminderSchedule?.cancel();
+    vehicleComplianceSchedule?.cancel();
     if (overdueInterval) {
       clearInterval(overdueInterval);
     }
@@ -308,6 +315,7 @@ export async function start(
   process.on('SIGTERM', shutdown);
   server.on('close', () => {
     reminderSchedule?.cancel();
+    vehicleComplianceSchedule?.cancel();
     if (overdueInterval) {
       clearInterval(overdueInterval);
     }

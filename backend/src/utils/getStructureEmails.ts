@@ -1,10 +1,13 @@
 import { Db, ObjectId } from 'mongodb';
-import { isNotificationEnabled } from './notificationPreferences';
+import { NotificationPreference, isNotificationEnabled } from './notificationPreferences';
 
 export async function getStructureEmails(
   db: Db,
   structureId: string,
-  { requireSystemAlerts = false }: { requireSystemAlerts?: boolean } = {},
+  {
+    requireSystemAlerts = false,
+    preference,
+  }: { requireSystemAlerts?: boolean; preference?: NotificationPreference } = {},
 ): Promise<string[]> {
   if (!ObjectId.isValid(structureId)) {
     return [];
@@ -17,7 +20,8 @@ export async function getStructureEmails(
     .filter(
       (u: any) =>
         u.email &&
-        (!requireSystemAlerts || isNotificationEnabled(u, 'systemAlerts')),
+        (!requireSystemAlerts || isNotificationEnabled(u, 'systemAlerts')) &&
+        (!preference || isNotificationEnabled(u, preference)),
     )
     .map((u: any) => u.email)
     .filter(Boolean);

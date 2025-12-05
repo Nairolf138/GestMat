@@ -1,4 +1,5 @@
 import { LoanItem, LoanRequest } from '../models/LoanRequest';
+import type { Vehicle } from '../models/Vehicle';
 
 type LoanRecipientRole = 'owner' | 'borrower' | 'requester';
 
@@ -36,6 +37,12 @@ interface PasswordResetContext {
 interface UsernameReminderContext {
   displayName: string;
   username: string;
+}
+
+interface VehicleComplianceContext {
+  vehicle: Vehicle;
+  kind: 'insurance' | 'technicalInspection';
+  expiryDate: Date;
 }
 
 interface MailTemplate {
@@ -437,6 +444,33 @@ export function loanOverdueTemplate({ loan, role = 'owner' }: LoanMailContext): 
       <p>Le prêt ${loan._id} est en retard.</p>
       ${html}
       <p><strong>Action à entreprendre :</strong> ${action}</p>
+      <p>${SIGNATURE}</p>
+    `,
+  };
+}
+
+export function vehicleComplianceReminderTemplate({
+  vehicle,
+  kind,
+  expiryDate,
+}: VehicleComplianceContext): MailTemplate {
+  const formattedDate = formatDate(expiryDate);
+  const kindLabel = kind === 'insurance' ? "d'assurance" : 'de contrôle technique';
+  const vehicleLabel = `${vehicle.name || 'Véhicule'}${
+    vehicle.registrationNumber ? ` (${vehicle.registrationNumber})` : ''
+  }`;
+
+  return {
+    subject: `Rappel ${kindLabel} pour ${vehicleLabel}`,
+    text:
+      `Bonjour,\n\n` +
+      `L'échéance ${kindLabel} du véhicule ${vehicleLabel} approche : ${formattedDate}.\n\n` +
+      `Merci de vérifier les documents de conformité associés et de planifier le renouvellement si nécessaire.\n\n` +
+      SIGNATURE,
+    html: `
+      <p>Bonjour,</p>
+      <p>L'échéance ${kindLabel} du véhicule <strong>${vehicleLabel}</strong> approche : <strong>${formattedDate}</strong>.</p>
+      <p>Merci de vérifier les documents de conformité associés et de planifier le renouvellement si nécessaire.</p>
       <p>${SIGNATURE}</p>
     `,
   };
