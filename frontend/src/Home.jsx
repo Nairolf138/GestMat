@@ -286,6 +286,10 @@ function Home() {
             <i className="fa-solid fa-cart-shopping" aria-hidden="true"></i>
             <span>{t('nav.cart')}</span>
           </Link>
+          <Link className="shortcut-card" to="/vehicles">
+            <i className="fa-solid fa-car" aria-hidden="true"></i>
+            <span>{t('nav.vehicles')}</span>
+          </Link>
           <Link className="shortcut-card" to="/profile">
             <i className="fa-solid fa-user" aria-hidden="true"></i>
             <span>{t('nav.profile')}</span>
