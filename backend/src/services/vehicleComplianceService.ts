@@ -56,8 +56,9 @@ function needsReminder(
     | string
     | undefined;
   const expiry = expiryValue ? new Date(expiryValue) : undefined;
-  const sentAt = (vehicle.complianceReminders as any)?.
-    technicalInspectionReminderSentAt as Date | undefined;
+  const sentAt = (vehicle.complianceReminders as any)?.technicalInspectionReminderSentAt as
+    | Date
+    | undefined;
   return Boolean(
     expiry &&
       expiry >= new Date() &&
