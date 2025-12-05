@@ -44,14 +44,11 @@ type VehicleAggregateResult = {
 
 export async function refreshMonitoringMetrics(db: Db): Promise<void> {
   const now = new Date();
-  const [totalVehicles, aggregates] = await Promise.all<[
-    number,
-    VehicleAggregateResult[],
-  ]>([
+  const [totalVehicles, aggregates] = await Promise.all([
     db.collection('vehicles').countDocuments({}),
     db
       .collection('vehicles')
-      .aggregate([
+      .aggregate<VehicleAggregateResult>([
         {
           $facet: {
             occupied: [
