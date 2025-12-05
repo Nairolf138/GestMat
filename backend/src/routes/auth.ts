@@ -176,9 +176,6 @@ router.post(
         { expiresIn: stayLoggedIn ? '7d' : '1d' },
       );
       const hashedRefreshToken = hashToken(refreshToken);
-      if (stayLoggedIn) {
-        await deleteSessionsByUser(db, user._id!.toString());
-      }
       await createSession(db, {
         token: hashedRefreshToken,
         userId: user._id!.toString(),
@@ -227,9 +224,6 @@ router.post(
         { expiresIn: stayLoggedIn ? '7d' : '1d' },
       );
       const hashedNewRefreshToken = hashToken(newRefreshToken);
-      if (stayLoggedIn) {
-        await deleteSessionsByUser(db, String(payload.id));
-      }
       await createSession(db, {
         token: hashedNewRefreshToken,
         userId: String(payload.id),
