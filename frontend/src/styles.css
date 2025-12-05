@@ -1,6 +1,10 @@
 /* CSS variable system */
 /* Spacing scale (8px grid):
    xs=4px, sm=8px, md=16px, lg=32px, xl=48px, xxl=64px */
+html {
+  text-size-adjust: 100%;
+}
+
 :root {
   --color-bg: #f4f6f9;
   --color-text: #212529;
@@ -82,6 +86,10 @@ body {
   width: auto;
   height: auto;
   overflow: auto;
+}
+
+.text-match-parent {
+  text-align: match-parent !important;
 }
 
 .form {
@@ -166,6 +174,7 @@ body {
   background-color: var(--color-navbar-bg);
   color: var(--color-text);
   border: 1px solid color-mix(in srgb, var(--color-text) 18%, transparent);
+  text-align: match-parent;
   transition:
     background-color 0.2s,
     border-color 0.2s,
@@ -393,6 +402,7 @@ body {
   color: var(--color-text);
   background-color: var(--color-navbar-bg);
   border-color: var(--table-border-color);
+  text-align: match-parent;
 }
 
 .table thead {
