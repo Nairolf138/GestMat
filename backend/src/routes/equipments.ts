@@ -70,7 +70,7 @@ router.get('/', auth(), async (req: Request, res: Response) => {
 
 router.post(
   '/',
-  auth(MANAGE_EQUIPMENTS),
+  auth({ permissions: MANAGE_EQUIPMENTS, action: 'equipments:create' }),
   createEquipmentValidator,
   validate,
   async (req: Request, res: Response, next: NextFunction) => {
@@ -104,7 +104,7 @@ router.post(
 
 router.put(
   '/:id',
-  auth(MANAGE_EQUIPMENTS),
+  auth({ permissions: MANAGE_EQUIPMENTS, action: 'equipments:update' }),
   checkId(),
   updateEquipmentValidator,
   validate,
@@ -143,7 +143,7 @@ router.put(
 
 router.delete(
   '/:id',
-  auth(MANAGE_EQUIPMENTS),
+  auth({ permissions: MANAGE_EQUIPMENTS, action: 'equipments:delete' }),
   checkId(),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
