@@ -48,7 +48,9 @@ function checkUsageType(
 ): boolean {
   if (!rule.usageTypes?.length) return true;
   const usage = getUsageType?.(req);
-  return Boolean(usage) && rule.usageTypes.includes(String(usage).toLowerCase());
+  const normalizedUsage = usage?.toString().trim();
+  if (!normalizedUsage) return true;
+  return rule.usageTypes.includes(normalizedUsage.toLowerCase());
 }
 
 const authorizationCounter =
