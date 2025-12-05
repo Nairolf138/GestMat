@@ -130,6 +130,7 @@ function Home() {
       loans.filter((l) => {
         if (l.borrower?._id !== (user?.structure?._id || user?.structure))
           return false;
+        if (['cancelled', 'refused'].includes(l.status)) return false;
         const start = l.startDate ? new Date(l.startDate) : null;
         const end = l.endDate ? new Date(l.endDate) : null;
         return start && end && start <= now && end >= now;
