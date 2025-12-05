@@ -96,7 +96,7 @@ test('POST /users allows admins to create accounts', async () => {
     .set(auth('admin', ADMIN_ROLE))
     .send({
       username: 'newuser',
-      password: 'secret',
+      password: 'StrongSecret123',
       role: 'Regisseur Son',
       structure: structureId.toString(),
       email: 'new@example.com',
@@ -112,7 +112,19 @@ test('POST /users allows admins to create accounts', async () => {
   const saved = await db.collection('users').findOne({ username: 'newuser' });
   assert(saved);
   assert.strictEqual(saved.structure.toString(), structureId.toString());
-  assert.strictEqual(await bcrypt.compare('secret', saved.password), true);
+  assert.strictEqual(await bcrypt.compare('StrongSecret123', saved.password), true);
+
+  const weakPassword = await request(app)
+    .post(withApiPrefix('/users'))
+    .set(auth('admin', ADMIN_ROLE))
+    .send({ username: 'weak', password: 'shortpass1A' });
+  assert.strictEqual(weakPassword.status, 400);
+  assert(
+    weakPassword.body.errors.some((error) =>
+      error.path === 'password' &&
+      error.msg.includes('Password must be at least 12 characters long'),
+    ),
+  );
 
   await client.close();
   await mongod.stop();

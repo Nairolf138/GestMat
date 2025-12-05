@@ -1,8 +1,9 @@
 import { body, ValidationChain } from 'express-validator';
+import { passwordPolicy } from './passwordPolicy';
 
 export const registerValidator: ValidationChain[] = [
   body('username').notEmpty().withMessage('Username is required'),
-  body('password').notEmpty().withMessage('Password is required'),
+  passwordPolicy(),
   body('email').optional().isEmail().withMessage('Invalid email'),
   body('role').optional().isString().withMessage('Invalid role'),
   body('structure').optional().isMongoId().withMessage('Invalid structure'),
@@ -24,12 +25,12 @@ export const forgotUsernameValidator: ValidationChain[] = [
 
 export const resetPasswordValidator: ValidationChain[] = [
   body('token').notEmpty().withMessage('Token is required'),
-  body('password').notEmpty().withMessage('Password is required'),
+  passwordPolicy(),
 ];
 
 export const adminCreateUserValidator: ValidationChain[] = [
   body('username').notEmpty().withMessage('Username is required'),
-  body('password').notEmpty().withMessage('Password is required'),
+  passwordPolicy(),
   body('role').optional().isString(),
   body('structure').optional().isMongoId(),
   body('email').optional().isEmail(),
