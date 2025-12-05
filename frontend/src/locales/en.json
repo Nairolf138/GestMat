@@ -169,6 +169,10 @@
       "type_placeholder": "Van, utility...",
       "usage": "Usage",
       "usage_placeholder": "Transport, logistics...",
+      "usage_option": {
+        "technique": "Technical",
+        "logistique": "Logistics"
+      },
       "structure": "Structure",
       "location": "Location",
       "location_placeholder": "Depot, parking...",

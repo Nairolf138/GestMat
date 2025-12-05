@@ -169,6 +169,10 @@
       "type_placeholder": "Fourgon, utilitaire...",
       "usage": "Usage",
       "usage_placeholder": "Transport, logistique...",
+      "usage_option": {
+        "technique": "Technique",
+        "logistique": "Logistique"
+      },
       "structure": "Structure",
       "location": "Emplacement",
       "location_placeholder": "Parc, dépôt...",

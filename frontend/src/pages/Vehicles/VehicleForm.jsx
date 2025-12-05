@@ -9,6 +9,12 @@ import { GlobalContext } from '../../GlobalContext.jsx';
 import { AuthContext } from '../../AuthContext.jsx';
 
 const statusOptions = ['available', 'unavailable', 'maintenance', 'retired'];
+const usageOptions = ['technique', 'logistique'];
+
+function sanitizeUsage(value) {
+  const normalized = value?.toLowerCase();
+  return usageOptions.includes(normalized) ? normalized : undefined;
+}
 
 function sanitizeCharacteristics(form) {
   const characteristics = {
@@ -128,7 +134,7 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
     const payload = {
       name: form.name.trim(),
       type: form.type || undefined,
-      usage: form.usage || undefined,
+      usage: sanitizeUsage(form.usage),
       structure: form.structure || undefined,
       brand: form.brand || undefined,
       model: form.model || undefined,
@@ -239,15 +245,26 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
           <label className="form-label" htmlFor="veh-usage">
             {t('vehicles.form.usage')}
           </label>
-          <input
+          <select
             id="veh-usage"
             name="usage"
             value={form.usage}
             onChange={handleChange}
-            className="form-control"
-            autoComplete="off"
-            placeholder={t('vehicles.form.usage_placeholder')}
-          />
+            className="form-select"
+            aria-describedby={errors.usage ? 'veh-usage-error' : undefined}
+          >
+            <option value="">{t('common.choose')}</option>
+            {usageOptions.map((option) => (
+              <option key={option} value={option}>
+                {t(`vehicles.form.usage_option.${option}`)}
+              </option>
+            ))}
+          </select>
+          {errors.usage && (
+            <div className="invalid-feedback" id="veh-usage-error" role="alert">
+              {errors.usage}
+            </div>
+          )}
         </div>
         <div className="col-md-6">
           <label className="form-label" htmlFor="veh-structure">
