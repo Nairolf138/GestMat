@@ -476,7 +476,19 @@
     "top_lenders": "Top lending structures",
     "top_borrowers": "Top requesting structures",
     "monthly_logins": "Logins per month",
-    "login_count_label": "Login count"
+    "login_count_label": "Login count",
+    "vehicle_status_breakdown": "Vehicles by status",
+    "vehicle_usage_breakdown": "Vehicles by usage",
+    "vehicle_count_label": "Vehicle count",
+    "mileage_summary": "Fleet mileage",
+    "total_kilometers": "Total kilometers traveled: {{value}} km",
+    "total_downtime": "Total downtime days: {{value}}",
+    "occupancy_rate": "Occupancy rate",
+    "occupancy_caption": "Reserved vehicles: {{reserved}} / {{total}} ({{ratio}}%)",
+    "occupancy_prompt": "Select a start and end month to view the occupancy rate.",
+    "occupancy_period_label": "Selected period",
+    "period": "Period",
+    "percentage": "Percentage"
   },
   "common": {
     "choose": "Choose...",

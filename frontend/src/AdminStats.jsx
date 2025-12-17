@@ -30,6 +30,13 @@ function AdminStats() {
   const [topLenders, setTopLenders] = useState([]);
   const [topBorrowers, setTopBorrowers] = useState([]);
   const [loginMonthly, setLoginMonthly] = useState([]);
+  const [vehicleStatusCounts, setVehicleStatusCounts] = useState([]);
+  const [vehicleUsageCounts, setVehicleUsageCounts] = useState([]);
+  const [vehicleOccupancy, setVehicleOccupancy] = useState(null);
+  const [vehicleMileage, setVehicleMileage] = useState({
+    totalKilometers: 0,
+    totalDowntimeDays: 0,
+  });
   const [duration, setDuration] = useState({ average: 0, median: 0 });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -55,6 +62,10 @@ function AdminStats() {
           lendersData,
           borrowersData,
           loginsData,
+          vehicleStatusData,
+          vehicleUsageData,
+          vehicleOccupancyData,
+          vehicleMileageData,
         ] = await Promise.all([
           api(`/stats/loans/monthly${paramsStr ? `?${paramsStr}` : ''}`),
           api('/stats/equipments/top'),
@@ -63,6 +74,10 @@ function AdminStats() {
           api(`/stats/structures/top-lenders${paramsStr ? `?${paramsStr}` : ''}`),
           api(`/stats/structures/top-borrowers${paramsStr ? `?${paramsStr}` : ''}`),
           api(`/stats/logins/monthly${paramsStr ? `?${paramsStr}` : ''}`),
+          api(`/stats/vehicles/status${paramsStr ? `?${paramsStr}` : ''}`),
+          api('/stats/vehicles/usage'),
+          from && to ? api(`/stats/vehicles/occupancy?${params.toString()}`) : null,
+          api('/stats/vehicles/mileage'),
         ]);
         setMonthly(monthlyData);
         setTopEquipments(topData);
@@ -71,6 +86,10 @@ function AdminStats() {
         setTopBorrowers(borrowersData);
         setLoginMonthly(loginsData);
         setDuration(durationData);
+        setVehicleStatusCounts(vehicleStatusData);
+        setVehicleUsageCounts(vehicleUsageData);
+        setVehicleOccupancy(vehicleOccupancyData);
+        setVehicleMileage(vehicleMileageData);
       } catch (err) {
         setError(err.message);
         setMonthly([]);
@@ -80,6 +99,10 @@ function AdminStats() {
         setTopBorrowers([]);
         setLoginMonthly([]);
         setDuration({ average: 0, median: 0 });
+        setVehicleStatusCounts([]);
+        setVehicleUsageCounts([]);
+        setVehicleOccupancy(null);
+        setVehicleMileage({ totalKilometers: 0, totalDowntimeDays: 0 });
       } finally {
         setLoading(false);
       }
@@ -183,6 +206,68 @@ function AdminStats() {
     ],
   };
 
+  const vehicleStatusChart = {
+    labels: vehicleStatusCounts.map((s) => {
+      const key = `vehicles.status.${s._id}`;
+      const translated = t(key);
+      return translated === key ? s._id : translated;
+    }),
+    datasets: [
+      {
+        label: t('admin_stats.vehicle_count_label'),
+        data: vehicleStatusCounts.map((s) => s.count),
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40',
+        ],
+      },
+    ],
+  };
+
+  const vehicleUsageChart = {
+    labels: vehicleUsageCounts.map((u) => {
+      const key = `vehicles.form.usage_option.${u._id}`;
+      const translated = t(key);
+      return translated === key ? u._id : translated;
+    }),
+    datasets: [
+      {
+        label: t('admin_stats.vehicle_count_label'),
+        data: vehicleUsageCounts.map((u) => u.count),
+        backgroundColor: [
+          '#4BC0C0',
+          '#9966FF',
+          '#FF9F40',
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+        ],
+      },
+    ],
+  };
+
+  const occupancyRatio = vehicleOccupancy?.ratio
+    ? Math.round(vehicleOccupancy.ratio * 1000) / 10
+    : 0;
+  const occupancyChart = {
+    labels: [
+      from && to
+        ? `${from} → ${to}`
+        : t('admin_stats.occupancy_period_label'),
+    ],
+    datasets: [
+      {
+        label: t('admin_stats.occupancy_rate'),
+        data: vehicleOccupancy ? [occupancyRatio] : [],
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+      },
+    ],
+  };
+
   const commonOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -201,7 +286,10 @@ function AdminStats() {
               typeof parsed === 'number'
                 ? parsed
                 : parsed?.y ?? parsed?.x ?? context.raw;
-            return `${context.label}: ${value} ${t('admin_stats.count')}`;
+            const datasetLabel = context.dataset?.label;
+            return datasetLabel && datasetLabel !== context.label
+              ? `${datasetLabel} - ${context.label}: ${value}`
+              : `${context.label}: ${value}`;
           },
         },
       },
@@ -221,6 +309,49 @@ function AdminStats() {
       },
     },
   });
+
+  const occupancyOptions = (() => {
+    const base = barOptions(
+      t('admin_stats.period'),
+      t('admin_stats.percentage'),
+    );
+    return {
+      ...base,
+      scales: {
+        ...base.scales,
+        y: {
+          ...base.scales?.y,
+          max: 100,
+          ticks: {
+            ...base.scales?.y?.ticks,
+            precision: 1,
+          },
+        },
+      },
+      plugins: {
+        ...base.plugins,
+        tooltip: {
+          ...base.plugins?.tooltip,
+          callbacks: {
+            ...base.plugins?.tooltip?.callbacks,
+            label: (context) => {
+              const value =
+                typeof context.parsed === 'number'
+                  ? context.parsed
+                  : context.parsed?.y ?? context.raw;
+              const reserved = vehicleOccupancy?.reserved ?? 0;
+              const total = vehicleOccupancy?.total ?? 0;
+              const ratioLabel =
+                typeof value === 'number'
+                  ? value.toFixed(1)
+                  : value ?? '0.0';
+              return `${t('admin_stats.occupancy_rate')}: ${ratioLabel}% (${reserved}/${total})`;
+            },
+          },
+        },
+      },
+    };
+  })();
 
   return (
     <div>
@@ -321,7 +452,7 @@ function AdminStats() {
           </div>
         </div>
       </div>
-      <div className="row g-4">
+      <div className="row g-4 mb-4">
         <div className="col-12 col-lg-6">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
@@ -341,6 +472,68 @@ function AdminStats() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      <div className="row g-4 mb-4">
+        <div className="col-12 col-xl-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="h4">{t('admin_stats.vehicle_status_breakdown')}</h2>
+              <div className="mt-3 position-relative" style={{ minHeight: 260, maxHeight: 340 }}>
+                <Pie data={vehicleStatusChart} options={commonOptions} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-xl-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="h4">{t('admin_stats.vehicle_usage_breakdown')}</h2>
+              <div className="mt-3 position-relative" style={{ minHeight: 260, maxHeight: 340 }}>
+                <Pie data={vehicleUsageChart} options={commonOptions} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-xl-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body d-flex flex-column justify-content-center">
+              <h2 className="h4">{t('admin_stats.mileage_summary')}</h2>
+              <p className="mt-3 mb-2 fw-semibold">
+                {t('admin_stats.total_kilometers', {
+                  value: vehicleMileage.totalKilometers.toLocaleString(),
+                })}
+              </p>
+              <p className="text-muted mb-0">
+                {t('admin_stats.total_downtime', {
+                  value: vehicleMileage.totalDowntimeDays.toLocaleString(),
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="card mb-4 shadow-sm">
+        <div className="card-body">
+          <h2 className="h4">{t('admin_stats.occupancy_rate')}</h2>
+          {from && to && vehicleOccupancy ? (
+            <>
+              <div className="mt-3 position-relative" style={{ minHeight: 260, maxHeight: 340 }}>
+                <Bar data={occupancyChart} options={occupancyOptions} />
+              </div>
+              <p className="text-muted small mt-2 mb-0">
+                {t('admin_stats.occupancy_caption', {
+                  reserved: vehicleOccupancy.reserved.toLocaleString(),
+                  total: vehicleOccupancy.total.toLocaleString(),
+                  ratio: occupancyRatio.toFixed(1),
+                })}
+              </p>
+            </>
+          ) : (
+            <p className="text-muted mb-0">
+              {t('admin_stats.occupancy_prompt')}
+            </p>
+          )}
         </div>
       </div>
     </div>
