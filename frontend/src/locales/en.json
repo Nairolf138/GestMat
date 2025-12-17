@@ -145,7 +145,8 @@
       "available": "Available",
       "unavailable": "Unavailable",
       "maintenance": "Maintenance",
-      "retired": "Retired"
+      "retired": "Retired",
+      "unknown": "Unknown"
     },
     "columns": {
       "name": "Name",
@@ -173,7 +174,8 @@
       "usage_placeholder": "Transport, logistics...",
       "usage_option": {
         "technique": "Technical",
-        "logistique": "Logistics"
+        "logistique": "Logistics",
+        "unknown": "Unknown"
       },
       "structure": "Structure",
       "location": "Location",

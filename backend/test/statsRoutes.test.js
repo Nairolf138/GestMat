@@ -166,6 +166,10 @@ test('stats routes are restricted to admins', async () => {
   await request(app).get(withApiPrefix('/stats/loans/monthly')).expect(401);
   await request(app).get(withApiPrefix('/stats/equipments/top')).expect(401);
   await request(app).get(withApiPrefix('/stats/loans/duration')).expect(401);
+  await request(app).get(withApiPrefix('/stats/vehicles/status')).expect(401);
+  await request(app).get(withApiPrefix('/stats/vehicles/usage')).expect(401);
+  await request(app).get(withApiPrefix('/stats/vehicles/occupancy')).expect(401);
+  await request(app).get(withApiPrefix('/stats/vehicles/mileage')).expect(401);
 
   const nonAdmin = auth(REGISSEUR_GENERAL_ROLE);
   await request(app)
@@ -180,6 +184,130 @@ test('stats routes are restricted to admins', async () => {
     .get(withApiPrefix('/stats/loans/duration'))
     .set(nonAdmin)
     .expect(403);
+  await request(app)
+    .get(withApiPrefix('/stats/vehicles/status'))
+    .set(nonAdmin)
+    .expect(403);
+  await request(app)
+    .get(withApiPrefix('/stats/vehicles/usage'))
+    .set(nonAdmin)
+    .expect(403);
+  await request(app)
+    .get(withApiPrefix('/stats/vehicles/occupancy'))
+    .set(nonAdmin)
+    .expect(403);
+  await request(app)
+    .get(withApiPrefix('/stats/vehicles/mileage'))
+    .set(nonAdmin)
+    .expect(403);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('GET /api/stats/vehicles/status filters by reservation overlap', async () => {
+  const { app, client, mongod, db } = await createApp();
+  await db.collection('vehicles').insertMany([
+    {
+      status: 'Available',
+      reservations: [{ start: new Date('2024-01-05'), end: new Date('2024-01-10') }],
+    },
+    {
+      status: 'maintenance',
+      reservations: [{ start: new Date('2024-02-01'), end: new Date('2024-02-05') }],
+    },
+    {
+      status: 'retired',
+      reservations: [],
+    },
+  ]);
+
+  const res = await request(app)
+    .get(withApiPrefix('/stats/vehicles/status?from=2024-01-01&to=2024-01-31'))
+    .set(auth())
+    .expect(200);
+
+  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  assert.strictEqual(counts.available, 1);
+  assert.strictEqual(counts.maintenance, undefined);
+  assert.strictEqual(counts.retired, undefined);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('GET /api/stats/vehicles/usage aggregates usages', async () => {
+  const { app, client, mongod, db } = await createApp();
+  await db.collection('vehicles').insertMany([
+    { usage: 'Technique' },
+    { usage: 'technique' },
+    { usage: 'Logistique' },
+    {},
+  ]);
+
+  const res = await request(app)
+    .get(withApiPrefix('/stats/vehicles/usage'))
+    .set(auth())
+    .expect(200);
+
+  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  assert.strictEqual(counts.technique, 2);
+  assert.strictEqual(counts.logistique, 1);
+  assert.strictEqual(counts.unknown, 1);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('GET /api/stats/vehicles/occupancy validates parameters and computes ratio', async () => {
+  const { app, client, mongod, db } = await createApp();
+
+  await db.collection('vehicles').insertMany([
+    {
+      reservations: [{ start: new Date('2024-03-01'), end: new Date('2024-03-05') }],
+    },
+    {
+      reservations: [{ start: new Date('2024-04-10'), end: new Date('2024-04-12') }],
+    },
+    { reservations: [] },
+  ]);
+
+  await request(app)
+    .get(withApiPrefix('/stats/vehicles/occupancy'))
+    .set(auth())
+    .expect(400);
+
+  const res = await request(app)
+    .get(withApiPrefix('/stats/vehicles/occupancy?from=2024-03-01&to=2024-03-31'))
+    .set(auth())
+    .expect(200);
+
+  assert.strictEqual(res.body.reserved, 1);
+  assert.strictEqual(res.body.total, 3);
+  assert.strictEqual(res.body.ratio, 1 / 3);
+
+  await client.close();
+  await mongod.stop();
+});
+
+test('GET /api/stats/vehicles/mileage sums kilometers and downtime days', async () => {
+  const { app, client, mongod, db } = await createApp();
+
+  await db.collection('vehicles').insertMany([
+    { kilometersTraveled: 1000, downtimeDays: 3 },
+    { kilometersTraveled: 500 },
+    {},
+  ]);
+
+  const res = await request(app)
+    .get(withApiPrefix('/stats/vehicles/mileage'))
+    .set(auth())
+    .expect(200);
+
+  assert.deepStrictEqual(res.body, {
+    totalKilometers: 1500,
+    totalDowntimeDays: 3,
+  });
 
   await client.close();
   await mongod.stop();
