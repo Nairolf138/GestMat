@@ -85,6 +85,24 @@ function Catalog() {
   }, [page, filters.endDate, filters.search, filters.startDate, filters.structure, filters.type, fetchItems]);
 
   useEffect(() => {
+    setQuantities((prev) => {
+      let updated = prev;
+
+      items.forEach((item) => {
+        if (prev[item._id] === undefined) {
+          if (updated === prev) {
+            updated = { ...prev };
+          }
+
+          updated[item._id] = '1';
+        }
+      });
+
+      return updated;
+    });
+  }, [items]);
+
+  useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -128,8 +146,8 @@ function Catalog() {
 
   const addToCart = async (eq) => {
     const qtyValue = quantities[eq._id];
-    const qty = qtyValue === '' || qtyValue === undefined ? NaN : Number(qtyValue);
-    if (!qty || qty < 1) return;
+    const qty = Number(qtyValue === '' || qtyValue === undefined ? 1 : qtyValue);
+    if (Number.isNaN(qty) || qty < 1) return;
     if (!filters.startDate || !filters.endDate) {
       setError(t('catalog.select_period'));
       setSuccess('');
