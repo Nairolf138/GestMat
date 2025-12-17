@@ -192,6 +192,15 @@ these routes require authentication.
 - `GET <API_PREFIX>/stats/equipments/top?limit=5` – list the most requested equipment
   sorted by total quantity, limited by the optional `limit` query parameter
   (default: `5`).
+- `GET <API_PREFIX>/stats/vehicles/status?from=...&to=...` – count vehicles grouped by
+  status, optionally filtering on reservations overlapping the provided date range.
+- `GET <API_PREFIX>/stats/vehicles/usage` – count vehicles grouped by normalized usage
+  type.
+- `GET <API_PREFIX>/stats/vehicles/occupancy?from=...&to=...` – compute the number of
+  vehicles reserved during an interval alongside the total fleet to obtain an
+  occupancy ratio.
+- `GET <API_PREFIX>/stats/vehicles/mileage` – aggregate total `kilometersTraveled` and
+  `downtimeDays` across all vehicles.
 
 ## Annual structure reports
 

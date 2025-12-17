@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import auth from '../middleware/auth';
 import permissions from '../config/permissions';
+import { badRequest } from '../utils/errors';
 
 const { MANAGE_STATS } = permissions;
 
@@ -19,6 +20,39 @@ const normalizeDateQueryParam = (
 const extractDateValue = (value?: string | string[]): string | undefined => {
   if (!value) return undefined;
   return Array.isArray(value) ? value[0] : value;
+};
+
+const normalizeDateRange = (
+  from?: string | string[],
+  to?: string | string[],
+): { fromDate?: Date; toDate?: Date } => {
+  const fromDateValue = extractDateValue(from);
+  const toDateValue = extractDateValue(to);
+  const fromDate = fromDateValue ? new Date(fromDateValue) : undefined;
+  const toDate = toDateValue ? new Date(toDateValue) : undefined;
+
+  if (fromDate && Number.isNaN(fromDate.getTime())) {
+    throw badRequest('Invalid from date');
+  }
+  if (toDate && Number.isNaN(toDate.getTime())) {
+    throw badRequest('Invalid to date');
+  }
+  if (fromDate && toDate && fromDate > toDate) {
+    throw badRequest('Invalid date range');
+  }
+
+  return { fromDate, toDate };
+};
+
+const resolveDateRange = (
+  from?: unknown,
+  to?: unknown,
+): { from?: string | string[]; to?: string | string[]; fromDate?: Date; toDate?: Date } => {
+  const normalizedFrom = normalizeDateQueryParam(from);
+  const normalizedTo = normalizeDateQueryParam(to);
+  const { fromDate, toDate } = normalizeDateRange(normalizedFrom, normalizedTo);
+
+  return { from: normalizedFrom, to: normalizedTo, fromDate, toDate };
 };
 
 router.get(
@@ -152,16 +186,27 @@ const buildDateMatch = (
   field = 'startDate',
 ): Record<string, unknown> | undefined => {
   const match: Record<string, Date> = {};
-  const fromDateValue = extractDateValue(from);
-  const toDateValue = extractDateValue(to);
-  const fromDate = fromDateValue ? new Date(fromDateValue) : undefined;
-  const toDate = toDateValue ? new Date(toDateValue) : undefined;
+  const { fromDate, toDate } = normalizeDateRange(from, to);
 
   if (fromDate) match.$gte = fromDate;
   if (toDate) match.$lte = toDate;
 
   if (!Object.keys(match).length) return undefined;
   return { [field]: match };
+};
+
+const buildReservationOverlapMatch = (
+  fromDate?: Date,
+  toDate?: Date,
+): Record<string, unknown> | undefined => {
+  if (!fromDate && !toDate) return undefined;
+
+  const dateConditions: Record<string, unknown> = {};
+
+  if (fromDate) dateConditions.end = { $gte: fromDate };
+  if (toDate) dateConditions.start = { $lte: toDate };
+
+  return { reservations: { $elemMatch: dateConditions } };
 };
 
 router.get(
@@ -415,6 +460,123 @@ router.get(
       }
 
       res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  '/vehicles/status',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const { fromDate, toDate } = resolveDateRange(req.query.from, req.query.to);
+      const reservationMatch = buildReservationOverlapMatch(fromDate, toDate);
+      const pipeline: any[] = [];
+      if (reservationMatch) pipeline.push({ $match: reservationMatch });
+
+      pipeline.push(
+        {
+          $group: {
+            _id: { $toLower: { $toString: { $ifNull: ['$status', 'unknown'] } } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      );
+
+      const agg = await db.collection('vehicles').aggregate(pipeline).toArray();
+      res.json(agg);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  '/vehicles/usage',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const agg = await db
+        .collection('vehicles')
+        .aggregate([
+          {
+            $project: {
+              usage: { $toLower: { $toString: { $ifNull: ['$usage', 'unknown'] } } },
+            },
+          },
+          {
+            $group: {
+              _id: '$usage',
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ])
+        .toArray();
+
+      res.json(agg);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  '/vehicles/occupancy',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const { fromDate, toDate } = resolveDateRange(req.query.from, req.query.to);
+
+      if (!fromDate || !toDate) {
+        throw badRequest('Query parameters "from" and "to" are required');
+      }
+
+      const reservationMatch = buildReservationOverlapMatch(fromDate, toDate);
+
+      const [reservedVehicles, totalVehicles] = await Promise.all([
+        db.collection('vehicles').countDocuments(reservationMatch ?? {}),
+        db.collection('vehicles').countDocuments(),
+      ]);
+
+      const ratio = totalVehicles ? reservedVehicles / totalVehicles : 0;
+
+      res.json({ reserved: reservedVehicles, total: totalVehicles, ratio });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  '/vehicles/mileage',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const [result] = await db
+        .collection('vehicles')
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              totalKilometers: { $sum: { $ifNull: ['$kilometersTraveled', 0] } },
+              totalDowntimeDays: { $sum: { $ifNull: ['$downtimeDays', 0] } },
+            },
+          },
+        ])
+        .toArray();
+
+      res.json({
+        totalKilometers: result?.totalKilometers ?? 0,
+        totalDowntimeDays: result?.totalDowntimeDays ?? 0,
+      });
     } catch (err) {
       next(err);
     }
