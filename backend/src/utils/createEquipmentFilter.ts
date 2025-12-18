@@ -10,6 +10,7 @@ export interface EquipmentFilterQuery {
   location?: string;
   structure?: string;
   excludeStructure?: string;
+  excludeStatuses?: string | string[];
 }
 
 export default function createEquipmentFilter(
@@ -21,6 +22,7 @@ export default function createEquipmentFilter(
     location = '',
     structure = '',
     excludeStructure = '',
+    excludeStatuses = [],
   } = query;
   const filter: Record<string, unknown> = {};
   if (search) filter.name = { $regex: escapeRegExp(search), $options: 'i' };
@@ -32,5 +34,11 @@ export default function createEquipmentFilter(
   } else if (excludeStructure && ObjectId.isValid(excludeStructure)) {
     filter.structure = { $ne: new ObjectId(excludeStructure) };
   }
+  const excludedStatuses = Array.isArray(excludeStatuses)
+    ? excludeStatuses
+    : excludeStatuses
+      ? [excludeStatuses]
+      : [];
+  if (excludedStatuses.length) filter.status = { $nin: excludedStatuses };
   return filter;
 }
