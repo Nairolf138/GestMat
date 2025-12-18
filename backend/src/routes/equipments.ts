@@ -37,12 +37,17 @@ router.get('/', auth(), async (req: Request, res: Response) => {
     if (user?.structure) excludeStructure = user.structure.toString();
   }
   const { search, type, location, structure } = query;
+  const hideUnavailableStatuses =
+    query.catalog === 'true' || query.catalog === true || query.catalog === '1';
   const filter = createEquipmentFilter({
     search,
     type,
     location,
     structure,
     excludeStructure,
+    excludeStatuses: hideUnavailableStatuses
+      ? ['HS', 'En maintenance']
+      : undefined,
   });
   const page = query.page ? parseInt(query.page as string, 10) : 1;
   const limit = query.limit ? parseInt(query.limit as string, 10) : 0;

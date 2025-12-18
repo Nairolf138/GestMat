@@ -7,6 +7,11 @@ import { addToCart as addCartItem } from './Cart.jsx';
 import Loading from './Loading.jsx';
 import { useSearchParams } from 'react-router-dom';
 
+const HIDDEN_STATUSES = ['HS', 'En maintenance'];
+
+const filterUnavailableItems = (data) =>
+  data.filter((item) => !HIDDEN_STATUSES.includes(item.status));
+
 function Catalog() {
   const { t } = useTranslation();
   const { structures } = useContext(GlobalContext);
@@ -45,6 +50,7 @@ function Catalog() {
         search: filters.search,
         type: filters.type,
         structure: filters.structure,
+        catalog: 'true',
         all: 'true',
         limit: PAGE_SIZE.toString(),
         page: targetPage.toString(),
@@ -53,7 +59,10 @@ function Catalog() {
       if (filters.endDate) params.append('endDate', filters.endDate);
       api(`/equipments?${params.toString()}`)
         .then((data) => {
-          setItems((prev) => (isFirstPage ? data : [...prev, ...data]));
+          const filteredData = filterUnavailableItems(data);
+          setItems((prev) =>
+            isFirstPage ? filteredData : [...prev, ...filteredData],
+          );
           const moreAvailable = data.length === PAGE_SIZE;
           setHasMore(moreAvailable);
         })

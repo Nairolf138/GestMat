@@ -72,6 +72,58 @@ test('create, list, update and delete equipments', async () => {
   await mongod.stop();
 });
 
+test('catalog listing hides HS and maintenance equipments', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const structureId = new ObjectId();
+  await db
+    .collection('structures')
+    .insertOne({ _id: structureId, name: 'Main' });
+
+  await db.collection('equipments').insertMany([
+    {
+      name: 'Usable mic',
+      type: 'Son',
+      condition: 'Neuf',
+      totalQty: 2,
+      availableQty: 2,
+      status: 'Disponible',
+      structure: structureId,
+    },
+    {
+      name: 'Broken camera',
+      type: 'Vidéo',
+      condition: 'Usé',
+      totalQty: 1,
+      availableQty: 0,
+      status: 'HS',
+      structure: structureId,
+    },
+    {
+      name: 'Light under maintenance',
+      type: 'Lumière',
+      condition: 'Usé',
+      totalQty: 4,
+      availableQty: 4,
+      status: 'En maintenance',
+      structure: structureId,
+    },
+  ]);
+
+  const res = await request(app)
+    .get(withApiPrefix('/equipments?catalog=true&all=true'))
+    .set(auth())
+    .expect(200);
+
+  assert.strictEqual(res.body.length, 1);
+  assert.strictEqual(res.body[0].name, 'Usable mic');
+  assert.strictEqual(res.body[0].status, 'Disponible');
+  assert.strictEqual(res.body[0].availability, '2/2');
+
+  await client.close();
+  await mongod.stop();
+});
+
 test('default availableQty to totalQty when missing', async () => {
   const { app, client, mongod } = await createApp();
   const newEq = {
