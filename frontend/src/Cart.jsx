@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext } from 'react';
-import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
@@ -97,49 +96,42 @@ function Cart() {
   };
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <h1 className="h1">{t('cart.title')}</h1>
-        <Alert message={error} />
-        <Alert type="success" message={success} />
-        <ul className="list-group mb-3">
-          {cart.map((it, idx) => (
-            <li
-              key={idx}
-              className="list-group-item d-flex justify-content-between align-items-center"
-            >
-              <span>
-                {it.equipment.name} ({it.startDate} → {it.endDate})
-              </span>
-              <div className="d-flex align-items-center">
-                <input
-                  type="number"
-                  min="1"
-                  value={it.quantity}
-                  onChange={(e) => updateQuantity(idx, e.target.value)}
-                  className="form-control me-3"
-                  style={{ width: '6rem' }}
-                />
-                <button
-                  className="btn btn-outline-danger btn-sm"
-                  onClick={() => removeItem(idx)}
-                >
-                  {t('cart.remove')}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <button
-          disabled={!cart.length}
-          onClick={validate}
-          className="btn btn-primary"
-        >
-          {t('cart.send_requests')}
-        </button>
-      </main>
-    </div>
+    <>
+      <h1 className="h1">{t('cart.title')}</h1>
+      <Alert message={error} />
+      <Alert type="success" message={success} />
+      <ul className="list-group mb-3">
+        {cart.map((it, idx) => (
+          <li
+            key={idx}
+            className="list-group-item d-flex justify-content-between align-items-center"
+          >
+            <span>
+              {it.equipment.name} ({it.startDate} → {it.endDate})
+            </span>
+            <div className="d-flex align-items-center">
+              <input
+                type="number"
+                min="1"
+                value={it.quantity}
+                onChange={(e) => updateQuantity(idx, e.target.value)}
+                className="form-control me-3"
+                style={{ width: '6rem' }}
+              />
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => removeItem(idx)}
+              >
+                {t('cart.remove')}
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <button disabled={!cart.length} onClick={validate} className="btn btn-primary">
+        {t('cart.send_requests')}
+      </button>
+    </>
   );
 }
 

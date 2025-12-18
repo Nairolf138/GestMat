@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext, useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import NavBar from './NavBar';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { AuthContext } from './AuthContext.jsx';
@@ -123,110 +122,97 @@ function Home() {
   );
 
   if (loading) {
-    return (
-      <div className="container">
-        <NavBar />
-        <main id="main-content">
-          <Loading />
-        </main>
-      </div>
-    );
+    return <Loading />;
   }
 
   const previewCount = 5;
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <div className="d-flex justify-content-end mt-2">
-          <button
-            className="btn btn-outline-secondary"
-            onClick={() => setRunTour(true)}
-          >
-            {t('tour.help')}
-          </button>
-        </div>
-        <div className="tutorial-notifications">
-          <Notifications />
-        </div>
-        <h1 className="h1">{t('home.title')}</h1>
-        <Alert message={error} />
-        <Alert type="success" message={message} />
-        {user && (
-          <p>{t('home.greeting', { name: user.firstName || user.username })}</p>
-        )}
-        {user && <DashboardSummary counts={counts} />}
-        <LoanPreviewSection
-          title={t('home.recent_requests')}
-          loans={pending}
-          emptyMessage={t('home.no_requests')}
-          previewCount={previewCount}
-          counterLabel={t('home.counter', {
-            shown: previewCount,
-            total: pending.length,
-            category: t('home.recent_requests').toLowerCase(),
-          })}
-          onAccept={(loanId) => updateLoanStatus(loanId, 'accepted')}
-          onDecline={(loanId) => updateLoanStatus(loanId, 'refused')}
-          actionInProgressId={actionLoadingId}
-        />
-        <LoanPreviewSection
-          title={t('home.current_loans')}
-          loans={currentLoans}
-          emptyMessage={t('home.no_loans')}
-          previewCount={previewCount}
-          counterLabel={t('home.counter', {
-            shown: previewCount,
-            total: currentLoans.length,
-            category: t('home.current_loans').toLowerCase(),
-          })}
-        />
-        <LoanPreviewSection
-          title={t('home.incoming_loans')}
-          loans={upcomingLoans}
-          emptyMessage={t('home.no_loans')}
-          previewCount={previewCount}
-          counterLabel={t('home.counter', {
-            shown: previewCount,
-            total: upcomingLoans.length,
-            category: t('home.incoming_loans').toLowerCase(),
-          })}
-        />
-        <h2 className="h2">{t('home.shortcuts')}</h2>
-        <div className="card-grid shortcuts tutorial-shortcuts">
-          <Link className="shortcut-card" to="/inventory">
-            <i className="fa-solid fa-warehouse" aria-hidden="true"></i>
-            <span>{t('nav.inventory')}</span>
-          </Link>
-          <Link className="shortcut-card" to="/catalog">
-            <i className="fa-solid fa-book" aria-hidden="true"></i>
-            <span>{t('nav.catalog')}</span>
-          </Link>
-          <Link className="shortcut-card" to="/loans">
-            <i className="fa-solid fa-handshake" aria-hidden="true"></i>
-            <span>{t('nav.loans')}</span>
-          </Link>
-          <Link className="shortcut-card" to="/loans/history">
-            <i className="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
-            <span>{t('nav.loans_history')}</span>
-          </Link>
-          <Link className="shortcut-card" to="/cart">
-            <i className="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-            <span>{t('nav.cart')}</span>
-          </Link>
-          <Link className="shortcut-card" to="/vehicles">
-            <i className="fa-solid fa-car" aria-hidden="true"></i>
-            <span>{t('nav.vehicles')}</span>
-          </Link>
-          <Link className="shortcut-card" to="/profile">
-            <i className="fa-solid fa-user" aria-hidden="true"></i>
-            <span>{t('nav.profile')}</span>
-          </Link>
-        </div>
-        <OnboardingTour run={runTour} onClose={() => setRunTour(false)} />
-      </main>
-    </div>
+    <>
+      <div className="d-flex justify-content-end mt-2">
+        <button className="btn btn-outline-secondary" onClick={() => setRunTour(true)}>
+          {t('tour.help')}
+        </button>
+      </div>
+      <div className="tutorial-notifications">
+        <Notifications />
+      </div>
+      <h1 className="h1">{t('home.title')}</h1>
+      <Alert message={error} />
+      <Alert type="success" message={message} />
+      {user && (
+        <p>{t('home.greeting', { name: user.firstName || user.username })}</p>
+      )}
+      {user && <DashboardSummary counts={counts} />}
+      <LoanPreviewSection
+        title={t('home.recent_requests')}
+        loans={pending}
+        emptyMessage={t('home.no_requests')}
+        previewCount={previewCount}
+        counterLabel={t('home.counter', {
+          shown: previewCount,
+          total: pending.length,
+          category: t('home.recent_requests').toLowerCase(),
+        })}
+        onAccept={(loanId) => updateLoanStatus(loanId, 'accepted')}
+        onDecline={(loanId) => updateLoanStatus(loanId, 'refused')}
+        actionInProgressId={actionLoadingId}
+      />
+      <LoanPreviewSection
+        title={t('home.current_loans')}
+        loans={currentLoans}
+        emptyMessage={t('home.no_loans')}
+        previewCount={previewCount}
+        counterLabel={t('home.counter', {
+          shown: previewCount,
+          total: currentLoans.length,
+          category: t('home.current_loans').toLowerCase(),
+        })}
+      />
+      <LoanPreviewSection
+        title={t('home.incoming_loans')}
+        loans={upcomingLoans}
+        emptyMessage={t('home.no_loans')}
+        previewCount={previewCount}
+        counterLabel={t('home.counter', {
+          shown: previewCount,
+          total: upcomingLoans.length,
+          category: t('home.incoming_loans').toLowerCase(),
+        })}
+      />
+      <h2 className="h2">{t('home.shortcuts')}</h2>
+      <div className="card-grid shortcuts tutorial-shortcuts">
+        <Link className="shortcut-card" to="/inventory">
+          <i className="fa-solid fa-warehouse" aria-hidden="true"></i>
+          <span>{t('nav.inventory')}</span>
+        </Link>
+        <Link className="shortcut-card" to="/catalog">
+          <i className="fa-solid fa-book" aria-hidden="true"></i>
+          <span>{t('nav.catalog')}</span>
+        </Link>
+        <Link className="shortcut-card" to="/loans">
+          <i className="fa-solid fa-handshake" aria-hidden="true"></i>
+          <span>{t('nav.loans')}</span>
+        </Link>
+        <Link className="shortcut-card" to="/loans/history">
+          <i className="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+          <span>{t('nav.loans_history')}</span>
+        </Link>
+        <Link className="shortcut-card" to="/cart">
+          <i className="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+          <span>{t('nav.cart')}</span>
+        </Link>
+        <Link className="shortcut-card" to="/vehicles">
+          <i className="fa-solid fa-car" aria-hidden="true"></i>
+          <span>{t('nav.vehicles')}</span>
+        </Link>
+        <Link className="shortcut-card" to="/profile">
+          <i className="fa-solid fa-user" aria-hidden="true"></i>
+          <span>{t('nav.profile')}</span>
+        </Link>
+      </div>
+      <OnboardingTour run={runTour} onClose={() => setRunTour(false)} />
+    </>
   );
 }
 

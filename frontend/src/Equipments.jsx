@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import AddEquipment from './AddEquipment';
 import EditEquipment from './EditEquipment';
-import NavBar from './NavBar';
 import Alert from './Alert.jsx';
 import Loading from './Loading.jsx';
 import { AuthContext } from './AuthContext.jsx';
@@ -24,6 +23,7 @@ function Equipments() {
   const [editing, setEditing] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
   const queryClient = useQueryClient();
+
   const conditionLabels = useMemo(
     () => ({
       Neuf: t('equipments.add.conditions.new'),
@@ -33,6 +33,7 @@ function Equipments() {
     }),
     [t],
   );
+
   const {
     data: items = [],
     isFetching,
@@ -110,135 +111,133 @@ function Equipments() {
   };
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <Alert message={error?.message} />
-        <Alert type="success" message={message} />
-        <h1 className="h1">
-          {t('equipments.title')}
-          {structureName && ` - ${structureName}`}
-        </h1>
-        <form
-          className="row g-2 mb-3"
-          autoComplete="off"
-          onSubmit={(e) => {
-            e.preventDefault();
-            refetch();
-          }}
-        >
-          <div className="col-md">
-            <label htmlFor="equip-search" className="visually-hidden">
-              {t('equipments.search')}
-            </label>
-            <input
-              id="equip-search"
-              name="search"
-              placeholder={t('equipments.search')}
-              className="form-control"
-              value={search}
-              autoComplete="off"
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="col-md">
-            <label htmlFor="equip-type" className="visually-hidden">
-              {t('equipments.type')}
-            </label>
-            <select
-              id="equip-type"
-              name="type"
-              className="form-select"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-            >
-              <option value="">{t('equipments.type')}</option>
-              {typeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="col-md">
-            <label htmlFor="equip-sort" className="visually-hidden">
-              {t('equipments.sort')}
-            </label>
-            <select
-              id="equip-sort"
-              name="sort"
-              className="form-select"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option value="">{t('equipments.sort')}</option>
-              <option value="name">{t('equipments.name')}</option>
-              <option value="type">{t('equipments.type')}</option>
-            </select>
-          </div>
-          <div className="col-auto">
-            <button type="submit" className="btn btn-primary me-2">
-              {t('equipments.search_button')}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                setSearch('');
-                setType('');
-                setSort('');
-                setTimeout(() => refetch(), 0);
-              }}
-            >
-              {t('equipments.reset')}
-            </button>
-          </div>
-        </form>
-        {isMobile ? (
-          <div className="card-grid mb-4">
-            {isFetching ? (
-              <Loading />
-            ) : (
-              items.map((e) => (
-                <div className="card" key={e._id}>
-                  <div className="card-body">
-                    <h5 className="card-title h5">{e.name}</h5>
-                    <p className="card-text">
-                      <strong>{t('equipments.type')}:</strong> {e.type}
-                      <br />
-                      <strong>{t('equipments.availability')}:</strong>{' '}
-                      {e.availability}
-                      <br />
-                      <strong>{t('equipments.add.condition')}:</strong>{' '}
-                      {conditionLabels[e.condition] || e.condition}
-                    </p>
-                    {canManageEquipment(user?.role, e.type) && (
-                      <div className="card-actions">
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm me-2"
-                          onClick={() => handleEditSelect(e)}
-                        >
-                          {t('equipments.edit.button')}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm"
-                          onClick={() => deleteEquipment(e._id)}
-                        >
-                          {t('equipments.delete.button')}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+    <>
+      <Alert message={error?.message} />
+      <Alert type="success" message={message} />
+      <h1 className="h1">
+        {t('equipments.title')}
+        {structureName && ` - ${structureName}`}
+      </h1>
+      <form
+        className="row g-2 mb-3"
+        autoComplete="off"
+        onSubmit={(e) => {
+          e.preventDefault();
+          refetch();
+        }}
+      >
+        <div className="col-md">
+          <label htmlFor="equip-search" className="visually-hidden">
+            {t('equipments.search')}
+          </label>
+          <input
+            id="equip-search"
+            name="search"
+            placeholder={t('equipments.search')}
+            className="form-control"
+            value={search}
+            autoComplete="off"
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="col-md">
+          <label htmlFor="equip-type" className="visually-hidden">
+            {t('equipments.type')}
+          </label>
+          <select
+            id="equip-type"
+            name="type"
+            className="form-select"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="">{t('equipments.type')}</option>
+            {typeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md">
+          <label htmlFor="equip-sort" className="visually-hidden">
+            {t('equipments.sort')}
+          </label>
+          <select
+            id="equip-sort"
+            name="sort"
+            className="form-select"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="">{t('equipments.sort')}</option>
+            <option value="name">{t('equipments.name')}</option>
+            <option value="type">{t('equipments.type')}</option>
+          </select>
+        </div>
+        <div className="col-auto">
+          <button type="submit" className="btn btn-primary me-2">
+            {t('equipments.search_button')}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setSearch('');
+              setType('');
+              setSort('');
+              setTimeout(() => refetch(), 0);
+            }}
+          >
+            {t('equipments.reset')}
+          </button>
+        </div>
+      </form>
+      {isMobile ? (
+        <div className="card-grid mb-4">
+          {isFetching ? (
+            <Loading />
+          ) : (
+            items.map((e) => (
+              <div className="card" key={e._id}>
+                <div className="card-body">
+                  <h5 className="card-title h5">{e.name}</h5>
+                  <p className="card-text">
+                    <strong>{t('equipments.type')}:</strong> {e.type}
+                    <br />
+                    <strong>{t('equipments.availability')}:</strong>{' '}
+                    {e.availability}
+                    <br />
+                    <strong>{t('equipments.add.condition')}:</strong>{' '}
+                    {conditionLabels[e.condition] || e.condition}
+                  </p>
+                  {canManageEquipment(user?.role, e.type) && (
+                    <div className="card-actions">
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm me-2"
+                        onClick={() => handleEditSelect(e)}
+                      >
+                        {t('equipments.edit.button')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={() => deleteEquipment(e._id)}
+                      >
+                        {t('equipments.delete.button')}
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ))
-            )}
-          </div>
-        ) : (
-          <div className="table-responsive mb-4">
-            <table className="table mb-0">
-              <thead>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="table-responsive mb-4">
+          <table className="table mb-0">
+            <thead>
               <tr>
                 <th>{t('equipments.name')}</th>
                 <th>{t('equipments.type')}</th>
@@ -246,71 +245,68 @@ function Equipments() {
                 <th>{t('equipments.add.condition')}</th>
                 <th>{t('equipments.actions')}</th>
               </tr>
-              </thead>
-              <tbody>
-                {isFetching ? (
-                  <tr>
-                    <td colSpan="5">
-                      <Loading />
+            </thead>
+            <tbody>
+              {isFetching ? (
+                <tr>
+                  <td colSpan="5">
+                    <Loading />
+                  </td>
+                </tr>
+              ) : (
+                items.map((e) => (
+                  <tr key={e._id}>
+                    <td>{e.name}</td>
+                    <td>{e.type}</td>
+                    <td>{e.availability}</td>
+                    <td>{conditionLabels[e.condition] || e.condition}</td>
+                    <td>
+                      {canManageEquipment(user?.role, e.type) && (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm me-2"
+                            onClick={() => handleEditSelect(e)}
+                          >
+                            {t('equipments.edit.button')}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() => deleteEquipment(e._id)}
+                          >
+                            {t('equipments.delete.button')}
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
-                ) : (
-                  items.map((e) => (
-                    <tr key={e._id}>
-                      <td>{e.name}</td>
-                      <td>{e.type}</td>
-                      <td>{e.availability}</td>
-                      <td>{conditionLabels[e.condition] || e.condition}</td>
-                      <td>
-                        {canManageEquipment(user?.role, e.type) && (
-                          <>
-                            <button
-                              type="button"
-                              className="btn btn-secondary btn-sm me-2"
-                              onClick={() => handleEditSelect(e)}
-                            >
-                              {t('equipments.edit.button')}
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-danger btn-sm"
-                              onClick={() => deleteEquipment(e._id)}
-                            >
-                              {t('equipments.delete.button')}
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {canManageEquipment(user?.role) && (
-          <>
-            <button
-              onClick={toggleAddForm}
-              className="btn btn-secondary mb-3"
-              type="button"
-            >
-              {t('equipments.add.title')}
-            </button>
-            {showForm && (
-              <AddEquipment onCreated={() => setShowForm(false)} />
-            )}
-          </>
-        )}
-        {editing && canManageEquipment(user?.role, editing.type) && (
-          <EditEquipment
-            equipment={editing}
-            onUpdated={() => setEditing(null)}
-            onCancel={() => setEditing(null)}
-          />
-        )}
-      </main>
-    </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {canManageEquipment(user?.role) && (
+        <>
+          <button
+            onClick={toggleAddForm}
+            className="btn btn-secondary mb-3"
+            type="button"
+          >
+            {t('equipments.add.title')}
+          </button>
+          {showForm && <AddEquipment onCreated={() => setShowForm(false)} />}
+        </>
+      )}
+      {editing && canManageEquipment(user?.role, editing.type) && (
+        <EditEquipment
+          equipment={editing}
+          onUpdated={() => setEditing(null)}
+          onCancel={() => setEditing(null)}
+        />
+      )}
+    </>
   );
 }
 

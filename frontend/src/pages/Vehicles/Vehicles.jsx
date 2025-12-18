@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import NavBar from '../../NavBar';
 import Alert from '../../Alert.jsx';
 import Loading from '../../Loading.jsx';
 import VehicleList from './VehicleList.jsx';
@@ -76,180 +75,177 @@ function Vehicles() {
   }, [filters.structure, structures, user]);
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <Alert message={routerLocation.state?.message} />
-        <Alert message={error?.message} />
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <div>
-            <h1 className="h1 mb-1">
-              {t('vehicles.title')}
-              {structureName && ` - ${structureName}`}
-            </h1>
-            <p className="text-muted mb-0">{t('vehicles.subtitle')}</p>
-          </div>
-          <button type="button" className="btn btn-primary" onClick={() => setShowForm((prev) => !prev)}>
-            {showForm ? t('common.close') : t('vehicles.form.create_title')}
+    <>
+      <Alert message={routerLocation.state?.message} />
+      <Alert message={error?.message} />
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h1 className="h1 mb-1">
+            {t('vehicles.title')}
+            {structureName && ` - ${structureName}`}
+          </h1>
+          <p className="text-muted mb-0">{t('vehicles.subtitle')}</p>
+        </div>
+        <button type="button" className="btn btn-primary" onClick={() => setShowForm((prev) => !prev)}>
+          {showForm ? t('common.close') : t('vehicles.form.create_title')}
+        </button>
+      </div>
+
+      <form
+        className="row g-2 mb-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          refetch();
+        }}
+        autoComplete="off"
+        aria-label={t('vehicles.filters.title')}
+      >
+        <div className="col-md-3">
+          <label className="visually-hidden" htmlFor="veh-search">
+            {t('vehicles.filters.search')}
+          </label>
+          <input
+            id="veh-search"
+            name="search"
+            className="form-control"
+            placeholder={t('vehicles.filters.search')}
+            value={filters.search}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </div>
+        <div className="col-md-3">
+          <label className="visually-hidden" htmlFor="veh-status">
+            {t('vehicles.filters.status')}
+          </label>
+          <select
+            id="veh-status"
+            name="status"
+            className="form-select"
+            value={filters.status}
+            onChange={handleChange}
+          >
+            <option value="">{t('vehicles.filters.status')}</option>
+            <option value="available">{t('vehicles.status.available')}</option>
+            <option value="unavailable">{t('vehicles.status.unavailable')}</option>
+            <option value="maintenance">{t('vehicles.status.maintenance')}</option>
+            <option value="retired">{t('vehicles.status.retired')}</option>
+          </select>
+        </div>
+        <div className="col-md-3">
+          <label className="visually-hidden" htmlFor="veh-usage">
+            {t('vehicles.filters.usage')}
+          </label>
+          <input
+            id="veh-usage"
+            name="usage"
+            className="form-control"
+            placeholder={t('vehicles.filters.usage')}
+            list="veh-usage-options"
+            value={filters.usage}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+          <datalist id="veh-usage-options">
+            {usageOptions.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
+        </div>
+        <div className="col-md-3">
+          <label className="visually-hidden" htmlFor="veh-location">
+            {t('vehicles.filters.location')}
+          </label>
+          <input
+            id="veh-location"
+            name="location"
+            className="form-control"
+            placeholder={t('vehicles.filters.location')}
+            list="veh-location-options"
+            value={filters.location}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+          <datalist id="veh-location-options">
+            {locationOptions.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
+        </div>
+        <div className="col-md-3">
+          <label className="form-label" htmlFor="veh-start">
+            {t('vehicles.filters.availableStart')}
+          </label>
+          <input
+            id="veh-start"
+            name="availableStart"
+            type="date"
+            className="form-control"
+            value={filters.availableStart}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </div>
+        <div className="col-md-3">
+          <label className="form-label" htmlFor="veh-end">
+            {t('vehicles.filters.availableEnd')}
+          </label>
+          <input
+            id="veh-end"
+            name="availableEnd"
+            type="date"
+            className="form-control"
+            value={filters.availableEnd}
+            onChange={handleChange}
+            autoComplete="off"
+          />
+        </div>
+        <div className="col-md-3">
+          <label className="form-label" htmlFor="veh-structure">
+            {t('vehicles.filters.structure')}
+          </label>
+          <select
+            id="veh-structure"
+            name="structure"
+            className="form-select"
+            value={filters.structure}
+            onChange={handleChange}
+          >
+            <option value="">{t('vehicles.filters.structure')}</option>
+            {structures.map((structure) => (
+              <option key={structure._id} value={structure._id}>
+                {structure.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-3 d-flex align-items-end gap-2">
+          <button type="submit" className="btn btn-primary">
+            {t('vehicles.filters.apply')}
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={resetFilters}>
+            {t('vehicles.filters.reset')}
           </button>
         </div>
+      </form>
 
-        <form
-          className="row g-2 mb-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            refetch();
-          }}
-          autoComplete="off"
-          aria-label={t('vehicles.filters.title')}
-        >
-          <div className="col-md-3">
-            <label className="visually-hidden" htmlFor="veh-search">
-              {t('vehicles.filters.search')}
-            </label>
-            <input
-              id="veh-search"
-              name="search"
-              className="form-control"
-              placeholder={t('vehicles.filters.search')}
-              value={filters.search}
-              onChange={handleChange}
-              autoComplete="off"
-            />
-          </div>
-          <div className="col-md-3">
-            <label className="visually-hidden" htmlFor="veh-status">
-              {t('vehicles.filters.status')}
-            </label>
-            <select
-              id="veh-status"
-              name="status"
-              className="form-select"
-              value={filters.status}
-              onChange={handleChange}
-            >
-              <option value="">{t('vehicles.filters.status')}</option>
-              <option value="available">{t('vehicles.status.available')}</option>
-              <option value="unavailable">{t('vehicles.status.unavailable')}</option>
-              <option value="maintenance">{t('vehicles.status.maintenance')}</option>
-              <option value="retired">{t('vehicles.status.retired')}</option>
-            </select>
-          </div>
-          <div className="col-md-3">
-            <label className="visually-hidden" htmlFor="veh-usage">
-              {t('vehicles.filters.usage')}
-            </label>
-            <input
-              id="veh-usage"
-              name="usage"
-              className="form-control"
-              placeholder={t('vehicles.filters.usage')}
-              list="veh-usage-options"
-              value={filters.usage}
-              onChange={handleChange}
-              autoComplete="off"
-            />
-            <datalist id="veh-usage-options">
-              {usageOptions.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
-          </div>
-          <div className="col-md-3">
-            <label className="visually-hidden" htmlFor="veh-location">
-              {t('vehicles.filters.location')}
-            </label>
-            <input
-              id="veh-location"
-              name="location"
-              className="form-control"
-              placeholder={t('vehicles.filters.location')}
-              list="veh-location-options"
-              value={filters.location}
-              onChange={handleChange}
-              autoComplete="off"
-            />
-            <datalist id="veh-location-options">
-              {locationOptions.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
-          </div>
-          <div className="col-md-3">
-            <label className="form-label" htmlFor="veh-start">
-              {t('vehicles.filters.availableStart')}
-            </label>
-            <input
-              id="veh-start"
-              name="availableStart"
-              type="date"
-              className="form-control"
-              value={filters.availableStart}
-              onChange={handleChange}
-              autoComplete="off"
-            />
-          </div>
-          <div className="col-md-3">
-            <label className="form-label" htmlFor="veh-end">
-              {t('vehicles.filters.availableEnd')}
-            </label>
-            <input
-              id="veh-end"
-              name="availableEnd"
-              type="date"
-              className="form-control"
-              value={filters.availableEnd}
-              onChange={handleChange}
-              autoComplete="off"
-            />
-          </div>
-          <div className="col-md-3">
-            <label className="form-label" htmlFor="veh-structure">
-              {t('vehicles.filters.structure')}
-            </label>
-            <select
-              id="veh-structure"
-              name="structure"
-              className="form-select"
-              value={filters.structure}
-              onChange={handleChange}
-            >
-              <option value="">{t('vehicles.filters.structure')}</option>
-              {structures.map((structure) => (
-                <option key={structure._id} value={structure._id}>
-                  {structure.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="col-md-3 d-flex align-items-end gap-2">
-            <button type="submit" className="btn btn-primary">
-              {t('vehicles.filters.apply')}
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={resetFilters}>
-              {t('vehicles.filters.reset')}
-            </button>
-          </div>
-        </form>
+      {showForm && (
+        <div className="mb-4">
+          <VehicleForm onCompleted={() => setShowForm(false)} onCancel={() => setShowForm(false)} />
+        </div>
+      )}
 
-        {showForm && (
-          <div className="mb-4">
-            <VehicleForm onCompleted={() => setShowForm(false)} onCancel={() => setShowForm(false)} />
-          </div>
-        )}
-
-        {isFetching && !vehicles.length ? (
-          <Loading />
-        ) : (
-          <VehicleList
-            vehicles={vehicles}
-            isFetching={isFetching}
-            availableStart={filters.availableStart}
-            availableEnd={filters.availableEnd}
-          />
-        )}
-      </main>
-    </div>
+      {isFetching && !vehicles.length ? (
+        <Loading />
+      ) : (
+        <VehicleList
+          vehicles={vehicles}
+          isFetching={isFetching}
+          availableStart={filters.availableStart}
+          availableEnd={filters.availableEnd}
+        />
+      )}
+    </>
   );
 }
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
-import NavBar from './NavBar';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext';
 import Alert from './Alert.jsx';
@@ -182,19 +181,17 @@ function Catalog() {
   };
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <h1 className="h1">{t('catalog.title')}</h1>
-        <Alert message={error} />
-        <Alert type="success" message={success} />
-        <div
-          className="row"
-          style={{
-            gap: 'var(--spacing-sm)',
-            marginBottom: 'var(--spacing-xl)',
-          }}
-        >
+    <>
+      <h1 className="h1">{t('catalog.title')}</h1>
+      <Alert message={error} />
+      <Alert type="success" message={success} />
+      <div
+        className="row"
+        style={{
+          gap: 'var(--spacing-sm)',
+          marginBottom: 'var(--spacing-xl)',
+        }}
+      >
           <div className="col-md">
             <input
               name="search"
@@ -369,8 +366,7 @@ function Catalog() {
             {t('catalog.end_of_list') || '—'}
           </p>
         )}
-      </main>
-    </div>
+    </>
   );
 }
 

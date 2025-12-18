@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import NavBar from './NavBar';
 import { api } from './api';
 import Loading from './Loading.jsx';
 import Alert from './Alert.jsx';
@@ -21,36 +20,15 @@ function LoanDetail() {
   }, [id, t]);
 
   if (loading) {
-    return (
-      <div className="container">
-        <NavBar />
-        <main id="main-content">
-          <Loading />
-        </main>
-      </div>
-    );
+    return <Loading />;
   }
 
   if (error) {
-    return (
-      <div className="container">
-        <NavBar />
-        <main id="main-content">
-          <Alert message={error} />
-        </main>
-      </div>
-    );
+    return <Alert message={error} />;
   }
 
   if (!loan) {
-    return (
-      <div className="container">
-        <NavBar />
-        <main id="main-content">
-          <p>{t('home.no_loans')}</p>
-        </main>
-      </div>
-    );
+    return <p>{t('home.no_loans')}</p>;
   }
 
   const start = loan.startDate
@@ -59,27 +37,24 @@ function LoanDetail() {
   const end = loan.endDate ? new Date(loan.endDate).toLocaleDateString() : '';
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <h1 className="h1">{t('loans.title')}</h1>
-        <p>
-          {loan.owner?.name} → {loan.borrower?.name}
-        </p>
-        <p>
-          {start}
-          {end && ` – ${end}`}
-        </p>
-        <ul className="list-group mb-3">
-          {loan.items?.map((it) => (
-            <li key={it._id} className="list-group-item">
-              {it.equipment ? `${it.equipment.name} x${it.quantity}` : ''}
-            </li>
-          ))}
-        </ul>
-        <Link to="/loans">{t('home.view_all')}</Link>
-      </main>
-    </div>
+    <>
+      <h1 className="h1">{t('loans.title')}</h1>
+      <p>
+        {loan.owner?.name} → {loan.borrower?.name}
+      </p>
+      <p>
+        {start}
+        {end && ` – ${end}`}
+      </p>
+      <ul className="list-group mb-3">
+        {loan.items?.map((it) => (
+          <li key={it._id} className="list-group-item">
+            {it.equipment ? `${it.equipment.name} x${it.quantity}` : ''}
+          </li>
+        ))}
+      </ul>
+      <Link to="/loans">{t('home.view_all')}</Link>
+    </>
   );
 }
 
