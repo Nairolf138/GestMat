@@ -18,6 +18,7 @@ describe('AdminStats', () => {
   const defaultResponses = {
     '/stats/loans/monthly': [{ _id: '2024-01', count: 1 }],
     '/stats/equipments/top': [{ name: 'Lamp', count: 2 }],
+    '/stats/equipments/top-refused': [{ name: 'Speaker', count: 4 }],
     '/stats/loans': [{ _id: 'pending', count: 3 }],
     '/stats/loans/duration?median=true': { average: 4, median: 5 },
     '/stats/structures/top-lenders': [{ name: 'Lender', count: 2 }],
@@ -45,6 +46,8 @@ describe('AdminStats', () => {
         return Promise.resolve(defaultResponses['/stats/logins/monthly']);
       if (url.startsWith('/stats/loans/duration'))
         return Promise.resolve(defaultResponses['/stats/loans/duration?median=true']);
+      if (url.startsWith('/stats/equipments/top-refused'))
+        return Promise.resolve(defaultResponses['/stats/equipments/top-refused']);
       if (url.startsWith('/stats/structures/top-lenders'))
         return Promise.resolve(defaultResponses['/stats/structures/top-lenders']);
       if (url.startsWith('/stats/structures/top-borrowers'))
@@ -76,6 +79,12 @@ describe('AdminStats', () => {
 
     expect(screen.getByText('Véhicules par statut')).toBeTruthy();
     expect(screen.getByText('Véhicules par usage')).toBeTruthy();
+    expect(screen.getByText('Top équipements refusés')).toBeTruthy();
+
+    const refusedCall = api.api.mock.calls.find(([url]) =>
+      url.startsWith('/stats/equipments/top-refused'),
+    );
+    expect(refusedCall).toBeTruthy();
   });
 
   it('displays vehicle mileage and occupancy prompt', async () => {
@@ -103,7 +112,7 @@ describe('AdminStats', () => {
     expect(toInput.value).toBe('2024-02');
 
     await waitFor(() => {
-      expect(api.api.mock.calls.length).toBeGreaterThan(10);
+      expect(api.api.mock.calls.length).toBeGreaterThan(11);
     });
 
     await waitFor(() => {

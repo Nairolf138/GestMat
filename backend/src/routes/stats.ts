@@ -329,6 +329,52 @@ router.get(
 );
 
 router.get(
+  '/equipments/top-refused',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    const limit = parseInt(req.query.limit as string, 10) || 5;
+    try {
+      const agg = await db
+        .collection('loanrequests')
+        .aggregate([
+          { $match: { status: 'refused' } },
+          { $unwind: '$items' },
+          {
+            $group: {
+              _id: '$items.equipment',
+              count: { $sum: '$items.quantity' },
+            },
+          },
+          { $match: { _id: { $ne: null } } },
+          { $sort: { count: -1 } },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'equipments',
+              localField: '_id',
+              foreignField: '_id',
+              as: 'equipment',
+            },
+          },
+          { $unwind: '$equipment' },
+          {
+            $project: {
+              _id: 1,
+              count: 1,
+              name: '$equipment.name',
+            },
+          },
+        ])
+        .toArray();
+      res.json(agg);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
   '/structures/top-lenders',
   auth(MANAGE_STATS),
   async (req: Request, res: Response, next: NextFunction) => {

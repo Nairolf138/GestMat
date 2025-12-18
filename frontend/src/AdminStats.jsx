@@ -26,6 +26,7 @@ function AdminStats() {
   const { t } = useTranslation();
   const [monthly, setMonthly] = useState([]);
   const [topEquipments, setTopEquipments] = useState([]);
+  const [topRefusedEquipments, setTopRefusedEquipments] = useState([]);
   const [statusCounts, setStatusCounts] = useState([]);
   const [topLenders, setTopLenders] = useState([]);
   const [topBorrowers, setTopBorrowers] = useState([]);
@@ -57,6 +58,7 @@ function AdminStats() {
         const [
           monthlyData,
           topData,
+          topRefusedData,
           statusData,
           durationData,
           lendersData,
@@ -69,6 +71,7 @@ function AdminStats() {
         ] = await Promise.all([
           api(`/stats/loans/monthly${paramsStr ? `?${paramsStr}` : ''}`),
           api('/stats/equipments/top'),
+          api('/stats/equipments/top-refused'),
           api('/stats/loans'),
           api(`/stats/loans/duration?${durationParams.toString()}`),
           api(`/stats/structures/top-lenders${paramsStr ? `?${paramsStr}` : ''}`),
@@ -81,6 +84,7 @@ function AdminStats() {
         ]);
         setMonthly(monthlyData);
         setTopEquipments(topData);
+        setTopRefusedEquipments(topRefusedData);
         setStatusCounts(statusData);
         setTopLenders(lendersData);
         setTopBorrowers(borrowersData);
@@ -94,6 +98,7 @@ function AdminStats() {
         setError(err.message);
         setMonthly([]);
         setTopEquipments([]);
+        setTopRefusedEquipments([]);
         setStatusCounts([]);
         setTopLenders([]);
         setTopBorrowers([]);
@@ -137,6 +142,17 @@ function AdminStats() {
           '#9966FF',
           '#FF9F40',
         ],
+      },
+    ],
+  };
+
+  const refusedEquipmentChart = {
+    labels: topRefusedEquipments.map((e) => e.name),
+    datasets: [
+      {
+        label: t('admin_stats.refused_equipment_count_label'),
+        data: topRefusedEquipments.map((e) => e.count),
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
       },
     ],
   };
@@ -453,7 +469,7 @@ function AdminStats() {
         </div>
       </div>
       <div className="row g-4 mb-4">
-        <div className="col-12 col-lg-6">
+        <div className="col-12 col-xl-4">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.top_equipments')}</h2>
@@ -463,7 +479,20 @@ function AdminStats() {
             </div>
           </div>
         </div>
-        <div className="col-12 col-lg-6">
+        <div className="col-12 col-xl-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h2 className="h4">{t('admin_stats.top_refused_equipments')}</h2>
+              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+                <Bar
+                  data={refusedEquipmentChart}
+                  options={barOptions(t('admin_stats.equipments'), t('admin_stats.count'))}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-xl-4">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.status_breakdown')}</h2>
