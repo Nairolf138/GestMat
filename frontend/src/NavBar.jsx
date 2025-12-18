@@ -1,4 +1,10 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
@@ -26,6 +32,7 @@ function NavBar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const dropdownRef = useRef(null);
   const searchContainerRef = useRef(null);
+  const navRef = useRef(null);
   const isAdmin = user?.role === ADMIN_ROLE;
   const handleLogout = async () => {
     try {
@@ -142,12 +149,30 @@ function NavBar() {
     setIsOpen(false);
   };
 
+  useLayoutEffect(() => {
+    const updateNavbarHeight = () => {
+      if (navRef.current) {
+        document.documentElement.style.setProperty(
+          '--navbar-height',
+          `${navRef.current.offsetHeight}px`,
+        );
+      }
+    };
+
+    updateNavbarHeight();
+    window.addEventListener('resize', updateNavbarHeight);
+    return () => window.removeEventListener('resize', updateNavbarHeight);
+  }, [cartCount, isOpen, user]);
+
   return (
     <>
       <a href="#main-content" className="skip-link">
         {t('nav.skip')}
       </a>
-      <nav className="navbar navbar-expand-lg navbar-light mb-4 shadow-sm py-2 sticky-top">
+      <nav
+        ref={navRef}
+        className="navbar navbar-expand-lg navbar-light shadow-sm py-2 navbar-fixed"
+      >
         <div className="container-fluid">
           <NavLink
             className="navbar-brand"

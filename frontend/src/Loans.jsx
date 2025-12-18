@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext } from 'react';
-import NavBar from './NavBar';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import { useTranslation } from 'react-i18next';
@@ -105,81 +104,76 @@ function Loans() {
   );
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <h1 className="h1">{t('loans.title')}</h1>
-        <div className="d-flex justify-content-end mb-3">
-          <Link className="btn btn-outline-secondary" to="/loans/history">
-            {t('loans.history.view_all')}
-          </Link>
-        </div>
-        {loading ? (
-          <Loading />
-        ) : error ? (
-          <div className="alert alert-danger">{t('common.error')}</div>
-        ) : (
-          <>
-            <ul className="nav nav-tabs mt-4">
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
-                  onClick={() => setTab('owner')}
-                >
-                  {t('loans.as_owner')}
-                </button>
-              </li>
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
-                  onClick={() => setTab('borrower')}
-                >
-                  {t('loans.as_borrower')}
-                </button>
-              </li>
-            </ul>
-            <div className="mt-3">
-              <CollapsibleSection
-                title={t('loans.finished')}
-                isOpen={sectionsOpen.finished}
-                onToggle={() => toggleSection('finished')}
+    <>
+      <h1 className="h1">{t('loans.title')}</h1>
+      <div className="d-flex justify-content-end mb-3">
+        <Link className="btn btn-outline-secondary" to="/loans/history">
+          {t('loans.history.view_all')}
+        </Link>
+      </div>
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <div className="alert alert-danger">{t('common.error')}</div>
+      ) : (
+        <>
+          <ul className="nav nav-tabs mt-4">
+            <li className="nav-item">
+              <button
+                className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
+                onClick={() => setTab('owner')}
               >
-                {renderSection(limitedFinished, tab === 'owner')}
-                {hasMoreFinished && (
-                  <div className="d-flex justify-content-end">
-                    <Link className="btn btn-link p-0" to="/loans/history">
-                      {t('loans.history.view_all')}
-                    </Link>
-                  </div>
-                )}
-              </CollapsibleSection>
-              <CollapsibleSection
-                title={t('loans.ongoing')}
-                isOpen={sectionsOpen.ongoing}
-                onToggle={() => toggleSection('ongoing')}
+                {t('loans.as_owner')}
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
+                onClick={() => setTab('borrower')}
               >
-                {renderSection(
-                  tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
-                  tab === 'owner',
-                )}
-              </CollapsibleSection>
-              <CollapsibleSection
-                title={t('loans.upcoming')}
-                isOpen={sectionsOpen.upcoming}
-                onToggle={() => toggleSection('upcoming')}
-              >
-                {renderSection(
-                  tab === 'owner'
-                    ? ownerLoans.upcoming
-                    : borrowerLoans.upcoming,
-                  tab === 'owner',
-                )}
-              </CollapsibleSection>
-            </div>
-          </>
-        )}
-      </main>
-    </div>
+                {t('loans.as_borrower')}
+              </button>
+            </li>
+          </ul>
+          <div className="mt-3">
+            <CollapsibleSection
+              title={t('loans.finished')}
+              isOpen={sectionsOpen.finished}
+              onToggle={() => toggleSection('finished')}
+            >
+              {renderSection(limitedFinished, tab === 'owner')}
+              {hasMoreFinished && (
+                <div className="d-flex justify-content-end">
+                  <Link className="btn btn-link p-0" to="/loans/history">
+                    {t('loans.history.view_all')}
+                  </Link>
+                </div>
+              )}
+            </CollapsibleSection>
+            <CollapsibleSection
+              title={t('loans.ongoing')}
+              isOpen={sectionsOpen.ongoing}
+              onToggle={() => toggleSection('ongoing')}
+            >
+              {renderSection(
+                tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
+                tab === 'owner',
+              )}
+            </CollapsibleSection>
+            <CollapsibleSection
+              title={t('loans.upcoming')}
+              isOpen={sectionsOpen.upcoming}
+              onToggle={() => toggleSection('upcoming')}
+            >
+              {renderSection(
+                tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
+                tab === 'owner',
+              )}
+            </CollapsibleSection>
+          </div>
+        </>
+      )}
+    </>
   );
 }
 

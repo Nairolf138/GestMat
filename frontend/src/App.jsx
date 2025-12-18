@@ -20,6 +20,7 @@ import AdminRoute from './AdminRoute';
 import AdminDashboard from './AdminDashboard';
 import ErrorBoundary from './ErrorBoundary';
 import i18n from './i18n';
+import AppLayout from './layouts/AppLayout.jsx';
 
 function App() {
   useEffect(() => {
@@ -40,7 +41,9 @@ function App() {
             path="/"
             element={
               <PrivateRoute>
-                <Home />
+                <AppLayout>
+                  <Home />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -48,7 +51,9 @@ function App() {
             path="/inventory"
             element={
               <PrivateRoute>
-                <Equipments />
+                <AppLayout>
+                  <Equipments />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -56,7 +61,9 @@ function App() {
             path="/catalog"
             element={
               <PrivateRoute>
-                <Catalog />
+                <AppLayout>
+                  <Catalog />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -64,7 +71,9 @@ function App() {
             path="/vehicles"
             element={
               <PrivateRoute>
-                <Vehicles />
+                <AppLayout>
+                  <Vehicles />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -72,7 +81,9 @@ function App() {
             path="/vehicles/:id"
             element={
               <PrivateRoute>
-                <VehicleDetail />
+                <AppLayout>
+                  <VehicleDetail />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -80,7 +91,9 @@ function App() {
             path="/loans"
             element={
               <PrivateRoute>
-                <Loans />
+                <AppLayout>
+                  <Loans />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -88,7 +101,9 @@ function App() {
             path="/loans/history"
             element={
               <PrivateRoute>
-                <LoansHistory />
+                <AppLayout>
+                  <LoansHistory />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -96,7 +111,9 @@ function App() {
             path="/loans/:id"
             element={
               <PrivateRoute>
-                <LoanDetail />
+                <AppLayout>
+                  <LoanDetail />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -104,7 +121,9 @@ function App() {
             path="/cart"
             element={
               <PrivateRoute>
-                <Cart />
+                <AppLayout>
+                  <Cart />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -112,7 +131,9 @@ function App() {
             path="/profile"
             element={
               <PrivateRoute>
-                <Profile />
+                <AppLayout>
+                  <Profile />
+                </AppLayout>
               </PrivateRoute>
             }
           />
@@ -120,7 +141,9 @@ function App() {
             path="/admin"
             element={
               <AdminRoute>
-                <AdminDashboard />
+                <AppLayout>
+                  <AdminDashboard />
+                </AppLayout>
               </AdminRoute>
             }
           />

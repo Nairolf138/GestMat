@@ -14,7 +14,7 @@ html {
   --color-success: #28a745;
   --color-danger: #dc3545;
 
-  --navbar-height: 56px;
+  --navbar-height: 72px;
 
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -57,8 +57,8 @@ html {
 body {
   font-family: 'Roboto', sans-serif;
   margin: 0;
-  padding: var(--spacing-lg);
-  padding-top: calc(var(--spacing-lg) + var(--navbar-height));
+  padding: var(--spacing-sm);
+  padding-top: var(--navbar-height);
   background-color: var(--color-bg);
   color: var(--color-text);
   transition:
@@ -76,7 +76,7 @@ body {
   padding: var(--spacing-sm);
   background: var(--color-primary);
   color: #fff;
-  z-index: 1000;
+  z-index: 1100;
   text-decoration: none;
 }
 
@@ -101,8 +101,10 @@ body {
 }
 
 .search-suggestions {
-  z-index: 1050;
-  margin: var(--spacing-xs) 0 0;
+  z-index: 1080;
+  top: calc(100% + var(--spacing-xs));
+  left: 0;
+  right: 0;
   padding: var(--spacing-xs);
   background-color: var(--color-navbar-bg);
   color: var(--color-text);
@@ -335,7 +337,15 @@ body {
     background-color 0.3s,
     color 0.3s;
   padding: var(--spacing-sm) var(--spacing-md);
-  z-index: 1030;
+  min-height: var(--navbar-height, 72px);
+}
+
+.navbar-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1040;
 }
 
 .navbar-nav {
@@ -346,6 +356,7 @@ body {
 .navbar-search {
   gap: var(--spacing-xs);
   min-width: 260px;
+  width: min(360px, 100%);
 }
 
 .navbar-search .form-control {
@@ -382,10 +393,25 @@ body {
   width: auto;
 }
 
+.dropdown-menu {
+  z-index: 1070;
+  margin-top: var(--spacing-xs);
+}
+
+.app-main {
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-xl);
+  scroll-margin-top: calc(var(--navbar-height) + var(--spacing-sm));
+}
+
+.app-container {
+  padding-top: 0;
+}
+
 @media (max-width: 768px) {
   body {
     padding: var(--spacing-sm);
-    padding-top: calc(var(--spacing-sm) + var(--navbar-height));
+    padding-top: var(--navbar-height);
   }
 
   .navbar-search {
@@ -396,21 +422,19 @@ body {
 @media (min-width: 769px) and (max-width: 1024px) {
   body {
     padding: var(--spacing-md);
-    padding-top: calc(var(--spacing-md) + var(--navbar-height));
+    padding-top: var(--navbar-height);
   }
 }
 
 @media (min-width: 1440px) {
   body {
-    padding: var(--spacing-xl);
-    padding-top: calc(var(--spacing-xl) + var(--navbar-height));
+    padding-inline: var(--spacing-xl);
   }
 }
 
 @media (min-width: 1920px) {
   body {
-    padding: var(--spacing-xxl);
-    padding-top: calc(var(--spacing-xxl) + var(--navbar-height));
+    padding-inline: var(--spacing-xxl);
   }
 }
 

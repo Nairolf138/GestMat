@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import NavBar from './NavBar';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import LoanItem from './LoanItem.jsx';
@@ -116,130 +115,125 @@ function LoansHistory() {
   };
 
   return (
-    <div className="container">
-      <NavBar />
-      <main id="main-content">
-        <h1 className="h1">{t('loans.history.title')}</h1>
-        {loading ? (
-          <Loading />
-        ) : error ? (
-          <div className="alert alert-danger">{t('common.error')}</div>
-        ) : (
-          <>
-            <div className="card mb-3">
-              <div className="card-body d-flex flex-column flex-md-row gap-3">
-                <div className="d-flex flex-column flex-grow-1">
-                  <label className="form-label" htmlFor="status-filter">
-                    {t('loans.history.status_filter')}
-                  </label>
-                  <select
-                    id="status-filter"
-                    className="form-select"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <option value="all">{t('common.all')}</option>
-                    <option value="finished">{t('loans.finished')}</option>
-                    <option value="accepted">{t('loans.status.accepted')}</option>
-                    <option value="cancelled">{t('loans.status.cancelled')}</option>
-                    <option value="refused">{t('loans.status.refused')}</option>
-                  </select>
-                </div>
-                <div className="d-flex flex-column flex-grow-1">
-                  <label className="form-label" htmlFor="from-date">
-                    {t('loans.history.from')}
-                  </label>
-                  <input
-                    id="from-date"
-                    type="date"
-                    className="form-control"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                  />
-                </div>
-                <div className="d-flex flex-column flex-grow-1">
-                  <label className="form-label" htmlFor="to-date">
-                    {t('loans.history.to')}
-                  </label>
-                  <input
-                    id="to-date"
-                    type="date"
-                    className="form-control"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                  />
-                </div>
-                <div className="d-flex align-items-end">
-                  <button className="btn btn-secondary" onClick={handleResetFilters}>
-                    {t('common.reset')}
-                  </button>
-                </div>
+    <>
+      <h1 className="h1">{t('loans.history.title')}</h1>
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <div className="alert alert-danger">{t('common.error')}</div>
+      ) : (
+        <>
+          <div className="card mb-3">
+            <div className="card-body d-flex flex-column flex-md-row gap-3">
+              <div className="d-flex flex-column flex-grow-1">
+                <label className="form-label" htmlFor="status-filter">
+                  {t('loans.history.status_filter')}
+                </label>
+                <select
+                  id="status-filter"
+                  className="form-select"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">{t('common.all')}</option>
+                  <option value="finished">{t('loans.finished')}</option>
+                  <option value="accepted">{t('loans.status.accepted')}</option>
+                  <option value="cancelled">{t('loans.status.cancelled')}</option>
+                  <option value="refused">{t('loans.status.refused')}</option>
+                </select>
+              </div>
+              <div className="d-flex flex-column flex-grow-1">
+                <label className="form-label" htmlFor="from-date">
+                  {t('loans.history.from')}
+                </label>
+                <input
+                  id="from-date"
+                  type="date"
+                  className="form-control"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+              </div>
+              <div className="d-flex flex-column flex-grow-1">
+                <label className="form-label" htmlFor="to-date">
+                  {t('loans.history.to')}
+                </label>
+                <input
+                  id="to-date"
+                  type="date"
+                  className="form-control"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+              </div>
+              <div className="d-flex align-items-end">
+                <button className="btn btn-secondary" onClick={handleResetFilters}>
+                  {t('common.reset')}
+                </button>
               </div>
             </div>
-            <ul className="nav nav-tabs mt-3">
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
-                  onClick={() => setTab('owner')}
-                >
-                  {t('loans.as_owner')}
-                </button>
-              </li>
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
-                  onClick={() => setTab('borrower')}
-                >
-                  {t('loans.as_borrower')}
-                </button>
-              </li>
+          </div>
+          <ul className="nav nav-tabs mt-3">
+            <li className="nav-item">
+              <button
+                className={`nav-link ${tab === 'owner' ? 'active' : ''}`}
+                onClick={() => setTab('owner')}
+              >
+                {t('loans.as_owner')}
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                className={`nav-link ${tab === 'borrower' ? 'active' : ''}`}
+                onClick={() => setTab('borrower')}
+              >
+                {t('loans.as_borrower')}
+              </button>
+            </li>
+          </ul>
+          <div className="mt-3">
+            <ul className="list-group mb-3">
+              {paginatedLoans.map((loan) => (
+                <LoanItem
+                  key={loan._id}
+                  loan={loan}
+                  isOwner={tab === 'owner'}
+                  refresh={refresh}
+                />
+              ))}
+              {!paginatedLoans.length && (
+                <li className="list-group-item">{t('loans.history.no_results')}</li>
+              )}
             </ul>
-            <div className="mt-3">
-              <ul className="list-group mb-3">
-                {paginatedLoans.map((loan) => (
-                  <LoanItem
-                    key={loan._id}
-                    loan={loan}
-                    isOwner={tab === 'owner'}
-                    refresh={refresh}
-                  />
-                ))}
-                {!paginatedLoans.length && (
-                  <li className="list-group-item">
-                    {t('loans.history.no_results')}
-                  </li>
-                )}
-              </ul>
-              <div className="d-flex justify-content-between align-items-center">
-                <small className="text-muted">
-                  {t('loans.history.pagination', {
-                    start: historyLoans.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0,
-                    end: Math.min(historyLoans.length, currentPage * PAGE_SIZE),
-                    total: historyLoans.length,
-                  })}
-                </small>
-                <div className="btn-group">
-                  <button
-                    className="btn btn-outline-primary"
-                    disabled={currentPage === 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    {t('common.previous')}
-                  </button>
-                  <button
-                    className="btn btn-outline-primary"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  >
-                    {t('common.next')}
-                  </button>
-                </div>
+            <div className="d-flex justify-content-between align-items-center">
+              <small className="text-muted">
+                {t('loans.history.pagination', {
+                  start: historyLoans.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0,
+                  end: Math.min(historyLoans.length, currentPage * PAGE_SIZE),
+                  total: historyLoans.length,
+                })}
+              </small>
+              <div className="btn-group">
+                <button
+                  className="btn btn-outline-primary"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  {t('common.previous')}
+                </button>
+                <button
+                  className="btn btn-outline-primary"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  {t('common.next')}
+                </button>
               </div>
             </div>
-          </>
-        )}
-      </main>
-    </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
 
