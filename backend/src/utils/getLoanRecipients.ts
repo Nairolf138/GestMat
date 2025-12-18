@@ -2,8 +2,12 @@ import { Db, ObjectId } from 'mongodb';
 import { canModify } from './roleAccess';
 import {
   NotificationPreference,
+  getNotificationStatus,
   isNotificationEnabled,
 } from './notificationPreferences';
+import logger from './logger';
+
+type LoanRecipientRole = 'owner' | 'borrower' | 'requester';
 
 interface LoanRecipientContext {
   ownerId?: string | null;
@@ -25,17 +29,35 @@ interface LoanItemRef {
 
 interface RecipientFilterOptions {
   requireSystemAlerts?: boolean;
+  trace?: (details: RecipientTrace) => void;
+}
+
+interface RecipientTrace {
+  role: LoanRecipientRole | 'structure';
+  identifier?: string;
+  email?: string;
+  preference?: NotificationPreference;
+  reason: string;
 }
 
 function shouldNotify(
   user: any,
   preference: NotificationPreference,
   { requireSystemAlerts = false }: RecipientFilterOptions = {},
-): boolean {
-  return (
-    isNotificationEnabled(user, preference) &&
-    (!requireSystemAlerts || isNotificationEnabled(user, 'systemAlerts'))
-  );
+): { allowed: boolean; reason?: string } {
+  const preferenceStatus = getNotificationStatus(user, preference);
+  if (!preferenceStatus.enabled) {
+    return {
+      allowed: false,
+      reason: `opt-out for ${preference} (${preferenceStatus.source})`,
+    };
+  }
+
+  if (requireSystemAlerts && !isNotificationEnabled(user, 'systemAlerts')) {
+    return { allowed: false, reason: 'opt-out for systemAlerts' };
+  }
+
+  return { allowed: true };
 }
 
 async function findOwnerRecipients(
@@ -64,12 +86,31 @@ async function findOwnerRecipients(
     .toArray();
 
   return users
-    .filter(
-      (u: any) =>
+    .filter((u: any) => {
+      const result = shouldNotify(u, preference, options);
+      if (!result.allowed) {
+        options.trace?.({
+          role: 'owner',
+          identifier: u._id?.toString?.(),
+          email: u.email,
+          preference,
+          reason: result.reason ?? 'notification disabled',
+        });
+      }
+      if (!u.email) {
+        options.trace?.({
+          role: 'owner',
+          identifier: u._id?.toString?.(),
+          preference,
+          reason: 'missing email',
+        });
+      }
+      return (
         u.email &&
-        shouldNotify(u, preference, options) &&
-        (!types.length || types.some((t) => canModify(u.role, t))),
-    )
+        result.allowed &&
+        (!types.length || types.some((t) => canModify(u.role, t)))
+      );
+    })
     .map((u: any) => u.email as string);
 }
 
@@ -126,7 +167,27 @@ async function findBorrowerRecipients(
     .toArray();
 
   borrowerUsers
-    .filter((u: any) => u.email && shouldNotify(u, preference, options))
+    .filter((u: any) => {
+      const result = shouldNotify(u, preference, options);
+      if (!result.allowed) {
+        options.trace?.({
+          role: 'borrower',
+          identifier: u._id?.toString?.(),
+          email: u.email,
+          preference,
+          reason: result.reason ?? 'notification disabled',
+        });
+      }
+      if (!u.email) {
+        options.trace?.({
+          role: 'borrower',
+          identifier: u._id?.toString?.(),
+          preference,
+          reason: 'missing email',
+        });
+      }
+      return u.email && result.allowed;
+    })
     .forEach((u: any) => recipients.push(u.email as string));
 
   return recipients;
@@ -139,6 +200,7 @@ export async function getLoanRecipientsByRole(
   preference: NotificationPreference = 'loanStatusChanges',
   options: RecipientFilterOptions = {},
 ): Promise<LoanRecipientGroups> {
+  const trace = options.trace;
   const ownerRecipients = await findOwnerRecipients(
     db,
     items,
@@ -148,6 +210,28 @@ export async function getLoanRecipientsByRole(
   );
   const borrowerRecipients = await findBorrowerRecipients(db, context, preference, options);
   const requesterRecipients = await findRequesterRecipients(db, context, preference, options);
+
+  if (!ownerRecipients.length) {
+    trace?.({
+      role: 'owner',
+      identifier: context.ownerId ?? undefined,
+      reason: `no recipients resolved for preference ${preference}`,
+    });
+  }
+  if (!borrowerRecipients.length) {
+    trace?.({
+      role: 'borrower',
+      identifier: context.borrowerId ?? undefined,
+      reason: `no recipients resolved for preference ${preference}`,
+    });
+  }
+  if (!requesterRecipients.length) {
+    trace?.({
+      role: 'requester',
+      identifier: context.requestedById ?? undefined,
+      reason: `no recipients resolved for preference ${preference}`,
+    });
+  }
 
   return { ownerRecipients, borrowerRecipients, requesterRecipients };
 }
@@ -159,10 +243,30 @@ export async function getLoanRecipients(
   preference: NotificationPreference = 'loanStatusChanges',
   options: RecipientFilterOptions = {},
 ): Promise<string[]> {
-  const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-    await getLoanRecipientsByRole(db, items, context, preference, options);
+  const traces: RecipientTrace[] = [];
+  const trace =
+    options.trace ??
+    ((details: RecipientTrace) => {
+      traces.push(details);
+    });
 
-  return Array.from(
+  const { ownerRecipients, borrowerRecipients, requesterRecipients } =
+    await getLoanRecipientsByRole(db, items, context, preference, { ...options, trace });
+
+  const recipients = Array.from(
     new Set([...ownerRecipients, ...borrowerRecipients, ...requesterRecipients]),
   );
+
+  if (!recipients.length) {
+    logger.warn(
+      'Loan notification: no recipients found (owner: %s, borrower: %s, requester: %s, preference: %s). Trace: %o',
+      context.ownerId ?? 'unknown',
+      context.borrowerId ?? 'unknown',
+      context.requestedById ?? 'unknown',
+      preference,
+      traces,
+    );
+  }
+
+  return recipients;
 }

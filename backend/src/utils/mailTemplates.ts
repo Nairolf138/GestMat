@@ -52,6 +52,7 @@ interface MailTemplate {
 }
 
 const SIGNATURE = "L'équipe GestMat";
+const GREETING = 'Bonjour,';
 
 function formatDate(value?: string | Date | null): string {
   if (!value) return 'Non renseignée';
@@ -128,7 +129,7 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   return { text: textItems.join('\n'), html: htmlItems.join('') };
 }
 
-function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
+export function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
   const borrower = getStructureLabel(loan.borrower);
   const owner = getStructureLabel(loan.owner);
   const requester = getUserLabel(loan.requestedBy);
@@ -148,22 +149,65 @@ function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
     `Matériel :\n${itemsText}\n` +
     `Note : ${noteText}`;
 
-  const html = `
-    <ul>
-      <li><strong>Prêteur :</strong> ${owner}</li>
-      <li><strong>Emprunteur :</strong> ${borrower}</li>
-      <li><strong>Demandeur :</strong> ${requester}</li>
-      <li><strong>Début :</strong> ${start}</li>
-      <li><strong>Fin :</strong> ${end}</li>
-      <li><strong>Statut :</strong> ${status}</li>
-      <li><strong>Matériel :</strong>
-        <ul>${itemsHtml}</ul>
-      </li>
-      <li><strong>Note :</strong> ${noteHtml}</li>
-    </ul>
-  `;
+  const html = [
+    '<ul aria-label="Détails du prêt">',
+    `<li><strong>Prêteur :</strong> ${owner}</li>`,
+    `<li><strong>Emprunteur :</strong> ${borrower}</li>`,
+    `<li><strong>Demandeur :</strong> ${requester}</li>`,
+    `<li><strong>Début :</strong> ${start}</li>`,
+    `<li><strong>Fin :</strong> ${end}</li>`,
+    `<li><strong>Statut :</strong> ${status}</li>`,
+    `<li><strong>Matériel :</strong><ul>${itemsHtml}</ul></li>`,
+    `<li><strong>Note :</strong> ${noteHtml}</li>`,
+    '</ul>',
+  ].join('');
 
   return { text, html };
+}
+
+function getLoanLabel(loan: LoanRequest): string {
+  const id = (loan as any)?._id;
+  if (!id) return 'prêt';
+  return typeof id === 'string' ? id : id.toString();
+}
+
+function renderLoanTemplate({
+  subject,
+  preamble,
+  eventLine,
+  action,
+  summary,
+}: {
+  subject: string;
+  preamble: string;
+  eventLine: string;
+  action: string;
+  summary: { text: string; html: string };
+}): MailTemplate {
+  const text = [
+    GREETING,
+    '',
+    preamble,
+    eventLine,
+    '',
+    'Résumé du prêt :',
+    summary.text,
+    '',
+    `Action à entreprendre : ${action}`,
+    '',
+    SIGNATURE,
+  ].join('\n');
+
+  const html = [
+    `<p>${GREETING}</p>`,
+    `<p>${preamble}</p>`,
+    `<p>${eventLine}</p>`,
+    `<div role="group" aria-label="Résumé du prêt">${summary.html}</div>`,
+    `<p><strong>Action à entreprendre :</strong> ${action}</p>`,
+    `<p>${SIGNATURE}</p>`,
+  ].join('');
+
+  return { subject, text, html };
 }
 
 function creationRoleCopy(role: LoanRecipientRole): {
@@ -348,25 +392,15 @@ function overdueRoleCopy(role: LoanRecipientRole): {
 export function loanCreationTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const { subject, preamble, action } = creationRoleCopy(role);
+  const loanLabel = getLoanLabel(loan);
 
-  return {
+  return renderLoanTemplate({
     subject,
-    text:
-      `Bonjour,\n\n` +
-      `${preamble}\n` +
-      `Une nouvelle demande de prêt (${loan._id}) a été créée.\n\n` +
-      `${text}\n\n` +
-      `Action à entreprendre : ${action}\n\n` +
-      SIGNATURE,
-    html: `
-      <p>Bonjour,</p>
-      <p>${preamble}</p>
-      <p>Une nouvelle demande de prêt (${loan._id}) a été créée.</p>
-      ${html}
-      <p><strong>Action à entreprendre :</strong> ${action}</p>
-      <p>${SIGNATURE}</p>
-    `,
-  };
+    preamble,
+    eventLine: `Une nouvelle demande de prêt (${loanLabel}) a été créée.`,
+    action,
+    summary: { text, html },
+  });
 }
 
 export function loanStatusTemplate({
@@ -379,49 +413,29 @@ export function loanStatusTemplate({
   const statusLabel = translateStatus(status);
   const actorLine = actor ? ` par ${actor}` : '';
   const { subject, preamble, action } = statusRoleCopy(role, status);
+  const loanLabel = getLoanLabel(loan);
 
-  return {
+  return renderLoanTemplate({
     subject,
-    text:
-      `Bonjour,\n\n` +
-      `${preamble}\n` +
-      `La demande de prêt ${loan._id} est ${statusLabel}${actorLine}.\n\n` +
-      `${text}\n\n` +
-      `Action à entreprendre : ${action}\n\n` +
-      SIGNATURE,
-    html: `
-      <p>Bonjour,</p>
-      <p>${preamble}</p>
-      <p>La demande de prêt ${loan._id} est <strong>${statusLabel}</strong>${actorLine}.</p>
-      ${html}
-      <p><strong>Action à entreprendre :</strong> ${action}</p>
-      <p>${SIGNATURE}</p>
-    `,
-  };
+    preamble,
+    eventLine: `La demande de prêt ${loanLabel} est ${statusLabel}${actorLine}.`,
+    action,
+    summary: { text, html },
+  });
 }
 
 export function loanReminderTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const { subject, preamble, action } = reminderRoleCopy(role);
+  const loanLabel = getLoanLabel(loan);
 
-  return {
+  return renderLoanTemplate({
     subject,
-    text:
-      `Bonjour,\n\n` +
-      `${preamble}\n` +
-      `Le prêt ${loan._id} approche de son échéance.\n\n` +
-      `${text}\n\n` +
-      `Action à entreprendre : ${action}\n\n` +
-      SIGNATURE,
-    html: `
-      <p>Bonjour,</p>
-      <p>${preamble}</p>
-      <p>Le prêt ${loan._id} approche de son échéance.</p>
-      ${html}
-      <p><strong>Action à entreprendre :</strong> ${action}</p>
-      <p>${SIGNATURE}</p>
-    `,
-  };
+    preamble,
+    eventLine: `Le prêt ${loanLabel} approche de son échéance.`,
+    action,
+    summary: { text, html },
+  });
 }
 
 export function loanStartReminderTemplate({
@@ -430,49 +444,29 @@ export function loanStartReminderTemplate({
 }: StartReminderContext & { role?: LoanRecipientRole }): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const { subject, preamble, action } = startReminderRoleCopy(role);
+  const loanLabel = getLoanLabel(loan);
 
-  return {
+  return renderLoanTemplate({
     subject,
-    text:
-      `Bonjour,\n\n` +
-      `${preamble}\n` +
-      `Le prêt ${loan._id} va bientôt commencer.\n\n` +
-      `${text}\n\n` +
-      `Action à entreprendre : ${action}\n\n` +
-      SIGNATURE,
-    html: `
-      <p>Bonjour,</p>
-      <p>${preamble}</p>
-      <p>Le prêt ${loan._id} va bientôt commencer.</p>
-      ${html}
-      <p><strong>Action à entreprendre :</strong> ${action}</p>
-      <p>${SIGNATURE}</p>
-    `,
-  };
+    preamble,
+    eventLine: `Le prêt ${loanLabel} va bientôt commencer.`,
+    action,
+    summary: { text, html },
+  });
 }
 
 export function loanOverdueTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const { subject, preamble, action } = overdueRoleCopy(role);
+  const loanLabel = getLoanLabel(loan);
 
-  return {
+  return renderLoanTemplate({
     subject,
-    text:
-      `Bonjour,\n\n` +
-      `${preamble}\n` +
-      `Le prêt ${loan._id} est en retard.\n\n` +
-      `${text}\n\n` +
-      `Action à entreprendre : ${action}\n\n` +
-      SIGNATURE,
-    html: `
-      <p>Bonjour,</p>
-      <p>${preamble}</p>
-      <p>Le prêt ${loan._id} est en retard.</p>
-      ${html}
-      <p><strong>Action à entreprendre :</strong> ${action}</p>
-      <p>${SIGNATURE}</p>
-    `,
-  };
+    preamble,
+    eventLine: `Le prêt ${loanLabel} est en retard.`,
+    action,
+    summary: { text, html },
+  });
 }
 
 export function vehicleComplianceReminderTemplate({
