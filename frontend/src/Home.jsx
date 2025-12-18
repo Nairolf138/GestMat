@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useMemo, useCallback } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import NavBar from './NavBar';
 import { api } from './api';
@@ -19,11 +19,7 @@ function Home() {
   const location = useLocation();
   const [message, setMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
   const [actionLoadingId, setActionLoadingId] = useState('');
-  const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [runTour, setRunTour] = useState(false);
 
   const structureId = useMemo(
@@ -92,39 +88,6 @@ function Home() {
     [refreshLoans, t],
   );
 
-  useEffect(() => {
-    if (!query.trim()) {
-      setSuggestions([]);
-      return;
-    }
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      api(`/equipments?search=${encodeURIComponent(query)}`, {
-        signal: controller.signal,
-      })
-        .then((data) => {
-          if (Array.isArray(data)) setSuggestions(data.slice(0, 5));
-          else setSuggestions([]);
-        })
-        .catch(() => setSuggestions([]));
-    }, 300);
-    return () => {
-      controller.abort();
-      clearTimeout(timeoutId);
-    };
-  }, [query]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim()) navigate(`/catalog?search=${encodeURIComponent(query)}`);
-    setShowSuggestions(false);
-  };
-
-  const handleSelect = (item) => {
-    navigate(`/catalog?search=${encodeURIComponent(item.name)}`);
-    setShowSuggestions(false);
-  };
-
   const currentLoans = useMemo(
     () =>
       loans.filter((l) => {
@@ -187,40 +150,6 @@ function Home() {
         <div className="tutorial-notifications">
           <Notifications />
         </div>
-        <form
-          className="mb-3 position-relative tutorial-search"
-          autoComplete="off"
-          onSubmit={handleSubmit}
-        >
-          <input
-            type="text"
-            className="form-control"
-            placeholder={t('home.search_placeholder')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-          />
-          {showSuggestions && (suggestions.length > 0 || query.trim()) && (
-            <ul
-              className="list-group position-absolute w-100 search-suggestions"
-            >
-              {suggestions.length > 0 ? (
-                suggestions.map((s) => (
-                  <li
-                    key={s._id}
-                    className="list-group-item list-group-item-action"
-                    onMouseDown={() => handleSelect(s)}
-                  >
-                    {s.name}
-                  </li>
-                ))
-              ) : (
-                <li className="list-group-item">{t('home.no_results')}</li>
-              )}
-            </ul>
-          )}
-        </form>
         <h1 className="h1">{t('home.title')}</h1>
         <Alert message={error} />
         <Alert type="success" message={message} />

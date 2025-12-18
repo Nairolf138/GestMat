@@ -343,6 +343,25 @@ body {
   gap: var(--spacing-sm);
 }
 
+.navbar-search {
+  gap: var(--spacing-xs);
+  min-width: 260px;
+}
+
+.navbar-search .form-control {
+  height: 38px;
+}
+
+.navbar-search .btn {
+  margin-top: 0;
+  margin-right: 0;
+}
+
+.navbar-search .search-suggestions {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
 .user-dropdown .dropdown-toggle {
   color: var(--color-primary);
   background-color: transparent;
@@ -367,6 +386,10 @@ body {
   body {
     padding: var(--spacing-sm);
     padding-top: calc(var(--spacing-sm) + var(--navbar-height));
+  }
+
+  .navbar-search {
+    width: 100%;
   }
 }
 
