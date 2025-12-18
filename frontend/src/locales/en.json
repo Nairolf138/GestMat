@@ -72,6 +72,9 @@
     "login": "Login",
     "logout": "Logout",
     "language": "Language",
+    "search_placeholder": "Search equipment...",
+    "search_label": "Search equipment",
+    "search_button": "Search",
     "skip": "Skip to main content",
     "toggle_theme": {
       "activate": "Enable dark mode",

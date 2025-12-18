@@ -72,6 +72,9 @@
     "login": "Connexion",
     "logout": "Déconnexion",
     "language": "Langue",
+    "search_placeholder": "Rechercher un équipement...",
+    "search_label": "Rechercher un équipement",
+    "search_button": "Rechercher",
     "skip": "Aller au contenu principal",
     "toggle_theme": {
       "activate": "Activer le mode sombre",

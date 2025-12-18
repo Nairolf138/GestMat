@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
@@ -9,6 +9,7 @@ import { ADMIN_ROLE } from '../roles';
 function NavBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser } = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(
@@ -20,7 +21,11 @@ function NavBar() {
     JSON.parse(localStorage.getItem('cart') || '[]').length,
   );
   const [accountOpen, setAccountOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const dropdownRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const isAdmin = user?.role === ADMIN_ROLE;
   const handleLogout = async () => {
     try {
@@ -51,6 +56,36 @@ function NavBar() {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchFromUrl = params.get('search') || '';
+    setSearchQuery(searchFromUrl);
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      api(`/equipments?search=${encodeURIComponent(searchQuery)}`, {
+        signal: controller.signal,
+      })
+        .then((data) => {
+          if (Array.isArray(data)) setSuggestions(data.slice(0, 5));
+          else setSuggestions([]);
+        })
+        .catch(() => setSuggestions([]));
+    }, 300);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!accountOpen) {
@@ -86,6 +121,26 @@ function NavBar() {
       clearTimeout(inactivityTimer);
     };
   }, [accountOpen]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) return;
+
+    navigate(`/catalog?search=${encodeURIComponent(trimmedQuery)}`);
+    setShowSuggestions(false);
+    setIsOpen(false);
+  };
+
+  const handleSuggestionSelect = (item) => {
+    const name = item?.name || '';
+    if (!name) return;
+
+    setSearchQuery(name);
+    navigate(`/catalog?search=${encodeURIComponent(name)}`);
+    setShowSuggestions(false);
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -203,6 +258,53 @@ function NavBar() {
               )}
             </div>
             <div className="navbar-utils d-flex ms-auto align-items-center gap-3">
+              <form
+                ref={searchContainerRef}
+                className="navbar-search d-flex align-items-center tutorial-search"
+                autoComplete="off"
+                onSubmit={handleSearchSubmit}
+              >
+                <label className="visually-hidden" htmlFor="navbar-search">
+                  {t('nav.search_label')}
+                </label>
+                <div className="position-relative flex-grow-1">
+                  <input
+                    id="navbar-search"
+                    type="text"
+                    className="form-control form-control-sm"
+                    placeholder={t('nav.search_placeholder')}
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+                    aria-label={t('nav.search_label')}
+                  />
+                  {showSuggestions && (suggestions.length > 0 || searchQuery.trim()) && (
+                    <ul className="list-group position-absolute w-100 search-suggestions">
+                      {suggestions.length > 0 ? (
+                        suggestions.map((suggestion) => (
+                          <li
+                            key={suggestion._id}
+                            className="list-group-item list-group-item-action"
+                            onMouseDown={() => handleSuggestionSelect(suggestion)}
+                          >
+                            {suggestion.name}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="list-group-item">{t('home.no_results')}</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-sm ms-2 d-flex align-items-center justify-content-center"
+                  aria-label={t('nav.search_button')}
+                >
+                  <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                </button>
+              </form>
               {user && (
                 <div ref={dropdownRef} className="dropdown user-dropdown">
                   <button
