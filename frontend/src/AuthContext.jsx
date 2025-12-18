@@ -18,7 +18,6 @@ export const AuthContext = createContext({
 });
 
 const DEFAULT_INACTIVITY_LIMIT = 30 * 60 * 1000;
-const EXTENDED_INACTIVITY_LIMIT = 7 * 24 * 60 * 60 * 1000;
 
 export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
@@ -31,10 +30,6 @@ export function AuthProvider({ children }) {
   const [stayLoggedInPreference, setStayLoggedInPreferenceState] = useState(() =>
     localStorage.getItem('stayLoggedIn') === 'true',
   );
-
-  const inactivityLimit = stayLoggedInPreference
-    ? EXTENDED_INACTIVITY_LIMIT
-    : DEFAULT_INACTIVITY_LIMIT;
 
   const setStayLoggedInPreference = useCallback((value) => {
     setStayLoggedInPreferenceState(value);
@@ -68,12 +63,17 @@ export function AuthProvider({ children }) {
   }, [queryClient]);
 
   const resetTimer = useCallback(
-    (timestamp = Date.now(), limit = inactivityLimit) => {
+    (
+      timestamp = Date.now(),
+      limit = DEFAULT_INACTIVITY_LIMIT,
+      shouldTrack = !stayLoggedInPreference,
+    ) => {
+      if (!shouldTrack) return;
       localStorage.setItem('lastActivity', timestamp.toString());
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(logout, limit);
     },
-    [inactivityLimit, logout],
+    [logout, stayLoggedInPreference],
   );
 
   const setUser = (newUser, options = {}) => {
@@ -84,9 +84,6 @@ export function AuthProvider({ children }) {
     const targetStayLoggedIn = hasPreferenceOverride
       ? options.stayLoggedIn
       : stayLoggedInPreference;
-    const targetLimit = targetStayLoggedIn
-      ? EXTENDED_INACTIVITY_LIMIT
-      : DEFAULT_INACTIVITY_LIMIT;
 
     if (hasPreferenceOverride) {
       setStayLoggedInPreference(targetStayLoggedIn);
@@ -94,7 +91,12 @@ export function AuthProvider({ children }) {
 
     queryClient.setQueryData(['currentUser'], newUser);
     if (newUser) {
-      resetTimer(Date.now(), targetLimit);
+      if (!targetStayLoggedIn) {
+        resetTimer(Date.now(), DEFAULT_INACTIVITY_LIMIT, true);
+      } else {
+        clearTimeout(timerRef.current);
+        localStorage.removeItem('lastActivity');
+      }
     } else {
       clearTimeout(timerRef.current);
       localStorage.removeItem('lastActivity');
@@ -104,6 +106,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!user) return;
 
+    if (stayLoggedInPreference) {
+      clearTimeout(timerRef.current);
+      localStorage.removeItem('lastActivity');
+      previousStayLoggedIn.current = stayLoggedInPreference;
+      return;
+    }
+
     const storedActivity = Number(localStorage.getItem('lastActivity'));
     const preferenceChanged =
       previousStayLoggedIn.current !== stayLoggedInPreference;
@@ -112,14 +121,17 @@ export function AuthProvider({ children }) {
         ? Date.now()
         : storedActivity;
     const elapsed = Date.now() - initialTimestamp;
-    if (elapsed >= inactivityLimit) {
+    if (elapsed >= DEFAULT_INACTIVITY_LIMIT) {
       logout();
       return;
     }
 
     localStorage.setItem('lastActivity', initialTimestamp.toString());
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(logout, inactivityLimit - elapsed);
+    timerRef.current = setTimeout(
+      logout,
+      DEFAULT_INACTIVITY_LIMIT - elapsed,
+    );
 
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
     const handler = () => user && resetTimer();
@@ -130,10 +142,13 @@ export function AuthProvider({ children }) {
       const lastActivityTime = Number(event.newValue);
       const elapsed = Date.now() - lastActivityTime;
       clearTimeout(timerRef.current);
-      if (elapsed >= inactivityLimit) {
+      if (elapsed >= DEFAULT_INACTIVITY_LIMIT) {
         logout();
       } else {
-        timerRef.current = setTimeout(logout, inactivityLimit - elapsed);
+        timerRef.current = setTimeout(
+          logout,
+          DEFAULT_INACTIVITY_LIMIT - elapsed,
+        );
       }
     };
 
@@ -144,7 +159,7 @@ export function AuthProvider({ children }) {
       window.removeEventListener('storage', onStorage);
       clearTimeout(timerRef.current);
     };
-  }, [inactivityLimit, logout, resetTimer, stayLoggedInPreference, user]);
+  }, [logout, resetTimer, stayLoggedInPreference, user]);
 
   if (isPublicRoute) {
     return (
