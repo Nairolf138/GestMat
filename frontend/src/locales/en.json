@@ -64,6 +64,7 @@
     "vehicles": "Vehicles",
     "inventory": "Local inventory",
     "loans": "Loans",
+    "loans_with_pending": "Loans – {{count}} pending requests",
     "loans_history": "History",
     "cart": "Cart",
     "admin": "Admin",

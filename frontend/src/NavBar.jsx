@@ -11,6 +11,7 @@ import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import logo from './logo.png';
 import { ADMIN_ROLE } from '../roles';
+import usePendingLoanRequestsCount from './hooks/usePendingLoanRequestsCount';
 
 function NavBar() {
   const { t } = useTranslation();
@@ -33,6 +34,10 @@ function NavBar() {
   const dropdownRef = useRef(null);
   const searchContainerRef = useRef(null);
   const navRef = useRef(null);
+  const { count: pendingLoanCount } = usePendingLoanRequestsCount({
+    enabled: Boolean(user),
+    userId: user?._id,
+  });
   const isAdmin = user?.role === ADMIN_ROLE;
   const handleLogout = async () => {
     try {
@@ -46,6 +51,12 @@ function NavBar() {
   const themeLabel = isDarkTheme
     ? t('nav.toggle_theme.deactivate')
     : t('nav.toggle_theme.activate');
+
+  const loansNavLabel = pendingLoanCount
+    ? t('nav.loans_with_pending', {
+        count: pendingLoanCount > 99 ? '99+' : pendingLoanCount,
+      })
+    : t('nav.loans');
 
   const handleThemeToggle = () => {
     const body = document.body;
@@ -231,8 +242,14 @@ function NavBar() {
                     }
                     to="/loans"
                     onClick={() => setIsOpen(false)}
+                    aria-label={loansNavLabel}
                   >
                     {t('nav.loans')}
+                    {pendingLoanCount > 0 && (
+                      <span className="loan-badge" aria-hidden="true">
+                        {pendingLoanCount > 99 ? '99+' : pendingLoanCount}
+                      </span>
+                    )}
                   </NavLink>
                   <NavLink
                     className={({ isActive }) =>

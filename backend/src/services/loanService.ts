@@ -76,6 +76,30 @@ function normalizeLoanResults(
   return Array.isArray(result) ? result : result.loans;
 }
 
+export async function countPendingLoans(db: Db, user: AuthUser): Promise<number> {
+  if (user.role === ADMIN_ROLE) {
+    return db.collection('loanrequests').countDocuments({
+      status: 'pending',
+      archived: { $ne: true },
+    });
+  }
+
+  const u = await findUserById(db, user.id);
+  const structId = u?.structure?.toString();
+  if (!structId) return 0;
+
+  const ownerId = new ObjectId(structId);
+  const filter = {
+    status: 'pending',
+    archived: { $ne: true },
+    $or: [{ owner: ownerId }, { 'owner._id': ownerId }],
+  };
+
+  const result = await findLoans(db, filter);
+  const loans = normalizeLoanResults(result);
+  return filterLoansForUser(loans, user, structId).length;
+}
+
 export async function listLoans(
   db: Db,
   user: AuthUser,
