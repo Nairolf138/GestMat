@@ -6,6 +6,7 @@ import {
   createLoanRequest,
   updateLoanRequest,
   deleteLoanRequest,
+  countPendingLoans,
 } from '../services/loanService';
 import auth from '../middleware/auth';
 import validate from '../middleware/validate';
@@ -41,6 +42,20 @@ router.get(
       const includeArchived = req.query.includeArchived === 'true';
       const loans = await listLoans(db, req.user!, page, limit, includeArchived);
       res.json(loans);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  '/pending/count',
+  auth(),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const db = req.app.locals.db;
+      const count = await countPendingLoans(db, req.user!);
+      res.json({ count });
     } catch (err) {
       next(err);
     }

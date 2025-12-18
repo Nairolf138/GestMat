@@ -64,6 +64,7 @@
     "vehicles": "Véhicules",
     "inventory": "Inventaire local",
     "loans": "Prêts/Emprunts",
+    "loans_with_pending": "Prêts – {{count}} demande(s) en attente",
     "loans_history": "Historique",
     "cart": "Panier",
     "admin": "Administration",
