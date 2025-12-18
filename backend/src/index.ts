@@ -17,6 +17,7 @@ import {
   normalizeCorsOrigins,
   COOKIE_SAME_SITE,
   COOKIE_SECURE,
+  LOAN_OVERDUE_NOTIFICATIONS_ENABLED,
 } from './config';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
@@ -232,7 +233,11 @@ export async function start(
     await ensurePasswordResetIndexes(db);
     if (NODE_ENV !== 'test') {
       reminderSchedule = scheduleLoanReminders(db);
-      overdueInterval = scheduleOverdueLoanNotifications(db);
+      if (LOAN_OVERDUE_NOTIFICATIONS_ENABLED) {
+        overdueInterval = scheduleOverdueLoanNotifications(db);
+      } else {
+        logger.info('Overdue loan notification scheduling disabled by configuration.');
+      }
       archiveInterval = scheduleLoanArchiving(db);
       reportInterval = scheduleAnnualReports(db);
       vehicleComplianceSchedule = scheduleVehicleComplianceReminders(db);

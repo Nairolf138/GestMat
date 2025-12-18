@@ -17,11 +17,30 @@ export interface LoanRequest {
   note?: string;
   reminderSentAt?: Date;
   startReminderSentAt?: Date;
+  /**
+   * Timestamp automatically set when overdue notifications are sent to avoid duplicate emails.
+   * Managed internally by the service layer.
+   */
   overdueNotifiedAt?: Date;
   archived?: boolean;
   archivedAt?: Date;
   [key: string]: unknown;
 }
+
+const normalizeOverdueNotificationFields = (data: LoanRequest): void => {
+  if (!data.overdueNotifiedAt) {
+    delete data.overdueNotifiedAt;
+    return;
+  }
+
+  const overdueNotifiedAt = new Date(data.overdueNotifiedAt);
+  if (Number.isNaN(overdueNotifiedAt.getTime())) {
+    delete data.overdueNotifiedAt;
+    return;
+  }
+
+  data.overdueNotifiedAt = overdueNotifiedAt;
+};
 
 async function _populate(
   db: Db,
@@ -131,8 +150,7 @@ export async function createLoan(
   if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
   if (data.startReminderSentAt)
     data.startReminderSentAt = new Date(data.startReminderSentAt);
-  if (data.overdueNotifiedAt)
-    data.overdueNotifiedAt = new Date(data.overdueNotifiedAt);
+  normalizeOverdueNotificationFields(data);
   if (data.archivedAt) data.archivedAt = new Date(data.archivedAt);
   const result = await db
     .collection<LoanRequest>('loanrequests')
@@ -164,8 +182,7 @@ export async function updateLoan(
   if (data.reminderSentAt) data.reminderSentAt = new Date(data.reminderSentAt);
   if (data.startReminderSentAt)
     data.startReminderSentAt = new Date(data.startReminderSentAt);
-  if (data.overdueNotifiedAt)
-    data.overdueNotifiedAt = new Date(data.overdueNotifiedAt);
+  normalizeOverdueNotificationFields(data);
   if (data.archivedAt) data.archivedAt = new Date(data.archivedAt);
   const res = await db
     .collection<LoanRequest>('loanrequests')

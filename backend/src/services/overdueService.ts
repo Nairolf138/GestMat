@@ -3,7 +3,11 @@ import { LoanRequest } from '../models/LoanRequest';
 import { getLoanRecipientsByRole } from '../utils/getLoanRecipients';
 import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
-import { LOAN_OVERDUE_CHECK_INTERVAL_MINUTES, NOTIFY_EMAIL } from '../config';
+import {
+  LOAN_OVERDUE_CHECK_INTERVAL_MINUTES,
+  LOAN_OVERDUE_NOTIFICATIONS_ENABLED,
+  NOTIFY_EMAIL,
+} from '../config';
 import { loanOverdueTemplate } from '../utils/mailTemplates';
 
 const MINUTES_IN_MS = 60 * 1000;
@@ -21,6 +25,11 @@ function toObjectIdString(value: unknown): string | null {
 }
 
 export async function processOverdueLoans(db: Db): Promise<void> {
+  if (!LOAN_OVERDUE_NOTIFICATIONS_ENABLED) {
+    logger.info('Overdue loan notifications are disabled; skipping processing run.');
+    return;
+  }
+
   const now = new Date();
 
   const overdueLoans = await db
