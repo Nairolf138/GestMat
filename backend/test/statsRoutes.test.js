@@ -161,10 +161,47 @@ test('GET /api/stats/equipments/top returns aggregated equipment counts', async 
   await mongod.stop();
 });
 
+test('GET /api/stats/equipments/top-refused aggregates refused equipment quantities', async () => {
+  const { app, client, mongod, db } = await createApp();
+  const e1 = new ObjectId();
+  const e2 = new ObjectId();
+
+  await db.collection('equipments').insertMany([
+    { _id: e1, name: 'Refused 1' },
+    { _id: e2, name: 'Refused 2' },
+  ]);
+
+  await db.collection('loanrequests').insertMany([
+    {
+      status: 'refused',
+      items: [
+        { equipment: e1, quantity: 2 },
+        { equipment: e2, quantity: 1 },
+      ],
+    },
+    { status: 'accepted', items: [{ equipment: e1, quantity: 10 }] },
+    { status: 'refused', items: [{ equipment: e1, quantity: 1 }] },
+  ]);
+
+  const res = await request(app)
+    .get(withApiPrefix('/stats/equipments/top-refused?limit=2'))
+    .set(auth())
+    .expect(200);
+
+  assert.strictEqual(res.body.length, 2);
+  const ranking = Object.fromEntries(res.body.map(({ name, count }) => [name, count]));
+  assert.strictEqual(ranking['Refused 1'], 3);
+  assert.strictEqual(ranking['Refused 2'], 1);
+
+  await client.close();
+  await mongod.stop();
+});
+
 test('stats routes are restricted to admins', async () => {
   const { app, client, mongod } = await createApp();
   await request(app).get(withApiPrefix('/stats/loans/monthly')).expect(401);
   await request(app).get(withApiPrefix('/stats/equipments/top')).expect(401);
+  await request(app).get(withApiPrefix('/stats/equipments/top-refused')).expect(401);
   await request(app).get(withApiPrefix('/stats/loans/duration')).expect(401);
   await request(app).get(withApiPrefix('/stats/vehicles/status')).expect(401);
   await request(app).get(withApiPrefix('/stats/vehicles/usage')).expect(401);
@@ -178,6 +215,10 @@ test('stats routes are restricted to admins', async () => {
     .expect(403);
   await request(app)
     .get(withApiPrefix('/stats/equipments/top'))
+    .set(nonAdmin)
+    .expect(403);
+  await request(app)
+    .get(withApiPrefix('/stats/equipments/top-refused'))
     .set(nonAdmin)
     .expect(403);
   await request(app)
