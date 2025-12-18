@@ -379,7 +379,8 @@
     "send_requests": "Valider la demande de prêt",
     "requests_sent": "Demandes envoyées",
     "note_label": "Note pour la demande",
-    "note_placeholder": "Ajoutez des précisions utiles pour ce prêt"
+    "note_placeholder": "Ajoutez des précisions utiles pour ce prêt",
+    "structure_label": "Structure : {{structure}}"
   },
   "users": {
     "title": "Utilisateurs",
