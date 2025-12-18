@@ -369,7 +369,9 @@
     "title": "Panier",
     "remove": "Supprimer",
     "send_requests": "Valider la demande de prêt",
-    "requests_sent": "Demandes envoyées"
+    "requests_sent": "Demandes envoyées",
+    "note_label": "Note pour la demande",
+    "note_placeholder": "Ajoutez des précisions utiles pour ce prêt"
   },
   "users": {
     "title": "Utilisateurs",

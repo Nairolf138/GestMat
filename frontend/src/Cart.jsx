@@ -27,11 +27,14 @@ function Cart() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [borrower, setBorrower] = useState('');
+  const [note, setNote] = useState('');
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('cart') || '[]');
     setCart(stored);
+    const storedNote = localStorage.getItem('cartNote') || '';
+    setNote(storedNote);
   }, []);
 
   useEffect(() => {
@@ -55,6 +58,11 @@ function Cart() {
     );
     setCart(newCart);
     localStorage.setItem('cart', JSON.stringify(newCart));
+  };
+
+  const handleNoteChange = (value) => {
+    setNote(value);
+    localStorage.setItem('cartNote', value);
   };
 
   const validate = async () => {
@@ -81,12 +89,14 @@ function Cart() {
         Object.values(groups).map((g) =>
           api('/loans', {
             method: 'POST',
-            body: JSON.stringify({ ...g, borrower }),
+            body: JSON.stringify({ ...g, borrower, note }),
           }),
         ),
       );
       setCart([]);
+      setNote('');
       localStorage.removeItem('cart');
+      localStorage.removeItem('cartNote');
       setSuccess(t('cart.requests_sent'));
       setError('');
     } catch (err) {
@@ -128,6 +138,18 @@ function Cart() {
           </li>
         ))}
       </ul>
+      <div className="mb-3">
+        <label className="form-label" htmlFor="cart-note">
+          {t('cart.note_label')}
+        </label>
+        <textarea
+          id="cart-note"
+          className="form-control"
+          placeholder={t('cart.note_placeholder')}
+          value={note}
+          onChange={(e) => handleNoteChange(e.target.value)}
+        />
+      </div>
       <button disabled={!cart.length} onClick={validate} className="btn btn-primary">
         {t('cart.send_requests')}
       </button>
