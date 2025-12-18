@@ -19,6 +19,7 @@ import checkId from '../middleware/checkObjectId';
 import {
   createEquipmentValidator,
   updateEquipmentValidator,
+  defaultStatus,
 } from '../validators/equipmentValidator';
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
@@ -61,6 +62,7 @@ router.get('/', auth(), async (req: Request, res: Response) => {
         end,
         1,
       );
+      if (!eq.status) eq.status = defaultStatus;
       eq.availability = `${avail?.availableQty ?? 0}/${eq.totalQty || 0}`;
       delete eq.availableQty;
     }),
@@ -97,6 +99,7 @@ router.post(
       location,
       structure: structureId,
       availableQty,
+      status: req.body.status || defaultStatus,
     });
     res.json(equipment);
   },

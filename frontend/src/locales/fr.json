@@ -92,12 +92,18 @@
     "search_button": "Rechercher",
     "sort": "Tri",
     "reset": "Réinitialiser",
+    "status": {
+      "available": "Disponible",
+      "unusable": "HS",
+      "maintenance": "En maintenance"
+    },
     "add": {
       "title": "Nouvel équipement",
       "name": "Nom de l'équipement",
       "type": "Type",
       "total_quantity": "Quantité totale",
       "condition": "État",
+      "status": "Statut",
       "submit": "Ajouter",
       "success": "Équipement ajouté",
       "error_create": "Erreur lors de la création",
@@ -420,6 +426,7 @@
     "total_quantity": "Quantité totale",
     "available_quantity": "Quantité disponible",
     "condition": "État",
+    "status": "Statut",
     "error_invalid_total": "La quantité totale doit être un nombre",
     "error_invalid_available": "La quantité disponible doit être un nombre",
     "error_available_exceeds_total": "La quantité disponible ne peut pas dépasser la quantité totale",

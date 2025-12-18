@@ -2,6 +2,8 @@ import { body, ValidationChain } from 'express-validator';
 import { ALL_TYPES, normalizeType } from '../utils/roleAccess';
 
 const conditionValues = ['Neuf', 'Légèrement usé', 'Usé', 'Très usé'];
+export const statusValues = ['Disponible', 'HS', 'En maintenance'];
+export const defaultStatus = 'Disponible';
 
 export const createEquipmentValidator: ValidationChain[] = [
   body('name').notEmpty().withMessage('Name is required'),
@@ -19,6 +21,11 @@ export const createEquipmentValidator: ValidationChain[] = [
       return true;
     }),
   body('condition').isIn(conditionValues),
+  body('status')
+    .optional()
+    .isIn(statusValues)
+    .withMessage(`Status must be one of: ${statusValues.join(', ')}`)
+    .default(defaultStatus),
   body('totalQty').isInt({ min: 0 }).withMessage('totalQty must be >= 0'),
   body('availableQty')
     .optional()
@@ -49,6 +56,10 @@ export const updateEquipmentValidator: ValidationChain[] = [
       return true;
     }),
   body('condition').optional().isIn(conditionValues),
+  body('status')
+    .optional()
+    .isIn(statusValues)
+    .withMessage(`Status must be one of: ${statusValues.join(', ')}`),
   body('totalQty').optional().isInt({ min: 0 }),
   body('availableQty')
     .optional()
