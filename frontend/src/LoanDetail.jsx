@@ -35,6 +35,7 @@ function LoanDetail() {
     ? new Date(loan.startDate).toLocaleDateString()
     : '';
   const end = loan.endDate ? new Date(loan.endDate).toLocaleDateString() : '';
+  const noteContent = loan.note?.trim();
 
   return (
     <>
@@ -45,6 +46,12 @@ function LoanDetail() {
       <p>
         {start}
         {end && ` – ${end}`}
+      </p>
+      <p>
+        <strong>{t('loans.note_label')}:</strong>{' '}
+        <span style={{ whiteSpace: 'pre-wrap' }}>
+          {noteContent || t('loans.note_not_provided')}
+        </span>
       </p>
       <ul className="list-group mb-3">
         {loan.items?.map((it) => (
