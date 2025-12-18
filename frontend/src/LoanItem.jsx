@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
+import Alert from './Alert.jsx';
 import { toLoanItemsPayload } from './utils';
 
 function LoanItem({ loan, isOwner, refresh }) {
   const { t } = useTranslation();
+  const [actionError, setActionError] = useState('');
   const start = loan.startDate ? new Date(loan.startDate) : null;
   const end = loan.endDate ? new Date(loan.endDate) : null;
   const now = new Date();
@@ -31,33 +33,52 @@ function LoanItem({ loan, isOwner, refresh }) {
       : '';
 
   const changeStatus = async (status) => {
-    await api(`/loans/${loan._id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-    refresh();
+    setActionError('');
+    try {
+      await api(`/loans/${loan._id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+      refresh();
+    } catch (err) {
+      setActionError(err.message || t('common.error'));
+    }
   };
 
   const modifyLoan = async () => {
+    if (!borrowerCanModify) {
+      setActionError(
+        t('loans.modify_not_allowed', {
+          defaultValue: 'This request cannot be modified.',
+        }),
+      );
+      return;
+    }
+
+    setActionError('');
     const payload = {
       startDate: loan.startDate,
       endDate: loan.endDate,
-      status: loan.status,
       items: toLoanItemsPayload(loan.items),
     };
 
-    await api(`/loans/${loan._id}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
-    refresh();
+    try {
+      await api(`/loans/${loan._id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      refresh();
+    } catch (err) {
+      setActionError(err.message || t('common.error'));
+    }
   };
 
   const cancelLoan = async () => {
     await changeStatus('cancelled');
   };
 
-  const borrowerCanManage =
+  const borrowerCanModify = isFuture && loan.status === 'pending';
+  const borrowerCanCancel =
     isFuture && loan.status && !['cancelled', 'refused'].includes(loan.status);
 
   return (
@@ -115,22 +136,27 @@ function LoanItem({ loan, isOwner, refresh }) {
           </button>
         </div>
       )}
-      {!isOwner && borrowerCanManage && (
+      {!isOwner && (borrowerCanModify || borrowerCanCancel) && (
         <div className="mt-2">
-          <button
-            onClick={modifyLoan}
-            className="btn btn-primary btn-sm me-2"
-          >
-            {t('loans.modify')}
-          </button>
-          <button
-            onClick={cancelLoan}
-            className="btn btn-danger btn-sm"
-          >
-            {t('loans.cancel')}
-          </button>
+          {borrowerCanModify && (
+            <button
+              onClick={modifyLoan}
+              className="btn btn-primary btn-sm me-2"
+            >
+              {t('loans.modify')}
+            </button>
+          )}
+          {borrowerCanCancel && (
+            <button
+              onClick={cancelLoan}
+              className="btn btn-danger btn-sm"
+            >
+              {t('loans.cancel')}
+            </button>
+          )}
         </div>
       )}
+      <Alert message={actionError} onClose={() => setActionError('')} />
     </li>
   );
 }
