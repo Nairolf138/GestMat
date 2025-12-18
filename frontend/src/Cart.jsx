@@ -5,17 +5,28 @@ import { useTranslation } from 'react-i18next';
 import { AuthContext } from './AuthContext.jsx';
 
 export function addToCart(newItem) {
+  const equipmentStructure = newItem.equipment?.structure;
+  const cartItem = {
+    ...newItem,
+    equipment: {
+      ...newItem.equipment,
+      structure: equipmentStructure,
+    },
+  };
   const cart = JSON.parse(localStorage.getItem('cart') || '[]');
   const existing = cart.find(
     (it) =>
-      it.equipment._id === newItem.equipment._id &&
-      it.startDate === newItem.startDate &&
-      it.endDate === newItem.endDate,
+      it.equipment._id === cartItem.equipment._id &&
+      it.startDate === cartItem.startDate &&
+      it.endDate === cartItem.endDate,
   );
   if (existing) {
-    existing.quantity += newItem.quantity;
+    existing.quantity += cartItem.quantity;
+    if (!existing.equipment.structure && cartItem.equipment.structure) {
+      existing.equipment.structure = cartItem.equipment.structure;
+    }
   } else {
-    cart.push(newItem);
+    cart.push(cartItem);
   }
   localStorage.setItem('cart', JSON.stringify(cart));
   return cart;
@@ -111,32 +122,47 @@ function Cart() {
       <Alert message={error} />
       <Alert type="success" message={success} />
       <ul className="list-group mb-3">
-        {cart.map((it, idx) => (
-          <li
-            key={idx}
-            className="list-group-item d-flex justify-content-between align-items-center"
-          >
-            <span>
-              {it.equipment.name} ({it.startDate} → {it.endDate})
-            </span>
-            <div className="d-flex align-items-center">
-              <input
-                type="number"
-                min="1"
-                value={it.quantity}
-                onChange={(e) => updateQuantity(idx, e.target.value)}
-                className="form-control me-3"
-                style={{ width: '6rem' }}
-              />
-              <button
-                className="btn btn-outline-danger btn-sm"
-                onClick={() => removeItem(idx)}
-              >
-                {t('cart.remove')}
-              </button>
-            </div>
-          </li>
-        ))}
+        {cart.map((it, idx) => {
+          const structure =
+            typeof it.equipment.structure === 'string'
+              ? it.equipment.structure
+              : it.equipment.structure?.name;
+          return (
+            <li
+              key={idx}
+              className="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <span>
+                {it.equipment.name}
+                {structure && (
+                  <>
+                    {' '}
+                    <span className="text-muted">
+                      {t('cart.structure_label', { structure })}
+                    </span>
+                  </>
+                )}{' '}
+                ({it.startDate} → {it.endDate})
+              </span>
+              <div className="d-flex align-items-center">
+                <input
+                  type="number"
+                  min="1"
+                  value={it.quantity}
+                  onChange={(e) => updateQuantity(idx, e.target.value)}
+                  className="form-control me-3"
+                  style={{ width: '6rem' }}
+                />
+                <button
+                  className="btn btn-outline-danger btn-sm"
+                  onClick={() => removeItem(idx)}
+                >
+                  {t('cart.remove')}
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
       <div className="mb-3">
         <label className="form-label" htmlFor="cart-note">
