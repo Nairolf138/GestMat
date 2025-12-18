@@ -94,7 +94,7 @@
     "reset": "Réinitialiser",
     "add": {
       "title": "Nouvel équipement",
-      "name": "Nom",
+      "name": "Nom de l'équipement",
       "type": "Type",
       "total_quantity": "Quantité totale",
       "condition": "État",
@@ -413,7 +413,7 @@
   },
   "inventory": {
     "search": "Rechercher",
-    "name": "Nom",
+    "name": "Nom de l'équipement",
     "type": "Type",
     "location": "Emplacement",
     "availability": "Disponibilité",

@@ -94,7 +94,7 @@
     "reset": "Reset",
     "add": {
       "title": "New equipment",
-      "name": "Name",
+      "name": "Equipment name",
       "type": "Type",
       "total_quantity": "Total quantity",
       "condition": "Condition",
@@ -413,7 +413,7 @@
   },
   "inventory": {
     "search": "Search",
-    "name": "Name",
+    "name": "Equipment name",
     "type": "Type",
     "location": "Location",
     "availability": "Availability",
