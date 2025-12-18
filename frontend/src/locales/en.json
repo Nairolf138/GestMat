@@ -92,12 +92,18 @@
     "search_button": "Search",
     "sort": "Sort",
     "reset": "Reset",
+    "status": {
+      "available": "Available",
+      "unusable": "Out of service",
+      "maintenance": "In maintenance"
+    },
     "add": {
       "title": "New equipment",
       "name": "Equipment name",
       "type": "Type",
       "total_quantity": "Total quantity",
       "condition": "Condition",
+      "status": "Status",
       "submit": "Add",
       "success": "Equipment added",
       "error_create": "Error during creation",
@@ -420,6 +426,7 @@
     "total_quantity": "Total quantity",
     "available_quantity": "Available quantity",
     "condition": "Condition",
+    "status": "Status",
     "error_invalid_total": "Total quantity must be a number",
     "error_invalid_available": "Available quantity must be a number",
     "error_available_exceeds_total": "Available quantity cannot exceed total quantity",

@@ -15,6 +15,7 @@ function AddEquipment({ onCreated }) {
     type: '',
     totalQty: 0,
     condition: '',
+    status: 'Disponible',
   };
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
@@ -52,6 +53,7 @@ function AddEquipment({ onCreated }) {
     if (!form.type) fieldErrors.type = t('common.required');
     if (!form.totalQty) fieldErrors.totalQty = t('common.required');
     if (!form.condition) fieldErrors.condition = t('common.required');
+    if (!form.status) fieldErrors.status = t('common.required');
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return;
 
@@ -197,6 +199,39 @@ function AddEquipment({ onCreated }) {
             aria-live="polite"
           >
             {errors.condition}
+          </div>
+        )}
+      </div>
+      <div className="mb-3">
+        <label className="form-label" htmlFor="eq-status">
+          {t('equipments.add.status')}
+        </label>
+        <select
+          id="eq-status"
+          name="status"
+          className={`form-select${errors.status ? ' is-invalid' : ''}`}
+          aria-label={t('equipments.add.status')}
+          value={form.status}
+          onChange={handleChange}
+          required
+          autoComplete="off"
+          aria-invalid={errors.status ? 'true' : undefined}
+          aria-describedby={errors.status ? 'eq-status-error' : undefined}
+        >
+          <option value="Disponible">{t('equipments.status.available')}</option>
+          <option value="HS">{t('equipments.status.unusable')}</option>
+          <option value="En maintenance">
+            {t('equipments.status.maintenance')}
+          </option>
+        </select>
+        {errors.status && (
+          <div
+            className="invalid-feedback"
+            id="eq-status-error"
+            role="alert"
+            aria-live="polite"
+          >
+            {errors.status}
           </div>
         )}
       </div>

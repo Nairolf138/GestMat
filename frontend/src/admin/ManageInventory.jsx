@@ -22,6 +22,12 @@ const CONDITION_OPTIONS = [
   { value: 'Très usé', labelKey: 'equipments.add.conditions.very_used' },
 ];
 
+const STATUS_OPTIONS = [
+  { value: 'Disponible', labelKey: 'equipments.status.available' },
+  { value: 'HS', labelKey: 'equipments.status.unusable' },
+  { value: 'En maintenance', labelKey: 'equipments.status.maintenance' },
+];
+
 const createEmptyFormState = () => ({
   name: '',
   type: '',
@@ -29,6 +35,7 @@ const createEmptyFormState = () => ({
   totalQty: '',
   availableQty: '',
   condition: '',
+  status: 'Disponible',
 });
 
 const parseAvailability = (value) => {
@@ -66,6 +73,15 @@ function ManageInventory() {
     [t],
   );
 
+  const statusLabels = useMemo(
+    () =>
+      STATUS_OPTIONS.reduce((acc, option) => {
+        acc[option.value] = t(option.labelKey);
+        return acc;
+      }, {}),
+    [t],
+  );
+
   const normalizeEquipment = (item) => {
     const parsed = parseAvailability(item.availability);
     const totalQty = item.totalQty ?? parsed.total;
@@ -91,6 +107,7 @@ function ManageInventory() {
       totalQty,
       availability,
       location,
+      status: item.status || 'Disponible',
     };
   };
 
@@ -146,6 +163,7 @@ function ManageInventory() {
         location: form.location,
         totalQty,
         condition: form.condition,
+        status: form.status || 'Disponible',
       };
       if (form.availableQty !== '') {
         const availableQty = Number(form.availableQty);
@@ -186,6 +204,7 @@ function ManageInventory() {
           ? ''
           : String(normalized.availableQty),
       condition: normalized.condition || '',
+      status: normalized.status || 'Disponible',
     });
   };
 
@@ -217,6 +236,10 @@ function ManageInventory() {
       const conditionValue = editForm.condition;
       if (conditionValue) {
         payload.condition = conditionValue;
+      }
+      const statusValue = editForm.status;
+      if (statusValue) {
+        payload.status = statusValue;
       }
       if (
         payload.totalQty !== undefined &&
@@ -330,6 +353,20 @@ function ManageInventory() {
           >
             <option value="">{t('common.choose')}</option>
             {CONDITION_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {t(option.labelKey)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md">
+          <select
+            className="form-select"
+            value={form.status}
+            required
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
+          >
+            {STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {t(option.labelKey)}
               </option>
@@ -464,6 +501,20 @@ function ManageInventory() {
                     </option>
                   ))}
                 </select>
+                <select
+                  className="form-select mb-2"
+                  value={editForm.status}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, status: e.target.value })
+                  }
+                  required
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {t(option.labelKey)}
+                    </option>
+                  ))}
+                </select>
                 <button
                   className="btn btn-primary btn-sm me-2"
                   onClick={() => save(it._id)}
@@ -498,6 +549,11 @@ function ManageInventory() {
                     it.condition
                       ? `${t('inventory.condition')}: ${
                           conditionLabels[it.condition] || it.condition
+                        }`
+                      : null,
+                    it.status
+                      ? `${t('inventory.status')}: ${
+                          statusLabels[it.status] || it.status
                         }`
                       : null,
                   ]
@@ -542,4 +598,3 @@ function ManageInventory() {
 }
 
 export default ManageInventory;
-

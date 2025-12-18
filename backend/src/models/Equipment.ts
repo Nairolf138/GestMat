@@ -7,6 +7,7 @@ export interface Equipment {
   type?: string;
   totalQty?: number;
   availableQty?: number;
+  status?: string;
   [key: string]: unknown;
 }
 
