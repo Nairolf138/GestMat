@@ -24,6 +24,7 @@ export const createLoanValidator: ValidationChain[] = [
       }
       return true;
     }),
+  body('note').optional().isString().isLength({ max: 500 }),
   body('status').optional().isIn(statusValues),
 ];
 
@@ -55,5 +56,6 @@ export const updateLoanValidator: ValidationChain[] = [
       }
       return true;
     }),
+  body('note').optional().isString().isLength({ max: 500 }),
   body('status').optional().isIn(statusValues),
 ];
