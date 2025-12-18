@@ -28,12 +28,14 @@ function Catalog() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [addAnimation, setAddAnimation] = useState(null);
   const [quantities, setQuantities] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef(null);
+  const addAnimationTimeoutRef = useRef(null);
   const PAGE_SIZE = 20;
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
@@ -116,6 +118,14 @@ function Catalog() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (addAnimationTimeoutRef.current) {
+        clearTimeout(addAnimationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilters({ ...filters, [name]: value });
@@ -152,6 +162,26 @@ function Catalog() {
     setQuantities({ ...quantities, [id]: value });
   };
 
+  const clearAddAnimation = useCallback(() => {
+    if (addAnimationTimeoutRef.current) {
+      clearTimeout(addAnimationTimeoutRef.current);
+      addAnimationTimeoutRef.current = null;
+    }
+    setAddAnimation(null);
+  }, []);
+
+  const triggerAddAnimation = useCallback(
+    (itemName) => {
+      clearAddAnimation();
+      setAddAnimation({ itemName });
+      addAnimationTimeoutRef.current = setTimeout(() => {
+        setAddAnimation(null);
+        addAnimationTimeoutRef.current = null;
+      }, 1700);
+    },
+    [clearAddAnimation],
+  );
+
   const addToCart = async (eq) => {
     const qtyValue = quantities[eq._id];
     const qty = Number(qtyValue === '' || qtyValue === undefined ? 1 : qtyValue);
@@ -173,6 +203,7 @@ function Catalog() {
       if (!res.available) {
         setError(t('catalog.unavailable'));
         setSuccess('');
+        clearAddAnimation();
         return;
       }
       addCartItem({
@@ -183,9 +214,11 @@ function Catalog() {
       });
       setError('');
       setSuccess(t('catalog.added'));
+      triggerAddAnimation(eq.name);
     } catch (err) {
       setError(err.message || t('catalog.error'));
       setSuccess('');
+      clearAddAnimation();
     }
   };
 
@@ -194,6 +227,22 @@ function Catalog() {
       <h1 className="h1">{t('catalog.title')}</h1>
       <Alert message={error} />
       <Alert type="success" message={success} />
+      {addAnimation && (
+        <div
+          className="add-toast"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span className="add-toast__icon" aria-hidden="true">
+            ✓
+          </span>
+          <div className="add-toast__content">
+            <p className="add-toast__title">{t('catalog.added')}</p>
+            <p className="add-toast__subtitle">{addAnimation.itemName}</p>
+          </div>
+        </div>
+      )}
       <div
         className="row"
         style={{
