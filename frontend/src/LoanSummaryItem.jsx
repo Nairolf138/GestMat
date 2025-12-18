@@ -17,6 +17,7 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
     (sum, it) => sum + (it.quantity || 0),
     0,
   );
+  const noteContent = loan.note?.trim();
 
   const showActions =
     loan.status === 'pending' && (typeof onAccept === 'function' || typeof onDecline === 'function');
@@ -35,6 +36,9 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
         <span className="equipment-count">
           {t('loans.items', { count: totalItems || 0 })}
         </span>
+      </div>
+      <div className="mt-1 small" style={{ whiteSpace: 'pre-wrap' }}>
+        <strong>{t('loans.note_label')}:</strong> {noteContent || t('loans.note_not_provided')}
       </div>
       {showActions && (
         <div className="d-flex gap-2 flex-wrap mt-2">

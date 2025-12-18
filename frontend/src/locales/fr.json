@@ -327,6 +327,8 @@
       "refused": "Refusé",
       "cancelled": "Annulé"
     },
+    "note_label": "Note",
+    "note_not_provided": "Aucune note renseignée",
     "items": "{{count}} équipement",
     "items_plural": "{{count}} équipements"
   },

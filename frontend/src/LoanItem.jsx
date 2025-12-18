@@ -71,6 +71,12 @@ function LoanItem({ loan, isOwner, refresh }) {
               )
               .join(', ')}
           </div>
+          <div className="mt-1">
+            <strong>{t('loans.note_label')}:</strong>{' '}
+            <span style={{ whiteSpace: 'pre-wrap' }}>
+              {loan.note?.trim() || t('loans.note_not_provided')}
+            </span>
+          </div>
         </div>
         <span
           className="badge rounded-pill"

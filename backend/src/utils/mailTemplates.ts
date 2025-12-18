@@ -89,6 +89,29 @@ function translateStatus(status: string | undefined): string {
   }
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatNote(note?: string | null): { text: string; html: string } {
+  const cleanedNote = note?.toString().trim();
+  if (!cleanedNote) {
+    const fallback = 'Aucune note renseignée';
+    return { text: fallback, html: fallback };
+  }
+
+  const escapedNote = escapeHtml(cleanedNote);
+  return {
+    text: cleanedNote,
+    html: escapedNote.replace(/\n/g, '<br>'),
+  };
+}
+
 function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   if (!items.length) {
     return { text: '- Aucun matériel renseigné', html: '<li>Aucun matériel renseigné</li>' };
@@ -113,6 +136,7 @@ function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
   const start = formatDate(loan.startDate as any);
   const end = formatDate(loan.endDate as any);
   const { text: itemsText, html: itemsHtml } = formatItems(loan.items as LoanItem[]);
+  const { text: noteText, html: noteHtml } = formatNote(loan.note as string | null);
 
   const text =
     `Prêteur : ${owner}\n` +
@@ -121,7 +145,8 @@ function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
     `Début : ${start}\n` +
     `Fin : ${end}\n` +
     `Statut : ${status}\n` +
-    `Matériel :\n${itemsText}`;
+    `Matériel :\n${itemsText}\n` +
+    `Note : ${noteText}`;
 
   const html = `
     <ul>
@@ -134,6 +159,7 @@ function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
       <li><strong>Matériel :</strong>
         <ul>${itemsHtml}</ul>
       </li>
+      <li><strong>Note :</strong> ${noteHtml}</li>
     </ul>
   `;
 
