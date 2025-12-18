@@ -30,6 +30,7 @@ export function AuthProvider({ children }) {
   const [stayLoggedInPreference, setStayLoggedInPreferenceState] = useState(() =>
     localStorage.getItem('stayLoggedIn') === 'true',
   );
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
 
   const setStayLoggedInPreference = useCallback((value) => {
     setStayLoggedInPreferenceState(value);
@@ -76,32 +77,80 @@ export function AuthProvider({ children }) {
     [logout, stayLoggedInPreference],
   );
 
-  const setUser = (newUser, options = {}) => {
-    const hasPreferenceOverride = Object.prototype.hasOwnProperty.call(
-      options,
-      'stayLoggedIn',
-    );
-    const targetStayLoggedIn = hasPreferenceOverride
-      ? options.stayLoggedIn
-      : stayLoggedInPreference;
+  const setUser = useCallback(
+    (newUser, options = {}) => {
+      const hasPreferenceOverride = Object.prototype.hasOwnProperty.call(
+        options,
+        'stayLoggedIn',
+      );
+      const targetStayLoggedIn = hasPreferenceOverride
+        ? options.stayLoggedIn
+        : stayLoggedInPreference;
 
-    if (hasPreferenceOverride) {
-      setStayLoggedInPreference(targetStayLoggedIn);
-    }
+      if (hasPreferenceOverride) {
+        setStayLoggedInPreference(targetStayLoggedIn);
+      }
 
-    queryClient.setQueryData(['currentUser'], newUser);
-    if (newUser) {
-      if (!targetStayLoggedIn) {
-        resetTimer(Date.now(), DEFAULT_INACTIVITY_LIMIT, true);
+      queryClient.setQueryData(['currentUser'], newUser);
+      if (newUser) {
+        if (!targetStayLoggedIn) {
+          resetTimer(Date.now(), DEFAULT_INACTIVITY_LIMIT, true);
+        } else {
+          clearTimeout(timerRef.current);
+          localStorage.removeItem('lastActivity');
+        }
       } else {
         clearTimeout(timerRef.current);
         localStorage.removeItem('lastActivity');
       }
-    } else {
-      clearTimeout(timerRef.current);
-      localStorage.removeItem('lastActivity');
+    },
+    [queryClient, resetTimer, stayLoggedInPreference, setStayLoggedInPreference],
+  );
+
+  useEffect(() => {
+    if (!isPublicRoute) {
+      setIsCheckingSession(false);
+      return;
     }
-  };
+
+    const hasStayLoggedIn = stayLoggedInPreference;
+    const hasSessionOrRefreshCookie = document.cookie
+      .split(';')
+      .some((cookie) => /session|refresh/i.test(cookie.trim().split('=')[0]));
+
+    if (!hasStayLoggedIn && !hasSessionOrRefreshCookie) {
+      setIsCheckingSession(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const attemptSessionRecovery = async () => {
+      setIsCheckingSession(true);
+      try {
+        await api('/auth/refresh', { method: 'POST' });
+        const refreshedUser = await api('/users/me', {}, false);
+
+        if (cancelled) return;
+
+        if (refreshedUser) {
+          setUser(refreshedUser, { stayLoggedIn: stayLoggedInPreference });
+          window.location.href = '/';
+          return;
+        }
+      } catch {}
+
+      if (!cancelled) {
+        setIsCheckingSession(false);
+      }
+    };
+
+    attemptSessionRecovery();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPublicRoute, setUser, stayLoggedInPreference]);
 
   useEffect(() => {
     if (!user) return;
@@ -171,12 +220,12 @@ export function AuthProvider({ children }) {
           setStayLoggedInPreference,
         }}
       >
-        {children}
+        {isCheckingSession ? <Loading /> : children}
       </AuthContext.Provider>
     );
   }
 
-  if (status === 'pending') return <Loading />;
+  if (status === 'pending' || isCheckingSession) return <Loading />;
 
   return (
     <AuthContext.Provider
