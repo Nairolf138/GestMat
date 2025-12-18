@@ -58,20 +58,24 @@ function ManageUsers() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const load = useCallback(() => {
-    setError('');
-    api(
-      `/users?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`,
-    )
-      .then(setUsers)
-      .catch((err) => {
-        setError(err.message);
-        setUsers([]);
-      });
-  }, [limit, page, search]);
+  const load = useCallback(
+    (searchQuery = debouncedSearch, pageNumber = page) => {
+      setError('');
+      api(
+        `/users?search=${encodeURIComponent(searchQuery)}&page=${pageNumber}&limit=${limit}`,
+      )
+        .then(setUsers)
+        .catch((err) => {
+          setError(err.message);
+          setUsers([]);
+        });
+    },
+    [debouncedSearch, limit, page],
+  );
 
   useEffect(() => {
     load();
@@ -110,15 +114,16 @@ function ManageUsers() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (page !== 1) setPage(1);
-      else load();
+      setDebouncedSearch(search);
+      setPage((prevPage) => (prevPage !== 1 ? 1 : prevPage));
     }, 500);
     return () => clearTimeout(timeout);
-  }, [load, page, search]);
+  }, [search]);
 
   const doSearch = () => {
-    if (page !== 1) setPage(1);
-    else load();
+    setDebouncedSearch(search);
+    setPage((prevPage) => (prevPage !== 1 ? 1 : prevPage));
+    load(search, 1);
   };
 
   const del = async (id) => {
@@ -545,4 +550,3 @@ function ManageUsers() {
 }
 
 export default ManageUsers;
-
