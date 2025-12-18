@@ -57,6 +57,9 @@ function LoanItem({ loan, isOwner, refresh }) {
     await changeStatus('cancelled');
   };
 
+  const borrowerCanManage =
+    isFuture && loan.status && !['cancelled', 'refused'].includes(loan.status);
+
   return (
     <li className="list-group-item">
       <div className="d-flex justify-content-between align-items-start">
@@ -112,7 +115,7 @@ function LoanItem({ loan, isOwner, refresh }) {
           </button>
         </div>
       )}
-      {!isOwner && (loan.status === 'pending' || isFuture) && (
+      {!isOwner && borrowerCanManage && (
         <div className="mt-2">
           <button
             onClick={modifyLoan}
