@@ -69,6 +69,7 @@ test('create, update and delete loan request', async () => {
     items: [{ equipment: eqId.toString(), quantity: 1 }],
     startDate: '2024-01-01',
     endDate: '2024-01-02',
+    note: 'Fragile materials',
   };
 
   const res = await request(app)
@@ -78,6 +79,7 @@ test('create, update and delete loan request', async () => {
     .expect(200);
   assert.ok(res.body._id);
   assert.strictEqual(res.body.requestedBy._id.toString(), userId);
+  assert.strictEqual(res.body.note, payload.note);
   const start = new Date('2024-01-01');
   const end = new Date('2024-01-02');
   const availAfterCreate = await checkEquipmentAvailability(
@@ -91,6 +93,7 @@ test('create, update and delete loan request', async () => {
 
   const list1 = await request(app).get(withApiPrefix('/loans')).set(auth()).expect(200);
   assert.strictEqual(list1.body.length, 1);
+  assert.strictEqual(list1.body[0].note, payload.note);
 
   const id = res.body._id;
   const single = await request(app)
@@ -111,6 +114,7 @@ test('create, update and delete loan request', async () => {
     single.body.items[0].equipment._id.toString(),
     eqId.toString(),
   );
+  assert.strictEqual(single.body.note, payload.note);
 
   const upd = await request(app)
     .put(withApiPrefix(`/loans/${id}`))

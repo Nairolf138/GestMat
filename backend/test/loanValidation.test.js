@@ -4,6 +4,7 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const assert = require('assert');
 process.env.JWT_SECRET = 'test';
 
 const loanRoutes = require('../src/routes/loans').default;
@@ -87,6 +88,27 @@ test('post validates ids, status and dates', async () => {
     .send({ ...base, startDate: '2024-01-03', endDate: '2024-01-02' })
     .expect(400);
 
+  await request(app)
+    .post(withApiPrefix('/loans'))
+    .set(auth())
+    .send({ ...base, note: 123 })
+    .expect(400);
+
+  const longNote = 'a'.repeat(501);
+  await request(app)
+    .post(withApiPrefix('/loans'))
+    .set(auth())
+    .send({ ...base, note: longNote })
+    .expect(400);
+
+  const note = 'Handle with care';
+  const ok = await request(app)
+    .post(withApiPrefix('/loans'))
+    .set(auth())
+    .send({ ...base, note })
+    .expect(200);
+  assert.strictEqual(ok.body.note, note);
+
   await client.close();
   await mongod.stop();
 });
@@ -141,6 +163,20 @@ test('put validates status and dates', async () => {
     .set(auth())
     .send({ status: 'bad' })
     .expect(400);
+
+  const tooLong = 'b'.repeat(501);
+  await request(app)
+    .put(withApiPrefix(`/loans/${res.body._id}`))
+    .set(auth())
+    .send({ note: tooLong })
+    .expect(400);
+
+  const updated = await request(app)
+    .put(withApiPrefix(`/loans/${res.body._id}`))
+    .set(auth())
+    .send({ note: 'Updated note' })
+    .expect(200);
+  assert.strictEqual(updated.body.note, 'Updated note');
 
   await client.close();
   await mongod.stop();

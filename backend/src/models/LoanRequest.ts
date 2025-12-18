@@ -14,11 +14,12 @@ export interface LoanRequest {
   items?: LoanItem[];
   startDate?: Date;
   endDate?: Date;
+  note?: string;
   reminderSentAt?: Date;
   startReminderSentAt?: Date;
   overdueNotifiedAt?: Date;
-   archived?: boolean;
-   archivedAt?: Date;
+  archived?: boolean;
+  archivedAt?: Date;
   [key: string]: unknown;
 }
 
