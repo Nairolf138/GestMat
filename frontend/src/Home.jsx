@@ -35,6 +35,15 @@ function Home() {
     [structureId],
   );
 
+  const isBorrowerLoan = useCallback(
+    (loan) =>
+      Boolean(
+        structureId &&
+          (loan.borrower?._id === structureId || loan.borrower === structureId),
+      ),
+    [structureId],
+  );
+
   const refreshLoans = useCallback(
     async (withLoader = false) => {
       if (withLoader) setLoading(true);
@@ -59,9 +68,38 @@ function Home() {
 
   const now = useMemo(() => new Date(), []);
 
-  const pending = useMemo(
+  const isActiveLoan = useCallback(
+    (loan) => {
+      const start = loan.startDate ? new Date(loan.startDate) : null;
+      const end = loan.endDate ? new Date(loan.endDate) : null;
+      if (!start || !end) return false;
+      if (['cancelled', 'refused', 'pending'].includes(loan.status)) return false;
+      return start <= now && end >= now;
+    },
+    [now],
+  );
+
+  const isUpcomingLoan = useCallback(
+    (loan) => {
+      const start = loan.startDate ? new Date(loan.startDate) : null;
+      if (!start) return false;
+      if (['cancelled', 'refused', 'pending'].includes(loan.status)) return false;
+      return start > now;
+    },
+    [now],
+  );
+
+  const pendingApprovals = useMemo(
     () => loans.filter((l) => l.status === 'pending' && isOwnerLoan(l)),
     [loans, isOwnerLoan],
+  );
+
+  const pendingUnderReview = useMemo(
+    () =>
+      loans.filter(
+        (l) => l.status === 'pending' && isBorrowerLoan(l) && !isOwnerLoan(l),
+      ),
+    [isBorrowerLoan, isOwnerLoan, loans],
   );
 
   const updateLoanStatus = useCallback(
@@ -87,38 +125,46 @@ function Home() {
     [refreshLoans, t],
   );
 
-  const currentLoans = useMemo(
-    () =>
-      loans.filter((l) => {
-        if (l.borrower?._id !== (user?.structure?._id || user?.structure))
-          return false;
-        if (['cancelled', 'refused'].includes(l.status)) return false;
-        const start = l.startDate ? new Date(l.startDate) : null;
-        const end = l.endDate ? new Date(l.endDate) : null;
-        return start && end && start <= now && end >= now;
-      }),
-    [loans, user, now],
+  const ownerActiveLoans = useMemo(
+    () => loans.filter((l) => isOwnerLoan(l) && isActiveLoan(l)),
+    [isActiveLoan, isOwnerLoan, loans],
   );
 
-  const upcomingLoans = useMemo(
-    () =>
-      loans.filter((l) => {
-        if (l.borrower?._id !== (user?.structure?._id || user?.structure))
-          return false;
-        if (['pending', 'cancelled', 'refused'].includes(l.status)) return false;
-        const start = l.startDate ? new Date(l.startDate) : null;
-        return start && start > now;
-      }),
-    [loans, user, now],
+  const ownerUpcomingLoans = useMemo(
+    () => loans.filter((l) => isOwnerLoan(l) && isUpcomingLoan(l)),
+    [isOwnerLoan, isUpcomingLoan, loans],
   );
 
-  const counts = useMemo(
+  const borrowerActiveLoans = useMemo(
+    () => loans.filter((l) => isBorrowerLoan(l) && isActiveLoan(l)),
+    [isActiveLoan, isBorrowerLoan, loans],
+  );
+
+  const borrowerUpcomingLoans = useMemo(
+    () => loans.filter((l) => isBorrowerLoan(l) && isUpcomingLoan(l)),
+    [isBorrowerLoan, isUpcomingLoan, loans],
+  );
+
+  const currentLoans = borrowerActiveLoans;
+
+  const upcomingLoans = borrowerUpcomingLoans;
+
+  const badgeCounts = useMemo(
     () => ({
-      pending: pending.length,
-      ongoing: currentLoans.length,
-      upcoming: upcomingLoans.length,
+      pendingApprovals: pendingApprovals.length,
+      pendingUnderReview: pendingUnderReview.length,
+      ownerActiveUpcoming: ownerActiveLoans.length + ownerUpcomingLoans.length,
+      borrowerActiveUpcoming:
+        borrowerActiveLoans.length + borrowerUpcomingLoans.length,
     }),
-    [pending, currentLoans, upcomingLoans],
+    [
+      borrowerActiveLoans.length,
+      borrowerUpcomingLoans.length,
+      ownerActiveLoans.length,
+      ownerUpcomingLoans.length,
+      pendingApprovals.length,
+      pendingUnderReview.length,
+    ],
   );
 
   const previewCount = 5;
@@ -128,7 +174,7 @@ function Home() {
       {
         key: 'pending',
         title: t('home.tabs.pending'),
-        loans: pending,
+        loans: pendingApprovals,
         emptyMessage: t('home.no_requests'),
         onAccept: (loanId) => updateLoanStatus(loanId, 'accepted'),
         onDecline: (loanId) => updateLoanStatus(loanId, 'refused'),
@@ -146,7 +192,7 @@ function Home() {
         emptyMessage: t('home.no_loans'),
       },
     ],
-    [currentLoans, pending, t, upcomingLoans, updateLoanStatus],
+    [currentLoans, pendingApprovals, t, upcomingLoans, updateLoanStatus],
   );
 
   const dueSoonLoans = useMemo(() => {
@@ -164,7 +210,7 @@ function Home() {
   }, [loans, user]);
 
   const activityItems = useMemo(() => {
-    const pendingEntries = pending.slice(0, 3).map((loan) => ({
+    const pendingEntries = pendingApprovals.slice(0, 3).map((loan) => ({
       id: `pending-${loan._id}`,
       href: loan._id ? `/loans/${loan._id}` : '/loans',
       label: t('home.activity.pending_label'),
@@ -198,7 +244,7 @@ function Home() {
         return bDate - aDate;
       })
       .slice(0, 5);
-  }, [dueSoonLoans, pending, t]);
+  }, [dueSoonLoans, pendingApprovals, t]);
 
   const shortcuts = useMemo(
     () => [
@@ -258,7 +304,7 @@ function Home() {
       <div className="tutorial-notifications">
         <Notifications />
       </div>
-      <HomeHeader user={user} counts={counts} />
+      <HomeHeader user={user} counts={badgeCounts} />
       <Alert message={error} />
       <Alert type="success" message={message} />
       <LoanSectionsTabs

@@ -302,9 +302,10 @@
     "status_update_success": "Statut du prêt mis à jour vers {{status}}",
     "status_update_error": "Impossible de mettre à jour le statut du prêt",
     "badges": {
-      "pending": "Demandes en attente",
-      "ongoing": "Prêts actifs",
-      "upcoming": "À venir"
+      "pending_approvals": "Demandes reçues en attente",
+      "pending_under_review": "Demandes en cours d'examen",
+      "owner_active_upcoming": "Prêts à venir ou actifs",
+      "borrower_active_upcoming": "Emprunts à venir ou actifs"
     },
     "tabs": {
       "pending": "Demandes",
@@ -436,6 +437,10 @@
       "to": "Au",
       "no_results": "Aucune entrée dans l'historique",
       "pagination": "Affichage {{start}}–{{end}} sur {{total}} prêts"
+    },
+    "filter_applied": "Filtré par : {{filter}}",
+    "filters": {
+      "active_upcoming": "Prêts ou emprunts à venir ou actifs"
     },
     "status": {
       "pending": "En attente",
