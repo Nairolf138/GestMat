@@ -106,7 +106,10 @@ function Loans() {
   return (
     <>
       <h1 className="h1">{t('loans.title')}</h1>
-      <div className="d-flex justify-content-end mb-3">
+      <div className="d-flex justify-content-end gap-2 mb-3">
+        <Link className="btn btn-primary" to="/loans/new?mode=direct">
+          {t('loans.new.direct_action')}
+        </Link>
         <Link className="btn btn-outline-secondary" to="/loans/history">
           {t('loans.history.view_all')}
         </Link>

@@ -286,7 +286,7 @@
     "hero": {
       "title": "Bon retour",
       "primary_action": "Nouvelle demande",
-      "secondary_action": "Enregistrer un prêt"
+      "secondary_action": "Enregistrer un prêt (mode propriétaire)"
     },
     "recent_requests": "Demandes récentes",
     "no_requests": "Aucune demande",
@@ -404,6 +404,7 @@
     "new": {
       "title": "Enregistrer un prêt",
       "description": "Créez une nouvelle demande en sélectionnant l'emprunteur, le propriétaire et l'équipement.",
+      "direct_action": "Enregistrer un prêt (mode propriétaire)",
       "direct_title": "Enregistrement direct d'un prêt",
       "direct_description": "Consignez un prêt sorti depuis votre structure en sélectionnant l'emprunteur et le matériel éligible.",
       "borrower_structure": "Structure emprunteuse",
