@@ -368,7 +368,7 @@ body {
     background-color 0.3s,
     color 0.3s;
   padding: var(--spacing-sm) var(--spacing-md);
-  min-height: var(--navbar-height, 72px);
+  min-height: 72px;
 }
 
 .navbar-collapse.show {
