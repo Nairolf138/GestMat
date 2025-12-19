@@ -225,7 +225,7 @@ export async function apiDownload(path, options = {}, retry = true) {
     }
     const blob = await res.blob();
     const disposition = res.headers.get('content-disposition') || '';
-    const match = disposition.match(/filename="?([^\";]+)"?/i);
+    const match = disposition.match(/filename="?([^";]+)"?/i);
     const filename = match ? match[1] : undefined;
     return { blob, filename };
   } catch (err) {
