@@ -105,6 +105,8 @@ body {
   top: calc(100% + var(--spacing-xs));
   left: 0;
   right: 0;
+  width: 100%;
+  max-width: 100%;
   padding: var(--spacing-xs);
   background-color: var(--color-navbar-bg);
   color: var(--color-text);
@@ -356,6 +358,11 @@ body {
   min-height: var(--navbar-height, 72px);
 }
 
+.navbar-collapse.show {
+  max-height: calc(100vh - max(env(safe-area-inset-top), var(--spacing-sm)));
+  overflow-y: auto;
+}
+
 .navbar-toggler {
   border-color: color-mix(in srgb, var(--color-text) 25%, transparent);
   color: var(--color-text);
@@ -418,7 +425,10 @@ body {
 }
 
 .navbar-search .search-suggestions {
-  max-height: 280px;
+  max-height: min(
+    280px,
+    calc(100vh - var(--navbar-height) - max(env(safe-area-inset-top), var(--spacing-sm)))
+  );
   overflow-y: auto;
 }
 
