@@ -404,8 +404,12 @@
     "new": {
       "title": "Enregistrer un prêt",
       "description": "Créez une nouvelle demande en sélectionnant l'emprunteur, le propriétaire et l'équipement.",
+      "direct_title": "Enregistrement direct d'un prêt",
+      "direct_description": "Consignez un prêt sorti depuis votre structure en sélectionnant l'emprunteur et le matériel éligible.",
       "borrower_structure": "Structure emprunteuse",
       "owner_structure": "Structure propriétaire",
+      "owner_locked": "Le prêteur est verrouillé sur votre structure pour cet enregistrement.",
+      "owner_missing": "Aucune structure ne vous est associée. Contactez un administrateur.",
       "equipment_label": "Équipement",
       "equipment_placeholder": "Sélectionnez un équipement à emprunter",
       "equipment_empty": "Aucun équipement disponible pour ces filtres.",
@@ -417,7 +421,9 @@
       "note_help": "La note est partagée avec la structure propriétaire (500 caractères max).",
       "back": "Retour aux prêts",
       "submit": "Envoyer la demande",
+      "direct_submit": "Enregistrer le prêt",
       "success": "Demande de prêt envoyée",
+      "direct_success": "Prêt enregistré et validé",
       "missing_fields": "Merci de renseigner tous les champs obligatoires",
       "invalid_dates": "La date de début doit être antérieure ou égale à la date de fin"
     },
@@ -624,7 +630,8 @@
     "previous": "Précédent",
     "next": "Suivant",
     "close": "Fermer",
-    "back": "Retour"
+    "back": "Retour",
+    "not_available": "Non renseigné"
   },
   "roles": {
     "Administrateur": "Administrateur",

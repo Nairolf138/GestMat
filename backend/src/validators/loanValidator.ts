@@ -26,6 +26,7 @@ export const createLoanValidator: ValidationChain[] = [
     }),
   body('note').optional().isString().isLength({ max: 500 }),
   body('status').optional().isIn(statusValues),
+  body('direct').optional().isBoolean(),
 ];
 
 export const updateLoanValidator: ValidationChain[] = [

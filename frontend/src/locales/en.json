@@ -404,8 +404,12 @@
     "new": {
       "title": "Log a loan",
       "description": "Create a new loan request by selecting the borrower, owner, and equipment.",
+      "direct_title": "Direct loan entry",
+      "direct_description": "Record a loan handled by your structure by selecting the borrower and eligible equipment.",
       "borrower_structure": "Borrower structure",
       "owner_structure": "Owner structure",
+      "owner_locked": "The lender is locked to your structure for this entry.",
+      "owner_missing": "No structure is linked to your account. Please contact an administrator.",
       "equipment_label": "Equipment",
       "equipment_placeholder": "Select equipment to loan",
       "equipment_empty": "No equipment available for the selected filters.",
@@ -417,7 +421,9 @@
       "note_help": "Notes are shared with the owner structure (max 500 characters).",
       "back": "Back to loans",
       "submit": "Submit request",
+      "direct_submit": "Save loan",
       "success": "Loan request submitted successfully",
+      "direct_success": "Loan recorded and validated",
       "missing_fields": "Please fill in all required fields",
       "invalid_dates": "The start date must be before or equal to the end date"
     },
@@ -622,7 +628,8 @@
     "previous": "Previous",
     "next": "Next",
     "close": "Close",
-    "back": "Back"
+    "back": "Back",
+    "not_available": "Not available"
   },
   "roles": {
     "Administrateur": "Administrator",

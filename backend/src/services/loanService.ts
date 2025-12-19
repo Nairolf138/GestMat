@@ -201,21 +201,56 @@ export async function createLoanRequest(
   const start = data.startDate ? new Date(data.startDate) : null;
   const end = data.endDate ? new Date(data.endDate) : null;
   const items = data.items || [];
+  const { direct: directFlag, ...requestData } = data as any;
   const u = await findUserById(db, user.id);
   const userStruct = u?.structure?.toString();
   const owner = (data.owner as any)?.toString();
   const borrower = (data.borrower as any)?.toString();
-  if (
-    (owner && borrower && owner === borrower) ||
-    (userStruct && owner === userStruct)
-  ) {
+  if (owner && borrower && owner === borrower) {
     throw forbidden('Cannot request loan for own structure');
   }
+
+  const equipmentDetails = await Promise.all(
+    items.map(async (item: LoanItem) => {
+      const equipment = await db
+        .collection('equipments')
+        .findOne<{ type?: string; structure?: ObjectId }>({
+          _id: new ObjectId(item.equipment as any),
+        });
+      if (!equipment) {
+        throw notFound('Equipment not found');
+      }
+      const type = equipment.type;
+      if (!canModify(user.role, type)) {
+        throw forbidden('Access denied');
+      }
+      const structureId =
+        (equipment.structure as any)?._id?.toString?.() ||
+        (equipment.structure as any)?.toString?.();
+      return { type, structureId };
+    }),
+  );
+
+  const isDirectOwner = Boolean(userStruct && owner === userStruct);
+  if (directFlag && !isDirectOwner) {
+    throw forbidden('Direct loan entry requires ownership');
+  }
+  const status = isDirectOwner ? 'accepted' : 'pending';
+
   for (let attempt = 0; attempt < 5; attempt++) {
     const session = (db as any).client.startSession();
     try {
       session.startTransaction();
-      for (const item of items) {
+      for (const [index, item] of items.entries()) {
+        const detail = equipmentDetails[index];
+        if (
+          isDirectOwner &&
+          detail?.structureId &&
+          owner &&
+          detail.structureId !== owner
+        ) {
+          throw forbidden('Equipment must belong to the owner structure');
+        }
         const avail = await checkEquipmentAvailability(
           db,
           item.equipment as any,
@@ -238,7 +273,12 @@ export async function createLoanRequest(
 
       const loan = await createLoan(
         db,
-        { ...data, status: 'pending', requestedBy: user.id as any },
+        {
+          ...requestData,
+          status,
+          requestedBy: user.id as any,
+          processedBy: isDirectOwner ? (user.id as any) : undefined,
+        },
         session,
       );
       await session.commitTransaction();
@@ -261,7 +301,7 @@ export async function createLoanRequest(
             borrower: loan.borrower,
             requestedById,
             requestedBy: loan.requestedBy,
-          }, 'loanRequests');
+          }, status === 'pending' ? 'loanRequests' : 'loanStatusChanges');
 
         const requesterSet = new Set(requesterRecipients);
         const borrowerSet = new Set(
@@ -284,22 +324,33 @@ export async function createLoanRequest(
           ownerSet.add(NOTIFY_EMAIL);
         }
 
-        const sendCreationMail = async (
-          recipients: Set<string>,
-          role: 'owner' | 'borrower' | 'requester',
-        ) => {
-          if (!recipients.size) return;
-          const to = Array.from(recipients).join(',');
-          const { subject, text, html } = loanCreationTemplate({ loan, role });
-          await sendMail({ to, subject, text, html });
-        };
-
         if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
           logger.warn(
             'Loan creation notification not sent: no recipient email found for loan %s',
             loan._id,
           );
         } else {
+          const sendCreationMail = async (
+            recipients: Set<string>,
+            role: 'owner' | 'borrower' | 'requester',
+          ) => {
+            if (!recipients.size) return;
+            const to = Array.from(recipients).join(',');
+            const { subject, text, html } =
+              status === 'pending'
+                ? loanCreationTemplate({ loan, role })
+                : loanStatusTemplate({
+                    loan,
+                    status,
+                    role,
+                    actor:
+                      `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim() ||
+                      u?.username ||
+                      undefined,
+                  });
+            await sendMail({ to, subject, text, html });
+          };
+
           await Promise.all([
             sendCreationMail(ownerSet, 'owner'),
             sendCreationMail(borrowerSet, 'borrower'),
