@@ -8,6 +8,7 @@ function HomeHeader({ user, counts, onPrimaryAction }) {
   const structureName =
     user?.structure?.name || user?.structure?.label || user?.structureName;
   const primaryPath = user?.structure ? '/catalog' : '/loans/new';
+  const directLoanPath = '/loans/new?mode=direct';
 
   return (
     <div className="home-header card">
@@ -23,7 +24,7 @@ function HomeHeader({ user, counts, onPrimaryAction }) {
           >
             {t('home.hero.primary_action')}
           </Link>
-          <Link className="btn btn-outline-secondary" to="/loans/new">
+          <Link className="btn btn-outline-secondary" to={directLoanPath}>
             {t('home.hero.secondary_action')}
           </Link>
         </div>

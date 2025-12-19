@@ -286,7 +286,7 @@
     "hero": {
       "title": "Welcome back",
       "primary_action": "Start a request",
-      "secondary_action": "Log a loan"
+      "secondary_action": "Log a loan (owner mode)"
     },
     "recent_requests": "Recent requests",
     "no_requests": "No request",
@@ -404,6 +404,7 @@
     "new": {
       "title": "Log a loan",
       "description": "Create a new loan request by selecting the borrower, owner, and equipment.",
+      "direct_action": "Log a loan (owner mode)",
       "direct_title": "Direct loan entry",
       "direct_description": "Record a loan handled by your structure by selecting the borrower and eligible equipment.",
       "borrower_structure": "Borrower structure",
