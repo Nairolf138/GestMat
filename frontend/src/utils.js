@@ -40,3 +40,14 @@ export const canManageEquipment = (role, type) => {
   if (!type) return true;
   return allowed.includes(type);
 };
+
+export const downloadBlob = (blob, filename, fallbackName) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || fallbackName || 'export';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};

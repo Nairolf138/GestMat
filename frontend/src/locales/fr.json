@@ -133,6 +133,24 @@
     "delete": {
       "button": "Supprimer",
       "confirm": "Supprimer cet équipement ?"
+    },
+    "export": {
+      "button": "Exporter",
+      "title": "Exporter l'inventaire",
+      "type_label": "Type d'équipement",
+      "format_label": "Format",
+      "email_me": "M'envoyer par email",
+      "submit": "Exporter",
+      "success_download": "Export téléchargé avec succès.",
+      "success_email": "Export envoyé par e-mail.",
+      "error": "Impossible de générer l'export.",
+      "type": {
+        "all": "Tous",
+        "sound": "Son",
+        "light": "Lumière",
+        "video": "Vidéo",
+        "other": "Autres"
+      }
     }
   },
   "vehicles": {
@@ -240,6 +258,26 @@
       "edit_title": "Mettre à jour",
       "edit_hint": "Cliquez sur \"Modifier le véhicule\" pour mettre à jour les informations.",
       "not_provided": "Non renseigné"
+    }
+  },
+  "admin_export": {
+    "button": "Exporter l’inventaire global",
+    "title": "Exporter l’inventaire global",
+    "sections": {
+      "users": "Utilisateurs",
+      "inventories": "Inventaires",
+      "vehicles": "Véhicules",
+      "loansHistory": "Historique des prêts",
+      "structures": "Structures"
+    },
+    "format": "Format",
+    "email_me": "M'envoyer par email",
+    "submit": "Exporter",
+    "success_download": "Export téléchargé avec succès.",
+    "success_email": "Export envoyé par e-mail.",
+    "error_generic": "Impossible de générer l’export.",
+    "validation": {
+      "sections": "Sélectionnez au moins une section."
     }
   },
   "home": {
