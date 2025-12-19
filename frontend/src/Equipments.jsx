@@ -9,12 +9,14 @@ import Alert from './Alert.jsx';
 import Loading from './Loading.jsx';
 import { AuthContext } from './AuthContext.jsx';
 import { canManageEquipment } from './utils.js';
+import EquipmentsExportModal from './EquipmentsExportModal.jsx';
 
 function Equipments() {
   const { t } = useTranslation();
   const routerLocation = useLocation();
   const { user } = useContext(AuthContext);
   const [message] = useState(routerLocation.state?.message || '');
+  const [exportMessage, setExportMessage] = useState('');
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
   const [sort, setSort] = useState('');
@@ -22,6 +24,7 @@ function Equipments() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  const [showExportModal, setShowExportModal] = useState(false);
   const queryClient = useQueryClient();
 
   const conditionLabels = useMemo(
@@ -114,6 +117,7 @@ function Equipments() {
     <>
       <Alert message={error?.message} />
       <Alert type="success" message={message} />
+      <Alert type="success" message={exportMessage} onClose={() => setExportMessage('')} />
       <h1 className="h1">
         {t('equipments.title')}
         {structureName && ` - ${structureName}`}
@@ -191,6 +195,15 @@ function Equipments() {
           >
             {t('equipments.reset')}
           </button>
+          {canManageEquipment(user?.role) && (
+            <button
+              type="button"
+              className="btn btn-outline-secondary ms-2"
+              onClick={() => setShowExportModal(true)}
+            >
+              {t('equipments.export.button')}
+            </button>
+          )}
         </div>
       </form>
       {isMobile ? (
@@ -306,6 +319,11 @@ function Equipments() {
           onCancel={() => setEditing(null)}
         />
       )}
+      <EquipmentsExportModal
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onSuccess={(msg) => setExportMessage(msg)}
+      />
     </>
   );
 }

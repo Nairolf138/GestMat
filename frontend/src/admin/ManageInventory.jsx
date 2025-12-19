@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { confirmDialog } from '../utils';
 import Alert from '../Alert.jsx';
+import GlobalExportModal from './GlobalExportModal.jsx';
 
 const TYPE_OPTIONS = [
   { value: 'Son', labelKey: 'equipments.add.types.sound' },
@@ -63,6 +64,7 @@ function ManageInventory() {
   const limit = 10;
   const [editing, setEditing] = useState(null);
   const [editForm, setEditForm] = useState(createEmptyFormState);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const conditionLabels = useMemo(
     () =>
@@ -285,6 +287,15 @@ function ManageInventory() {
         message={message}
         onClose={() => setMessage('')}
       />
+      <div className="d-flex justify-content-end mb-3">
+        <button
+          type="button"
+          className="btn btn-outline-secondary"
+          onClick={() => setShowExportModal(true)}
+        >
+          {t('admin_export.button')}
+        </button>
+      </div>
       <form className="row g-2 mb-3" onSubmit={create}>
         <div className="col-md">
           <input
@@ -593,6 +604,11 @@ function ManageInventory() {
           {t('inventory.next')}
         </button>
       </div>
+      <GlobalExportModal
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onSuccess={(msg) => setMessage(msg)}
+      />
     </div>
   );
 }

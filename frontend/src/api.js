@@ -178,3 +178,76 @@ let errorHandler = () => {};
 export function setErrorHandler(handler) {
   errorHandler = typeof handler === 'function' ? handler : () => {};
 }
+
+export async function apiDownload(path, options = {}, retry = true) {
+  const { timeout = 10000, signal, ...fetchOptions } = options;
+  const method = (fetchOptions.method || 'GET').toUpperCase();
+  const headers = { ...(fetchOptions.headers || {}) };
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    if (!headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+    let token = getCsrfTokenFromCookie();
+    if (!token) {
+      token = await ensureCsrfToken();
+    }
+    if (token) headers['CSRF-Token'] = token;
+  }
+  const controller = new AbortController();
+  if (signal) {
+    signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...fetchOptions,
+      headers,
+      credentials: 'include',
+      signal: controller.signal,
+    });
+    if (res.status === 401 && retry) {
+      const refreshed = await refreshToken();
+      if (refreshed) {
+        return apiDownload(path, options, false);
+      }
+    }
+    if (!res.ok) {
+      let message = 'API error';
+      try {
+        const data = await res.clone().json();
+        message = data.message || message;
+      } catch {
+        try {
+          message = await res.clone().text();
+        } catch {}
+      }
+      throw new ApiError(message, res.status);
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('content-disposition') || '';
+    const match = disposition.match(/filename="?([^\";]+)"?/i);
+    const filename = match ? match[1] : undefined;
+    return { blob, filename };
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      const error = new ApiError('Request timed out', 'ABORT_ERROR');
+      errorHandler(error);
+      throw error;
+    }
+    const error =
+      err instanceof ApiError
+        ? err
+        : new ApiError(
+            err.message || 'Network error',
+            err.code || 'NETWORK_ERROR',
+            err.fields || err.fieldErrors,
+          );
+    if (!(err instanceof ApiError) && err.stack) {
+      error.stack = err.stack;
+    }
+    errorHandler(error);
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}

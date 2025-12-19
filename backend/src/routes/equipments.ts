@@ -23,6 +23,10 @@ import {
 } from '../validators/equipmentValidator';
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
+import {
+  EquipmentTypeFilter,
+  generateEquipmentExport,
+} from '../services/exportService';
 
 const { MANAGE_EQUIPMENTS } = permissions;
 
@@ -107,6 +111,50 @@ router.post(
       status: req.body.status || defaultStatus,
     });
     res.json(equipment);
+  },
+);
+
+router.post(
+  '/export',
+  auth({ permissions: MANAGE_EQUIPMENTS, action: 'equipments:export' }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const { type, format, email } = req.body || {};
+      const allowedFormats = ['pdf', 'xlsx'];
+      if (!allowedFormats.includes(format)) {
+        return next(badRequest('Invalid format'));
+      }
+      const userId = req.user!.id;
+      const user = await findUserById(db, userId);
+      if (!user?.structure) {
+        return next(forbidden('Access denied'));
+      }
+      const normalizedType =
+        type && type !== 'Tous'
+          ? normalizeType(type as string) ||
+            ((type as string) === 'Autres' ? ('Autre' as EquipmentTypeFilter) : (type as EquipmentTypeFilter))
+          : undefined;
+      if (!canModify(req.user!.role, normalizedType)) {
+        return next(forbidden('Access denied'));
+      }
+      if (email && !user.email) {
+        return next(badRequest('Email address missing'));
+      }
+      const result = await generateEquipmentExport({
+        db,
+        userId,
+        structureId: user.structure.toString(),
+        type: (normalizedType as EquipmentTypeFilter) || type,
+        format,
+        email: Boolean(email),
+      });
+      res.contentType(result.contentType);
+      res.setHeader('Content-Disposition', `attachment; filename=${result.filename}`);
+      res.send(result.buffer);
+    } catch (err) {
+      next(err);
+    }
   },
 );
 

@@ -133,6 +133,24 @@
     "delete": {
       "button": "Delete",
       "confirm": "Delete this equipment?"
+    },
+    "export": {
+      "button": "Export",
+      "title": "Export inventory",
+      "type_label": "Equipment type",
+      "format_label": "Format",
+      "email_me": "Send me the file by email",
+      "submit": "Export",
+      "success_download": "Export downloaded successfully.",
+      "success_email": "Export sent by email.",
+      "error": "Unable to generate export.",
+      "type": {
+        "all": "All",
+        "sound": "Sound",
+        "light": "Light",
+        "video": "Video",
+        "other": "Other"
+      }
     }
   },
   "vehicles": {
@@ -240,6 +258,26 @@
       "edit_title": "Update",
       "edit_hint": "Use \"Edit vehicle\" to update this record.",
       "not_provided": "Not provided"
+    }
+  },
+  "admin_export": {
+    "button": "Export global inventory",
+    "title": "Export global inventory",
+    "sections": {
+      "users": "Users",
+      "inventories": "Inventories",
+      "vehicles": "Vehicles",
+      "loansHistory": "Loans history",
+      "structures": "Structures"
+    },
+    "format": "Format",
+    "email_me": "Email me the export",
+    "submit": "Export",
+    "success_download": "Export downloaded successfully.",
+    "success_email": "Export sent by email.",
+    "error_generic": "Unable to generate export.",
+    "validation": {
+      "sections": "Select at least one section."
     }
   },
   "home": {
