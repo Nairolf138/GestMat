@@ -606,27 +606,87 @@ body {
 .home-badges {
   display: grid;
   gap: var(--spacing-md);
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .badge-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: color-mix(in srgb, var(--color-navbar-bg) 96%, #000 0%);
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.badge-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+}
+
+.badge-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 3px;
+}
+
+.badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  color: var(--color-text);
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+
+.badge-meta {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  padding: var(--spacing-md);
-  background-color: color-mix(in srgb, var(--color-primary) 6%, var(--color-navbar-bg));
-  border-radius: var(--radius-sm);
 }
 
 .badge-count {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--color-primary);
 }
 
 .badge-label {
   font-size: 0.95rem;
-  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+  color: color-mix(in srgb, var(--color-text) 68%, transparent);
+}
+
+.badge-card.owner {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.badge-card.owner .badge-count {
+  color: var(--color-primary);
+}
+
+.badge-card.owner .badge-icon {
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  color: var(--color-primary);
+}
+
+.badge-card.borrower {
+  border-color: color-mix(in srgb, var(--color-secondary) 24%, transparent);
+}
+
+.badge-card.borrower .badge-count {
+  color: var(--color-secondary);
+}
+
+.badge-card.borrower .badge-icon {
+  background: color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  color: var(--color-secondary);
 }
 
 @media (max-width: 768px) {

@@ -302,9 +302,10 @@
     "status_update_success": "Loan status updated to {{status}}",
     "status_update_error": "Unable to update loan status",
     "badges": {
-      "pending": "Pending approvals",
-      "ongoing": "Active loans",
-      "upcoming": "Upcoming"
+      "pending_approvals": "Pending received requests",
+      "pending_under_review": "Requests under review",
+      "owner_active_upcoming": "Owner loans upcoming/active",
+      "borrower_active_upcoming": "Borrowings upcoming/active"
     },
     "tabs": {
       "pending": "Requests",
@@ -436,6 +437,10 @@
       "to": "To",
       "no_results": "No entries in the history",
       "pagination": "Showing {{start}}–{{end}} of {{total}} loans"
+    },
+    "filter_applied": "Filtered by: {{filter}}",
+    "filters": {
+      "active_upcoming": "Upcoming or active loans"
     },
     "status": {
       "pending": "Pending",

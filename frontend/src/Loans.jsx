@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import LoanItem from './LoanItem.jsx';
 import Loading from './Loading.jsx';
 import CollapsibleSection from './CollapsibleSection.jsx';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const getLoanDate = (loan) =>
   loan.endDate || loan.startDate || loan.createdAt || loan.updatedAt || new Date();
@@ -13,18 +13,61 @@ const getLoanDate = (loan) =>
 const sortLoans = (list) =>
   [...list].sort((a, b) => new Date(getLoanDate(b)) - new Date(getLoanDate(a)));
 
+const parseTabFromSearch = (search) => {
+  const params = new URLSearchParams(search);
+  const tab = params.get('tab');
+  return tab === 'borrower' || tab === 'owner' ? tab : 'owner';
+};
+
+const parseStatusFilterFromSearch = (search) => {
+  const params = new URLSearchParams(search);
+  const status = params.get('status');
+  const allowed = ['pending', 'active', 'upcoming', 'active_upcoming'];
+  return allowed.includes(status) ? status : 'all';
+};
+
+const isActiveLoan = (loan, referenceDate = new Date()) => {
+  const start = loan.startDate ? new Date(loan.startDate) : null;
+  const end = loan.endDate ? new Date(loan.endDate) : null;
+  if (!start || !end) return false;
+  if (['cancelled', 'refused', 'pending'].includes(loan.status)) return false;
+  return start <= referenceDate && end >= referenceDate;
+};
+
+const isUpcomingLoan = (loan, referenceDate = new Date()) => {
+  const start = loan.startDate ? new Date(loan.startDate) : null;
+  if (!start) return false;
+  if (['cancelled', 'refused', 'pending'].includes(loan.status)) return false;
+  return start > referenceDate;
+};
+
 function Loans() {
   const { t } = useTranslation();
   const { user } = useContext(AuthContext);
+  const location = useLocation();
   const [loans, setLoans] = useState([]);
-  const [tab, setTab] = useState('owner');
+  const [tab, setTab] = useState(() => parseTabFromSearch(location.search));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(() =>
+    parseStatusFilterFromSearch(location.search),
+  );
   const [sectionsOpen, setSectionsOpen] = useState({
     finished: true,
     ongoing: true,
     upcoming: true,
   });
+
+  const pendingLabel =
+    tab === 'owner'
+      ? t('home.badges.pending_approvals')
+      : t('home.badges.pending_under_review');
+  const statusFilterLabels = {
+    pending: pendingLabel,
+    active: t('loans.ongoing'),
+    upcoming: t('home.tabs.upcoming'),
+    active_upcoming: t('loans.filters.active_upcoming'),
+  };
 
   const toggleSection = (section) =>
     setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -47,6 +90,15 @@ function Loans() {
   useEffect(() => {
     refresh();
   }, []);
+
+  useEffect(() => {
+    const nextTab = parseTabFromSearch(location.search);
+    const nextStatusFilter = parseStatusFilterFromSearch(location.search);
+    setTab((currentTab) => (currentTab !== nextTab ? nextTab : currentTab));
+    setStatusFilter((currentFilter) =>
+      currentFilter !== nextStatusFilter ? nextStatusFilter : currentFilter,
+    );
+  }, [location.search]);
 
   const categorize = (list) => {
     const now = new Date();
@@ -75,15 +127,27 @@ function Loans() {
     };
   };
 
+  const filterLoansByStatus = (list) => {
+    const now = new Date();
+    return list.filter((loan) => {
+      if (statusFilter === 'pending') return loan.status === 'pending';
+      if (statusFilter === 'active') return isActiveLoan(loan, now);
+      if (statusFilter === 'upcoming') return isUpcomingLoan(loan, now);
+      if (statusFilter === 'active_upcoming')
+        return isActiveLoan(loan, now) || isUpcomingLoan(loan, now);
+      return true;
+    });
+  };
+
   const structureId = user?.structure?._id || user?.structure;
   const ownerLoans = categorize(
-    loans.filter(
-      (l) => l.owner?._id === structureId || l.owner === structureId,
+    filterLoansByStatus(
+      loans.filter((l) => l.owner?._id === structureId || l.owner === structureId),
     ),
   );
   const borrowerLoans = categorize(
-    loans.filter(
-      (l) => l.borrower?._id === structureId || l.borrower === structureId,
+    filterLoansByStatus(
+      loans.filter((l) => l.borrower?._id === structureId || l.borrower === structureId),
     ),
   );
 
@@ -114,6 +178,21 @@ function Loans() {
           {t('loans.history.view_all')}
         </Link>
       </div>
+      {statusFilter !== 'all' && (
+        <div className="alert alert-info d-flex justify-content-between align-items-center">
+          <span>
+            {t('loans.filter_applied', {
+              filter: statusFilterLabels[statusFilter] || statusFilter,
+            })}
+          </span>
+          <button
+            className="btn btn-sm btn-outline-primary"
+            onClick={() => setStatusFilter('all')}
+          >
+            {t('common.reset')}
+          </button>
+        </div>
+      )}
       {loading ? (
         <Loading />
       ) : error ? (

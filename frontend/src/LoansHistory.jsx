@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import LoanItem from './LoanItem.jsx';
@@ -10,12 +11,28 @@ const PAGE_SIZE = 10;
 const getLoanDate = (loan) =>
   loan.endDate || loan.startDate || loan.createdAt || new Date().toISOString();
 
+const parseHistoryTab = (search) => {
+  const params = new URLSearchParams(search);
+  const tab = params.get('tab');
+  return tab === 'borrower' || tab === 'owner' ? tab : 'owner';
+};
+
+const parseHistoryStatus = (search) => {
+  const params = new URLSearchParams(search);
+  const status = params.get('status');
+  const allowed = ['all', 'finished', 'accepted', 'cancelled', 'refused'];
+  return allowed.includes(status) ? status : 'all';
+};
+
 function LoansHistory() {
   const { t } = useTranslation();
   const { user } = useContext(AuthContext);
+  const location = useLocation();
   const [loans, setLoans] = useState([]);
-  const [tab, setTab] = useState('owner');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [tab, setTab] = useState(() => parseHistoryTab(location.search));
+  const [statusFilter, setStatusFilter] = useState(() =>
+    parseHistoryStatus(location.search),
+  );
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(1);
@@ -42,6 +59,15 @@ function LoansHistory() {
   useEffect(() => {
     refresh();
   }, []);
+
+  useEffect(() => {
+    const nextTab = parseHistoryTab(location.search);
+    const nextStatus = parseHistoryStatus(location.search);
+    setTab((currentTab) => (currentTab !== nextTab ? nextTab : currentTab));
+    setStatusFilter((currentStatus) =>
+      currentStatus !== nextStatus ? nextStatus : currentStatus,
+    );
+  }, [location.search]);
 
   const historyLoans = useMemo(() => {
     const now = new Date();
