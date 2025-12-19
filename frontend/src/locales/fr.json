@@ -245,6 +245,11 @@
   "home": {
     "title": "Accueil",
     "greeting": "Bonjour {{name}} !",
+    "hero": {
+      "title": "Bon retour",
+      "primary_action": "Nouvelle demande",
+      "secondary_action": "Enregistrer un prêt"
+    },
     "recent_requests": "Demandes récentes",
     "no_requests": "Aucune demande",
     "current_loans": "Emprunts en cours",
@@ -257,7 +262,46 @@
     "search_placeholder": "Rechercher un équipement...",
     "no_results": "Aucun équipement trouvé",
     "status_update_success": "Statut du prêt mis à jour vers {{status}}",
-    "status_update_error": "Impossible de mettre à jour le statut du prêt"
+    "status_update_error": "Impossible de mettre à jour le statut du prêt",
+    "badges": {
+      "pending": "Demandes en attente",
+      "ongoing": "Prêts actifs",
+      "upcoming": "À venir"
+    },
+    "tabs": {
+      "pending": "Demandes",
+      "ongoing": "En cours",
+      "upcoming": "À venir"
+    },
+    "sort": {
+      "label": "Trier par",
+      "start_date": "Date de début",
+      "end_date": "Date de fin",
+      "created_at": "Date de création"
+    },
+    "urgency": {
+      "due_soon": "Retour dans {{count}} jours",
+      "due_today": "Retour aujourd'hui",
+      "overdue": "Retard de {{count}} jours"
+    },
+    "shortcuts_descriptions": {
+      "inventory": "Consulter l'inventaire local",
+      "catalog": "Voir le catalogue disponible",
+      "loans": "Traiter et suivre les demandes",
+      "history": "Voir l'historique des prêts",
+      "cart": "Préparer une nouvelle demande",
+      "vehicles": "Vérifier la disponibilité des véhicules",
+      "profile": "Mettre à jour vos informations"
+    },
+    "activity": {
+      "title": "Activité",
+      "empty": "Aucune nouvelle notification.",
+      "pending_label": "En attente de validation",
+      "pending_description": "Demandé par {{borrower}}",
+      "due_label": "Retour à venir",
+      "due_description": "Retour attendu de {{borrower}}",
+      "untitled": "Prêt"
+    }
   },
   "tour": {
     "help": "Aide",

@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { AuthContext } from './AuthContext.jsx';
-import Loading from './Loading.jsx';
-import LoanPreviewSection from './components/LoanPreviewSection.jsx';
-import DashboardSummary from './components/DashboardSummary.jsx';
+import LoanSectionsTabs from './components/LoanSectionsTabs.jsx';
+import HomeHeader from './components/HomeHeader.jsx';
+import ActivityRail from './components/ActivityRail.jsx';
 import Notifications from './components/Notifications.jsx';
 import OnboardingTour from './components/OnboardingTour.jsx';
 
@@ -121,11 +121,132 @@ function Home() {
     [pending, currentLoans, upcomingLoans],
   );
 
-  if (loading) {
-    return <Loading />;
-  }
-
   const previewCount = 5;
+
+  const tabSections = useMemo(
+    () => [
+      {
+        key: 'pending',
+        title: t('home.tabs.pending'),
+        loans: pending,
+        emptyMessage: t('home.no_requests'),
+        onAccept: (loanId) => updateLoanStatus(loanId, 'accepted'),
+        onDecline: (loanId) => updateLoanStatus(loanId, 'refused'),
+      },
+      {
+        key: 'ongoing',
+        title: t('home.tabs.ongoing'),
+        loans: currentLoans,
+        emptyMessage: t('home.no_loans'),
+      },
+      {
+        key: 'upcoming',
+        title: t('home.tabs.upcoming'),
+        loans: upcomingLoans,
+        emptyMessage: t('home.no_loans'),
+      },
+    ],
+    [currentLoans, pending, t, upcomingLoans, updateLoanStatus],
+  );
+
+  const dueSoonLoans = useMemo(() => {
+    const nowDate = new Date();
+    return loans
+      .filter((loan) => {
+        if (!loan.endDate) return false;
+        if (['cancelled', 'refused'].includes(loan.status)) return false;
+        if (loan.borrower?._id !== (user?.structure?._id || user?.structure)) return false;
+        const end = new Date(loan.endDate);
+        const diffDays = Math.ceil((end - nowDate) / (1000 * 60 * 60 * 24));
+        return diffDays <= 7;
+      })
+      .slice(0, 5);
+  }, [loans, user]);
+
+  const activityItems = useMemo(() => {
+    const pendingEntries = pending.slice(0, 3).map((loan) => ({
+      id: `pending-${loan._id}`,
+      href: loan._id ? `/loans/${loan._id}` : '/loans',
+      label: t('home.activity.pending_label'),
+      tone: 'warning',
+      title: loan.items?.map((item) => item.equipment?.name).filter(Boolean).join(', ') || t('home.activity.untitled'),
+      description: t('home.activity.pending_description', {
+        borrower: loan.borrower?.name,
+      }),
+      date: loan.createdAt,
+    }));
+
+    const dueEntries = dueSoonLoans.map((loan) => ({
+      id: `due-${loan._id}`,
+      href: loan._id ? `/loans/${loan._id}` : '/loans',
+      label: t('home.activity.due_label'),
+      tone: 'info',
+      title: loan.items?.map((item) => item.equipment?.name).filter(Boolean).join(', ') || t('home.activity.untitled'),
+      description: t('home.activity.due_description', {
+        borrower: loan.borrower?.name,
+      }),
+      date: loan.endDate,
+    }));
+
+    return [...dueEntries, ...pendingEntries]
+      .sort((a, b) => {
+        const aDate = a.date ? new Date(a.date) : null;
+        const bDate = b.date ? new Date(b.date) : null;
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+        return bDate - aDate;
+      })
+      .slice(0, 5);
+  }, [dueSoonLoans, pending, t]);
+
+  const shortcuts = useMemo(
+    () => [
+      {
+        to: '/inventory',
+        icon: 'fa-warehouse',
+        label: t('nav.inventory'),
+        description: t('home.shortcuts_descriptions.inventory'),
+      },
+      {
+        to: '/catalog',
+        icon: 'fa-book',
+        label: t('nav.catalog'),
+        description: t('home.shortcuts_descriptions.catalog'),
+      },
+      {
+        to: '/loans',
+        icon: 'fa-handshake',
+        label: t('nav.loans'),
+        description: t('home.shortcuts_descriptions.loans'),
+      },
+      {
+        to: '/loans/history',
+        icon: 'fa-clock-rotate-left',
+        label: t('nav.loans_history'),
+        description: t('home.shortcuts_descriptions.history'),
+      },
+      {
+        to: '/cart',
+        icon: 'fa-cart-shopping',
+        label: t('nav.cart'),
+        description: t('home.shortcuts_descriptions.cart'),
+      },
+      {
+        to: '/vehicles',
+        icon: 'fa-car',
+        label: t('nav.vehicles'),
+        description: t('home.shortcuts_descriptions.vehicles'),
+      },
+      {
+        to: '/profile',
+        icon: 'fa-user',
+        label: t('nav.profile'),
+        description: t('home.shortcuts_descriptions.profile'),
+      },
+    ],
+    [t],
+  );
 
   return (
     <>
@@ -137,79 +258,29 @@ function Home() {
       <div className="tutorial-notifications">
         <Notifications />
       </div>
-      <h1 className="h1">{t('home.title')}</h1>
+      <HomeHeader user={user} counts={counts} />
       <Alert message={error} />
       <Alert type="success" message={message} />
-      {user && (
-        <p>{t('home.greeting', { name: user.firstName || user.username })}</p>
-      )}
-      {user && <DashboardSummary counts={counts} />}
-      <LoanPreviewSection
-        title={t('home.recent_requests')}
-        loans={pending}
-        emptyMessage={t('home.no_requests')}
+      <LoanSectionsTabs
+        sections={tabSections}
+        loading={loading}
         previewCount={previewCount}
-        counterLabel={t('home.counter', {
-          shown: previewCount,
-          total: pending.length,
-          category: t('home.recent_requests').toLowerCase(),
-        })}
         onAccept={(loanId) => updateLoanStatus(loanId, 'accepted')}
         onDecline={(loanId) => updateLoanStatus(loanId, 'refused')}
         actionInProgressId={actionLoadingId}
       />
-      <LoanPreviewSection
-        title={t('home.current_loans')}
-        loans={currentLoans}
-        emptyMessage={t('home.no_loans')}
-        previewCount={previewCount}
-        counterLabel={t('home.counter', {
-          shown: previewCount,
-          total: currentLoans.length,
-          category: t('home.current_loans').toLowerCase(),
-        })}
-      />
-      <LoanPreviewSection
-        title={t('home.incoming_loans')}
-        loans={upcomingLoans}
-        emptyMessage={t('home.no_loans')}
-        previewCount={previewCount}
-        counterLabel={t('home.counter', {
-          shown: previewCount,
-          total: upcomingLoans.length,
-          category: t('home.incoming_loans').toLowerCase(),
-        })}
-      />
       <h2 className="h2">{t('home.shortcuts')}</h2>
-      <div className="card-grid shortcuts tutorial-shortcuts">
-        <Link className="shortcut-card" to="/inventory">
-          <i className="fa-solid fa-warehouse" aria-hidden="true"></i>
-          <span>{t('nav.inventory')}</span>
-        </Link>
-        <Link className="shortcut-card" to="/catalog">
-          <i className="fa-solid fa-book" aria-hidden="true"></i>
-          <span>{t('nav.catalog')}</span>
-        </Link>
-        <Link className="shortcut-card" to="/loans">
-          <i className="fa-solid fa-handshake" aria-hidden="true"></i>
-          <span>{t('nav.loans')}</span>
-        </Link>
-        <Link className="shortcut-card" to="/loans/history">
-          <i className="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
-          <span>{t('nav.loans_history')}</span>
-        </Link>
-        <Link className="shortcut-card" to="/cart">
-          <i className="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-          <span>{t('nav.cart')}</span>
-        </Link>
-        <Link className="shortcut-card" to="/vehicles">
-          <i className="fa-solid fa-car" aria-hidden="true"></i>
-          <span>{t('nav.vehicles')}</span>
-        </Link>
-        <Link className="shortcut-card" to="/profile">
-          <i className="fa-solid fa-user" aria-hidden="true"></i>
-          <span>{t('nav.profile')}</span>
-        </Link>
+      <div className="quick-actions">
+        <div className="card-grid shortcuts tutorial-shortcuts">
+          {shortcuts.map((shortcut) => (
+            <Link key={shortcut.to} className="shortcut-card" to={shortcut.to}>
+              <i className={`fa-solid ${shortcut.icon}`} aria-hidden="true"></i>
+              <span className="shortcut-title">{shortcut.label}</span>
+              <span className="shortcut-description">{shortcut.description}</span>
+            </Link>
+          ))}
+        </div>
+        <ActivityRail items={activityItems} />
       </div>
       <OnboardingTour run={runTour} onClose={() => setRunTour(false)} />
     </>
