@@ -431,7 +431,21 @@ body {
   }
 
   .navbar-search {
+    min-width: 0;
+    flex: 1 1 auto;
     width: 100%;
+  }
+
+  .navbar-utils {
+    flex-direction: column;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: var(--spacing-xs);
+  }
+
+  .navbar-utils > * {
+    width: 100%;
+    min-width: 0;
   }
 }
 
