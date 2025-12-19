@@ -9,6 +9,7 @@ import HomeHeader from './components/HomeHeader.jsx';
 import ActivityRail from './components/ActivityRail.jsx';
 import Notifications from './components/Notifications.jsx';
 import OnboardingTour from './components/OnboardingTour.jsx';
+import i18n from './i18n.js';
 
 function Home() {
   const { t } = useTranslation();
@@ -195,56 +196,178 @@ function Home() {
     [currentLoans, pendingApprovals, t, upcomingLoans, updateLoanStatus],
   );
 
-  const dueSoonLoans = useMemo(() => {
+  const formatDateLabel = useCallback(
+    (date) => {
+      if (!date) return t('home.activity.date_unknown');
+      return new Intl.DateTimeFormat(i18n.language, {
+        dateStyle: 'medium',
+      }).format(new Date(date));
+    },
+    [t],
+  );
+
+  const formatPeriod = useCallback(
+    (start, end) => {
+      const startLabel = start ? formatDateLabel(start) : '';
+      const endLabel = end ? formatDateLabel(end) : '';
+      if (startLabel && endLabel) {
+        return t('home.activity.period', { start: startLabel, end: endLabel });
+      }
+      if (startLabel) {
+        return t('home.activity.period_start', { start: startLabel });
+      }
+      if (endLabel) {
+        return t('home.activity.period_end', { end: endLabel });
+      }
+      return '';
+    },
+    [formatDateLabel, t],
+  );
+
+  const getStructureName = useCallback(
+    (entity) => entity?.name || t('home.activity.unknown_structure'),
+    [t],
+  );
+
+  const { activityItems, totalActivityCount } = useMemo(() => {
     const nowDate = new Date();
-    return loans
-      .filter((loan) => {
-        if (!loan.endDate) return false;
-        if (['cancelled', 'refused'].includes(loan.status)) return false;
-        if (loan.borrower?._id !== (user?.structure?._id || user?.structure)) return false;
-        const end = new Date(loan.endDate);
-        const diffDays = Math.ceil((end - nowDate) / (1000 * 60 * 60 * 24));
-        return diffDays <= 7;
-      })
-      .slice(0, 5);
-  }, [loans, user]);
+    const itemsList = [];
 
-  const activityItems = useMemo(() => {
-    const pendingEntries = pendingApprovals.slice(0, 3).map((loan) => ({
-      id: `pending-${loan._id}`,
-      href: loan._id ? `/loans/${loan._id}` : '/loans',
-      label: t('home.activity.pending_label'),
-      tone: 'warning',
-      title: loan.items?.map((item) => item.equipment?.name).filter(Boolean).join(', ') || t('home.activity.untitled'),
-      description: t('home.activity.pending_description', {
-        borrower: loan.borrower?.name,
-      }),
-      date: loan.createdAt,
-    }));
+    loans.forEach((loan) => {
+      const ownerRelated = isOwnerLoan(loan);
+      const borrowerRelated = isBorrowerLoan(loan);
+      if (!ownerRelated && !borrowerRelated) return;
 
-    const dueEntries = dueSoonLoans.map((loan) => ({
-      id: `due-${loan._id}`,
-      href: loan._id ? `/loans/${loan._id}` : '/loans',
-      label: t('home.activity.due_label'),
-      tone: 'info',
-      title: loan.items?.map((item) => item.equipment?.name).filter(Boolean).join(', ') || t('home.activity.untitled'),
-      description: t('home.activity.due_description', {
-        borrower: loan.borrower?.name,
-      }),
-      date: loan.endDate,
-    }));
+      const ownerName = getStructureName(loan.owner);
+      const borrowerName = getStructureName(loan.borrower);
+      const counterpartName = ownerRelated ? borrowerName : ownerName;
+      const title =
+        loan.items?.map((item) => item.equipment?.name).filter(Boolean).join(', ') ||
+        t('home.activity.untitled');
+      const href = loan._id ? `/loans/${loan._id}` : '/loans';
 
-    return [...dueEntries, ...pendingEntries]
-      .sort((a, b) => {
-        const aDate = a.date ? new Date(a.date) : null;
-        const bDate = b.date ? new Date(b.date) : null;
-        if (!aDate && !bDate) return 0;
-        if (!aDate) return 1;
-        if (!bDate) return -1;
-        return bDate - aDate;
-      })
-      .slice(0, 5);
-  }, [dueSoonLoans, pendingApprovals, t]);
+      const addEntry = (type, date, data) => {
+        if (!date) return;
+        const parsed = new Date(date);
+        if (Number.isNaN(parsed.getTime())) return;
+        itemsList.push({
+          id: `${type}-${loan._id || href}-${parsed.getTime()}`,
+          href,
+          title,
+          date: parsed.toISOString(),
+          ...data,
+        });
+      };
+
+      addEntry('created', loan.createdAt, {
+        label: ownerRelated
+          ? t('home.activity.request_received')
+          : t('home.activity.request_sent'),
+        description: ownerRelated
+          ? t('home.activity.request_received_description', {
+              borrower: borrowerName,
+            })
+          : t('home.activity.request_sent_description', { owner: ownerName }),
+        tone: ownerRelated ? 'warning' : 'info',
+        icon: 'fa-circle-plus',
+      });
+
+      if (loan.status === 'accepted') {
+        const descKey = ownerRelated
+          ? 'home.activity.request_validated_description_owner'
+          : 'home.activity.request_validated_description_borrower';
+        const descParts = [
+          t(descKey, { counterpart: counterpartName }),
+          formatPeriod(loan.startDate, loan.endDate),
+        ].filter(Boolean);
+        addEntry('accepted', loan.updatedAt || loan.createdAt, {
+          label: t('home.activity.request_validated'),
+          description: descParts.join(' • '),
+          tone: 'success',
+          icon: 'fa-circle-check',
+        });
+      }
+
+      if (loan.status === 'cancelled') {
+        const descKey = ownerRelated
+          ? 'home.activity.request_cancelled_description_owner'
+          : 'home.activity.request_cancelled_description_borrower';
+        addEntry('cancelled', loan.updatedAt || loan.endDate || loan.createdAt, {
+          label: t('home.activity.request_cancelled'),
+          description: t(descKey, { counterpart: counterpartName }),
+          tone: 'danger',
+          icon: 'fa-circle-xmark',
+        });
+      }
+
+      if (loan.status === 'refused') {
+        addEntry('refused', loan.updatedAt || loan.createdAt, {
+          label: t('home.activity.request_refused'),
+          description: t('home.activity.request_refused_description', {
+            counterpart: counterpartName,
+          }),
+          tone: 'danger',
+          icon: 'fa-ban',
+        });
+      }
+
+      if (loan.status === 'accepted' && loan.startDate) {
+        const startDate = new Date(loan.startDate);
+        const isFutureStart = startDate > nowDate;
+        const labelKey = isFutureStart
+          ? 'home.activity.loan_start_planned'
+          : 'home.activity.loan_started';
+        const descKey = ownerRelated
+          ? 'home.activity.loan_start_description_owner'
+          : 'home.activity.loan_start_description_borrower';
+        const descParts = [
+          t(descKey, { counterpart: counterpartName }),
+          formatPeriod(loan.startDate, loan.endDate),
+        ].filter(Boolean);
+
+        addEntry('start', loan.startDate, {
+          label: t(labelKey),
+          description: descParts.join(' • '),
+          tone: isFutureStart ? 'info' : 'success',
+          icon: isFutureStart ? 'fa-clock' : 'fa-play',
+        });
+      }
+
+      if (loan.endDate && !['cancelled', 'refused'].includes(loan.status)) {
+        const endDate = new Date(loan.endDate);
+        const daysUntilEnd = Math.ceil(
+          (endDate - nowDate) / (1000 * 60 * 60 * 24),
+        );
+        const isPast = endDate < nowDate;
+        const labelKey = isPast
+          ? 'home.activity.loan_returned'
+          : daysUntilEnd <= 7
+            ? 'home.activity.loan_return_due_soon'
+            : 'home.activity.loan_return_due';
+        const descKey = ownerRelated
+          ? 'home.activity.loan_return_description_owner'
+          : 'home.activity.loan_return_description_borrower';
+        const descParts = [
+          t(descKey, { counterpart: counterpartName }),
+          t('home.activity.return_date', { date: formatDateLabel(loan.endDate) }),
+        ].filter(Boolean);
+
+        addEntry('return', loan.endDate, {
+          label: t(labelKey),
+          description: descParts.join(' • '),
+          tone: isPast ? 'success' : daysUntilEnd <= 7 ? 'warning' : 'info',
+          icon: isPast ? 'fa-box-archive' : 'fa-rotate-left',
+        });
+      }
+    });
+
+    const sorted = itemsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const maxItems = 8;
+    return {
+      activityItems: sorted.slice(0, maxItems),
+      totalActivityCount: sorted.length,
+    };
+  }, [formatDateLabel, formatPeriod, getStructureName, isBorrowerLoan, isOwnerLoan, loans, t]);
 
   const shortcuts = useMemo(
     () => [
@@ -326,7 +449,11 @@ function Home() {
             </Link>
           ))}
         </div>
-        <ActivityRail items={activityItems} />
+        <ActivityRail
+          items={activityItems}
+          totalCount={totalActivityCount}
+          seeAllHref="/loans/history"
+        />
       </div>
       <OnboardingTour run={runTour} onClose={() => setRunTour(false)} />
     </>
