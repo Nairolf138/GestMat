@@ -162,17 +162,32 @@ function NavBar() {
 
   useLayoutEffect(() => {
     const updateNavbarHeight = () => {
-      if (navRef.current) {
-        document.documentElement.style.setProperty(
-          '--navbar-height',
-          `${navRef.current.offsetHeight}px`,
-        );
-      }
+      const navElement = navRef.current;
+      if (!navElement) return;
+
+      const computedStyles = window.getComputedStyle(navElement);
+      const previousMinHeight = navElement.style.minHeight;
+      navElement.style.minHeight = '0';
+
+      const measuredHeight = navElement.getBoundingClientRect().height;
+      navElement.style.minHeight = previousMinHeight;
+
+      const minHeight = parseFloat(computedStyles.minHeight) || 0;
+      const navbarHeight = Math.max(measuredHeight, minHeight);
+
+      document.documentElement.style.setProperty(
+        '--navbar-height',
+        `${navbarHeight}px`,
+      );
     };
 
     updateNavbarHeight();
+    const rafId = requestAnimationFrame(updateNavbarHeight);
     window.addEventListener('resize', updateNavbarHeight);
-    return () => window.removeEventListener('resize', updateNavbarHeight);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', updateNavbarHeight);
+    };
   }, [cartCount, isOpen, user]);
 
   return (
