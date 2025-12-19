@@ -245,6 +245,11 @@
   "home": {
     "title": "Home",
     "greeting": "Hello {{name}} !",
+    "hero": {
+      "title": "Welcome back",
+      "primary_action": "Start a request",
+      "secondary_action": "Log a loan"
+    },
     "recent_requests": "Recent requests",
     "no_requests": "No request",
     "current_loans": "Current loans",
@@ -257,7 +262,46 @@
     "search_placeholder": "Search equipment...",
     "no_results": "No equipment found",
     "status_update_success": "Loan status updated to {{status}}",
-    "status_update_error": "Unable to update loan status"
+    "status_update_error": "Unable to update loan status",
+    "badges": {
+      "pending": "Pending approvals",
+      "ongoing": "Active loans",
+      "upcoming": "Upcoming"
+    },
+    "tabs": {
+      "pending": "Requests",
+      "ongoing": "Ongoing",
+      "upcoming": "Upcoming"
+    },
+    "sort": {
+      "label": "Sort by",
+      "start_date": "Start date",
+      "end_date": "End date",
+      "created_at": "Creation date"
+    },
+    "urgency": {
+      "due_soon": "Due in {{count}} days",
+      "due_today": "Due today",
+      "overdue": "Overdue by {{count}} days"
+    },
+    "shortcuts_descriptions": {
+      "inventory": "Review and manage local equipment",
+      "catalog": "Consult available catalog items",
+      "loans": "Process and track loan requests",
+      "history": "See the full borrowing history",
+      "cart": "Prepare a new loan request",
+      "vehicles": "Check vehicle availability",
+      "profile": "Update your personal details"
+    },
+    "activity": {
+      "title": "Activity",
+      "empty": "No new notifications yet.",
+      "pending_label": "Pending approval",
+      "pending_description": "Requested by {{borrower}}",
+      "due_label": "Upcoming return",
+      "due_description": "Return expected from {{borrower}}",
+      "untitled": "Loan"
+    }
   },
   "tour": {
     "help": "Help",
