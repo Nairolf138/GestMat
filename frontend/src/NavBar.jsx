@@ -182,7 +182,7 @@ function NavBar() {
       </a>
       <nav
         ref={navRef}
-        className="navbar navbar-expand-lg navbar-light shadow-sm py-2 navbar-fixed"
+        className={`navbar navbar-expand-lg ${isDarkTheme ? 'navbar-dark' : 'navbar-light'} shadow-sm py-2 navbar-fixed`}
       >
         <div className="container-fluid">
           <NavLink

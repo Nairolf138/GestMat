@@ -356,6 +356,39 @@ body {
   min-height: var(--navbar-height, 72px);
 }
 
+.navbar-toggler {
+  border-color: color-mix(in srgb, var(--color-text) 25%, transparent);
+  color: var(--color-text);
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s;
+}
+
+.navbar-toggler:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-text) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.navbar-toggler-icon {
+  --navbar-toggler-color: color-mix(in srgb, var(--color-text) 92%, var(--color-bg) 8%);
+
+  width: 1.5rem;
+  height: 1.5rem;
+  background-image:
+    linear-gradient(var(--navbar-toggler-color), var(--navbar-toggler-color)),
+    linear-gradient(var(--navbar-toggler-color), var(--navbar-toggler-color)),
+    linear-gradient(var(--navbar-toggler-color), var(--navbar-toggler-color));
+  background-repeat: no-repeat;
+  background-size: 100% 2px;
+  background-position:
+    center calc(50% - 6px),
+    center,
+    center calc(50% + 6px);
+  mask-image: linear-gradient(#fff 0 0);
+}
+
 .navbar-fixed {
   position: fixed;
   top: 0;
