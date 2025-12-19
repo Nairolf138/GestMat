@@ -1,17 +1,28 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import Alert from '../Alert.jsx';
 import Loading from '../Loading.jsx';
 import { GlobalContext } from '../GlobalContext.jsx';
 import { AuthContext } from '../AuthContext.jsx';
+import { canManageEquipment } from '../utils';
 
 function NewLoan() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { structures } = useContext(GlobalContext);
   const { user } = useContext(AuthContext);
+  const isDirectMode =
+    searchParams.get('direct') === 'true' || searchParams.get('mode') === 'direct';
+  const userStructureId =
+    typeof user?.structure === 'string'
+      ? user.structure
+      : user?.structure?._id || '';
+  const ownerStructure =
+    structures.find((structure) => structure._id === userStructureId) ||
+    (typeof user?.structure === 'object' ? user.structure : null);
 
   const today = useMemo(() => new Date(), []);
   const defaultStart = useMemo(
@@ -39,24 +50,46 @@ function NewLoan() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!form.borrower && user) {
+    if (!form.borrower && user && !isDirectMode) {
       const borrowerId = user.structure?._id || user.structure;
       if (borrowerId) {
         setForm((prev) => ({ ...prev, borrower: borrowerId }));
       }
     }
-  }, [form.borrower, user]);
+  }, [form.borrower, isDirectMode, user]);
+
+  useEffect(() => {
+    if (!isDirectMode || !userStructureId) return;
+    setForm((prev) =>
+      prev.owner === userStructureId ? prev : { ...prev, owner: userStructureId },
+    );
+  }, [isDirectMode, userStructureId]);
 
   const fetchEquipments = useCallback(async () => {
+    if (isDirectMode && !userStructureId) {
+      setEquipments([]);
+      setError((prev) => prev || t('loans.new.owner_missing'));
+      return;
+    }
+
     const params = new URLSearchParams({ catalog: 'true' });
-    if (form.owner) params.set('structure', form.owner);
+    if (isDirectMode) {
+      params.set('structure', userStructureId);
+      params.set('all', 'true');
+    } else if (form.owner) {
+      params.set('structure', form.owner);
+    }
     if (form.startDate) params.set('startDate', form.startDate);
     if (form.endDate) params.set('endDate', form.endDate);
 
     setLoadingEquipments(true);
     try {
       const data = await api(`/equipments?${params.toString()}`);
-      setEquipments(Array.isArray(data) ? data : []);
+      const equipmentList = Array.isArray(data) ? data : [];
+      const filtered = user?.role
+        ? equipmentList.filter((eq) => canManageEquipment(user.role, eq.type))
+        : equipmentList;
+      setEquipments(filtered);
       setError('');
     } catch (err) {
       setEquipments([]);
@@ -64,7 +97,7 @@ function NewLoan() {
     } finally {
       setLoadingEquipments(false);
     }
-  }, [form.endDate, form.owner, form.startDate, t]);
+  }, [form.endDate, form.owner, form.startDate, isDirectMode, t, user?.role, userStructureId]);
 
   useEffect(() => {
     fetchEquipments();
@@ -76,7 +109,7 @@ function NewLoan() {
   );
 
   useEffect(() => {
-    if (!selectedEquipment) return;
+    if (!selectedEquipment || isDirectMode) return;
     const eqOwner =
       typeof selectedEquipment.structure === 'string'
         ? selectedEquipment.structure
@@ -84,7 +117,7 @@ function NewLoan() {
     if (eqOwner && eqOwner !== form.owner) {
       setForm((prev) => ({ ...prev, owner: eqOwner }));
     }
-  }, [form.owner, selectedEquipment]);
+  }, [form.owner, isDirectMode, selectedEquipment]);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -95,12 +128,18 @@ function NewLoan() {
     setError('');
     setSuccess('');
 
+    if (isDirectMode && !userStructureId) {
+      setError(t('loans.new.owner_missing'));
+      return;
+    }
+
     const quantity = Number(form.quantity) || 0;
-    const ownerId =
-      form.owner ||
-      (typeof selectedEquipment?.structure === 'string'
-        ? selectedEquipment?.structure
-        : selectedEquipment?.structure?._id);
+    const ownerId = isDirectMode
+      ? userStructureId
+      : form.owner ||
+        (typeof selectedEquipment?.structure === 'string'
+          ? selectedEquipment?.structure
+          : selectedEquipment?.structure?._id);
 
     if (
       !form.borrower ||
@@ -131,6 +170,7 @@ function NewLoan() {
       startDate: form.startDate,
       endDate: form.endDate,
       note: form.note,
+      direct: isDirectMode,
     };
 
     setSubmitting(true);
@@ -139,7 +179,9 @@ function NewLoan() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      setSuccess(t('loans.new.success'));
+      setSuccess(
+        isDirectMode ? t('loans.new.direct_success') : t('loans.new.success'),
+      );
       const target = created?._id ? `/loans/${created._id}` : '/loans';
       navigate(target);
     } catch (err) {
@@ -158,8 +200,12 @@ function NewLoan() {
 
   return (
     <>
-      <h1 className="h1 mb-4">{t('loans.new.title')}</h1>
-      <p className="text-muted">{t('loans.new.description')}</p>
+      <h1 className="h1 mb-4">
+        {isDirectMode ? t('loans.new.direct_title') : t('loans.new.title')}
+      </h1>
+      <p className="text-muted">
+        {isDirectMode ? t('loans.new.direct_description') : t('loans.new.description')}
+      </p>
 
       <Alert message={error} onClose={() => setError('')} />
       <Alert
@@ -185,20 +231,36 @@ function NewLoan() {
               {renderStructureOptions()}
             </select>
           </div>
-          <div className="col-md-6">
-            <label className="form-label" htmlFor="owner-structure">
-              {t('loans.new.owner_structure')}
-            </label>
-            <select
-              id="owner-structure"
-              className="form-select"
-              value={form.owner}
-              onChange={(e) => updateField('owner', e.target.value)}
-            >
-              <option value="">{t('common.choose')}</option>
-              {renderStructureOptions()}
-            </select>
-          </div>
+          {!isDirectMode && (
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="owner-structure">
+                {t('loans.new.owner_structure')}
+              </label>
+              <select
+                id="owner-structure"
+                className="form-select"
+                value={form.owner}
+                onChange={(e) => updateField('owner', e.target.value)}
+              >
+                <option value="">{t('common.choose')}</option>
+                {renderStructureOptions()}
+              </select>
+            </div>
+          )}
+          {isDirectMode && (
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="owner-structure">
+                {t('loans.new.owner_structure')}
+              </label>
+              <input
+                id="owner-structure"
+                className="form-control"
+                value={ownerStructure?.name || ownerStructure?.label || t('common.not_available')}
+                disabled
+              />
+              <small className="text-muted">{t('loans.new.owner_locked')}</small>
+            </div>
+          )}
         </div>
 
         <div className="row g-3 mt-2">
@@ -320,7 +382,11 @@ function NewLoan() {
             className="btn btn-primary"
             disabled={submitting}
           >
-            {submitting ? t('common.loading') : t('loans.new.submit')}
+            {submitting
+              ? t('common.loading')
+              : isDirectMode
+                ? t('loans.new.direct_submit')
+                : t('loans.new.submit')}
           </button>
         </div>
       </form>
