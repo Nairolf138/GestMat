@@ -15,6 +15,7 @@ import Catalog from './Catalog';
 import Cart from './Cart';
 import Vehicles from './pages/Vehicles/Vehicles.jsx';
 import VehicleDetail from './pages/Vehicles/VehicleDetail.jsx';
+import NewLoan from './pages/NewLoan.jsx';
 import PrivateRoute from './PrivateRoute';
 import AdminRoute from './AdminRoute';
 import AdminDashboard from './AdminDashboard';
@@ -93,6 +94,16 @@ function App() {
               <PrivateRoute>
                 <AppLayout>
                   <Loans />
+                </AppLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/loans/new"
+            element={
+              <PrivateRoute>
+                <AppLayout>
+                  <NewLoan />
                 </AppLayout>
               </PrivateRoute>
             }
