@@ -472,6 +472,19 @@ export async function updateLoanRequest(
 
     if (status === 'accepted' || status === 'refused') {
       (data as any).processedBy = user.id;
+      const decisionNote = (data as any).decisionNote;
+      if (typeof decisionNote === 'string') {
+        const trimmed = decisionNote.trim();
+        if (trimmed) {
+          (data as any).decisionNote = trimmed;
+        } else {
+          delete (data as any).decisionNote;
+        }
+      } else {
+        delete (data as any).decisionNote;
+      }
+    } else {
+      delete (data as any).decisionNote;
     }
 
     if (

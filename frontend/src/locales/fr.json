@@ -480,6 +480,11 @@
     },
     "note_label": "Note",
     "note_not_provided": "Aucune note renseignée",
+    "decision_note_label": "Note de décision",
+    "decision_note_placeholder": "Ajoutez une note pour cette décision (500 caractères max)",
+    "decision_note_prompt": "Ajoutez une note de décision pour ce statut « {{status}} » (facultatif, 500 caractères max).",
+    "decision_note_too_long": "La note de décision doit contenir 500 caractères maximum.",
+    "decision_note_not_provided": "Aucune note de décision fournie par le prêteur",
     "items": "{{count}} équipement",
     "items_plural": "{{count}} équipements"
   },

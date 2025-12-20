@@ -103,15 +103,48 @@ function Home() {
     [isBorrowerLoan, isOwnerLoan, loans],
   );
 
+  const promptDecisionNote = useCallback(
+    (status) => {
+      if (!['accepted', 'refused'].includes(status)) return '';
+      const promptMessage = t('loans.decision_note_prompt', {
+        status: t(`loans.status.${status}`),
+      });
+      let lastInput = '';
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        // eslint-disable-next-line no-alert
+        const decisionNote = window.prompt(promptMessage, lastInput);
+        if (decisionNote === null) {
+          return null;
+        }
+        if (decisionNote.length <= 500) {
+          return decisionNote;
+        }
+        lastInput = decisionNote.slice(0, 500);
+        // eslint-disable-next-line no-alert
+        window.alert(t('loans.decision_note_too_long'));
+      }
+    },
+    [t],
+  );
+
   const updateLoanStatus = useCallback(
     async (loanId, status) => {
+      const decisionNote = promptDecisionNote(status);
+      if (decisionNote === null) return;
       setActionLoadingId(loanId);
       setError('');
       setMessage('');
       try {
+        const trimmedDecisionNote =
+          typeof decisionNote === 'string' ? decisionNote.trim() : undefined;
+        const payload =
+          status === 'accepted' || status === 'refused'
+            ? { status, decisionNote: trimmedDecisionNote }
+            : { status };
         await api(`/loans/${loanId}`, {
           method: 'PUT',
-          body: JSON.stringify({ status }),
+          body: JSON.stringify(payload),
         });
         setMessage(
           t('home.status_update_success', { status: t(`loans.status.${status}`) }),
@@ -123,7 +156,7 @@ function Home() {
         setActionLoadingId('');
       }
     },
-    [refreshLoans, t],
+    [promptDecisionNote, refreshLoans, t],
   );
 
   const ownerActiveLoans = useMemo(

@@ -480,6 +480,11 @@
     },
     "note_label": "Note",
     "note_not_provided": "No note provided",
+    "decision_note_label": "Decision note",
+    "decision_note_placeholder": "Add a note for this decision (max 500 characters)",
+    "decision_note_prompt": "Add a decision note for this {{status}} decision (optional, 500 characters max).",
+    "decision_note_too_long": "Decision note must be 500 characters or fewer.",
+    "decision_note_not_provided": "No decision note provided by the lender",
     "items": "{{count}} equipment",
     "items_plural": "{{count}} equipments"
   },

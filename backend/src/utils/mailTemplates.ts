@@ -113,6 +113,15 @@ function formatNote(note?: string | null): { text: string; html: string } {
   };
 }
 
+function formatDecisionNote(note?: string | null): { text: string; html: string } {
+  const cleaned = note?.toString().trim();
+  if (!cleaned) {
+    const fallback = 'Aucune note de décision renseignée';
+    return { text: fallback, html: fallback };
+  }
+  return formatNote(cleaned);
+}
+
 function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   if (!items.length) {
     return { text: '- Aucun matériel renseigné', html: '<li>Aucun matériel renseigné</li>' };
@@ -177,12 +186,14 @@ function renderLoanTemplate({
   eventLine,
   action,
   summary,
+  decisionNote,
 }: {
   subject: string;
   preamble: string;
   eventLine: string;
   action: string;
   summary: { text: string; html: string };
+  decisionNote?: { text: string; html: string };
 }): MailTemplate {
   const text = [
     GREETING,
@@ -190,6 +201,7 @@ function renderLoanTemplate({
     preamble,
     eventLine,
     '',
+    ...(decisionNote ? [`Note de décision : ${decisionNote.text}`, ''] : []),
     'Résumé du prêt :',
     summary.text,
     '',
@@ -202,10 +214,15 @@ function renderLoanTemplate({
     `<p>${GREETING}</p>`,
     `<p>${preamble}</p>`,
     `<p>${eventLine}</p>`,
+    decisionNote
+      ? `<p><strong>Note de décision :</strong> ${decisionNote.html}</p>`
+      : '',
     `<div role="group" aria-label="Résumé du prêt">${summary.html}</div>`,
     `<p><strong>Action à entreprendre :</strong> ${action}</p>`,
     `<p>${SIGNATURE}</p>`,
-  ].join('');
+  ]
+    .filter(Boolean)
+    .join('');
 
   return { subject, text, html };
 }
@@ -410,6 +427,12 @@ export function loanStatusTemplate({
   role = 'owner',
 }: LoanStatusContext & { role?: LoanRecipientRole }): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
+  const hasDecisionNote =
+    typeof loan.decisionNote === 'string' && loan.decisionNote.trim().length > 0;
+  const decisionNote =
+    hasDecisionNote && (status === 'accepted' || status === 'refused')
+      ? formatDecisionNote(loan.decisionNote as string | null)
+      : undefined;
   const statusLabel = translateStatus(status);
   const actorLine = actor ? ` par ${actor}` : '';
   const { subject, preamble, action } = statusRoleCopy(role, status);
@@ -421,6 +444,7 @@ export function loanStatusTemplate({
     eventLine: `La demande de prêt ${loanLabel} est ${statusLabel}${actorLine}.`,
     action,
     summary: { text, html },
+    decisionNote,
   });
 }
 

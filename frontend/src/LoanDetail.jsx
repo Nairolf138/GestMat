@@ -36,6 +36,7 @@ function LoanDetail() {
     : '';
   const end = loan.endDate ? new Date(loan.endDate).toLocaleDateString() : '';
   const noteContent = loan.note?.trim();
+  const decisionNoteContent = loan.decisionNote?.trim();
 
   return (
     <>
@@ -53,6 +54,14 @@ function LoanDetail() {
           {noteContent || t('loans.note_not_provided')}
         </span>
       </p>
+      {['accepted', 'refused'].includes(loan.status) && (
+        <p>
+          <strong>{t('loans.decision_note_label')}:</strong>{' '}
+          <span style={{ whiteSpace: 'pre-wrap' }}>
+            {decisionNoteContent || t('loans.decision_note_not_provided')}
+          </span>
+        </p>
+      )}
       <ul className="list-group mb-3">
         {loan.items?.map((it) => (
           <li key={it._id} className="list-group-item">

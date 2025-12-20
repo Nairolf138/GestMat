@@ -15,6 +15,7 @@ export interface LoanRequest {
   startDate?: Date;
   endDate?: Date;
   note?: string;
+  decisionNote?: string;
   reminderSentAt?: Date;
   startReminderSentAt?: Date;
   /**
