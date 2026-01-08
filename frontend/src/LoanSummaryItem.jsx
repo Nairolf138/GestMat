@@ -20,6 +20,7 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
     0,
   );
   const noteContent = loan.note?.trim();
+  const decisionNoteContent = loan.decisionNote?.trim();
 
   const urgency = useMemo(() => {
     if (!loan.endDate) return null;
@@ -71,6 +72,12 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
       <div className="mt-1 small" style={{ whiteSpace: 'pre-wrap' }}>
         <strong>{t('loans.note_label')}:</strong> {noteContent || t('loans.note_not_provided')}
       </div>
+      {['accepted', 'refused'].includes(loan.status) && (
+        <div className="mt-1 small" style={{ whiteSpace: 'pre-wrap' }}>
+          <strong>{t('loans.decision_note_label')}:</strong>{' '}
+          {decisionNoteContent || t('loans.decision_note_not_provided')}
+        </div>
+      )}
       {showActions && (
         <div className="d-flex gap-2 flex-wrap mt-2">
           {typeof onAccept === 'function' && (

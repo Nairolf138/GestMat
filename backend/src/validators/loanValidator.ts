@@ -59,4 +59,14 @@ export const updateLoanValidator: ValidationChain[] = [
     }),
   body('note').optional().isString().isLength({ max: 500 }),
   body('status').optional().isIn(statusValues),
+  body('decisionNote')
+    .optional()
+    .custom((value, { req }) => {
+      if (!['accepted', 'refused'].includes(req.body.status)) {
+        throw new Error('decisionNote is only allowed when accepting or refusing a loan');
+      }
+      return true;
+    })
+    .isString()
+    .isLength({ max: 500 }),
 ];

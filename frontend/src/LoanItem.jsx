@@ -32,12 +32,42 @@ function LoanItem({ loan, isOwner, refresh }) {
       ? `${start.toLocaleDateString()} – ${end.toLocaleDateString()}`
       : '';
 
+  const promptDecisionNote = (status) => {
+    if (!['accepted', 'refused'].includes(status)) return '';
+    const promptMessage = t('loans.decision_note_prompt', {
+      status: t(`loans.status.${status}`),
+    });
+    let lastInput = '';
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      // eslint-disable-next-line no-alert
+      const decisionNote = window.prompt(promptMessage, lastInput);
+      if (decisionNote === null) {
+        return null;
+      }
+      if (decisionNote.length <= 500) {
+        return decisionNote;
+      }
+      lastInput = decisionNote.slice(0, 500);
+      // eslint-disable-next-line no-alert
+      window.alert(t('loans.decision_note_too_long'));
+    }
+  };
+
   const changeStatus = async (status) => {
     setActionError('');
+    const decisionNote = promptDecisionNote(status);
+    if (decisionNote === null) return;
+    const trimmedDecisionNote =
+      typeof decisionNote === 'string' ? decisionNote.trim() : undefined;
     try {
+      const payload =
+        status === 'accepted' || status === 'refused'
+          ? { status, decisionNote: trimmedDecisionNote }
+          : { status };
       await api(`/loans/${loan._id}`, {
         method: 'PUT',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(payload),
       });
       refresh();
     } catch (err) {
@@ -101,6 +131,14 @@ function LoanItem({ loan, isOwner, refresh }) {
               {loan.note?.trim() || t('loans.note_not_provided')}
             </span>
           </div>
+          {['accepted', 'refused'].includes(loan.status) && (
+            <div className="mt-1">
+              <strong>{t('loans.decision_note_label')}:</strong>{' '}
+              <span style={{ whiteSpace: 'pre-wrap' }}>
+                {loan.decisionNote?.trim() || t('loans.decision_note_not_provided')}
+              </span>
+            </div>
+          )}
         </div>
         <span
           className="badge rounded-pill"
