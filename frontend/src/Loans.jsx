@@ -169,6 +169,8 @@ function Loans() {
   const borrowerLoans = categorize(borrowerSplit.nonPending);
   const ownerPending = ownerSplit.pending;
   const borrowerPending = borrowerSplit.pending;
+  const hasPending =
+    tab === 'owner' ? ownerPending.length > 0 : borrowerPending.length > 0;
 
   const finishedList =
     tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished;
@@ -237,16 +239,18 @@ function Loans() {
             </li>
           </ul>
           <div className="mt-3">
-            <CollapsibleSection
-              title={t('home.tabs.pending')}
-              isOpen={sectionsOpen.pending}
-              onToggle={() => toggleSection('pending')}
-            >
-              {renderSection(
-                tab === 'owner' ? ownerPending : borrowerPending,
-                tab === 'owner',
-              )}
-            </CollapsibleSection>
+            {hasPending && (
+              <CollapsibleSection
+                title={t('home.tabs.pending')}
+                isOpen={sectionsOpen.pending}
+                onToggle={() => toggleSection('pending')}
+              >
+                {renderSection(
+                  tab === 'owner' ? ownerPending : borrowerPending,
+                  tab === 'owner',
+                )}
+              </CollapsibleSection>
+            )}
             <CollapsibleSection
               title={t('loans.upcoming')}
               isOpen={sectionsOpen.upcoming}
