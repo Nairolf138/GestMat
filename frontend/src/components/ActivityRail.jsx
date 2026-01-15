@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import i18n from '../i18n.js';
+import { formatDateTime } from '../utils/dateFormat.js';
 
 const EVENT_ICONS = {
   success: 'fa-circle-check',
@@ -39,12 +39,7 @@ function ActivityRail({ items = [], totalCount = 0, seeAllHref }) {
       </div>
       <ul className="activity-list" aria-label={t('home.activity.list_label')}>
         {items.map((item) => {
-          const formattedDate = item.date
-            ? new Intl.DateTimeFormat(i18n.language, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              }).format(new Date(item.date))
-            : '';
+          const formattedDate = formatDateTime(item.date);
           const icon = item.icon || EVENT_ICONS[item.tone] || EVENT_ICONS.info;
           return (
             <li key={item.id} className="activity-item">

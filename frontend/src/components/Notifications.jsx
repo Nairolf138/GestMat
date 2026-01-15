@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from '../i18n.js';
 import { api } from '../api';
+import { formatDate } from '../utils/dateFormat.js';
 
 function Notifications() {
   const { t } = useTranslation();
@@ -36,9 +36,7 @@ function Notifications() {
       <h5 className="alert-heading">{t('notifications.title')}</h5>
       <ul className="mb-0">
         {activeLoans.map((loan) => {
-          const end = loan.endDate
-            ? new Date(loan.endDate).toLocaleDateString(i18n.language)
-            : '';
+          const end = formatDate(loan.endDate);
           const names = loan.items
             ?.map((it) => it.equipment?.name)
             .filter(Boolean)

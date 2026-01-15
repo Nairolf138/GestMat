@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import Loading from './Loading.jsx';
 import Alert from './Alert.jsx';
+import { formatDate } from './utils/dateFormat.js';
 
 function LoanDetail() {
   const { id } = useParams();
@@ -31,10 +32,8 @@ function LoanDetail() {
     return <p>{t('home.no_loans')}</p>;
   }
 
-  const start = loan.startDate
-    ? new Date(loan.startDate).toLocaleDateString()
-    : '';
-  const end = loan.endDate ? new Date(loan.endDate).toLocaleDateString() : '';
+  const start = formatDate(loan.startDate);
+  const end = formatDate(loan.endDate);
   const noteContent = loan.note?.trim();
   const decisionNoteContent = loan.decisionNote?.trim();
 

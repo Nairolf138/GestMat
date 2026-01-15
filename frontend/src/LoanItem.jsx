@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import { toLoanItemsPayload } from './utils';
+import { formatDate } from './utils/dateFormat.js';
 
 function LoanItem({ loan, isOwner, refresh }) {
   const { t } = useTranslation();
@@ -27,10 +28,7 @@ function LoanItem({ loan, isOwner, refresh }) {
     },
   };
 
-  const period =
-    start && end
-      ? `${start.toLocaleDateString()} – ${end.toLocaleDateString()}`
-      : '';
+  const period = start && end ? `${formatDate(start)} – ${formatDate(end)}` : '';
 
   const promptDecisionNote = (status) => {
     if (!['accepted', 'refused'].includes(status)) return '';
