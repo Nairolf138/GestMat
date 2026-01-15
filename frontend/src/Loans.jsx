@@ -219,17 +219,13 @@ function Loans() {
           </ul>
           <div className="mt-3">
             <CollapsibleSection
-              title={t('loans.finished')}
-              isOpen={sectionsOpen.finished}
-              onToggle={() => toggleSection('finished')}
+              title={t('loans.upcoming')}
+              isOpen={sectionsOpen.upcoming}
+              onToggle={() => toggleSection('upcoming')}
             >
-              {renderSection(limitedFinished, tab === 'owner')}
-              {hasMoreFinished && (
-                <div className="d-flex justify-content-end">
-                  <Link className="btn btn-link p-0" to="/loans/history">
-                    {t('loans.history.view_all')}
-                  </Link>
-                </div>
+              {renderSection(
+                tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
+                tab === 'owner',
               )}
             </CollapsibleSection>
             <CollapsibleSection
@@ -243,13 +239,17 @@ function Loans() {
               )}
             </CollapsibleSection>
             <CollapsibleSection
-              title={t('loans.upcoming')}
-              isOpen={sectionsOpen.upcoming}
-              onToggle={() => toggleSection('upcoming')}
+              title={t('loans.finished')}
+              isOpen={sectionsOpen.finished}
+              onToggle={() => toggleSection('finished')}
             >
-              {renderSection(
-                tab === 'owner' ? ownerLoans.upcoming : borrowerLoans.upcoming,
-                tab === 'owner',
+              {renderSection(limitedFinished, tab === 'owner')}
+              {hasMoreFinished && (
+                <div className="d-flex justify-content-end">
+                  <Link className="btn btn-link p-0" to="/loans/history">
+                    {t('loans.history.view_all')}
+                  </Link>
+                </div>
               )}
             </CollapsibleSection>
           </div>
