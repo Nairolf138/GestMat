@@ -11,7 +11,7 @@ const getLoanDate = (loan) =>
   loan.endDate || loan.startDate || loan.createdAt || loan.updatedAt || new Date();
 
 const sortLoans = (list) =>
-  [...list].sort((a, b) => new Date(getLoanDate(b)) - new Date(getLoanDate(a)));
+  [...list].sort((a, b) => new Date(getLoanDate(a)) - new Date(getLoanDate(b)));
 
 const parseTabFromSearch = (search) => {
   const params = new URLSearchParams(search);
