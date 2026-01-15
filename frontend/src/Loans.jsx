@@ -53,6 +53,7 @@ function Loans() {
     parseStatusFilterFromSearch(location.search),
   );
   const [sectionsOpen, setSectionsOpen] = useState({
+    pending: true,
     finished: true,
     ongoing: true,
     upcoming: true,
@@ -127,6 +128,22 @@ function Loans() {
     };
   };
 
+  const splitPendingLoans = (list) => {
+    const pending = [];
+    const nonPending = [];
+    list.forEach((loan) => {
+      if (loan.status === 'pending') {
+        pending.push(loan);
+      } else {
+        nonPending.push(loan);
+      }
+    });
+    return {
+      pending: sortLoans(pending),
+      nonPending,
+    };
+  };
+
   const filterLoansByStatus = (list) => {
     const now = new Date();
     return list.filter((loan) => {
@@ -140,16 +157,18 @@ function Loans() {
   };
 
   const structureId = user?.structure?._id || user?.structure;
-  const ownerLoans = categorize(
-    filterLoansByStatus(
-      loans.filter((l) => l.owner?._id === structureId || l.owner === structureId),
-    ),
+  const ownerLoanList = filterLoansByStatus(
+    loans.filter((l) => l.owner?._id === structureId || l.owner === structureId),
   );
-  const borrowerLoans = categorize(
-    filterLoansByStatus(
-      loans.filter((l) => l.borrower?._id === structureId || l.borrower === structureId),
-    ),
+  const borrowerLoanList = filterLoansByStatus(
+    loans.filter((l) => l.borrower?._id === structureId || l.borrower === structureId),
   );
+  const ownerSplit = splitPendingLoans(ownerLoanList);
+  const borrowerSplit = splitPendingLoans(borrowerLoanList);
+  const ownerLoans = categorize(ownerSplit.nonPending);
+  const borrowerLoans = categorize(borrowerSplit.nonPending);
+  const ownerPending = ownerSplit.pending;
+  const borrowerPending = borrowerSplit.pending;
 
   const finishedList =
     tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished;
@@ -218,6 +237,16 @@ function Loans() {
             </li>
           </ul>
           <div className="mt-3">
+            <CollapsibleSection
+              title={t('home.tabs.pending')}
+              isOpen={sectionsOpen.pending}
+              onToggle={() => toggleSection('pending')}
+            >
+              {renderSection(
+                tab === 'owner' ? ownerPending : borrowerPending,
+                tab === 'owner',
+              )}
+            </CollapsibleSection>
             <CollapsibleSection
               title={t('loans.upcoming')}
               isOpen={sectionsOpen.upcoming}
