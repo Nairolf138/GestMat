@@ -18,7 +18,13 @@ const ALLOWED_ROLES = ROLES.filter((r) => r !== ADMIN_ROLE);
 
 import { API_PREFIX, API_URL, JWT_SECRET, NOTIFY_EMAIL } from '../config';
 import { cookieOptions } from '../utils/cookieOptions';
-import { createUser, findUserByEmail, findUserById, findUserByUsername, updateUser } from '../models/User';
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+  findUserByUsername,
+  updateUser,
+} from '../models/User';
 import { findStructureById } from '../models/Structure';
 import {
   createSession,
@@ -64,6 +70,21 @@ const usernameReminderLimiter = rateLimit({
   max: 5,
   message: 'Too many username reminder attempts, please try again later.',
 });
+
+const resolveStructureId = (structure: unknown): string | undefined => {
+  if (!structure) return undefined;
+  if (typeof structure === 'string') return structure;
+  if (typeof structure === 'object' && '_id' in structure) {
+    const value = (structure as { _id?: unknown })._id;
+    if (value && typeof (value as any).toString === 'function') {
+      return (value as any).toString();
+    }
+  }
+  if (typeof (structure as any).toString === 'function') {
+    return (structure as any).toString();
+  }
+  return undefined;
+};
 
 const buildResetUrl = (token: string): string => {
   try {
@@ -166,12 +187,17 @@ router.post(
         const struct = await findStructureById(db, user.structure.toString());
         if (struct) user.structure = struct;
       }
+      const structureId = resolveStructureId(user.structure);
 
-      const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
-        expiresIn: '1h',
-      });
+      const token = jwt.sign(
+        { id: user._id, role: user.role, structure: structureId },
+        JWT_SECRET,
+        {
+          expiresIn: '1h',
+        },
+      );
       const refreshToken = jwt.sign(
-        { id: user._id, role: user.role, stayLoggedIn },
+        { id: user._id, role: user.role, structure: structureId, stayLoggedIn },
         JWT_SECRET,
         { expiresIn: stayLoggedIn ? '7d' : '1d' },
       );
@@ -213,13 +239,15 @@ router.post(
       if (!session) return next(unauthorized('Invalid refresh token'));
 
       const stayLoggedIn = (payload as AuthUser).stayLoggedIn ?? true;
+      const user = await findUserById(db, String(payload.id));
+      const structureId = resolveStructureId(user?.structure);
       const token = jwt.sign(
-        { id: payload.id, role: payload.role },
+        { id: payload.id, role: payload.role, structure: structureId },
         JWT_SECRET,
         { expiresIn: '1h' },
       );
       const newRefreshToken = jwt.sign(
-        { id: payload.id, role: payload.role, stayLoggedIn },
+        { id: payload.id, role: payload.role, structure: structureId, stayLoggedIn },
         JWT_SECRET,
         { expiresIn: stayLoggedIn ? '7d' : '1d' },
       );
