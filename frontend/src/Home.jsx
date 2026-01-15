@@ -9,7 +9,7 @@ import HomeHeader from './components/HomeHeader.jsx';
 import ActivityRail from './components/ActivityRail.jsx';
 import Notifications from './components/Notifications.jsx';
 import OnboardingTour from './components/OnboardingTour.jsx';
-import i18n from './i18n.js';
+import { formatDate } from './utils/dateFormat.js';
 
 function Home() {
   const { t } = useTranslation();
@@ -232,9 +232,7 @@ function Home() {
   const formatDateLabel = useCallback(
     (date) => {
       if (!date) return t('home.activity.date_unknown');
-      return new Intl.DateTimeFormat(i18n.language, {
-        dateStyle: 'medium',
-      }).format(new Date(date));
+      return formatDate(date);
     },
     [t],
   );

@@ -3,13 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Loading from '../../Loading.jsx';
-
-function formatDate(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString();
-}
+import { formatDate } from '../../utils/dateFormat.js';
 
 function hasOverlap(reservations = [], start, end) {
   if (!start || !end) return false;

@@ -3,6 +3,7 @@ import { api } from './api';
 import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from './AuthContext.jsx';
+import { formatDate } from './utils/dateFormat.js';
 
 export function addToCart(newItem) {
   const equipmentStructure = newItem.equipment?.structure;
@@ -127,6 +128,8 @@ function Cart() {
             typeof it.equipment.structure === 'string'
               ? it.equipment.structure
               : it.equipment.structure?.name;
+          const startLabel = formatDate(it.startDate);
+          const endLabel = formatDate(it.endDate);
           return (
             <li
               key={idx}
@@ -142,7 +145,7 @@ function Cart() {
                     </span>
                   </>
                 )}{' '}
-                ({it.startDate} → {it.endDate})
+                ({startLabel} → {endLabel})
               </span>
               <div className="d-flex align-items-center">
                 <input

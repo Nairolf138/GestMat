@@ -7,13 +7,7 @@ import Loading from '../../Loading.jsx';
 import VehicleForm from './VehicleForm.jsx';
 import { api } from '../../api';
 import { GlobalContext } from '../../GlobalContext.jsx';
-
-function formatDate(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString();
-}
+import { formatDate } from '../../utils/dateFormat.js';
 
 function VehicleDetail() {
   const { id } = useParams();
