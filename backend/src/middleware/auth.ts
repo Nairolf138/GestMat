@@ -3,6 +3,7 @@ import client, { Counter } from 'prom-client';
 import { JWT_SECRET } from '../config';
 import { Request, Response, NextFunction } from 'express';
 import { AuthUser } from '../types';
+import { ADMIN_ROLE } from '../config/roles';
 import permissionsConfig, { PermissionRule } from '../config/permissions';
 import logger from '../utils/logger';
 
@@ -35,6 +36,7 @@ function checkStructureScope(
   getStructureId?: (req: Request) => string | undefined | null,
 ): boolean {
   if (!rule.structureScoped) return true;
+  if (req.user?.role === ADMIN_ROLE) return true;
   const userStructure = normalizeId(req.user?.structure);
   const targetStructure = normalizeId(getStructureId?.(req));
   if (!targetStructure) return false;
