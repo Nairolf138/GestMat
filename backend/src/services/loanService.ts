@@ -400,6 +400,7 @@ export async function updateLoanRequest(
     const releaseStatuses = ['refused', 'cancelled'];
     const keys = Object.keys(data);
     const status = (data as any).status;
+    const decisionAllowedKeys = ['status', 'decisionNote'];
     const types = await Promise.all(
       (loan.items || []).map(async (item: LoanItem) => {
         const eq = await db
@@ -416,7 +417,7 @@ export async function updateLoanRequest(
       switch (user.role) {
         case AUTRE_ROLE: {
           if (status === 'accepted' || status === 'refused') {
-            if (!isOwner || keys.some((k) => k !== 'status')) {
+            if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
               throw forbidden('Access denied');
             }
           } else {
@@ -435,7 +436,7 @@ export async function updateLoanRequest(
           if (status === 'accepted' || status === 'refused') {
             if (
               !isOwner ||
-              keys.some((k) => k !== 'status') ||
+              keys.some((k) => !decisionAllowedKeys.includes(k)) ||
               !types.every((t) => canModify(user.role, t))
             ) {
               throw forbidden('Access denied');
@@ -452,7 +453,7 @@ export async function updateLoanRequest(
         }
         case REGISSEUR_GENERAL_ROLE: {
           if (status === 'accepted' || status === 'refused') {
-            if (!isOwner || keys.some((k) => k !== 'status')) {
+            if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
               throw forbidden('Access denied');
             }
           } else {
