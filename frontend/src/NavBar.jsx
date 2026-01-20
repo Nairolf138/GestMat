@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import { AuthContext } from './AuthContext.jsx';
 import logo from './logo.png';
-import { ADMIN_ROLE } from '../roles';
+import { ADMIN_ROLE, REGISSEUR_GENERAL_ROLE } from '../roles';
 import usePendingLoanRequestsCount from './hooks/usePendingLoanRequestsCount';
 
 function NavBar() {
@@ -39,6 +39,7 @@ function NavBar() {
     userId: user?._id,
   });
   const isAdmin = user?.role === ADMIN_ROLE;
+  const isRegisseurGeneral = user?.role === REGISSEUR_GENERAL_ROLE;
   const handleLogout = async () => {
     try {
       await api('/auth/logout', { method: 'POST' });
@@ -278,6 +279,17 @@ function NavBar() {
                       <span className="cart-badge">{cartCount}</span>
                     )}
                   </NavLink>
+                  {isRegisseurGeneral && (
+                    <NavLink
+                      className={({ isActive }) =>
+                        'nav-link' + (isActive ? ' active' : '')
+                      }
+                      to="/investments"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {t('nav.investments')}
+                    </NavLink>
+                  )}
                   {isAdmin && (
                     <NavLink
                       className={({ isActive }) =>
