@@ -90,6 +90,7 @@
     "year_two": "Année 2",
     "table": {
       "item": "Équipement",
+      "category": "Catégorie",
       "description": "Description",
       "amount": "Montant estimé",
       "source": "Source de financement",
@@ -97,9 +98,21 @@
     },
     "placeholders": {
       "item": "Ex. Console son",
+      "category": "Ex. Audio",
       "description": "Détails ou justification",
       "amount": "Montant",
       "source": "Ex. Subvention, autofinancement"
+    },
+    "summary": {
+      "title": "Synthèse",
+      "year_totals": "Totaux par année",
+      "category_totals": "Totaux par catégorie",
+      "category": "Catégorie",
+      "year1": "Année 1",
+      "year2": "Année 2",
+      "total": "Total",
+      "uncategorized": "Non catégorisé",
+      "empty": "Aucune catégorie pour le moment"
     },
     "actions": {
       "add_line": "Ajouter une ligne",
