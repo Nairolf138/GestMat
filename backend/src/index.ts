@@ -29,6 +29,7 @@ import rolesRoutes from './routes/roles';
 import reportRoutes from './routes/reports';
 import vehicleRoutes from './routes/vehicles';
 import adminExportRoutes from './routes/adminExport';
+import investmentRoutes from './routes/investments';
 import { Db } from 'mongodb';
 import { Server } from 'http';
 import { ensureSessionIndexes } from './models/Session';
@@ -260,6 +261,7 @@ export async function start(
   app.use(withApiPrefix('/roles'), rolesRoutes);
   app.use(withApiPrefix('/reports'), reportRoutes);
   app.use(withApiPrefix('/admin'), adminExportRoutes);
+  app.use(withApiPrefix('/investments'), investmentRoutes);
 
   app.get('/metrics', async (req: Request, res: Response) => {
     applyNoCacheHeaders(res);
