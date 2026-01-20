@@ -90,6 +90,7 @@
     "year_two": "Year 2",
     "table": {
       "item": "Equipment",
+      "category": "Category",
       "description": "Description",
       "amount": "Estimated amount",
       "source": "Funding source",
@@ -97,9 +98,21 @@
     },
     "placeholders": {
       "item": "e.g., Sound console",
+      "category": "e.g., Audio",
       "description": "Details or rationale",
       "amount": "Amount",
       "source": "e.g., Grant, self-funding"
+    },
+    "summary": {
+      "title": "Summary",
+      "year_totals": "Year totals",
+      "category_totals": "Totals by category",
+      "category": "Category",
+      "year1": "Year 1",
+      "year2": "Year 2",
+      "total": "Total",
+      "uncategorized": "Uncategorized",
+      "empty": "No category yet"
     },
     "actions": {
       "add_line": "Add line",
