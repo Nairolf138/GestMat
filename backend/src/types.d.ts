@@ -14,6 +14,7 @@ declare module './routes/vehicles';
 declare module './routes/loans';
 declare module './routes/stats';
 declare module './routes/roles';
+declare module './routes/investments';
 
 export interface AuthUser {
   id: string;

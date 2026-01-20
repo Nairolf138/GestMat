@@ -63,6 +63,10 @@ export const PERMISSIONS: Record<string, PermissionRule | string[]> = {
     roles: [REGISSEUR_GENERAL_ROLE, ADMIN_ROLE],
     structureScoped: true,
   },
+  MANAGE_INVESTMENTS: {
+    roles: [REGISSEUR_GENERAL_ROLE, ADMIN_ROLE],
+    structureScoped: true,
+  },
 };
 
 export const MANAGE_STRUCTURES = 'MANAGE_STRUCTURES';
@@ -74,6 +78,7 @@ export const VEHICLES_CREATE = 'VEHICLES_CREATE';
 export const VEHICLES_UPDATE = 'VEHICLES_UPDATE';
 export const VEHICLES_ASSIGN = 'VEHICLES_ASSIGN';
 export const VEHICLES_ARCHIVE = 'VEHICLES_ARCHIVE';
+export const MANAGE_INVESTMENTS = 'MANAGE_INVESTMENTS';
 
 export default {
   PERMISSIONS,
@@ -86,4 +91,5 @@ export default {
   VEHICLES_UPDATE,
   VEHICLES_ASSIGN,
   VEHICLES_ARCHIVE,
+  MANAGE_INVESTMENTS,
 };
