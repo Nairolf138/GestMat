@@ -67,6 +67,7 @@
     "loans_with_pending": "Prêts – {{count}} demande(s) en attente",
     "loans_history": "Historique",
     "cart": "Panier",
+    "investments": "Investissements",
     "admin": "Administration",
     "account": "Compte",
     "profile": "Profil",
@@ -80,6 +81,31 @@
     "toggle_theme": {
       "activate": "Activer le mode sombre",
       "deactivate": "Désactiver le mode sombre"
+    }
+  },
+  "investments": {
+    "title": "Plan d'investissements",
+    "subtitle": "Saisissez les besoins d'investissement pour chaque année.",
+    "year_one": "Année 1",
+    "year_two": "Année 2",
+    "table": {
+      "item": "Équipement",
+      "description": "Description",
+      "amount": "Montant estimé",
+      "source": "Source de financement",
+      "actions": "Actions"
+    },
+    "placeholders": {
+      "item": "Ex. Console son",
+      "description": "Détails ou justification",
+      "amount": "Montant",
+      "source": "Ex. Subvention, autofinancement"
+    },
+    "actions": {
+      "add_line": "Ajouter une ligne",
+      "remove_line": "Supprimer",
+      "reset": "Réinitialiser",
+      "save": "Enregistrer"
     }
   },
   "equipments": {
