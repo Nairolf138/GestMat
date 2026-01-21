@@ -86,33 +86,39 @@
   "investments": {
     "title": "Plan d'investissements",
     "subtitle": "Saisissez les besoins d'investissement pour chaque année.",
-    "year_one": "Année 1",
-    "year_two": "Année 2",
+    "year_one": "Année N",
+    "year_two": "Année N+1",
     "table": {
       "item": "Équipement",
-      "category": "Catégorie",
-      "description": "Description",
-      "amount": "Montant estimé",
-      "source": "Source de financement",
+      "type": "Type",
+      "quantity": "Quantité souhaitée",
+      "unit_price": "Prix unitaire",
+      "amount": "Coût total",
       "actions": "Actions"
     },
     "placeholders": {
       "item": "Ex. Console son",
-      "category": "Ex. Audio",
-      "description": "Détails ou justification",
-      "amount": "Montant",
-      "source": "Ex. Subvention, autofinancement"
+      "type": "Sélectionner un type",
+      "quantity": "Quantité",
+      "unit_price": "Prix unitaire"
+    },
+    "types": {
+      "sound": "Son",
+      "light": "Lumière",
+      "stage": "Plateau",
+      "video": "Vidéo",
+      "other": "Autre"
     },
     "summary": {
       "title": "Synthèse",
       "year_totals": "Totaux par année",
-      "category_totals": "Totaux par catégorie",
-      "category": "Catégorie",
+      "type_totals": "Totaux par type",
+      "type": "Type",
       "year1": "Année 1",
       "year2": "Année 2",
       "total": "Total",
-      "uncategorized": "Non catégorisé",
-      "empty": "Aucune catégorie pour le moment"
+      "untyped": "Non renseigné",
+      "empty": "Aucun type pour le moment"
     },
     "actions": {
       "add_line": "Ajouter une ligne",
