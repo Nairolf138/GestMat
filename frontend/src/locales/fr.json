@@ -86,8 +86,8 @@
   "investments": {
     "title": "Plan d'investissements",
     "subtitle": "Saisissez les besoins d'investissement pour chaque année.",
-    "year_one": "Année N",
-    "year_two": "Année N+1",
+    "year_one": "Année N / Année N+1",
+    "year_two": "Année N / Année N+1",
     "table": {
       "item": "Équipement",
       "type": "Type",
@@ -98,8 +98,8 @@
     },
     "placeholders": {
       "item": "Ex. Console son",
-      "type": "Sélectionner un type",
-      "quantity": "Quantité",
+      "type": "Type",
+      "quantity": "Quantité souhaitée",
       "unit_price": "Prix unitaire"
     },
     "types": {
