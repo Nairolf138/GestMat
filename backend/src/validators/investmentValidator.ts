@@ -25,12 +25,12 @@ export const createInvestmentValidator: ValidationChain[] = [
   body('lines.*.structure').optional().isMongoId(),
   body('lines.*.targetYear').optional().custom(targetYearValidator),
   body('lines.*.status').optional().custom(statusValidator),
-  body('lines.*.category')
+  body('lines.*.type')
     .if(body('lines').exists())
     .isString()
     .trim()
     .notEmpty()
-    .withMessage('category is required'),
+    .withMessage('type is required'),
   body('lines.*.quantity')
     .if(body('lines').exists())
     .isFloat({ min: 0 })
@@ -54,7 +54,7 @@ export const updateInvestmentValidator: ValidationChain[] = [
   body('lines.*.structure').optional().isMongoId(),
   body('lines.*.targetYear').optional().custom(targetYearValidator),
   body('lines.*.status').optional().custom(statusValidator),
-  body('lines.*.category').optional().isString().trim().notEmpty(),
+  body('lines.*.type').optional().isString().trim().notEmpty(),
   body('lines.*.quantity').optional().isFloat({ min: 0 }),
   body('lines.*.unitCost').optional().isFloat({ min: 0 }),
   body('lines.*.priority').optional().isFloat({ min: 0 }),

@@ -7,6 +7,8 @@ export interface InvestmentLine {
   _id?: ObjectId;
   structure?: ObjectId | Record<string, unknown>;
   targetYear?: TargetYear;
+  type?: string;
+  /** @deprecated use type */
   category?: string;
   quantity?: number;
   unitCost?: number;
