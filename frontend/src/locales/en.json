@@ -86,8 +86,8 @@
   "investments": {
     "title": "Investment plan",
     "subtitle": "Enter investment needs for each year.",
-    "year_one": "Year N",
-    "year_two": "Year N+1",
+    "year_one": "Year N / Year N+1",
+    "year_two": "Year N / Year N+1",
     "table": {
       "item": "Equipment",
       "type": "Type",
@@ -98,8 +98,8 @@
     },
     "placeholders": {
       "item": "e.g., Sound console",
-      "type": "Select a type",
-      "quantity": "Quantity",
+      "type": "Type",
+      "quantity": "Desired quantity",
       "unit_price": "Unit price"
     },
     "types": {
