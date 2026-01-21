@@ -80,7 +80,7 @@ const normalizeLine = (
 
   const normalizedTargetYear = parseTargetYear(targetYear, 'targetYear');
   const normalizedStatus = parseStatus(status, 'status');
-  const category = parseRequiredString(line.category, 'category');
+  const type = parseRequiredString(line.type, 'type');
   const quantity = parseRequiredNumber(line.quantity, 'quantity');
   const unitCost = parseRequiredNumber(line.unitCost, 'unitCost');
   const priority = parseRequiredNumber(line.priority, 'priority');
@@ -94,7 +94,7 @@ const normalizeLine = (
     targetYear: normalizedTargetYear,
     status: normalizedStatus,
     createdBy,
-    category,
+    type,
     quantity,
     unitCost,
     totalCost,

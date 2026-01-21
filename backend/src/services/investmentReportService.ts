@@ -2,8 +2,8 @@ import { Db, ObjectId } from 'mongodb';
 import PDFDocument from 'pdfkit';
 import { InvestmentPlan } from '../models/InvestmentPlan';
 
-export interface InvestmentCategorySummary {
-  category: string;
+export interface InvestmentTypeSummary {
+  type: string;
   year1Total: number;
   year2Total: number;
   total: number;
@@ -16,7 +16,7 @@ export interface InvestmentYearSummary {
 
 export interface InvestmentSummary {
   yearTotals: InvestmentYearSummary[];
-  categoryTotals: InvestmentCategorySummary[];
+  typeTotals: InvestmentTypeSummary[];
   grandTotal: number;
 }
 
@@ -34,14 +34,14 @@ export async function getInvestmentSummary(
     { $unwind: '$lines' },
     {
       $project: {
-        category: { $ifNull: ['$lines.category', 'Non catégorisé'] },
+        type: { $ifNull: ['$lines.type', 'Non typé'] },
         targetYear: '$lines.targetYear',
         totalCost: { $ifNull: ['$lines.totalCost', 0] },
       },
     },
     {
       $group: {
-        _id: { category: '$category', targetYear: '$targetYear' },
+        _id: { type: '$type', targetYear: '$targetYear' },
         total: { $sum: '$totalCost' },
       },
     },
@@ -52,24 +52,24 @@ export async function getInvestmentSummary(
     .aggregate(pipeline)
     .toArray();
 
-  const categoryMap = new Map<string, InvestmentCategorySummary>();
+  const typeMap = new Map<string, InvestmentTypeSummary>();
   const yearTotals: Record<string, number> = { year1: 0, year2: 0 };
   let grandTotal = 0;
 
   aggregates.forEach((entry) => {
-    const category = String(entry._id?.category ?? 'Non catégorisé');
+    const type = String(entry._id?.type ?? 'Non typé');
     const targetYear = String(entry._id?.targetYear ?? '');
     const total = typeof entry.total === 'number' ? entry.total : 0;
 
-    if (!categoryMap.has(category)) {
-      categoryMap.set(category, {
-        category,
+    if (!typeMap.has(type)) {
+      typeMap.set(type, {
+        type,
         year1Total: 0,
         year2Total: 0,
         total: 0,
       });
     }
-    const summary = categoryMap.get(category);
+    const summary = typeMap.get(type);
     if (!summary) return;
     if (targetYear === 'year1') summary.year1Total += total;
     if (targetYear === 'year2') summary.year2Total += total;
@@ -81,8 +81,8 @@ export async function getInvestmentSummary(
     grandTotal += total;
   });
 
-  const categoryTotals = Array.from(categoryMap.values()).sort((a, b) =>
-    a.category.localeCompare(b.category, 'fr'),
+  const typeTotals = Array.from(typeMap.values()).sort((a, b) =>
+    a.type.localeCompare(b.type, 'fr'),
   );
 
   return {
@@ -90,7 +90,7 @@ export async function getInvestmentSummary(
       { year: 'year1', total: yearTotals.year1 },
       { year: 'year2', total: yearTotals.year2 },
     ],
-    categoryTotals,
+    typeTotals,
     grandTotal,
   };
 }
@@ -102,22 +102,22 @@ const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
 export function renderInvestmentSummaryCsv(summary: InvestmentSummary): string {
   const lines: string[] = [];
-  lines.push('Type;Libellé;Année 1;Année 2;Total');
+  lines.push('Type;Libellé;Année N;Année N+1;Total');
   summary.yearTotals.forEach((year) => {
-    const label = year.year === 'year1' ? 'Année 1' : 'Année 2';
+    const label = year.year === 'year1' ? 'Année N' : 'Année N+1';
     const row = `Année;${label};${formatAmount(
       year.year === 'year1' ? year.total : 0,
     )};${formatAmount(year.year === 'year2' ? year.total : 0)};${formatAmount(year.total)}`;
     lines.push(row);
   });
-  summary.categoryTotals.forEach((category) => {
+  summary.typeTotals.forEach((typeSummary) => {
     lines.push(
       [
-        'Catégorie',
-        csvEscape(category.category),
-        formatAmount(category.year1Total),
-        formatAmount(category.year2Total),
-        formatAmount(category.total),
+        'Type',
+        csvEscape(typeSummary.type),
+        formatAmount(typeSummary.year1Total),
+        formatAmount(typeSummary.year2Total),
+        formatAmount(typeSummary.total),
       ].join(';'),
     );
   });
@@ -137,22 +137,22 @@ export async function renderInvestmentSummaryPdf(
 
   doc.fontSize(13).text('Totaux par année');
   summary.yearTotals.forEach((year) => {
-    const label = year.year === 'year1' ? 'Année 1' : 'Année 2';
+    const label = year.year === 'year1' ? 'Année N' : 'Année N+1';
     doc.fontSize(11).text(`${label}: ${formatAmount(year.total)} €`);
   });
   doc.moveDown();
 
-  doc.fontSize(13).text('Totaux par catégorie');
-  if (!summary.categoryTotals.length) {
+  doc.fontSize(13).text('Totaux par type');
+  if (!summary.typeTotals.length) {
     doc.fontSize(11).text('Aucune donnée');
   } else {
-    summary.categoryTotals.forEach((category) => {
+    summary.typeTotals.forEach((typeSummary) => {
       doc
         .fontSize(11)
         .text(
-          `${category.category}: ${formatAmount(category.total)} € (Année 1: ${formatAmount(
-            category.year1Total,
-          )} €, Année 2: ${formatAmount(category.year2Total)} €)`,
+          `${typeSummary.type}: ${formatAmount(typeSummary.total)} € (Année N: ${formatAmount(
+            typeSummary.year1Total,
+          )} €, Année N+1: ${formatAmount(typeSummary.year2Total)} €)`,
         );
     });
   }
