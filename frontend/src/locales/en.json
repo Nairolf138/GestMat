@@ -86,33 +86,39 @@
   "investments": {
     "title": "Investment plan",
     "subtitle": "Enter investment needs for each year.",
-    "year_one": "Year 1",
-    "year_two": "Year 2",
+    "year_one": "Year N",
+    "year_two": "Year N+1",
     "table": {
       "item": "Equipment",
-      "category": "Category",
-      "description": "Description",
-      "amount": "Estimated amount",
-      "source": "Funding source",
+      "type": "Type",
+      "quantity": "Desired quantity",
+      "unit_price": "Unit price",
+      "amount": "Total cost",
       "actions": "Actions"
     },
     "placeholders": {
       "item": "e.g., Sound console",
-      "category": "e.g., Audio",
-      "description": "Details or rationale",
-      "amount": "Amount",
-      "source": "e.g., Grant, self-funding"
+      "type": "Select a type",
+      "quantity": "Quantity",
+      "unit_price": "Unit price"
+    },
+    "types": {
+      "sound": "Sound",
+      "light": "Light",
+      "stage": "Stage",
+      "video": "Video",
+      "other": "Other"
     },
     "summary": {
       "title": "Summary",
       "year_totals": "Year totals",
-      "category_totals": "Totals by category",
-      "category": "Category",
+      "type_totals": "Totals by type",
+      "type": "Type",
       "year1": "Year 1",
       "year2": "Year 2",
       "total": "Total",
-      "uncategorized": "Uncategorized",
-      "empty": "No category yet"
+      "untyped": "Unspecified",
+      "empty": "No type yet"
     },
     "actions": {
       "add_line": "Add line",

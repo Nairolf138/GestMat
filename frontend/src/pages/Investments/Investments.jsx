@@ -3,10 +3,9 @@ import { useTranslation } from 'react-i18next';
 
 const createEmptyRow = () => ({
   item: '',
-  category: '',
-  description: '',
-  amount: '',
-  source: '',
+  type: '',
+  quantity: '',
+  unitPrice: '',
 });
 
 function Investments() {
@@ -14,17 +13,42 @@ function Investments() {
   const [yearOneRows, setYearOneRows] = useState([createEmptyRow()]);
   const [yearTwoRows, setYearTwoRows] = useState([createEmptyRow()]);
 
+  const typeOptions = useMemo(
+    () => [
+      { value: 'sound', label: t('investments.types.sound') },
+      { value: 'light', label: t('investments.types.light') },
+      { value: 'stage', label: t('investments.types.stage') },
+      { value: 'video', label: t('investments.types.video') },
+      { value: 'other', label: t('investments.types.other') },
+    ],
+    [t],
+  );
+
   const columnLabels = useMemo(
     () => ({
       item: t('investments.table.item'),
-      category: t('investments.table.category'),
-      description: t('investments.table.description'),
+      type: t('investments.table.type'),
+      quantity: t('investments.table.quantity'),
+      unitPrice: t('investments.table.unit_price'),
       amount: t('investments.table.amount'),
-      source: t('investments.table.source'),
       actions: t('investments.table.actions'),
     }),
     [t],
   );
+
+  const parseNumber = (value) => {
+    if (typeof value === 'number') return value;
+    if (!value) return 0;
+    const normalized = String(value).replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const calculateRowTotal = (row) => {
+    const quantity = parseNumber(row.quantity);
+    const unitPrice = parseNumber(row.unitPrice);
+    return quantity * unitPrice;
+  };
 
   const updateRow = (setRows) => (index, field, value) => {
     setRows((prevRows) =>
@@ -53,24 +77,18 @@ function Investments() {
   };
 
   const summary = useMemo(() => {
-    const parseAmount = (value) => {
-      if (typeof value === 'number') return value;
-      if (!value) return 0;
-      const normalized = String(value).replace(',', '.');
-      const parsed = Number(normalized);
-      return Number.isNaN(parsed) ? 0 : parsed;
-    };
-
     const totals = { year1: 0, year2: 0 };
-    const byCategory = new Map();
+    const byType = new Map();
+    const typeLabelMap = new Map(typeOptions.map((option) => [option.value, option.label]));
 
     const addRow = (row, targetYear) => {
-      const amount = parseAmount(row.amount);
-      const category = row.category?.trim() || t('investments.summary.uncategorized');
-      if (!byCategory.has(category)) {
-        byCategory.set(category, { category, year1: 0, year2: 0, total: 0 });
+      const amount = calculateRowTotal(row);
+      const typeValue = row.type?.trim();
+      const typeLabel = typeLabelMap.get(typeValue) || typeValue || t('investments.summary.untyped');
+      if (!byType.has(typeLabel)) {
+        byType.set(typeLabel, { type: typeLabel, year1: 0, year2: 0, total: 0 });
       }
-      const entry = byCategory.get(category);
+      const entry = byType.get(typeLabel);
       if (!entry) return;
       entry[targetYear] += amount;
       entry.total += amount;
@@ -80,16 +98,16 @@ function Investments() {
     yearOneRows.forEach((row) => addRow(row, 'year1'));
     yearTwoRows.forEach((row) => addRow(row, 'year2'));
 
-    const categoryTotals = Array.from(byCategory.values()).sort((a, b) =>
-      a.category.localeCompare(b.category, 'fr'),
+    const typeTotals = Array.from(byType.values()).sort((a, b) =>
+      a.type.localeCompare(b.type, 'fr'),
     );
 
     return {
       totals,
-      categoryTotals,
+      typeTotals,
       grandTotal: totals.year1 + totals.year2,
     };
-  }, [t, yearOneRows, yearTwoRows]);
+  }, [t, yearOneRows, yearTwoRows, typeOptions]);
 
   const renderTable = (rows, setRows, ariaLabel) => (
     <div className="table-responsive">
@@ -97,88 +115,96 @@ function Investments() {
         <thead>
           <tr>
             <th scope="col">{columnLabels.item}</th>
-            <th scope="col">{columnLabels.category}</th>
-            <th scope="col">{columnLabels.description}</th>
+            <th scope="col">{columnLabels.type}</th>
+            <th scope="col">{columnLabels.quantity}</th>
+            <th scope="col">{columnLabels.unitPrice}</th>
             <th scope="col">{columnLabels.amount}</th>
-            <th scope="col">{columnLabels.source}</th>
             <th scope="col">{columnLabels.actions}</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={`row-${index}`}>
-              <td>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={row.item}
-                  onChange={(event) =>
-                    updateRow(setRows)(index, 'item', event.target.value)
-                  }
-                  placeholder={t('investments.placeholders.item')}
-                  aria-label={`${ariaLabel} ${columnLabels.item}`}
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={row.category}
-                  onChange={(event) =>
-                    updateRow(setRows)(index, 'category', event.target.value)
-                  }
-                  placeholder={t('investments.placeholders.category')}
-                  aria-label={`${ariaLabel} ${columnLabels.category}`}
-                />
-              </td>
-              <td>
-                <textarea
-                  className="form-control"
-                  rows={2}
-                  value={row.description}
-                  onChange={(event) =>
-                    updateRow(setRows)(index, 'description', event.target.value)
-                  }
-                  placeholder={t('investments.placeholders.description')}
-                  aria-label={`${ariaLabel} ${columnLabels.description}`}
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  min="0"
-                  className="form-control"
-                  value={row.amount}
-                  onChange={(event) =>
-                    updateRow(setRows)(index, 'amount', event.target.value)
-                  }
-                  placeholder={t('investments.placeholders.amount')}
-                  aria-label={`${ariaLabel} ${columnLabels.amount}`}
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={row.source}
-                  onChange={(event) =>
-                    updateRow(setRows)(index, 'source', event.target.value)
-                  }
-                  placeholder={t('investments.placeholders.source')}
-                  aria-label={`${ariaLabel} ${columnLabels.source}`}
-                />
-              </td>
-              <td>
-                <button
-                  type="button"
-                  className="btn btn-outline-danger btn-sm"
-                  onClick={() => removeRow(setRows)(index)}
-                >
-                  {t('investments.actions.remove_line')}
-                </button>
-              </td>
-            </tr>
-          ))}
+          {rows.map((row, index) => {
+            const rowTotal = calculateRowTotal(row);
+            const displayTotal =
+              rowTotal || row.quantity || row.unitPrice ? rowTotal.toFixed(2) : '';
+            return (
+              <tr key={`row-${index}`}>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={row.item}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'item', event.target.value)
+                    }
+                    placeholder={t('investments.placeholders.item')}
+                    aria-label={`${ariaLabel} ${columnLabels.item}`}
+                  />
+                </td>
+                <td>
+                  <select
+                    className="form-select"
+                    value={row.type}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'type', event.target.value)
+                    }
+                    aria-label={`${ariaLabel} ${columnLabels.type}`}
+                  >
+                    <option value="">{t('investments.placeholders.type')}</option>
+                    {typeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={row.quantity}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'quantity', event.target.value)
+                    }
+                    placeholder={t('investments.placeholders.quantity')}
+                    aria-label={`${ariaLabel} ${columnLabels.quantity}`}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={row.unitPrice}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'unitPrice', event.target.value)
+                    }
+                    placeholder={t('investments.placeholders.unit_price')}
+                    aria-label={`${ariaLabel} ${columnLabels.unitPrice}`}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={displayTotal}
+                    readOnly
+                    aria-label={`${ariaLabel} ${columnLabels.amount}`}
+                  />
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => removeRow(setRows)(index)}
+                  >
+                    {t('investments.actions.remove_line')}
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       <button
@@ -224,26 +250,26 @@ function Investments() {
               <div className="col-12 col-lg-8">
                 <div className="border rounded p-3 h-100">
                   <p className="text-uppercase text-muted small mb-2">
-                    {t('investments.summary.category_totals')}
+                    {t('investments.summary.type_totals')}
                   </p>
                   <div className="table-responsive">
                     <table className="table table-sm align-middle mb-0">
                       <thead>
                         <tr>
-                          <th>{t('investments.summary.category')}</th>
+                          <th>{t('investments.summary.type')}</th>
                           <th>{t('investments.summary.year1')}</th>
                           <th>{t('investments.summary.year2')}</th>
                           <th>{t('investments.summary.total')}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {summary.categoryTotals.length ? (
-                          summary.categoryTotals.map((category) => (
-                            <tr key={category.category}>
-                              <td>{category.category}</td>
-                              <td>{category.year1.toFixed(2)} €</td>
-                              <td>{category.year2.toFixed(2)} €</td>
-                              <td className="fw-semibold">{category.total.toFixed(2)} €</td>
+                        {summary.typeTotals.length ? (
+                          summary.typeTotals.map((type) => (
+                            <tr key={type.type}>
+                              <td>{type.type}</td>
+                              <td>{type.year1.toFixed(2)} €</td>
+                              <td>{type.year2.toFixed(2)} €</td>
+                              <td className="fw-semibold">{type.total.toFixed(2)} €</td>
                             </tr>
                           ))
                         ) : (
