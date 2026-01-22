@@ -1,4 +1,4 @@
-import { body, ValidationChain } from 'express-validator';
+import { body, query, ValidationChain } from 'express-validator';
 
 const statusValues = ['pending', 'accepted', 'refused', 'cancelled'];
 
@@ -69,4 +69,9 @@ export const updateLoanValidator: ValidationChain[] = [
     })
     .isString()
     .isLength({ max: 500 }),
+];
+
+export const listLoanQueryValidator: ValidationChain[] = [
+  query('page').optional().isInt({ min: 1 }).withMessage('page must be >= 1'),
+  query('limit').optional().isInt({ min: 1 }).withMessage('limit must be >= 1'),
 ];
