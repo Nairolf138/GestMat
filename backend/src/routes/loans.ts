@@ -13,6 +13,7 @@ import validate from '../middleware/validate';
 import checkId from '../middleware/checkObjectId';
 import {
   createLoanValidator,
+  listLoanQueryValidator,
   updateLoanValidator,
 } from '../validators/loanValidator';
 import permissions from '../config/permissions';
@@ -25,6 +26,8 @@ const router = express.Router();
 router.get(
   '/',
   auth(),
+  listLoanQueryValidator,
+  validate,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const db = req.app.locals.db;
