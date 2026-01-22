@@ -107,6 +107,7 @@ export async function listLoans(
   limit?: number,
   includeArchived = false,
 ): Promise<LoanRequest[] | { loans: LoanRequest[]; total: number }> {
+  // includeArchived=true merges active + archived loans, with pagination applied to the merged list.
   if (user.role === ADMIN_ROLE) {
     return findLoans(db, {}, page, limit, { includeArchived });
   }

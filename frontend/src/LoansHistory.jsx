@@ -44,7 +44,7 @@ function LoansHistory() {
   const refresh = () => {
     setLoading(true);
     setError(null);
-    api('/loans')
+    api('/loans?includeArchived=true')
       .then((data) => {
         setLoans(data);
         setLoading(false);
