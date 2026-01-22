@@ -98,20 +98,44 @@ async function _populate(
   return loan;
 }
 
+interface FindLoanOptions {
+  /**
+   * When true, returns a merged list of active + archived loans.
+   * Filters apply to both collections, and pagination is applied to the merged list.
+   */
+  includeArchived?: boolean;
+}
+
 export async function findLoans(
   db: Db,
   filter: Record<string, unknown> = {},
   page?: number,
   limit?: number,
-  options: { includeArchived?: boolean } = {},
+  options: FindLoanOptions = {},
 ): Promise<LoanRequest[] | { loans: LoanRequest[]; total: number }> {
-  const collectionName = options.includeArchived
-    ? 'loanrequests_archive'
-    : 'loanrequests';
-  const collection = db.collection<LoanRequest>(collectionName);
   const baseFilter = options.includeArchived
     ? filter
     : { $and: [{ archived: { $ne: true } }, filter] };
+
+  if (options.includeArchived) {
+    const [activeLoans, archivedLoans] = await Promise.all([
+      db.collection<LoanRequest>('loanrequests').find(baseFilter).toArray(),
+      db
+        .collection<LoanRequest>('loanrequests_archive')
+        .find(baseFilter)
+        .toArray(),
+    ]);
+    const mergedLoans = [...activeLoans, ...archivedLoans];
+    await Promise.all(mergedLoans.map((loan) => _populate(db, loan)));
+    if (page !== undefined && limit !== undefined) {
+      const total = mergedLoans.length;
+      const loans = mergedLoans.slice((page - 1) * limit, page * limit);
+      return { loans, total };
+    }
+    return mergedLoans;
+  }
+
+  const collection = db.collection<LoanRequest>('loanrequests');
   if (page !== undefined && limit !== undefined) {
     const [loans, total] = await Promise.all([
       collection
