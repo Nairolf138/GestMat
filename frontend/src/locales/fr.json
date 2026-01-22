@@ -93,6 +93,7 @@
       "type": "Type",
       "quantity": "Quantité souhaitée",
       "unit_price": "Prix unitaire",
+      "priority": "Priorité",
       "amount": "Coût total",
       "actions": "Actions"
     },
@@ -646,6 +647,7 @@
     "loans": "Prêts",
     "inventory": "Inventaire",
     "vehicles": "Véhicules",
+    "investments": "Investissements",
     "stats": "Statistiques"
   },
     "summary": {

@@ -1,0 +1,596 @@
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import Alert from '../Alert.jsx';
+import { api } from '../api';
+import { GlobalContext } from '../GlobalContext.jsx';
+
+const createEmptyRow = () => ({
+  _id: undefined,
+  item: '',
+  type: '',
+  quantity: '',
+  unitPrice: '',
+  priority: '',
+  justification: '',
+});
+
+const toInputValue = (value) =>
+  value === undefined || value === null ? '' : String(value);
+
+const toNumber = (value) => {
+  if (value === undefined || value === null || value === '') return undefined;
+  const normalized = String(value).replace(',', '.');
+  const parsed = Number(normalized);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
+const isRowEmpty = (row) =>
+  ![
+    row.item,
+    row.type,
+    row.quantity,
+    row.unitPrice,
+    row.priority,
+    row.justification,
+  ].some((value) => String(value).trim().length > 0);
+
+const calculateRowTotal = (row) => {
+  const quantity = toNumber(row.quantity) ?? 0;
+  const unitPrice = toNumber(row.unitPrice) ?? 0;
+  return quantity * unitPrice;
+};
+
+const resolveStructureId = (value, structures) => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const lowered = trimmed.toLowerCase();
+  const match = structures.find(
+    (structure) =>
+      structure._id === trimmed || structure.name?.toLowerCase() === lowered,
+  );
+  if (match?._id) return match._id;
+  if (/^[a-fA-F0-9]{24}$/.test(trimmed)) return trimmed;
+  return '';
+};
+
+function ManageInvestments() {
+  const { t } = useTranslation();
+  const { structures } = useContext(GlobalContext);
+  const [structureInput, setStructureInput] = useState('');
+  const [structureFilter, setStructureFilter] = useState('');
+  const [yearOneRows, setYearOneRows] = useState([createEmptyRow()]);
+  const [yearTwoRows, setYearTwoRows] = useState([createEmptyRow()]);
+  const [yearOneMeta, setYearOneMeta] = useState({
+    id: null,
+    status: 'draft',
+  });
+  const [yearTwoMeta, setYearTwoMeta] = useState({
+    id: null,
+    status: 'draft',
+  });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const selectedStructureId = useMemo(
+    () => resolveStructureId(structureFilter, structures),
+    [structureFilter, structures],
+  );
+
+  const selectedStructure = useMemo(
+    () => structures.find((structure) => structure._id === selectedStructureId),
+    [structures, selectedStructureId],
+  );
+
+  const typeOptions = useMemo(
+    () => [
+      { value: 'sound', label: t('investments.types.sound') },
+      { value: 'light', label: t('investments.types.light') },
+      { value: 'stage', label: t('investments.types.stage') },
+      { value: 'video', label: t('investments.types.video') },
+      { value: 'other', label: t('investments.types.other') },
+    ],
+    [t],
+  );
+
+  const columnLabels = useMemo(
+    () => ({
+      item: t('investments.table.item'),
+      type: t('investments.table.type'),
+      quantity: t('investments.table.quantity'),
+      unitPrice: t('investments.table.unit_price'),
+      priority: t('investments.table.priority'),
+      amount: t('investments.table.amount'),
+      actions: t('investments.table.actions'),
+    }),
+    [t],
+  );
+
+  const mapPlanToRows = useCallback((plan) => {
+    if (!plan?.lines?.length) {
+      return [createEmptyRow()];
+    }
+    return plan.lines.map((line) => ({
+      _id: line._id,
+      item: line.item ?? '',
+      type: line.type ?? '',
+      quantity: toInputValue(line.quantity),
+      unitPrice: toInputValue(line.unitCost ?? line.unitPrice),
+      priority: toInputValue(line.priority ?? ''),
+      justification: line.justification ?? '',
+    }));
+  }, []);
+
+  const loadPlans = useCallback(async () => {
+    if (!selectedStructureId) {
+      setYearOneRows([createEmptyRow()]);
+      setYearTwoRows([createEmptyRow()]);
+      setYearOneMeta({ id: null, status: 'draft' });
+      setYearTwoMeta({ id: null, status: 'draft' });
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({ structure: selectedStructureId });
+      const plans = await api(`/investments?${params.toString()}`);
+      const yearOnePlan = plans.find((plan) => plan.targetYear === 'year1');
+      const yearTwoPlan = plans.find((plan) => plan.targetYear === 'year2');
+      setYearOneRows(mapPlanToRows(yearOnePlan));
+      setYearTwoRows(mapPlanToRows(yearTwoPlan));
+      setYearOneMeta({
+        id: yearOnePlan?._id ?? null,
+        status: yearOnePlan?.status ?? 'draft',
+      });
+      setYearTwoMeta({
+        id: yearTwoPlan?._id ?? null,
+        status: yearTwoPlan?.status ?? 'draft',
+      });
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setLoading(false);
+    }
+  }, [mapPlanToRows, selectedStructureId]);
+
+  useEffect(() => {
+    loadPlans();
+  }, [loadPlans]);
+
+  const updateRow = (setRows) => (index, field, value) => {
+    setRows((prevRows) =>
+      prevRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [field]: value } : row,
+      ),
+    );
+  };
+
+  const addRow = (setRows) => {
+    setRows((prevRows) => [...prevRows, createEmptyRow()]);
+  };
+
+  const removeRow = (setRows) => (index) => {
+    setRows((prevRows) => {
+      if (prevRows.length === 1) {
+        return [createEmptyRow()];
+      }
+      return prevRows.filter((_, rowIndex) => rowIndex !== index);
+    });
+  };
+
+  const resetAll = () => {
+    setYearOneRows([createEmptyRow()]);
+    setYearTwoRows([createEmptyRow()]);
+  };
+
+  const buildLines = (rows, targetYear) =>
+    rows
+      .filter((row) => !isRowEmpty(row))
+      .map((row) => ({
+        _id: row._id,
+        item: row.item?.trim() || undefined,
+        type: row.type?.trim(),
+        quantity: toNumber(row.quantity),
+        unitCost: toNumber(row.unitPrice),
+        priority: toNumber(row.priority) ?? 1,
+        justification: row.justification?.trim() || undefined,
+        targetYear,
+      }));
+
+  const persistPlan = async (targetYear, rows, meta) => {
+    const lines = buildLines(rows, targetYear);
+    if (!lines.length) {
+      if (meta.id) {
+        await api(`/investments/${meta.id}`, { method: 'DELETE' });
+      }
+      return;
+    }
+    const payload = {
+      structure: selectedStructureId,
+      targetYear,
+      status: meta.status ?? 'draft',
+      lines,
+    };
+    if (meta.id) {
+      await api(`/investments/${meta.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      return;
+    }
+    await api('/investments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  };
+
+  const handleSave = async () => {
+    if (!selectedStructureId) return;
+    setSaving(true);
+    setError('');
+    try {
+      await persistPlan('year1', yearOneRows, yearOneMeta);
+      await persistPlan('year2', yearTwoRows, yearTwoMeta);
+      await loadPlans();
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const summary = useMemo(() => {
+    const totals = { year1: 0, year2: 0 };
+    const byType = new Map();
+    const typeLabelMap = new Map(typeOptions.map((option) => [option.value, option.label]));
+
+    const addRowToSummary = (row, targetYear) => {
+      const amount = calculateRowTotal(row);
+      const typeValue = row.type?.trim();
+      const typeLabel = typeLabelMap.get(typeValue) || typeValue || t('investments.summary.untyped');
+      if (!byType.has(typeLabel)) {
+        byType.set(typeLabel, { type: typeLabel, year1: 0, year2: 0, total: 0 });
+      }
+      const entry = byType.get(typeLabel);
+      if (!entry) return;
+      entry[targetYear] += amount;
+      entry.total += amount;
+      totals[targetYear] += amount;
+    };
+
+    yearOneRows.forEach((row) => addRowToSummary(row, 'year1'));
+    yearTwoRows.forEach((row) => addRowToSummary(row, 'year2'));
+
+    const typeTotals = Array.from(byType.values()).sort((a, b) =>
+      a.type.localeCompare(b.type, 'fr'),
+    );
+
+    return {
+      totals,
+      typeTotals,
+      grandTotal: totals.year1 + totals.year2,
+    };
+  }, [t, typeOptions, yearOneRows, yearTwoRows]);
+
+  const renderTable = (rows, setRows, ariaLabel) => (
+    <div className="table-responsive">
+      <table className="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th scope="col">{columnLabels.item}</th>
+            <th scope="col">{columnLabels.type}</th>
+            <th scope="col">{columnLabels.quantity}</th>
+            <th scope="col">{columnLabels.unitPrice}</th>
+            <th scope="col">{columnLabels.priority}</th>
+            <th scope="col">{columnLabels.amount}</th>
+            <th scope="col">{columnLabels.actions}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => {
+            const rowTotal = calculateRowTotal(row);
+            const displayTotal =
+              rowTotal || row.quantity || row.unitPrice ? rowTotal.toFixed(2) : '';
+            return (
+              <tr key={row._id ?? `row-${index}`}>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={row.item}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'item', event.target.value)
+                    }
+                    placeholder={t('investments.placeholders.item')}
+                    aria-label={`${ariaLabel} ${columnLabels.item}`}
+                  />
+                </td>
+                <td>
+                  <select
+                    className="form-select"
+                    value={row.type}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'type', event.target.value)
+                    }
+                    aria-label={`${ariaLabel} ${columnLabels.type}`}
+                  >
+                    <option value="">{t('investments.placeholders.type')}</option>
+                    {typeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={row.quantity}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'quantity', event.target.value)
+                    }
+                    placeholder={t('investments.placeholders.quantity')}
+                    aria-label={`${ariaLabel} ${columnLabels.quantity}`}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={row.unitPrice}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'unitPrice', event.target.value)
+                    }
+                    placeholder={t('investments.placeholders.unit_price')}
+                    aria-label={`${ariaLabel} ${columnLabels.unitPrice}`}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={row.priority}
+                    onChange={(event) =>
+                      updateRow(setRows)(index, 'priority', event.target.value)
+                    }
+                    placeholder={columnLabels.priority}
+                    aria-label={`${ariaLabel} ${columnLabels.priority}`}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={displayTotal}
+                    readOnly
+                    aria-label={`${ariaLabel} ${columnLabels.amount}`}
+                  />
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => removeRow(setRows)(index)}
+                  >
+                    {t('investments.actions.remove_line')}
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        className="btn btn-outline-primary btn-sm"
+        onClick={() => addRow(setRows)}
+      >
+        {t('investments.actions.add_line')}
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="card shadow-sm">
+      <div className="card-body">
+        <div className="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+          <div>
+            <h2 className="h4 mb-0">{t('admin_dashboard.tabs.investments')}</h2>
+            {selectedStructure ? (
+              <p className="text-muted mb-0">
+                {t('structures.title')}: {selectedStructure.name}
+              </p>
+            ) : (
+              <p className="text-muted mb-0">{t('users.select_structure')}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline-secondary align-self-lg-start"
+            onClick={loadPlans}
+            disabled={loading || !selectedStructureId}
+          >
+            {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
+          </button>
+        </div>
+
+        <Alert message={error} onClose={() => setError('')} />
+
+        <form
+          className="row g-2 align-items-end mb-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setStructureFilter(structureInput.trim());
+          }}
+        >
+          <div className="col-md-6">
+            <label className="form-label" htmlFor="admin-investments-structure">
+              {t('vehicles.filters.structure')}
+            </label>
+            <input
+              id="admin-investments-structure"
+              className="form-control"
+              list="admin-investments-structure-options"
+              placeholder={t('users.select_structure')}
+              value={structureInput}
+              onChange={(event) => setStructureInput(event.target.value)}
+            />
+            <datalist id="admin-investments-structure-options">
+              {structures.map((structure) => (
+                <option
+                  key={structure._id}
+                  value={structure.name}
+                  label={structure._id}
+                />
+              ))}
+              {structures.map((structure) => (
+                <option
+                  key={`${structure._id}-id`}
+                  value={structure._id}
+                  label={structure.name}
+                />
+              ))}
+            </datalist>
+          </div>
+          <div className="col-md-auto">
+            <button type="submit" className="btn btn-primary">
+              {t('vehicles.filters.apply')}
+            </button>
+          </div>
+          <div className="col-md-auto">
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={() => {
+                setStructureInput('');
+                setStructureFilter('');
+              }}
+            >
+              {t('common.reset')}
+            </button>
+          </div>
+        </form>
+
+        {selectedStructureId ? (
+          <>
+            <section className="card border-0 shadow-sm mb-4">
+              <div className="card-body">
+                <h3 className="h5">{t('investments.summary.title')}</h3>
+                <div className="row g-3">
+                  <div className="col-12 col-lg-4">
+                    <div className="border rounded p-3 bg-light h-100">
+                      <p className="text-uppercase text-muted small mb-2">
+                        {t('investments.summary.year_totals')}
+                      </p>
+                      <ul className="list-unstyled mb-0">
+                        <li>
+                          {t('investments.summary.year1')}:{' '}
+                          {summary.totals.year1.toFixed(2)} €
+                        </li>
+                        <li>
+                          {t('investments.summary.year2')}:{' '}
+                          {summary.totals.year2.toFixed(2)} €
+                        </li>
+                        <li className="fw-semibold">
+                          {t('investments.summary.total')}:{' '}
+                          {summary.grandTotal.toFixed(2)} €
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="col-12 col-lg-8">
+                    <div className="border rounded p-3 h-100">
+                      <p className="text-uppercase text-muted small mb-2">
+                        {t('investments.summary.type_totals')}
+                      </p>
+                      <div className="table-responsive">
+                        <table className="table table-sm align-middle mb-0">
+                          <thead>
+                            <tr>
+                              <th>{t('investments.summary.type')}</th>
+                              <th>{t('investments.summary.year1')}</th>
+                              <th>{t('investments.summary.year2')}</th>
+                              <th>{t('investments.summary.total')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {summary.typeTotals.length ? (
+                              summary.typeTotals.map((type) => (
+                                <tr key={type.type}>
+                                  <td>{type.type}</td>
+                                  <td>{type.year1.toFixed(2)} €</td>
+                                  <td>{type.year2.toFixed(2)} €</td>
+                                  <td className="fw-semibold">
+                                    {type.total.toFixed(2)} €
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} className="text-muted">
+                                  {t('investments.summary.empty')}
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="card border-0 shadow-sm mb-4">
+              <div className="card-body">
+                <h3 className="h5">{t('investments.year_one')}</h3>
+                {renderTable(yearOneRows, setYearOneRows, t('investments.year_one'))}
+              </div>
+            </section>
+
+            <section className="card border-0 shadow-sm mb-4">
+              <div className="card-body">
+                <h3 className="h5">{t('investments.year_two')}</h3>
+                {renderTable(yearTwoRows, setYearTwoRows, t('investments.year_two'))}
+              </div>
+            </section>
+
+            <div className="d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={resetAll}
+                disabled={saving}
+              >
+                {t('investments.actions.reset')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? t('common.loading') : t('investments.actions.save')}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="text-muted">{t('users.select_structure')}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default ManageInvestments;
