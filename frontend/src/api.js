@@ -81,9 +81,18 @@ async function refreshToken() {
     return true;
   } catch {
     try {
+      let logoutToken = getCsrfTokenFromCookie();
+      if (!logoutToken) {
+        try {
+          logoutToken = await ensureCsrfToken();
+        } catch {
+          logoutToken = '';
+        }
+      }
       await fetch(`${API_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
+        headers: logoutToken ? { 'CSRF-Token': logoutToken } : {},
       });
     } catch {}
     try {
