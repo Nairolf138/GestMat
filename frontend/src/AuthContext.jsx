@@ -113,23 +113,19 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    const hasStayLoggedIn = stayLoggedInPreference;
-    const hasSessionOrRefreshCookie = document.cookie
-      .split(';')
-      .some((cookie) => /session|refresh/i.test(cookie.trim().split('=')[0]));
-
-    if (!hasStayLoggedIn && !hasSessionOrRefreshCookie) {
-      setIsCheckingSession(false);
-      return;
-    }
-
     let cancelled = false;
 
     const attemptSessionRecovery = async () => {
       setIsCheckingSession(true);
       try {
-        await api('/auth/refresh', { method: 'POST' });
-        const refreshedUser = await api('/users/me', {}, false);
+        let refreshedUser = null;
+
+        if (!stayLoggedInPreference) {
+          refreshedUser = await api('/users/me', {}, false);
+        } else {
+          await api('/auth/refresh', { method: 'POST' });
+          refreshedUser = await api('/users/me', {}, false);
+        }
 
         if (cancelled) return;
 
