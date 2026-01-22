@@ -279,7 +279,7 @@ function NavBar() {
                       <span className="cart-badge">{cartCount}</span>
                     )}
                   </NavLink>
-                  {isRegisseurGeneral && (
+                  {(isRegisseurGeneral || isAdmin) && (
                     <NavLink
                       className={({ isActive }) =>
                         'nav-link' + (isActive ? ' active' : '')
