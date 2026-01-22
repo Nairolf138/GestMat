@@ -5,6 +5,7 @@ import ManageUsers from './admin/ManageUsers';
 import ManageLoans from './admin/ManageLoans';
 import ManageInventory from './admin/ManageInventory';
 import ManageVehicles from './admin/ManageVehicles';
+import ManageInvestments from './admin/ManageInvestments';
 import { api } from './api';
 
 function AdminDashboard() {
@@ -135,6 +136,11 @@ function AdminDashboard() {
           </button>
         </li>
         <li className="nav-item">
+          <button className={`nav-link ${tab === 'investments' ? 'active' : ''}`} onClick={() => setTab('investments')}>
+            {t('admin_dashboard.tabs.investments')}
+          </button>
+        </li>
+        <li className="nav-item">
           <button className={`nav-link ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>
             {t('admin_dashboard.tabs.stats')}
           </button>
@@ -145,6 +151,7 @@ function AdminDashboard() {
         {tab === 'loans' && <ManageLoans />}
         {tab === 'inventory' && <ManageInventory />}
         {tab === 'vehicles' && <ManageVehicles />}
+        {tab === 'investments' && <ManageInvestments />}
         {tab === 'stats' && <AdminStats />}
       </div>
     </>
