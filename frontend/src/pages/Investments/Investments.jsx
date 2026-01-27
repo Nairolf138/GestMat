@@ -6,6 +6,7 @@ import {
   buildLines,
   calculateRowTotal,
   createEmptyRow,
+  isRowEmpty,
   mapPlanToRows,
 } from '../../investments/investmentPlanUtils';
 
@@ -21,9 +22,22 @@ function Investments() {
     id: null,
     status: 'draft',
   });
+  const [newWish, setNewWish] = useState({
+    ...createEmptyRow(),
+    targetYear: 'year1',
+  });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+
+  const yearLabels = useMemo(
+    () => ({
+      year1: t('investments.year_one', { year: currentYear }),
+      year2: t('investments.year_two', { year: currentYear + 1 }),
+    }),
+    [t, currentYear],
+  );
 
   const typeOptions = useMemo(
     () => [
@@ -86,10 +100,6 @@ function Investments() {
     );
   };
 
-  const addRow = (setRows) => {
-    setRows((prevRows) => [...prevRows, createEmptyRow()]);
-  };
-
   const removeRow = (setRows) => (index) => {
     setRows((prevRows) => {
       if (prevRows.length === 1) {
@@ -102,6 +112,51 @@ function Investments() {
   const resetAll = () => {
     setYearOneRows([createEmptyRow()]);
     setYearTwoRows([createEmptyRow()]);
+    setNewWish({
+      ...createEmptyRow(),
+      targetYear: 'year1',
+    });
+  };
+
+  const appendRow = (setRows, row) => {
+    setRows((prevRows) => {
+      if (prevRows.length === 1 && isRowEmpty(prevRows[0])) {
+        return [row];
+      }
+      return [...prevRows, row];
+    });
+  };
+
+  const updateNewWish = (field) => (event) => {
+    const value = event.target.value;
+    setNewWish((prevWish) => ({
+      ...prevWish,
+      [field]: value,
+    }));
+  };
+
+  const handleAddWish = () => {
+    const row = {
+      ...createEmptyRow(),
+      item: newWish.item,
+      type: newWish.type,
+      quantity: newWish.quantity,
+      unitPrice: newWish.unitPrice,
+      priority: newWish.priority,
+      justification: newWish.justification,
+    };
+    if (isRowEmpty(row)) {
+      return;
+    }
+    if (newWish.targetYear === 'year2') {
+      appendRow(setYearTwoRows, row);
+    } else {
+      appendRow(setYearOneRows, row);
+    }
+    setNewWish({
+      ...createEmptyRow(),
+      targetYear: newWish.targetYear,
+    });
   };
 
   const persistPlan = async (targetYear, rows, meta) => {
@@ -176,6 +231,14 @@ function Investments() {
       grandTotal: totals.year1 + totals.year2,
     };
   }, [t, yearOneRows, yearTwoRows, typeOptions]);
+
+  const summaryYearLabels = useMemo(
+    () => ({
+      year1: t('investments.summary.year1', { year: currentYear }),
+      year2: t('investments.summary.year2', { year: currentYear + 1 }),
+    }),
+    [t, currentYear],
+  );
 
   const renderTable = (rows, setRows, ariaLabel) => (
     <div className="table-responsive">
@@ -275,13 +338,6 @@ function Investments() {
           })}
         </tbody>
       </table>
-      <button
-        type="button"
-        className="btn btn-outline-primary btn-sm"
-        onClick={() => addRow(setRows)}
-      >
-        {t('investments.actions.add_line')}
-      </button>
     </div>
   );
 
@@ -320,10 +376,10 @@ function Investments() {
                   </p>
                   <ul className="list-unstyled mb-0">
                     <li>
-                      {t('investments.summary.year1')}: {summary.totals.year1.toFixed(2)} €
+                      {summaryYearLabels.year1}: {summary.totals.year1.toFixed(2)} €
                     </li>
                     <li>
-                      {t('investments.summary.year2')}: {summary.totals.year2.toFixed(2)} €
+                      {summaryYearLabels.year2}: {summary.totals.year2.toFixed(2)} €
                     </li>
                     <li className="fw-semibold">
                       {t('investments.summary.total')}: {summary.grandTotal.toFixed(2)} €
@@ -341,8 +397,8 @@ function Investments() {
                       <thead>
                         <tr>
                           <th>{t('investments.summary.type')}</th>
-                          <th>{t('investments.summary.year1')}</th>
-                          <th>{t('investments.summary.year2')}</th>
+                          <th>{summaryYearLabels.year1}</th>
+                          <th>{summaryYearLabels.year2}</th>
                           <th>{t('investments.summary.total')}</th>
                         </tr>
                       </thead>
@@ -374,15 +430,105 @@ function Investments() {
 
         <section className="card shadow-sm">
           <div className="card-body">
-            <h2 className="h5">{t('investments.year_one')}</h2>
-            {renderTable(yearOneRows, setYearOneRows, t('investments.year_one'))}
+            <h2 className="h5">{t('investments.form.title')}</h2>
+            <div className="row g-3 align-items-end">
+              <div className="col-12 col-lg-4">
+                <label className="form-label" htmlFor="investment-item">
+                  {columnLabels.item}
+                </label>
+                <input
+                  id="investment-item"
+                  type="text"
+                  className="form-control"
+                  value={newWish.item}
+                  onChange={updateNewWish('item')}
+                  placeholder={t('investments.placeholders.item')}
+                />
+              </div>
+              <div className="col-12 col-lg-3">
+                <label className="form-label" htmlFor="investment-type">
+                  {columnLabels.type}
+                </label>
+                <select
+                  id="investment-type"
+                  className="form-select"
+                  value={newWish.type}
+                  onChange={updateNewWish('type')}
+                >
+                  <option value="">{t('investments.placeholders.type')}</option>
+                  {typeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-6 col-lg-2">
+                <label className="form-label" htmlFor="investment-quantity">
+                  {columnLabels.quantity}
+                </label>
+                <input
+                  id="investment-quantity"
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  value={newWish.quantity}
+                  onChange={updateNewWish('quantity')}
+                  placeholder={t('investments.placeholders.quantity')}
+                />
+              </div>
+              <div className="col-6 col-lg-2">
+                <label className="form-label" htmlFor="investment-unit-price">
+                  {columnLabels.unitPrice}
+                </label>
+                <input
+                  id="investment-unit-price"
+                  type="number"
+                  min="0"
+                  className="form-control"
+                  value={newWish.unitPrice}
+                  onChange={updateNewWish('unitPrice')}
+                  placeholder={t('investments.placeholders.unit_price')}
+                />
+              </div>
+              <div className="col-12 col-lg-1">
+                <label className="form-label" htmlFor="investment-year">
+                  {t('investments.form.year_label')}
+                </label>
+                <select
+                  id="investment-year"
+                  className="form-select"
+                  value={newWish.targetYear}
+                  onChange={updateNewWish('targetYear')}
+                >
+                  <option value="year1">{yearLabels.year1}</option>
+                  <option value="year2">{yearLabels.year2}</option>
+                </select>
+              </div>
+              <div className="col-12">
+                <button
+                  type="button"
+                  className="btn btn-outline-primary"
+                  onClick={handleAddWish}
+                >
+                  {t('investments.actions.add_wish')}
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
         <section className="card shadow-sm">
           <div className="card-body">
-            <h2 className="h5">{t('investments.year_two')}</h2>
-            {renderTable(yearTwoRows, setYearTwoRows, t('investments.year_two'))}
+            <h2 className="h5">{yearLabels.year1}</h2>
+            {renderTable(yearOneRows, setYearOneRows, yearLabels.year1)}
+          </div>
+        </section>
+
+        <section className="card shadow-sm">
+          <div className="card-body">
+            <h2 className="h5">{yearLabels.year2}</h2>
+            {renderTable(yearTwoRows, setYearTwoRows, yearLabels.year2)}
           </div>
         </section>
 

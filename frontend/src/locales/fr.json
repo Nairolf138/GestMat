@@ -86,8 +86,8 @@
   "investments": {
     "title": "Plan d'investissements",
     "subtitle": "Saisissez les besoins d'investissement pour chaque année.",
-    "year_one": "Année N / Année N+1",
-    "year_two": "Année N / Année N+1",
+    "year_one": "Année N ({{year}})",
+    "year_two": "Année N+1 ({{year}})",
     "table": {
       "item": "Équipement",
       "type": "Type",
@@ -115,14 +115,19 @@
       "year_totals": "Totaux par année",
       "type_totals": "Totaux par type",
       "type": "Type",
-      "year1": "Année 1",
-      "year2": "Année 2",
+      "year1": "Année N ({{year}})",
+      "year2": "Année N+1 ({{year}})",
       "total": "Total",
       "untyped": "Non renseigné",
       "empty": "Aucun type pour le moment"
     },
+    "form": {
+      "title": "Ajouter un souhait d'investissement",
+      "year_label": "Année"
+    },
     "actions": {
       "add_line": "Ajouter une ligne",
+      "add_wish": "Ajouter le souhait",
       "remove_line": "Supprimer",
       "reset": "Réinitialiser",
       "save": "Enregistrer"

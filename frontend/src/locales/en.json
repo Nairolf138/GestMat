@@ -86,8 +86,8 @@
   "investments": {
     "title": "Investment plan",
     "subtitle": "Enter investment needs for each year.",
-    "year_one": "Year N / Year N+1",
-    "year_two": "Year N / Year N+1",
+    "year_one": "Year N ({{year}})",
+    "year_two": "Year N+1 ({{year}})",
     "table": {
       "item": "Equipment",
       "type": "Type",
@@ -115,14 +115,19 @@
       "year_totals": "Year totals",
       "type_totals": "Totals by type",
       "type": "Type",
-      "year1": "Year 1",
-      "year2": "Year 2",
+      "year1": "Year N ({{year}})",
+      "year2": "Year N+1 ({{year}})",
       "total": "Total",
       "untyped": "Unspecified",
       "empty": "No type yet"
     },
+    "form": {
+      "title": "Add an investment wish",
+      "year_label": "Year"
+    },
     "actions": {
       "add_line": "Add line",
+      "add_wish": "Add wish",
       "remove_line": "Remove",
       "reset": "Reset",
       "save": "Save"
