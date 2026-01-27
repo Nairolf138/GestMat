@@ -314,37 +314,6 @@ function statusRoleCopy(role: LoanRecipientRole, status?: string): {
   }
 }
 
-function reminderRoleCopy(role: LoanRecipientRole): {
-  subject: string;
-  preamble: string;
-  action: string;
-} {
-  switch (role) {
-    case 'borrower':
-      return {
-        subject: 'Rappel : échéance de prêt à venir - emprunteur',
-        preamble: 'Votre structure doit préparer la fin du prêt.',
-        action:
-          'Planifier le retour du matériel avec le prêteur et mettre à jour GestMat si nécessaire.',
-      };
-    case 'requester':
-      return {
-        subject: 'Rappel : échéance de votre demande de prêt',
-        preamble: 'Vous avez initié ce prêt.',
-        action:
-          'Vérifier avec l’emprunteur que le retour du matériel est organisé et suivre GestMat.',
-      };
-    case 'owner':
-    default:
-      return {
-        subject: 'Rappel : échéance de prêt à venir - prêteur',
-        preamble: 'Votre structure prêteuse approche de la fin du prêt.',
-        action:
-          "Anticiper le retour du matériel avec l'emprunteur et mettre à jour GestMat si besoin.",
-      };
-  }
-}
-
 function startReminderRoleCopy(role: LoanRecipientRole): {
   subject: string;
   preamble: string;
@@ -445,20 +414,6 @@ export function loanStatusTemplate({
     action,
     summary: { text, html },
     decisionNote,
-  });
-}
-
-export function loanReminderTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
-  const { text, html } = buildLoanSummary(loan);
-  const { subject, preamble, action } = reminderRoleCopy(role);
-  const loanLabel = getLoanLabel(loan);
-
-  return renderLoanTemplate({
-    subject,
-    preamble,
-    eventLine: `Le prêt ${loanLabel} approche de son échéance.`,
-    action,
-    summary: { text, html },
   });
 }
 

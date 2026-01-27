@@ -563,7 +563,7 @@
         "loan_status_changes": "Changements de statut des prêts",
         "loan_status_changes_help": "Recevoir les mises à jour lors de l'acceptation, du refus ou de la modification d'une demande.",
         "return_reminders": "Rappels de prêt",
-        "return_reminders_help": "Recevoir des rappels avant les dates de début et de fin des prêts.",
+        "return_reminders_help": "Recevoir un rappel la veille du début des prêts.",
         "system_alerts": "Alertes système",
         "system_alerts_help": "Recevoir les alertes automatiques (rappels planifiés, notifications d'échéance, rapports annuels)."
       }
