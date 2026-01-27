@@ -4,7 +4,6 @@ import { ObjectId } from 'mongodb';
 import {
   buildLoanSummary,
   loanOverdueTemplate,
-  loanReminderTemplate,
   loanStartReminderTemplate,
 } from '../src/utils/mailTemplates';
 
@@ -107,18 +106,6 @@ test('buildLoanSummary aligne texte et HTML', () => {
     text: expectedSummaryText,
     html: expectedSummaryHtml,
   });
-});
-
-test('loanReminderTemplate conserve un gabarit harmonisé', () => {
-  const template = loanReminderTemplate({ loan: sampleLoan as any, role: 'owner' });
-  const expected = buildExpectedTemplate({
-    subject: 'Rappel : échéance de prêt à venir - prêteur',
-    preamble: 'Votre structure prêteuse approche de la fin du prêt.',
-    eventLine: `Le prêt ${loanId.toString()} approche de son échéance.`,
-    action: "Anticiper le retour du matériel avec l'emprunteur et mettre à jour GestMat si besoin.",
-  });
-
-  assert.deepStrictEqual(template, expected);
 });
 
 test('loanStartReminderTemplate conserve un gabarit harmonisé', () => {

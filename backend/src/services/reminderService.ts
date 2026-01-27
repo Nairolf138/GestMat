@@ -9,7 +9,7 @@ import {
   LOAN_REMINDER_DAILY_SCHEDULE_ENABLED,
   LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED,
 } from '../config';
-import { loanReminderTemplate, loanStartReminderTemplate } from '../utils/mailTemplates';
+import { loanStartReminderTemplate } from '../utils/mailTemplates';
 
 const HOURS_IN_MS = 60 * 60 * 1000;
 const MINUTES_IN_MS = 60 * 1000;
@@ -108,31 +108,6 @@ async function sendLoanReminder(
   }
 }
 
-export async function processLoanReminders(
-  db: Db,
-  reminderOffsetMs: number = defaultReminderOffsetMs,
-): Promise<void> {
-  const now = new Date();
-  const reminderThreshold = new Date(now.getTime() + reminderOffsetMs);
-
-  const endLoans = await db
-    .collection<LoanRequest>('loanrequests')
-    .find({
-      status: 'accepted',
-      endDate: { $gte: now, $lte: reminderThreshold },
-      reminderSentAt: { $exists: false },
-    })
-    .toArray();
-
-  for (const loan of endLoans) {
-    try {
-      await sendLoanReminder(db, loan, 'reminderSentAt', loanReminderTemplate);
-    } catch (err) {
-      logger.error('Loan reminder error for loan %s: %o', loan._id, err);
-    }
-  }
-}
-
 export async function processStartLoanReminders(
   db: Db,
   reminderOffsetMs: number = defaultReminderOffsetMs,
@@ -172,14 +147,9 @@ export function scheduleLoanReminders(
   } = options;
 
   const run = () => {
-    Promise.all([
-      processLoanReminders(db, reminderOffsetMs).catch((err) => {
-        logger.error('Loan reminder processing error: %o', err);
-      }),
-      processStartLoanReminders(db, reminderOffsetMs).catch((err) => {
-        logger.error('Loan start reminder processing error: %o', err);
-      }),
-    ]);
+    processStartLoanReminders(db, reminderOffsetMs).catch((err) => {
+      logger.error('Loan start reminder processing error: %o', err);
+    });
   };
 
   let dailyTimeout: NodeJS.Timeout | null = null;
