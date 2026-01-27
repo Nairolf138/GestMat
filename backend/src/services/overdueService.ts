@@ -1,5 +1,5 @@
 import { Db, ObjectId } from 'mongodb';
-import { LoanRequest } from '../models/LoanRequest';
+import { LoanRequest, populateLoanRequest } from '../models/LoanRequest';
 import { getLoanRecipientsByRole } from '../utils/getLoanRecipients';
 import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
@@ -78,13 +78,17 @@ export async function processOverdueLoans(db: Db): Promise<void> {
         continue;
       }
 
+      const populatedLoan = await populateLoanRequest(db, loan);
       const sendOverdueMail = async (
         recipients: Set<string>,
         role: 'owner' | 'borrower' | 'requester',
       ) => {
         if (!recipients.size) return;
         const to = Array.from(recipients).join(',');
-        const { subject, text, html } = loanOverdueTemplate({ loan, role });
+        const { subject, text, html } = loanOverdueTemplate({
+          loan: populatedLoan,
+          role,
+        });
         await sendMail({ to, subject, text, html });
       };
 
