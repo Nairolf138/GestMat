@@ -98,6 +98,14 @@ async function _populate(
   return loan;
 }
 
+export async function populateLoanRequest(
+  db: Db,
+  loan: LoanRequest,
+  session?: ClientSession,
+): Promise<LoanRequest> {
+  return _populate(db, loan, session);
+}
+
 interface FindLoanOptions {
   /**
    * When true, returns a merged list of active + archived loans.

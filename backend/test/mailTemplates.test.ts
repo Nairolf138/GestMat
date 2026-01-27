@@ -135,3 +135,19 @@ test('loanOverdueTemplate conserve un gabarit harmonisé', () => {
 
   assert.deepStrictEqual(template, expected);
 });
+
+test('les templates de prêt ne contiennent pas de libellés par défaut', () => {
+  const summary = buildLoanSummary(sampleLoan as any);
+  const overdueTemplate = loanOverdueTemplate({ loan: sampleLoan as any });
+  const reminderTemplate = loanStartReminderTemplate({ loan: sampleLoan as any });
+
+  const forbiddenLabels = ['Non renseignée', 'Utilisateur inconnu'];
+  for (const label of forbiddenLabels) {
+    assert.ok(!summary.text.includes(label));
+    assert.ok(!summary.html.includes(label));
+    assert.ok(!overdueTemplate.text.includes(label));
+    assert.ok(!overdueTemplate.html.includes(label));
+    assert.ok(!reminderTemplate.text.includes(label));
+    assert.ok(!reminderTemplate.html.includes(label));
+  }
+});
