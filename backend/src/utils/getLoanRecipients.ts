@@ -121,18 +121,38 @@ async function findRequesterRecipients(
   options: RecipientFilterOptions = {},
 ): Promise<string[]> {
   const requesterEmail = (requestedBy as any)?.email;
-  if (typeof requesterEmail === 'string' && requesterEmail.trim()) {
-    return [requesterEmail.trim()];
+  const normalizedEmail =
+    typeof requesterEmail === 'string' && requesterEmail.trim() ? requesterEmail.trim() : null;
+  const shouldReload =
+    !requestedBy || !normalizedEmail || (requestedBy as any)?.preferences === undefined;
+  const canReload = requestedById && ObjectId.isValid(requestedById);
+
+  const requester =
+    shouldReload && canReload
+      ? await db
+          .collection('users')
+          .findOne<{ email?: string; preferences?: any }>({ _id: new ObjectId(requestedById) })
+      : (requestedBy as any);
+
+  if (!normalizedEmail && !requester?.email) {
+    return [];
   }
 
-  if (!requestedById || !ObjectId.isValid(requestedById)) return [];
+  const emailToUse = normalizedEmail ?? requester?.email;
+  const result = shouldNotify(requester, preference, options);
+  if (!result.allowed) {
+    options.trace?.({
+      role: 'requester',
+      identifier: requestedById ?? (requester as any)?._id?.toString?.(),
+      email: emailToUse,
+      preference,
+      reason: result.reason ?? 'notification disabled',
+    });
+    return [];
+  }
 
-  const requester = await db
-    .collection('users')
-    .findOne<{ email?: string; preferences?: any }>({ _id: new ObjectId(requestedById) });
-
-  if (requester?.email && shouldNotify(requester, preference, options)) {
-    return [requester.email];
+  if (emailToUse) {
+    return [emailToUse];
   }
 
   return [];
