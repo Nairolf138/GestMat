@@ -1,17 +1,29 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-const createEmptyRow = () => ({
-  item: '',
-  type: '',
-  quantity: '',
-  unitPrice: '',
-});
+import Alert from '../../Alert.jsx';
+import { api } from '../../api';
+import {
+  buildLines,
+  calculateRowTotal,
+  createEmptyRow,
+  mapPlanToRows,
+} from '../../investments/investmentPlanUtils';
 
 function Investments() {
   const { t } = useTranslation();
   const [yearOneRows, setYearOneRows] = useState([createEmptyRow()]);
   const [yearTwoRows, setYearTwoRows] = useState([createEmptyRow()]);
+  const [yearOneMeta, setYearOneMeta] = useState({
+    id: null,
+    status: 'draft',
+  });
+  const [yearTwoMeta, setYearTwoMeta] = useState({
+    id: null,
+    status: 'draft',
+  });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const typeOptions = useMemo(
     () => [
@@ -36,19 +48,35 @@ function Investments() {
     [t],
   );
 
-  const parseNumber = (value) => {
-    if (typeof value === 'number') return value;
-    if (!value) return 0;
-    const normalized = String(value).replace(',', '.');
-    const parsed = Number(normalized);
-    return Number.isNaN(parsed) ? 0 : parsed;
-  };
+  const mapPlanToRowsMemo = useCallback((plan) => mapPlanToRows(plan), []);
 
-  const calculateRowTotal = (row) => {
-    const quantity = parseNumber(row.quantity);
-    const unitPrice = parseNumber(row.unitPrice);
-    return quantity * unitPrice;
-  };
+  const loadPlans = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const plans = await api('/investments');
+      const yearOnePlan = plans.find((plan) => plan.targetYear === 'year1');
+      const yearTwoPlan = plans.find((plan) => plan.targetYear === 'year2');
+      setYearOneRows(mapPlanToRowsMemo(yearOnePlan));
+      setYearTwoRows(mapPlanToRowsMemo(yearTwoPlan));
+      setYearOneMeta({
+        id: yearOnePlan?._id ?? null,
+        status: yearOnePlan?.status ?? 'draft',
+      });
+      setYearTwoMeta({
+        id: yearTwoPlan?._id ?? null,
+        status: yearTwoPlan?.status ?? 'draft',
+      });
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setLoading(false);
+    }
+  }, [mapPlanToRowsMemo]);
+
+  useEffect(() => {
+    loadPlans();
+  }, [loadPlans]);
 
   const updateRow = (setRows) => (index, field, value) => {
     setRows((prevRows) =>
@@ -74,6 +102,46 @@ function Investments() {
   const resetAll = () => {
     setYearOneRows([createEmptyRow()]);
     setYearTwoRows([createEmptyRow()]);
+  };
+
+  const persistPlan = async (targetYear, rows, meta) => {
+    const lines = buildLines(rows, targetYear);
+    if (!lines.length) {
+      if (meta.id) {
+        await api(`/investments/${meta.id}`, { method: 'DELETE' });
+      }
+      return;
+    }
+    const payload = {
+      targetYear,
+      status: meta.status ?? 'draft',
+      lines,
+    };
+    if (meta.id) {
+      await api(`/investments/${meta.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      return;
+    }
+    await api('/investments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await persistPlan('year1', yearOneRows, yearOneMeta);
+      await persistPlan('year2', yearTwoRows, yearTwoMeta);
+      await loadPlans();
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const summary = useMemo(() => {
@@ -222,9 +290,25 @@ function Investments() {
       <header className="mb-4">
         <h1 className="h3 fw-bold">{t('investments.title')}</h1>
         <p className="text-muted mb-0">{t('investments.subtitle')}</p>
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm mt-3"
+          onClick={loadPlans}
+          disabled={loading}
+        >
+          {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
+        </button>
       </header>
 
-      <form className="d-grid gap-4" onSubmit={(event) => event.preventDefault()}>
+      <Alert message={error} onClose={() => setError('')} />
+
+      <form
+        className="d-grid gap-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSave();
+        }}
+      >
         <section className="card shadow-sm">
           <div className="card-body">
             <h2 className="h5">{t('investments.summary.title')}</h2>
@@ -303,11 +387,16 @@ function Investments() {
         </section>
 
         <div className="d-flex flex-wrap gap-2">
-          <button type="button" className="btn btn-outline-secondary" onClick={resetAll}>
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={resetAll}
+            disabled={saving}
+          >
             {t('investments.actions.reset')}
           </button>
-          <button type="submit" className="btn btn-primary">
-            {t('investments.actions.save')}
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? t('common.loading') : t('investments.actions.save')}
           </button>
         </div>
       </form>
