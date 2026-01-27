@@ -130,7 +130,14 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   const htmlItems: string[] = [];
   for (const item of items) {
     const equipment = item.equipment as any;
-    const label = equipment?.name || equipment?.reference || 'Matériel';
+    const equipmentId =
+      equipment?._id?.toString?.() || equipment?.toString?.() || undefined;
+    const label =
+      equipment?.name ||
+      equipment?.reference ||
+      equipment?.code ||
+      equipmentId ||
+      'Matériel';
     const quantity = item.quantity ?? 'N/A';
     textItems.push(`- ${label} (quantité : ${quantity})`);
     htmlItems.push(`<li><strong>${label}</strong> — quantité : ${quantity}</li>`);

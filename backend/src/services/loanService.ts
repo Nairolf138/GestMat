@@ -6,6 +6,7 @@ import {
   deleteLoan,
   LoanRequest,
   LoanItem,
+  populateLoanRequest,
 } from '../models/LoanRequest';
 import { sendMail } from '../utils/sendMail';
 import { getLoanRecipientsByRole } from '../utils/getLoanRecipients';
@@ -331,6 +332,7 @@ export async function createLoanRequest(
             loan._id,
           );
         } else {
+          const populatedLoan = await populateLoanRequest(db, loan);
           const sendCreationMail = async (
             recipients: Set<string>,
             role: 'owner' | 'borrower' | 'requester',
@@ -339,9 +341,9 @@ export async function createLoanRequest(
             const to = Array.from(recipients).join(',');
             const { subject, text, html } =
               status === 'pending'
-                ? loanCreationTemplate({ loan, role })
+                ? loanCreationTemplate({ loan: populatedLoan, role })
                 : loanStatusTemplate({
-                    loan,
+                    loan: populatedLoan,
                     status,
                     role,
                     actor:
@@ -572,6 +574,7 @@ export async function updateLoanRequest(
           ownerSet.add(NOTIFY_EMAIL);
         }
 
+        const populatedLoan = await populateLoanRequest(db, updated ?? loan);
         const sendStatusMail = async (
           recipients: Set<string>,
           role: 'owner' | 'borrower' | 'requester',
@@ -579,7 +582,7 @@ export async function updateLoanRequest(
           if (!recipients.size) return;
           const to = Array.from(recipients).join(',');
           const { subject, text, html } = loanStatusTemplate({
-            loan: updated ?? loan,
+            loan: populatedLoan,
             status,
             actor: actorName,
             role,
