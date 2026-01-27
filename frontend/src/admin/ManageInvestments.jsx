@@ -14,6 +14,7 @@ import {
   calculateRowTotal,
   createEmptyRow,
   mapPlanToRows,
+  toInputValue,
 } from '../investments/investmentPlanUtils';
 
 const resolveStructureId = (value, structures) => {
@@ -35,6 +36,8 @@ function ManageInvestments() {
   const { structures } = useContext(GlobalContext);
   const [structureInput, setStructureInput] = useState('');
   const [structureFilter, setStructureFilter] = useState('');
+  const [viewMode, setViewMode] = useState('structure');
+  const [allPlans, setAllPlans] = useState([]);
   const [yearOneRows, setYearOneRows] = useState([createEmptyRow()]);
   const [yearTwoRows, setYearTwoRows] = useState([createEmptyRow()]);
   const [yearOneMeta, setYearOneMeta] = useState({
@@ -57,6 +60,17 @@ function ManageInvestments() {
   const selectedStructure = useMemo(
     () => structures.find((structure) => structure._id === selectedStructureId),
     [structures, selectedStructureId],
+  );
+
+  const structureNameById = useMemo(
+    () =>
+      new Map(
+        structures.map((structure) => [
+          structure._id,
+          structure.name ?? structure._id,
+        ]),
+      ),
+    [structures],
   );
 
   const typeOptions = useMemo(
@@ -117,9 +131,26 @@ function ManageInvestments() {
     }
   }, [mapPlanToRowsMemo, selectedStructureId]);
 
+  const loadAllPlans = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const plans = await api('/investments');
+      setAllPlans(plans);
+    } catch (err) {
+      setError(err.message || '');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
+    if (viewMode === 'global') {
+      loadAllPlans();
+      return;
+    }
     loadPlans();
-  }, [loadPlans]);
+  }, [loadAllPlans, loadPlans, viewMode]);
 
   const updateRow = (setRows) => (index, field, value) => {
     setRows((prevRows) =>
@@ -221,6 +252,37 @@ function ManageInvestments() {
       grandTotal: totals.year1 + totals.year2,
     };
   }, [t, typeOptions, yearOneRows, yearTwoRows]);
+
+  const globalRows = useMemo(() => {
+    const rows = { year1: [], year2: [] };
+    allPlans.forEach((plan) => {
+      if (!plan?.lines?.length) return;
+      const targetYear = plan.targetYear;
+      if (targetYear !== 'year1' && targetYear !== 'year2') return;
+      const structureName =
+        structureNameById.get(plan.structure?.toString()) ??
+        structureNameById.get(plan.structure) ??
+        t('users.select_structure');
+      plan.lines.forEach((line) => {
+        rows[targetYear].push({
+          _id: line._id,
+          structure: structureName,
+          item: line.item ?? '',
+          type: line.type ?? '',
+          quantity: toInputValue(line.quantity),
+          unitPrice: toInputValue(line.unitCost ?? line.unitPrice),
+          priority: toInputValue(line.priority ?? ''),
+          justification: line.justification ?? '',
+        });
+      });
+    });
+    return rows;
+  }, [allPlans, structureNameById, t]);
+
+  const typeLabelMap = useMemo(
+    () => new Map(typeOptions.map((option) => [option.value, option.label])),
+    [typeOptions],
+  );
 
   const renderTable = (rows, setRows, ariaLabel) => (
     <div className="table-responsive">
@@ -344,6 +406,57 @@ function ManageInvestments() {
     </div>
   );
 
+  const renderGlobalTable = (rows, ariaLabel) => (
+    <div className="table-responsive">
+      <table className="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th scope="col">{t('vehicles.filters.structure')}</th>
+            <th scope="col">{columnLabels.item}</th>
+            <th scope="col">{columnLabels.type}</th>
+            <th scope="col">{columnLabels.quantity}</th>
+            <th scope="col">{columnLabels.unitPrice}</th>
+            <th scope="col">{columnLabels.priority}</th>
+            <th scope="col">{columnLabels.amount}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length ? (
+            rows.map((row, index) => {
+              const rowTotal = calculateRowTotal(row);
+              const displayTotal =
+                rowTotal || row.quantity || row.unitPrice
+                  ? rowTotal.toFixed(2)
+                  : '';
+              const typeLabel =
+                typeLabelMap.get(row.type) ||
+                row.type ||
+                t('investments.summary.untyped');
+              return (
+                <tr key={row._id ?? `global-row-${index}`}>
+                  <td>{row.structure}</td>
+                  <td>{row.item}</td>
+                  <td>{typeLabel}</td>
+                  <td>{row.quantity}</td>
+                  <td>{row.unitPrice}</td>
+                  <td>{row.priority}</td>
+                  <td>{displayTotal}</td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={7} className="text-muted">
+                {t('investments.summary.empty')}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      <span className="visually-hidden">{ariaLabel}</span>
+    </div>
+  );
+
   return (
     <div className="card shadow-sm">
       <div className="card-body">
@@ -361,8 +474,8 @@ function ManageInvestments() {
           <button
             type="button"
             className="btn btn-outline-secondary align-self-lg-start"
-            onClick={loadPlans}
-            disabled={loading || !selectedStructureId}
+            onClick={viewMode === 'global' ? loadAllPlans : loadPlans}
+            disabled={loading || (viewMode === 'structure' && !selectedStructureId)}
           >
             {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
           </button>
@@ -370,62 +483,100 @@ function ManageInvestments() {
 
         <Alert message={error} onClose={() => setError('')} />
 
-        <form
-          className="row g-2 align-items-end mb-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setStructureFilter(structureInput.trim());
-          }}
-        >
-          <div className="col-md-6">
-            <label className="form-label" htmlFor="admin-investments-structure">
-              {t('vehicles.filters.structure')}
-            </label>
-            <input
-              id="admin-investments-structure"
-              className="form-control"
-              list="admin-investments-structure-options"
-              placeholder={t('users.select_structure')}
-              value={structureInput}
-              onChange={(event) => setStructureInput(event.target.value)}
-            />
-            <datalist id="admin-investments-structure-options">
-              {structures.map((structure) => (
-                <option
-                  key={structure._id}
-                  value={structure.name}
-                  label={structure._id}
-                />
-              ))}
-              {structures.map((structure) => (
-                <option
-                  key={`${structure._id}-id`}
-                  value={structure._id}
-                  label={structure.name}
-                />
-              ))}
-            </datalist>
-          </div>
-          <div className="col-md-auto">
-            <button type="submit" className="btn btn-primary">
-              {t('vehicles.filters.apply')}
-            </button>
-          </div>
-          <div className="col-md-auto">
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={() => {
-                setStructureInput('');
-                setStructureFilter('');
-              }}
-            >
-              {t('common.reset')}
-            </button>
-          </div>
-        </form>
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          <button
+            type="button"
+            className={`btn ${
+              viewMode === 'structure' ? 'btn-primary' : 'btn-outline-primary'
+            }`}
+            onClick={() => setViewMode('structure')}
+          >
+            {t('structures.title')}
+          </button>
+          <button
+            type="button"
+            className={`btn ${
+              viewMode === 'global' ? 'btn-primary' : 'btn-outline-primary'
+            }`}
+            onClick={() => setViewMode('global')}
+          >
+            Toutes structures
+          </button>
+        </div>
 
-        {selectedStructureId ? (
+        {viewMode === 'structure' && (
+          <form
+            className="row g-2 align-items-end mb-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setStructureFilter(structureInput.trim());
+            }}
+          >
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="admin-investments-structure">
+                {t('vehicles.filters.structure')}
+              </label>
+              <input
+                id="admin-investments-structure"
+                className="form-control"
+                list="admin-investments-structure-options"
+                placeholder={t('users.select_structure')}
+                value={structureInput}
+                onChange={(event) => setStructureInput(event.target.value)}
+              />
+              <datalist id="admin-investments-structure-options">
+                {structures.map((structure) => (
+                  <option
+                    key={structure._id}
+                    value={structure.name}
+                    label={structure._id}
+                  />
+                ))}
+                {structures.map((structure) => (
+                  <option
+                    key={`${structure._id}-id`}
+                    value={structure._id}
+                    label={structure.name}
+                  />
+                ))}
+              </datalist>
+            </div>
+            <div className="col-md-auto">
+              <button type="submit" className="btn btn-primary">
+                {t('vehicles.filters.apply')}
+              </button>
+            </div>
+            <div className="col-md-auto">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => {
+                  setStructureInput('');
+                  setStructureFilter('');
+                }}
+              >
+                {t('common.reset')}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {viewMode === 'global' ? (
+          <>
+            <section className="card border-0 shadow-sm mb-4">
+              <div className="card-body">
+                <h3 className="h5">{t('investments.year_one')}</h3>
+                {renderGlobalTable(globalRows.year1, t('investments.year_one'))}
+              </div>
+            </section>
+            <section className="card border-0 shadow-sm mb-4">
+              <div className="card-body">
+                <h3 className="h5">{t('investments.year_two')}</h3>
+                {renderGlobalTable(globalRows.year2, t('investments.year_two'))}
+              </div>
+            </section>
+          </>
+        ) : selectedStructureId ? (
           <>
             <section className="card border-0 shadow-sm mb-4">
               <div className="card-body">
