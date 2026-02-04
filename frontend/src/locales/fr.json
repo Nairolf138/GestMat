@@ -101,7 +101,14 @@
       "item": "Ex. Console son",
       "type": "Type",
       "quantity": "Quantité souhaitée",
-      "unit_price": "Prix unitaire"
+      "unit_price": "Prix unitaire",
+      "priority": "Priorité"
+    },
+    "priorities": {
+      "very_high": "Très haute",
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Basse"
     },
     "types": {
       "sound": "Son",
