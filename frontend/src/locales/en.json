@@ -123,7 +123,10 @@
     },
     "form": {
       "title": "Add an investment wish",
-      "year_label": "Year"
+      "year_label": "Year",
+      "toggle_show": "Add a wish",
+      "toggle_hide": "Cancel",
+      "add_success": "Wish added"
     },
     "actions": {
       "add_line": "Add line",
