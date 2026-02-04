@@ -263,6 +263,15 @@ function Investments() {
     [t, currentYear],
   );
 
+  const formatCurrency = useCallback(
+    (value) =>
+      Number(value || 0).toLocaleString('fr-FR', {
+        style: 'currency',
+        currency: 'EUR',
+      }),
+    [],
+  );
+
   const renderTable = (rows, setRows, ariaLabel, tableKey) => (
     <div className="table-responsive">
       <table className="table table-striped align-middle">
@@ -270,9 +279,15 @@ function Investments() {
           <tr>
             <th scope="col">{columnLabels.item}</th>
             <th scope="col">{columnLabels.type}</th>
-            <th scope="col">{columnLabels.quantity}</th>
-            <th scope="col">{columnLabels.unitPrice}</th>
-            <th scope="col">{columnLabels.amount}</th>
+            <th scope="col" className="text-end">
+              {columnLabels.quantity}
+            </th>
+            <th scope="col" className="text-end">
+              {columnLabels.unitPrice}
+            </th>
+            <th scope="col" className="text-end">
+              {columnLabels.amount}
+            </th>
             <th scope="col">{columnLabels.actions}</th>
           </tr>
         </thead>
@@ -284,7 +299,7 @@ function Investments() {
             const rowTotal = calculateRowTotal(rowForTotal);
             const displayTotal =
               rowTotal || rowForTotal.quantity || rowForTotal.unitPrice
-                ? rowTotal.toFixed(2)
+                ? formatCurrency(rowTotal)
                 : '';
             const typeLabel = typeLabelMap.get(row.type) || row.type || '';
             return (
@@ -322,7 +337,7 @@ function Investments() {
                     typeLabel
                   )}
                 </td>
-                <td>
+                <td className="text-end">
                   {isEditing ? (
                     <input
                       type="number"
@@ -337,7 +352,7 @@ function Investments() {
                     row.quantity
                   )}
                 </td>
-                <td>
+                <td className="text-end">
                   {isEditing ? (
                     <input
                       type="number"
@@ -349,10 +364,10 @@ function Investments() {
                       aria-label={`${ariaLabel} ${columnLabels.unitPrice}`}
                     />
                   ) : (
-                    row.unitPrice
+                    row.unitPrice || row.unitPrice === 0 ? formatCurrency(row.unitPrice) : ''
                   )}
                 </td>
-                <td>
+                <td className="text-end">
                   {isEditing ? (
                     <input
                       type="text"
@@ -435,22 +450,34 @@ function Investments() {
               <div className="col-12 col-lg-4">
                 <div className="border rounded p-3 bg-light h-100">
                   <p className="text-uppercase text-muted small mb-2">
-                    {t('investments.summary.year_totals')}
+                    {summaryYearLabels.year1}
                   </p>
-                  <ul className="list-unstyled mb-0">
-                    <li>
-                      {summaryYearLabels.year1}: {summary.totals.year1.toFixed(2)} €
-                    </li>
-                    <li>
-                      {summaryYearLabels.year2}: {summary.totals.year2.toFixed(2)} €
-                    </li>
-                    <li className="fw-semibold">
-                      {t('investments.summary.total')}: {summary.grandTotal.toFixed(2)} €
-                    </li>
-                  </ul>
+                  <p className="h4 fw-bold mb-0">
+                    {formatCurrency(summary.totals.year1)}
+                  </p>
                 </div>
               </div>
-              <div className="col-12 col-lg-8">
+              <div className="col-12 col-lg-4">
+                <div className="border rounded p-3 bg-light h-100">
+                  <p className="text-uppercase text-muted small mb-2">
+                    {summaryYearLabels.year2}
+                  </p>
+                  <p className="h4 fw-bold mb-0">
+                    {formatCurrency(summary.totals.year2)}
+                  </p>
+                </div>
+              </div>
+              <div className="col-12 col-lg-4">
+                <div className="border rounded p-3 bg-light h-100">
+                  <p className="text-uppercase text-muted small mb-2">
+                    {t('investments.summary.total')}
+                  </p>
+                  <p className="h4 fw-bold mb-0">
+                    {formatCurrency(summary.grandTotal)}
+                  </p>
+                </div>
+              </div>
+              <div className="col-12">
                 <div className="border rounded p-3 h-100">
                   <p className="text-uppercase text-muted small mb-2">
                     {t('investments.summary.type_totals')}
@@ -460,9 +487,9 @@ function Investments() {
                       <thead>
                         <tr>
                           <th>{t('investments.summary.type')}</th>
-                          <th>{summaryYearLabels.year1}</th>
-                          <th>{summaryYearLabels.year2}</th>
-                          <th>{t('investments.summary.total')}</th>
+                          <th className="text-end">{summaryYearLabels.year1}</th>
+                          <th className="text-end">{summaryYearLabels.year2}</th>
+                          <th className="text-end">{t('investments.summary.total')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -470,9 +497,11 @@ function Investments() {
                           summary.typeTotals.map((type) => (
                             <tr key={type.type}>
                               <td>{type.type}</td>
-                              <td>{type.year1.toFixed(2)} €</td>
-                              <td>{type.year2.toFixed(2)} €</td>
-                              <td className="fw-semibold">{type.total.toFixed(2)} €</td>
+                              <td className="text-end">{formatCurrency(type.year1)}</td>
+                              <td className="text-end">{formatCurrency(type.year2)}</td>
+                              <td className="text-end fw-semibold">
+                                {formatCurrency(type.total)}
+                              </td>
                             </tr>
                           ))
                         ) : (
