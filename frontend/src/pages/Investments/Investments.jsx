@@ -494,7 +494,7 @@ function Investments() {
         <div>
           <button
             type="button"
-            className="btn btn-outline-primary"
+            className="btn btn-primary"
             onClick={() => setShowWishForm((prev) => !prev)}
           >
             {showWishForm
@@ -584,7 +584,7 @@ function Investments() {
                 <div className="col-12">
                   <button
                     type="button"
-                    className="btn btn-outline-primary"
+                    className="btn btn-primary"
                     onClick={handleAddWish}
                   >
                     {t('investments.actions.add_wish')}
