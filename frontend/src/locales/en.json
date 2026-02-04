@@ -101,7 +101,14 @@
       "item": "e.g., Sound console",
       "type": "Type",
       "quantity": "Desired quantity",
-      "unit_price": "Unit price"
+      "unit_price": "Unit price",
+      "priority": "Priority"
+    },
+    "priorities": {
+      "very_high": "Very high",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
     },
     "types": {
       "sound": "Sound",

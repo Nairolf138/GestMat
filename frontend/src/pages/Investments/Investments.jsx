@@ -27,6 +27,7 @@ function Investments() {
   const [newWish, setNewWish] = useState({
     ...createEmptyRow(),
     targetYear: 'year1',
+    priority: '1',
   });
   const [showWishForm, setShowWishForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -59,12 +60,23 @@ function Investments() {
     [typeOptions],
   );
 
+  const priorityOptions = useMemo(
+    () => [
+      { value: '4', label: t('investments.priorities.very_high') },
+      { value: '3', label: t('investments.priorities.high') },
+      { value: '2', label: t('investments.priorities.medium') },
+      { value: '1', label: t('investments.priorities.low') },
+    ],
+    [t],
+  );
+
   const columnLabels = useMemo(
     () => ({
       item: t('investments.table.item'),
       type: t('investments.table.type'),
       quantity: t('investments.table.quantity'),
       unitPrice: t('investments.table.unit_price'),
+      priority: t('investments.table.priority'),
       amount: t('investments.table.amount'),
       actions: t('investments.table.actions'),
     }),
@@ -188,6 +200,7 @@ function Investments() {
       setNewWish({
         ...createEmptyRow(),
         targetYear,
+        priority: '1',
       });
       setShowWishForm(false);
       notify(t('investments.form.add_success'), 'success');
@@ -595,6 +608,23 @@ function Investments() {
                     onChange={updateNewWish('unitPrice')}
                     placeholder={t('investments.placeholders.unit_price')}
                   />
+                </div>
+                <div className="col-6 col-lg-2">
+                  <label className="form-label" htmlFor="investment-priority">
+                    {columnLabels.priority}
+                  </label>
+                  <select
+                    id="investment-priority"
+                    className="form-select"
+                    value={newWish.priority}
+                    onChange={updateNewWish('priority')}
+                  >
+                    {priorityOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="col-12 col-lg-1">
                   <label className="form-label" htmlFor="investment-year">
