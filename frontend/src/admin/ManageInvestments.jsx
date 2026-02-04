@@ -319,10 +319,16 @@ function ManageInvestments() {
       const structureLabel =
         structureNameById.get(structureId) ?? structureId ?? t('users.select_structure');
       if (!structureLabel) return;
-      if (!totals.has(structureLabel)) {
-        totals.set(structureLabel, { structure: structureLabel, year1: 0, year2: 0 });
+      const key = structureId || structureLabel;
+      if (!totals.has(key)) {
+        totals.set(key, {
+          structureId,
+          structureLabel,
+          year1: 0,
+          year2: 0,
+        });
       }
-      const entry = totals.get(structureLabel);
+      const entry = totals.get(key);
       if (!entry) return;
       plan.lines.forEach((line) => {
         if (!shouldIncludePriority(line.priority)) return;
@@ -345,7 +351,7 @@ function ManageInvestments() {
       if (a.total !== b.total) {
         return summarySortOrder === 'asc' ? a.total - b.total : b.total - a.total;
       }
-      return a.structure.localeCompare(b.structure, 'fr');
+      return (a.structureLabel ?? '').localeCompare(b.structureLabel ?? '', 'fr');
     });
   }, [byStructure, summarySortOrder]);
 
@@ -511,8 +517,22 @@ function ManageInvestments() {
         <tbody>
           {summaryRows.length ? (
             summaryRows.map((row) => (
-              <tr key={row.structure}>
-                <td>{row.structure}</td>
+              <tr key={row.structureId || row.structureLabel}>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-link p-0 text-decoration-none d-inline-flex align-items-center gap-1"
+                    onClick={() => {
+                      const targetValue = row.structureId || row.structureLabel;
+                      setStructureInput(row.structureLabel);
+                      setStructureFilter(targetValue);
+                      setViewMode('structure');
+                    }}
+                  >
+                    <span>{row.structureLabel}</span>
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </td>
                 <td>{row.year1.toFixed(2)} €</td>
                 <td>{row.year2.toFixed(2)} €</td>
                 <td className="fw-semibold">{row.total.toFixed(2)} €</td>
