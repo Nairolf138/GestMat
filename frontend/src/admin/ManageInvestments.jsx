@@ -52,6 +52,16 @@ function ManageInvestments() {
   const [error, setError] = useState('');
   const [summarySortOrder, setSummarySortOrder] = useState('asc');
 
+  const currencyFormatter = useMemo(
+    () => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }),
+    [],
+  );
+
+  const formatCurrency = useCallback(
+    (value) => currencyFormatter.format(Number.isFinite(value) ? value : 0),
+    [currencyFormatter],
+  );
+
   const priorityOptions = useMemo(
     () => [
       { value: '4', label: t('investments.priorities.very_high') },
@@ -533,9 +543,9 @@ function ManageInvestments() {
                     <span aria-hidden="true">→</span>
                   </button>
                 </td>
-                <td>{row.year1.toFixed(2)} €</td>
-                <td>{row.year2.toFixed(2)} €</td>
-                <td className="fw-semibold">{row.total.toFixed(2)} €</td>
+                <td>{formatCurrency(row.year1)}</td>
+                <td>{formatCurrency(row.year2)}</td>
+                <td className="fw-semibold">{formatCurrency(row.total)}</td>
               </tr>
             ))
           ) : (
@@ -549,9 +559,9 @@ function ManageInvestments() {
         <tfoot>
           <tr className="fw-semibold">
             <td>Total général</td>
-            <td>{summaryTotals.year1.toFixed(2)} €</td>
-            <td>{summaryTotals.year2.toFixed(2)} €</td>
-            <td>{summaryTotals.total.toFixed(2)} €</td>
+            <td>{formatCurrency(summaryTotals.year1)}</td>
+            <td>{formatCurrency(summaryTotals.year2)}</td>
+            <td>{formatCurrency(summaryTotals.total)}</td>
           </tr>
         </tfoot>
       </table>
@@ -715,6 +725,22 @@ function ManageInvestments() {
             <section className="card border-0 shadow-sm mb-4">
               <div className="card-body">
                 <h3 className="h5">{t('investments.summary.title')}</h3>
+                <div className="border rounded p-3 bg-light mb-3">
+                  <p className="text-uppercase text-muted small mb-2">
+                    {t('investments.summary.year_totals')}
+                  </p>
+                  <ul className="list-unstyled mb-0 d-flex flex-wrap gap-3">
+                    <li>
+                      {t('investments.summary.year1')}: {formatCurrency(summaryTotals.year1)}
+                    </li>
+                    <li>
+                      {t('investments.summary.year2')}: {formatCurrency(summaryTotals.year2)}
+                    </li>
+                    <li className="fw-semibold">
+                      {t('investments.summary.total')}: {formatCurrency(summaryTotals.total)}
+                    </li>
+                  </ul>
+                </div>
                 {renderGlobalSummaryTable()}
               </div>
             </section>
@@ -733,15 +759,15 @@ function ManageInvestments() {
                       <ul className="list-unstyled mb-0">
                         <li>
                           {t('investments.summary.year1')}:{' '}
-                          {summary.totals.year1.toFixed(2)} €
+                          {formatCurrency(summary.totals.year1)}
                         </li>
                         <li>
                           {t('investments.summary.year2')}:{' '}
-                          {summary.totals.year2.toFixed(2)} €
+                          {formatCurrency(summary.totals.year2)}
                         </li>
                         <li className="fw-semibold">
                           {t('investments.summary.total')}:{' '}
-                          {summary.grandTotal.toFixed(2)} €
+                          {formatCurrency(summary.grandTotal)}
                         </li>
                       </ul>
                     </div>
@@ -766,10 +792,10 @@ function ManageInvestments() {
                               summary.typeTotals.map((type) => (
                                 <tr key={type.type}>
                                   <td>{type.type}</td>
-                                  <td>{type.year1.toFixed(2)} €</td>
-                                  <td>{type.year2.toFixed(2)} €</td>
+                                  <td>{formatCurrency(type.year1)}</td>
+                                  <td>{formatCurrency(type.year2)}</td>
                                   <td className="fw-semibold">
-                                    {type.total.toFixed(2)} €
+                                    {formatCurrency(type.total)}
                                   </td>
                                 </tr>
                               ))

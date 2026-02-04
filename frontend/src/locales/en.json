@@ -126,7 +126,7 @@
       "year2": "Year N+1 ({{year}})",
       "total": "Total",
       "untyped": "Unspecified",
-      "empty": "No type yet"
+      "empty": "No investment wishes for the current period and filters."
     },
     "form": {
       "title": "Add an investment wish",
