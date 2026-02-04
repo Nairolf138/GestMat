@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Alert from '../../Alert.jsx';
 import { api } from '../../api';
+import { GlobalContext } from '../../GlobalContext.jsx';
 import {
   buildLines,
   calculateRowTotal,
@@ -12,6 +13,7 @@ import {
 
 function Investments() {
   const { t } = useTranslation();
+  const { notify } = useContext(GlobalContext);
   const [yearOneRows, setYearOneRows] = useState([createEmptyRow()]);
   const [yearTwoRows, setYearTwoRows] = useState([createEmptyRow()]);
   const [yearOneMeta, setYearOneMeta] = useState({
@@ -26,6 +28,7 @@ function Investments() {
     ...createEmptyRow(),
     targetYear: 'year1',
   });
+  const [showWishForm, setShowWishForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -157,6 +160,8 @@ function Investments() {
       ...createEmptyRow(),
       targetYear: newWish.targetYear,
     });
+    setShowWishForm(false);
+    notify(t('investments.form.add_success'), 'success');
   };
 
   const persistPlan = async (targetYear, rows, meta) => {
@@ -428,95 +433,109 @@ function Investments() {
           </div>
         </section>
 
-        <section className="card shadow-sm">
-          <div className="card-body">
-            <h2 className="h5">{t('investments.form.title')}</h2>
-            <div className="row g-3 align-items-end">
-              <div className="col-12 col-lg-4">
-                <label className="form-label" htmlFor="investment-item">
-                  {columnLabels.item}
-                </label>
-                <input
-                  id="investment-item"
-                  type="text"
-                  className="form-control"
-                  value={newWish.item}
-                  onChange={updateNewWish('item')}
-                  placeholder={t('investments.placeholders.item')}
-                />
-              </div>
-              <div className="col-12 col-lg-3">
-                <label className="form-label" htmlFor="investment-type">
-                  {columnLabels.type}
-                </label>
-                <select
-                  id="investment-type"
-                  className="form-select"
-                  value={newWish.type}
-                  onChange={updateNewWish('type')}
-                >
-                  <option value="">{t('investments.placeholders.type')}</option>
-                  {typeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-6 col-lg-2">
-                <label className="form-label" htmlFor="investment-quantity">
-                  {columnLabels.quantity}
-                </label>
-                <input
-                  id="investment-quantity"
-                  type="number"
-                  min="0"
-                  className="form-control"
-                  value={newWish.quantity}
-                  onChange={updateNewWish('quantity')}
-                  placeholder={t('investments.placeholders.quantity')}
-                />
-              </div>
-              <div className="col-6 col-lg-2">
-                <label className="form-label" htmlFor="investment-unit-price">
-                  {columnLabels.unitPrice}
-                </label>
-                <input
-                  id="investment-unit-price"
-                  type="number"
-                  min="0"
-                  className="form-control"
-                  value={newWish.unitPrice}
-                  onChange={updateNewWish('unitPrice')}
-                  placeholder={t('investments.placeholders.unit_price')}
-                />
-              </div>
-              <div className="col-12 col-lg-1">
-                <label className="form-label" htmlFor="investment-year">
-                  {t('investments.form.year_label')}
-                </label>
-                <select
-                  id="investment-year"
-                  className="form-select"
-                  value={newWish.targetYear}
-                  onChange={updateNewWish('targetYear')}
-                >
-                  <option value="year1">{yearLabels.year1}</option>
-                  <option value="year2">{yearLabels.year2}</option>
-                </select>
-              </div>
-              <div className="col-12">
-                <button
-                  type="button"
-                  className="btn btn-outline-primary"
-                  onClick={handleAddWish}
-                >
-                  {t('investments.actions.add_wish')}
-                </button>
+        <div>
+          <button
+            type="button"
+            className="btn btn-outline-primary"
+            onClick={() => setShowWishForm((prev) => !prev)}
+          >
+            {showWishForm
+              ? t('investments.form.toggle_hide')
+              : t('investments.form.toggle_show')}
+          </button>
+        </div>
+
+        {showWishForm && (
+          <section className="card shadow-sm">
+            <div className="card-body">
+              <h2 className="h5">{t('investments.form.title')}</h2>
+              <div className="row g-3 align-items-end">
+                <div className="col-12 col-lg-4">
+                  <label className="form-label" htmlFor="investment-item">
+                    {columnLabels.item}
+                  </label>
+                  <input
+                    id="investment-item"
+                    type="text"
+                    className="form-control"
+                    value={newWish.item}
+                    onChange={updateNewWish('item')}
+                    placeholder={t('investments.placeholders.item')}
+                  />
+                </div>
+                <div className="col-12 col-lg-3">
+                  <label className="form-label" htmlFor="investment-type">
+                    {columnLabels.type}
+                  </label>
+                  <select
+                    id="investment-type"
+                    className="form-select"
+                    value={newWish.type}
+                    onChange={updateNewWish('type')}
+                  >
+                    <option value="">{t('investments.placeholders.type')}</option>
+                    {typeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-6 col-lg-2">
+                  <label className="form-label" htmlFor="investment-quantity">
+                    {columnLabels.quantity}
+                  </label>
+                  <input
+                    id="investment-quantity"
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={newWish.quantity}
+                    onChange={updateNewWish('quantity')}
+                    placeholder={t('investments.placeholders.quantity')}
+                  />
+                </div>
+                <div className="col-6 col-lg-2">
+                  <label className="form-label" htmlFor="investment-unit-price">
+                    {columnLabels.unitPrice}
+                  </label>
+                  <input
+                    id="investment-unit-price"
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={newWish.unitPrice}
+                    onChange={updateNewWish('unitPrice')}
+                    placeholder={t('investments.placeholders.unit_price')}
+                  />
+                </div>
+                <div className="col-12 col-lg-1">
+                  <label className="form-label" htmlFor="investment-year">
+                    {t('investments.form.year_label')}
+                  </label>
+                  <select
+                    id="investment-year"
+                    className="form-select"
+                    value={newWish.targetYear}
+                    onChange={updateNewWish('targetYear')}
+                  >
+                    <option value="year1">{yearLabels.year1}</option>
+                    <option value="year2">{yearLabels.year2}</option>
+                  </select>
+                </div>
+                <div className="col-12">
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    onClick={handleAddWish}
+                  >
+                    {t('investments.actions.add_wish')}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section className="card shadow-sm">
           <div className="card-body">
