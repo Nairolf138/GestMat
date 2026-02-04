@@ -52,6 +52,52 @@ function ManageInvestments() {
   const [error, setError] = useState('');
   const [summarySortOrder, setSummarySortOrder] = useState('asc');
 
+  const priorityOptions = useMemo(
+    () => [
+      { value: '4', label: t('investments.priorities.very_high') },
+      { value: '3', label: t('investments.priorities.high') },
+      { value: '2', label: t('investments.priorities.medium') },
+      { value: '1', label: t('investments.priorities.low') },
+    ],
+    [t],
+  );
+
+  const allPriorityValues = useMemo(
+    () => priorityOptions.map((option) => option.value),
+    [priorityOptions],
+  );
+
+  const [priorityFilter, setPriorityFilter] = useState(allPriorityValues);
+
+  const isAllPrioritiesSelected = useMemo(
+    () => priorityFilter.length === allPriorityValues.length,
+    [allPriorityValues.length, priorityFilter.length],
+  );
+
+  const shouldIncludePriority = useCallback(
+    (priority) => {
+      if (isAllPrioritiesSelected) return true;
+      if (!priorityFilter.length) return false;
+      const normalized = `${priority ?? ''}`.trim();
+      if (!normalized) return false;
+      return priorityFilter.includes(normalized);
+    },
+    [isAllPrioritiesSelected, priorityFilter],
+  );
+
+  const togglePriority = (value) => {
+    setPriorityFilter((prev) => {
+      const next = prev.includes(value)
+        ? prev.filter((entry) => entry !== value)
+        : [...prev, value];
+      return allPriorityValues.filter((entry) => next.includes(entry));
+    });
+  };
+
+  const resetPriorityFilter = () => {
+    setPriorityFilter(allPriorityValues);
+  };
+
   const selectedStructureId = useMemo(
     () => resolveStructureId(structureFilter, structures),
     [structureFilter, structures],
@@ -220,6 +266,16 @@ function ManageInvestments() {
     }
   };
 
+  const filteredYearOneRows = useMemo(
+    () => yearOneRows.filter((row) => shouldIncludePriority(row.priority)),
+    [shouldIncludePriority, yearOneRows],
+  );
+
+  const filteredYearTwoRows = useMemo(
+    () => yearTwoRows.filter((row) => shouldIncludePriority(row.priority)),
+    [shouldIncludePriority, yearTwoRows],
+  );
+
   const summary = useMemo(() => {
     const totals = { year1: 0, year2: 0 };
     const byType = new Map();
@@ -239,8 +295,8 @@ function ManageInvestments() {
       totals[targetYear] += amount;
     };
 
-    yearOneRows.forEach((row) => addRowToSummary(row, 'year1'));
-    yearTwoRows.forEach((row) => addRowToSummary(row, 'year2'));
+    filteredYearOneRows.forEach((row) => addRowToSummary(row, 'year1'));
+    filteredYearTwoRows.forEach((row) => addRowToSummary(row, 'year2'));
 
     const typeTotals = Array.from(byType.values()).sort((a, b) =>
       a.type.localeCompare(b.type, 'fr'),
@@ -251,7 +307,7 @@ function ManageInvestments() {
       typeTotals,
       grandTotal: totals.year1 + totals.year2,
     };
-  }, [t, typeOptions, yearOneRows, yearTwoRows]);
+  }, [filteredYearOneRows, filteredYearTwoRows, t, typeOptions]);
 
   const byStructure = useMemo(() => {
     const totals = new Map();
@@ -269,6 +325,7 @@ function ManageInvestments() {
       const entry = totals.get(structureLabel);
       if (!entry) return;
       plan.lines.forEach((line) => {
+        if (!shouldIncludePriority(line.priority)) return;
         const amount = calculateRowTotal({
           quantity: line.quantity,
           unitPrice: line.unitCost ?? line.unitPrice,
@@ -277,7 +334,7 @@ function ManageInvestments() {
       });
     });
     return totals;
-  }, [allPlans, structureNameById, t]);
+  }, [allPlans, shouldIncludePriority, structureNameById, t]);
 
   const summaryRows = useMemo(() => {
     const rows = Array.from(byStructure.values()).map((entry) => ({
@@ -305,7 +362,7 @@ function ManageInvestments() {
     [summaryRows],
   );
 
-  const renderTable = (rows, setRows, ariaLabel) => (
+  const renderTable = (setRows, displayRows, ariaLabel) => (
     <div className="table-responsive">
       <table className="table table-striped align-middle">
         <thead>
@@ -320,7 +377,7 @@ function ManageInvestments() {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => {
+          {displayRows.map(({ row, index }) => {
             const rowTotal = calculateRowTotal(row);
             const displayTotal =
               rowTotal || row.quantity || row.unitPrice ? rowTotal.toFixed(2) : '';
@@ -481,6 +538,22 @@ function ManageInvestments() {
     </div>
   );
 
+  const yearOneDisplayRows = useMemo(
+    () =>
+      yearOneRows
+        .map((row, index) => ({ row, index }))
+        .filter(({ row }) => shouldIncludePriority(row.priority)),
+    [shouldIncludePriority, yearOneRows],
+  );
+
+  const yearTwoDisplayRows = useMemo(
+    () =>
+      yearTwoRows
+        .map((row, index) => ({ row, index }))
+        .filter(({ row }) => shouldIncludePriority(row.priority)),
+    [shouldIncludePriority, yearTwoRows],
+  );
+
   return (
     <div className="card shadow-sm">
       <div className="card-body">
@@ -526,6 +599,38 @@ function ManageInvestments() {
           >
             Toutes structures
           </button>
+        </div>
+
+        <div className="card border-0 shadow-sm mb-4">
+          <div className="card-body">
+            <div className="d-flex flex-wrap align-items-center gap-3">
+              <span className="fw-semibold">{columnLabels.priority}</span>
+              {priorityOptions.map((option) => (
+                <div key={option.value} className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`priority-filter-${option.value}`}
+                    checked={priorityFilter.includes(option.value)}
+                    onChange={() => togglePriority(option.value)}
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor={`priority-filter-${option.value}`}
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                onClick={resetPriorityFilter}
+              >
+                {t('common.reset')}
+              </button>
+            </div>
+          </div>
         </div>
 
         {viewMode === 'structure' && (
@@ -667,14 +772,22 @@ function ManageInvestments() {
             <section className="card border-0 shadow-sm mb-4">
               <div className="card-body">
                 <h3 className="h5">{t('investments.year_one')}</h3>
-                {renderTable(yearOneRows, setYearOneRows, t('investments.year_one'))}
+                {renderTable(
+                  setYearOneRows,
+                  yearOneDisplayRows,
+                  t('investments.year_one'),
+                )}
               </div>
             </section>
 
             <section className="card border-0 shadow-sm mb-4">
               <div className="card-body">
                 <h3 className="h5">{t('investments.year_two')}</h3>
-                {renderTable(yearTwoRows, setYearTwoRows, t('investments.year_two'))}
+                {renderTable(
+                  setYearTwoRows,
+                  yearTwoDisplayRows,
+                  t('investments.year_two'),
+                )}
               </div>
             </section>
 
