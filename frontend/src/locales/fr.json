@@ -132,6 +132,10 @@
       "add_line": "Ajouter une ligne",
       "add_wish": "Ajouter le souhait",
       "remove_line": "Supprimer",
+      "edit": "Éditer",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "save_line": "Enregistrer",
       "reset": "Réinitialiser",
       "save": "Enregistrer"
     }

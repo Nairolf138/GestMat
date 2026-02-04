@@ -32,6 +32,8 @@ function Investments() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [editForm, setEditForm] = useState(createEmptyRow());
   const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   const yearLabels = useMemo(
@@ -51,6 +53,11 @@ function Investments() {
       { value: 'other', label: t('investments.types.other') },
     ],
     [t],
+  );
+
+  const typeLabelMap = useMemo(
+    () => new Map(typeOptions.map((option) => [option.value, option.label])),
+    [typeOptions],
   );
 
   const columnLabels = useMemo(
@@ -84,6 +91,8 @@ function Investments() {
         id: yearTwoPlan?._id ?? null,
         status: yearTwoPlan?.status ?? 'draft',
       });
+      setEditingRowId(null);
+      setEditForm(createEmptyRow());
     } catch (err) {
       setError(err.message || '');
     } finally {
@@ -94,14 +103,6 @@ function Investments() {
   useEffect(() => {
     loadPlans();
   }, [loadPlans]);
-
-  const updateRow = (setRows) => (index, field, value) => {
-    setRows((prevRows) =>
-      prevRows.map((row, rowIndex) =>
-        rowIndex === index ? { ...row, [field]: value } : row,
-      ),
-    );
-  };
 
   const removeRow = (setRows) => (index) => {
     setRows((prevRows) => {
@@ -119,6 +120,8 @@ function Investments() {
       ...createEmptyRow(),
       targetYear: 'year1',
     });
+    setEditingRowId(null);
+    setEditForm(createEmptyRow());
   };
 
   const appendRow = (setRows, row) => {
@@ -136,6 +139,47 @@ function Investments() {
       ...prevWish,
       [field]: value,
     }));
+  };
+
+  const updateEditForm = (field) => (event) => {
+    const value = event.target.value;
+    setEditForm((prevForm) => ({
+      ...prevForm,
+      [field]: value,
+    }));
+  };
+
+  const buildRowId = (tableKey, index) => `${tableKey}-${index}`;
+
+  const startEdit = (tableKey, index, row) => {
+    setEditingRowId(buildRowId(tableKey, index));
+    setEditForm({
+      ...createEmptyRow(),
+      ...row,
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingRowId(null);
+    setEditForm(createEmptyRow());
+  };
+
+  const saveEdit = (setRows, index) => {
+    setRows((prevRows) =>
+      prevRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, ...editForm } : row,
+      ),
+    );
+    setEditingRowId(null);
+    setEditForm(createEmptyRow());
+  };
+
+  const handleRemoveRow = (setRows, tableKey, index) => {
+    const rowId = buildRowId(tableKey, index);
+    if (editingRowId === rowId) {
+      cancelEdit();
+    }
+    removeRow(setRows)(index);
   };
 
   const handleAddWish = () => {
@@ -245,7 +289,7 @@ function Investments() {
     [t, currentYear],
   );
 
-  const renderTable = (rows, setRows, ariaLabel) => (
+  const renderTable = (rows, setRows, ariaLabel, tableKey) => (
     <div className="table-responsive">
       <table className="table table-striped align-middle">
         <thead>
@@ -260,83 +304,129 @@ function Investments() {
         </thead>
         <tbody>
           {rows.map((row, index) => {
-            const rowTotal = calculateRowTotal(row);
+            const rowId = buildRowId(tableKey, index);
+            const isEditing = editingRowId === rowId;
+            const rowForTotal = isEditing ? editForm : row;
+            const rowTotal = calculateRowTotal(rowForTotal);
             const displayTotal =
-              rowTotal || row.quantity || row.unitPrice ? rowTotal.toFixed(2) : '';
+              rowTotal || rowForTotal.quantity || rowForTotal.unitPrice
+                ? rowTotal.toFixed(2)
+                : '';
+            const typeLabel = typeLabelMap.get(row.type) || row.type || '';
             return (
               <tr key={`row-${index}`}>
                 <td>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={row.item}
-                    onChange={(event) =>
-                      updateRow(setRows)(index, 'item', event.target.value)
-                    }
-                    placeholder={t('investments.placeholders.item')}
-                    aria-label={`${ariaLabel} ${columnLabels.item}`}
-                  />
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editForm.item}
+                      onChange={updateEditForm('item')}
+                      placeholder={t('investments.placeholders.item')}
+                      aria-label={`${ariaLabel} ${columnLabels.item}`}
+                    />
+                  ) : (
+                    row.item
+                  )}
                 </td>
                 <td>
-                  <select
-                    className="form-select"
-                    value={row.type}
-                    onChange={(event) =>
-                      updateRow(setRows)(index, 'type', event.target.value)
-                    }
-                    aria-label={`${ariaLabel} ${columnLabels.type}`}
-                  >
-                    <option value="">{t('investments.placeholders.type')}</option>
-                    {typeOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  {isEditing ? (
+                    <select
+                      className="form-select"
+                      value={editForm.type}
+                      onChange={updateEditForm('type')}
+                      aria-label={`${ariaLabel} ${columnLabels.type}`}
+                    >
+                      <option value="">{t('investments.placeholders.type')}</option>
+                      {typeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    typeLabel
+                  )}
                 </td>
                 <td>
-                  <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={row.quantity}
-                    onChange={(event) =>
-                      updateRow(setRows)(index, 'quantity', event.target.value)
-                    }
-                    placeholder={t('investments.placeholders.quantity')}
-                    aria-label={`${ariaLabel} ${columnLabels.quantity}`}
-                  />
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      min="0"
+                      className="form-control"
+                      value={editForm.quantity}
+                      onChange={updateEditForm('quantity')}
+                      placeholder={t('investments.placeholders.quantity')}
+                      aria-label={`${ariaLabel} ${columnLabels.quantity}`}
+                    />
+                  ) : (
+                    row.quantity
+                  )}
                 </td>
                 <td>
-                  <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={row.unitPrice}
-                    onChange={(event) =>
-                      updateRow(setRows)(index, 'unitPrice', event.target.value)
-                    }
-                    placeholder={t('investments.placeholders.unit_price')}
-                    aria-label={`${ariaLabel} ${columnLabels.unitPrice}`}
-                  />
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      min="0"
+                      className="form-control"
+                      value={editForm.unitPrice}
+                      onChange={updateEditForm('unitPrice')}
+                      placeholder={t('investments.placeholders.unit_price')}
+                      aria-label={`${ariaLabel} ${columnLabels.unitPrice}`}
+                    />
+                  ) : (
+                    row.unitPrice
+                  )}
                 </td>
                 <td>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={displayTotal}
-                    readOnly
-                    aria-label={`${ariaLabel} ${columnLabels.amount}`}
-                  />
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={displayTotal}
+                      readOnly
+                      aria-label={`${ariaLabel} ${columnLabels.amount}`}
+                    />
+                  ) : (
+                    displayTotal
+                  )}
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={() => removeRow(setRows)(index)}
-                  >
-                    {t('investments.actions.remove_line')}
-                  </button>
+                  {isEditing ? (
+                    <div className="d-flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={() => saveEdit(setRows, index)}
+                      >
+                        {t('investments.actions.save_line')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={cancelEdit}
+                      >
+                        {t('investments.actions.cancel')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="d-flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => startEdit(tableKey, index, row)}
+                      >
+                        {t('investments.actions.edit')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => handleRemoveRow(setRows, tableKey, index)}
+                      >
+                        {t('investments.actions.delete')}
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             );
@@ -540,14 +630,14 @@ function Investments() {
         <section className="card shadow-sm">
           <div className="card-body">
             <h2 className="h5">{yearLabels.year1}</h2>
-            {renderTable(yearOneRows, setYearOneRows, yearLabels.year1)}
+            {renderTable(yearOneRows, setYearOneRows, yearLabels.year1, 'year1')}
           </div>
         </section>
 
         <section className="card shadow-sm">
           <div className="card-body">
             <h2 className="h5">{yearLabels.year2}</h2>
-            {renderTable(yearTwoRows, setYearTwoRows, yearLabels.year2)}
+            {renderTable(yearTwoRows, setYearTwoRows, yearLabels.year2, 'year2')}
           </div>
         </section>
 
