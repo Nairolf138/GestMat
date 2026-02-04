@@ -132,6 +132,10 @@
       "add_line": "Add line",
       "add_wish": "Add wish",
       "remove_line": "Remove",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save_line": "Save",
       "reset": "Reset",
       "save": "Save"
     }
