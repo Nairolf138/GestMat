@@ -30,7 +30,6 @@ function Investments() {
   });
   const [showWishForm, setShowWishForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [editingRowId, setEditingRowId] = useState(null);
   const [editForm, setEditForm] = useState(createEmptyRow());
@@ -113,26 +112,6 @@ function Investments() {
     });
   };
 
-  const resetAll = () => {
-    setYearOneRows([createEmptyRow()]);
-    setYearTwoRows([createEmptyRow()]);
-    setNewWish({
-      ...createEmptyRow(),
-      targetYear: 'year1',
-    });
-    setEditingRowId(null);
-    setEditForm(createEmptyRow());
-  };
-
-  const appendRow = (setRows, row) => {
-    setRows((prevRows) => {
-      if (prevRows.length === 1 && isRowEmpty(prevRows[0])) {
-        return [row];
-      }
-      return [...prevRows, row];
-    });
-  };
-
   const updateNewWish = (field) => (event) => {
     const value = event.target.value;
     setNewWish((prevWish) => ({
@@ -182,7 +161,7 @@ function Investments() {
     removeRow(setRows)(index);
   };
 
-  const handleAddWish = () => {
+  const handleAddWish = async () => {
     const row = {
       ...createEmptyRow(),
       item: newWish.item,
@@ -195,17 +174,26 @@ function Investments() {
     if (isRowEmpty(row)) {
       return;
     }
-    if (newWish.targetYear === 'year2') {
-      appendRow(setYearTwoRows, row);
-    } else {
-      appendRow(setYearOneRows, row);
+    setError('');
+    const targetYear = newWish.targetYear === 'year2' ? 'year2' : 'year1';
+    const currentRows = targetYear === 'year2' ? yearTwoRows : yearOneRows;
+    const currentMeta = targetYear === 'year2' ? yearTwoMeta : yearOneMeta;
+    const nextRows =
+      currentRows.length === 1 && isRowEmpty(currentRows[0])
+        ? [row]
+        : [...currentRows, row];
+    try {
+      await persistPlan(targetYear, nextRows, currentMeta);
+      await loadPlans();
+      setNewWish({
+        ...createEmptyRow(),
+        targetYear,
+      });
+      setShowWishForm(false);
+      notify(t('investments.form.add_success'), 'success');
+    } catch (err) {
+      setError(err.message || '');
     }
-    setNewWish({
-      ...createEmptyRow(),
-      targetYear: newWish.targetYear,
-    });
-    setShowWishForm(false);
-    notify(t('investments.form.add_success'), 'success');
   };
 
   const persistPlan = async (targetYear, rows, meta) => {
@@ -232,20 +220,6 @@ function Investments() {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError('');
-    try {
-      await persistPlan('year1', yearOneRows, yearOneMeta);
-      await persistPlan('year2', yearTwoRows, yearTwoMeta);
-      await loadPlans();
-    } catch (err) {
-      setError(err.message || '');
-    } finally {
-      setSaving(false);
-    }
   };
 
   const summary = useMemo(() => {
@@ -453,13 +427,7 @@ function Investments() {
 
       <Alert message={error} onClose={() => setError('')} />
 
-      <form
-        className="d-grid gap-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          handleSave();
-        }}
-      >
+      <div className="d-grid gap-4">
         <section className="card shadow-sm">
           <div className="card-body">
             <h2 className="h5">{t('investments.summary.title')}</h2>
@@ -641,20 +609,7 @@ function Investments() {
           </div>
         </section>
 
-        <div className="d-flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="btn btn-outline-secondary"
-            onClick={resetAll}
-            disabled={saving}
-          >
-            {t('investments.actions.reset')}
-          </button>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? t('common.loading') : t('investments.actions.save')}
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
