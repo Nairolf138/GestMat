@@ -50,6 +50,7 @@ function ManageInvestments() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [summarySortOrder, setSummarySortOrder] = useState('asc');
 
   const selectedStructureId = useMemo(
     () => resolveStructureId(structureFilter, structures),
@@ -283,8 +284,13 @@ function ManageInvestments() {
       ...entry,
       total: entry.year1 + entry.year2,
     }));
-    return rows.sort((a, b) => a.structure.localeCompare(b.structure, 'fr'));
-  }, [byStructure]);
+    return rows.sort((a, b) => {
+      if (a.total !== b.total) {
+        return summarySortOrder === 'asc' ? a.total - b.total : b.total - a.total;
+      }
+      return a.structure.localeCompare(b.structure, 'fr');
+    });
+  }, [byStructure, summarySortOrder]);
 
   const summaryTotals = useMemo(
     () =>
@@ -423,6 +429,19 @@ function ManageInvestments() {
 
   const renderGlobalSummaryTable = () => (
     <div className="table-responsive">
+      <div className="d-flex justify-content-end mb-2">
+        <label className="small text-muted d-flex align-items-center gap-2">
+          <span>Tri</span>
+          <select
+            className="form-select form-select-sm"
+            value={summarySortOrder}
+            onChange={(event) => setSummarySortOrder(event.target.value)}
+          >
+            <option value="asc">Montant ascendant</option>
+            <option value="desc">Montant descendant</option>
+          </select>
+        </label>
+      </div>
       <table className="table table-striped align-middle">
         <thead>
           <tr>
