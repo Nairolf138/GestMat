@@ -14,7 +14,6 @@ import {
   calculateRowTotal,
   createEmptyRow,
   mapPlanToRows,
-  toInputValue,
 } from '../investments/investmentPlanUtils';
 
 const resolveStructureId = (value, structures) => {
@@ -253,35 +252,51 @@ function ManageInvestments() {
     };
   }, [t, typeOptions, yearOneRows, yearTwoRows]);
 
-  const globalRows = useMemo(() => {
-    const rows = { year1: [], year2: [] };
+  const byStructure = useMemo(() => {
+    const totals = new Map();
     allPlans.forEach((plan) => {
       if (!plan?.lines?.length) return;
       const targetYear = plan.targetYear;
       if (targetYear !== 'year1' && targetYear !== 'year2') return;
-      const structureName =
-        structureNameById.get(plan.structure?.toString()) ??
-        structureNameById.get(plan.structure) ??
-        t('users.select_structure');
+      const structureId = plan.structure?.toString() ?? plan.structure ?? '';
+      const structureLabel =
+        structureNameById.get(structureId) ?? structureId ?? t('users.select_structure');
+      if (!structureLabel) return;
+      if (!totals.has(structureLabel)) {
+        totals.set(structureLabel, { structure: structureLabel, year1: 0, year2: 0 });
+      }
+      const entry = totals.get(structureLabel);
+      if (!entry) return;
       plan.lines.forEach((line) => {
-        rows[targetYear].push({
-          _id: line._id,
-          structure: structureName,
-          item: line.item ?? '',
-          type: line.type ?? '',
-          quantity: toInputValue(line.quantity),
-          unitPrice: toInputValue(line.unitCost ?? line.unitPrice),
-          priority: toInputValue(line.priority ?? ''),
-          justification: line.justification ?? '',
+        const amount = calculateRowTotal({
+          quantity: line.quantity,
+          unitPrice: line.unitCost ?? line.unitPrice,
         });
+        entry[targetYear] += amount;
       });
     });
-    return rows;
+    return totals;
   }, [allPlans, structureNameById, t]);
 
-  const typeLabelMap = useMemo(
-    () => new Map(typeOptions.map((option) => [option.value, option.label])),
-    [typeOptions],
+  const summaryRows = useMemo(() => {
+    const rows = Array.from(byStructure.values()).map((entry) => ({
+      ...entry,
+      total: entry.year1 + entry.year2,
+    }));
+    return rows.sort((a, b) => a.structure.localeCompare(b.structure, 'fr'));
+  }, [byStructure]);
+
+  const summaryTotals = useMemo(
+    () =>
+      summaryRows.reduce(
+        (acc, row) => ({
+          year1: acc.year1 + row.year1,
+          year2: acc.year2 + row.year2,
+          total: acc.total + row.total,
+        }),
+        { year1: 0, year2: 0, total: 0 },
+      ),
+    [summaryRows],
   );
 
   const renderTable = (rows, setRows, ariaLabel) => (
@@ -406,54 +421,44 @@ function ManageInvestments() {
     </div>
   );
 
-  const renderGlobalTable = (rows, ariaLabel) => (
+  const renderGlobalSummaryTable = () => (
     <div className="table-responsive">
       <table className="table table-striped align-middle">
         <thead>
           <tr>
             <th scope="col">{t('vehicles.filters.structure')}</th>
-            <th scope="col">{columnLabels.item}</th>
-            <th scope="col">{columnLabels.type}</th>
-            <th scope="col">{columnLabels.quantity}</th>
-            <th scope="col">{columnLabels.unitPrice}</th>
-            <th scope="col">{columnLabels.priority}</th>
-            <th scope="col">{columnLabels.amount}</th>
+            <th scope="col">{t('investments.summary.year1')}</th>
+            <th scope="col">{t('investments.summary.year2')}</th>
+            <th scope="col">{t('investments.summary.total')}</th>
           </tr>
         </thead>
         <tbody>
-          {rows.length ? (
-            rows.map((row, index) => {
-              const rowTotal = calculateRowTotal(row);
-              const displayTotal =
-                rowTotal || row.quantity || row.unitPrice
-                  ? rowTotal.toFixed(2)
-                  : '';
-              const typeLabel =
-                typeLabelMap.get(row.type) ||
-                row.type ||
-                t('investments.summary.untyped');
-              return (
-                <tr key={row._id ?? `global-row-${index}`}>
-                  <td>{row.structure}</td>
-                  <td>{row.item}</td>
-                  <td>{typeLabel}</td>
-                  <td>{row.quantity}</td>
-                  <td>{row.unitPrice}</td>
-                  <td>{row.priority}</td>
-                  <td>{displayTotal}</td>
-                </tr>
-              );
-            })
+          {summaryRows.length ? (
+            summaryRows.map((row) => (
+              <tr key={row.structure}>
+                <td>{row.structure}</td>
+                <td>{row.year1.toFixed(2)} €</td>
+                <td>{row.year2.toFixed(2)} €</td>
+                <td className="fw-semibold">{row.total.toFixed(2)} €</td>
+              </tr>
+            ))
           ) : (
             <tr>
-              <td colSpan={7} className="text-muted">
+              <td colSpan={4} className="text-muted">
                 {t('investments.summary.empty')}
               </td>
             </tr>
           )}
         </tbody>
+        <tfoot>
+          <tr className="fw-semibold">
+            <td>Total général</td>
+            <td>{summaryTotals.year1.toFixed(2)} €</td>
+            <td>{summaryTotals.year2.toFixed(2)} €</td>
+            <td>{summaryTotals.total.toFixed(2)} €</td>
+          </tr>
+        </tfoot>
       </table>
-      <span className="visually-hidden">{ariaLabel}</span>
     </div>
   );
 
@@ -565,14 +570,8 @@ function ManageInvestments() {
           <>
             <section className="card border-0 shadow-sm mb-4">
               <div className="card-body">
-                <h3 className="h5">{t('investments.year_one')}</h3>
-                {renderGlobalTable(globalRows.year1, t('investments.year_one'))}
-              </div>
-            </section>
-            <section className="card border-0 shadow-sm mb-4">
-              <div className="card-body">
-                <h3 className="h5">{t('investments.year_two')}</h3>
-                {renderGlobalTable(globalRows.year2, t('investments.year_two'))}
+                <h3 className="h5">{t('investments.summary.title')}</h3>
+                {renderGlobalSummaryTable()}
               </div>
             </section>
           </>
