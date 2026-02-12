@@ -30,6 +30,9 @@ const normalizeId = (value?: unknown): string | undefined => {
 };
 
 const extractInvestmentStructure = (req: Request): string | undefined => {
+  if (req.user?.role !== ADMIN_ROLE) {
+    return normalizeId(req.user?.structure);
+  }
   if (typeof req.body?.structure === 'string') return req.body.structure;
   if (typeof req.query?.structure === 'string') return req.query.structure;
   return normalizeId(req.user?.structure);
@@ -59,16 +62,18 @@ router.get(
       const filter: Record<string, unknown> = {};
       const structureQuery =
         typeof req.query.structure === 'string' ? req.query.structure : undefined;
-      if (structureQuery) {
+      const userStructure = normalizeId(req.user?.structure);
+      if (req.user?.role !== ADMIN_ROLE) {
+        if (!userStructure || !ObjectId.isValid(userStructure)) {
+          throw badRequest('Invalid user structure');
+        }
+        // Ignore any requested structure and enforce the authenticated one.
+        filter.structure = new ObjectId(userStructure);
+      } else if (structureQuery) {
         if (!ObjectId.isValid(structureQuery)) {
           throw badRequest('Invalid structure id');
         }
         filter.structure = new ObjectId(structureQuery);
-      } else if (req.user?.role !== ADMIN_ROLE && req.user?.structure) {
-        if (!ObjectId.isValid(req.user.structure)) {
-          throw badRequest('Invalid user structure');
-        }
-        filter.structure = new ObjectId(req.user.structure);
       }
       if (typeof req.query.targetYear === 'string') {
         filter.targetYear = req.query.targetYear;

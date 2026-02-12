@@ -63,10 +63,10 @@ const normalizeLine = (
   },
   now: Date,
 ): InvestmentLine => {
-  const structure = line.structure ?? defaults.structure;
+  const structure = toObjectId(line.structure) ?? toObjectId(defaults.structure);
   const targetYear = line.targetYear ?? defaults.targetYear;
   const status = line.status ?? defaults.status ?? 'draft';
-  const createdBy = line.createdBy ?? defaults.createdBy;
+  const createdBy = toObjectId(line.createdBy) ?? toObjectId(defaults.createdBy);
 
   if (!structure) {
     throw badRequest('structure is required for investment lines.');
