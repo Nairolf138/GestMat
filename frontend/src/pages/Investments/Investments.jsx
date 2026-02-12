@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useTranslation } from 'react-i18next';
 import Alert from '../../Alert.jsx';
 import { api } from '../../api';
+import { AuthContext } from '../../AuthContext.jsx';
 import { GlobalContext } from '../../GlobalContext.jsx';
 import {
   buildLines,
@@ -13,7 +14,9 @@ import {
 
 function Investments() {
   const { t } = useTranslation();
+  const { user } = useContext(AuthContext);
   const { notify } = useContext(GlobalContext);
+  const structureId = useMemo(() => user?.structure?._id || user?.structure, [user]);
   const [yearOneRows, setYearOneRows] = useState([createEmptyRow()]);
   const [yearTwoRows, setYearTwoRows] = useState([createEmptyRow()]);
   const [yearOneMeta, setYearOneMeta] = useState({
@@ -86,10 +89,12 @@ function Investments() {
   const mapPlanToRowsMemo = useCallback((plan) => mapPlanToRows(plan), []);
 
   const loadPlans = useCallback(async () => {
+    if (!structureId) return;
     setLoading(true);
     setError('');
     try {
-      const plans = await api('/investments');
+      const query = new URLSearchParams({ structure: String(structureId) });
+      const plans = await api(`/investments?${query.toString()}`);
       const yearOnePlan = plans.find((plan) => plan.targetYear === 'year1');
       const yearTwoPlan = plans.find((plan) => plan.targetYear === 'year2');
       setYearOneRows(mapPlanToRowsMemo(yearOnePlan));
@@ -109,7 +114,7 @@ function Investments() {
     } finally {
       setLoading(false);
     }
-  }, [mapPlanToRowsMemo]);
+  }, [mapPlanToRowsMemo, structureId]);
 
   useEffect(() => {
     loadPlans();
@@ -210,7 +215,7 @@ function Investments() {
   };
 
   const persistPlan = async (targetYear, rows, meta) => {
-    const lines = buildLines(rows, targetYear);
+    const lines = buildLines(rows, targetYear, structureId);
     if (!lines.length) {
       if (meta.id) {
         await api(`/investments/${meta.id}`, { method: 'DELETE' });

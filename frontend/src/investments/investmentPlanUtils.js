@@ -49,7 +49,7 @@ export const mapPlanToRows = (plan) => {
   }));
 };
 
-export const buildLines = (rows, targetYear) =>
+export const buildLines = (rows, targetYear, structureId) =>
   rows
     .filter((row) => !isRowEmpty(row))
     .map((row) => ({
@@ -61,4 +61,5 @@ export const buildLines = (rows, targetYear) =>
       priority: toNumber(row.priority) ?? 1,
       justification: row.justification?.trim() || undefined,
       targetYear,
+      structure: structureId,
     }));
