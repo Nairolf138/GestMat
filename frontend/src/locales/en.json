@@ -145,6 +145,13 @@
       "save_line": "Save",
       "reset": "Reset",
       "save": "Save"
+    },
+    "export": {
+      "button": "Export wishes",
+      "format_label": "Format",
+      "success": "Wishes export generated successfully.",
+      "error_generic": "Unable to generate wishes export.",
+      "error_structure_required": "Select a structure to export wishes."
     }
   },
   "equipments": {

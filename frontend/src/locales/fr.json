@@ -145,6 +145,13 @@
       "save_line": "Enregistrer",
       "reset": "Réinitialiser",
       "save": "Enregistrer"
+    },
+    "export": {
+      "button": "Exporter les souhaits",
+      "format_label": "Format",
+      "success": "Export des souhaits généré avec succès.",
+      "error_generic": "Impossible de générer l'export des souhaits.",
+      "error_structure_required": "Sélectionnez une structure pour exporter les souhaits."
     }
   },
   "equipments": {
