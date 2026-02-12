@@ -32,6 +32,7 @@ const resolveStructureId = (value, structures) => {
 
 function ManageInvestments() {
   const { t } = useTranslation();
+  const currentYear = new Date().getFullYear();
   const { structures } = useContext(GlobalContext);
   const [structureInput, setStructureInput] = useState('');
   const [structureFilter, setStructureFilter] = useState('');
@@ -151,6 +152,16 @@ function ManageInvestments() {
       actions: t('investments.table.actions'),
     }),
     [t],
+  );
+
+  const yearLabels = useMemo(
+    () => ({
+      year1: t('investments.year_one', { year: currentYear }),
+      year2: t('investments.year_two', { year: currentYear + 1 }),
+      summaryYear1: t('investments.summary.year1', { year: currentYear }),
+      summaryYear2: t('investments.summary.year2', { year: currentYear + 1 }),
+    }),
+    [currentYear, t],
   );
 
   const mapPlanToRowsMemo = useCallback((plan) => mapPlanToRows(plan), []);
@@ -519,8 +530,8 @@ function ManageInvestments() {
         <thead>
           <tr>
             <th scope="col">{t('vehicles.filters.structure')}</th>
-            <th scope="col">{t('investments.summary.year1')}</th>
-            <th scope="col">{t('investments.summary.year2')}</th>
+            <th scope="col">{yearLabels.summaryYear1}</th>
+            <th scope="col">{yearLabels.summaryYear2}</th>
             <th scope="col">{t('investments.summary.total')}</th>
           </tr>
         </thead>
@@ -731,10 +742,10 @@ function ManageInvestments() {
                   </p>
                   <ul className="list-unstyled mb-0 d-flex flex-wrap gap-3">
                     <li>
-                      {t('investments.summary.year1')}: {formatCurrency(summaryTotals.year1)}
+                      {yearLabels.summaryYear1}: {formatCurrency(summaryTotals.year1)}
                     </li>
                     <li>
-                      {t('investments.summary.year2')}: {formatCurrency(summaryTotals.year2)}
+                      {yearLabels.summaryYear2}: {formatCurrency(summaryTotals.year2)}
                     </li>
                     <li className="fw-semibold">
                       {t('investments.summary.total')}: {formatCurrency(summaryTotals.total)}
@@ -758,11 +769,11 @@ function ManageInvestments() {
                       </p>
                       <ul className="list-unstyled mb-0">
                         <li>
-                          {t('investments.summary.year1')}:{' '}
+                          {yearLabels.summaryYear1}:{' '}
                           {formatCurrency(summary.totals.year1)}
                         </li>
                         <li>
-                          {t('investments.summary.year2')}:{' '}
+                          {yearLabels.summaryYear2}:{' '}
                           {formatCurrency(summary.totals.year2)}
                         </li>
                         <li className="fw-semibold">
@@ -782,8 +793,8 @@ function ManageInvestments() {
                           <thead>
                             <tr>
                               <th>{t('investments.summary.type')}</th>
-                              <th>{t('investments.summary.year1')}</th>
-                              <th>{t('investments.summary.year2')}</th>
+                              <th>{yearLabels.summaryYear1}</th>
+                              <th>{yearLabels.summaryYear2}</th>
                               <th>{t('investments.summary.total')}</th>
                             </tr>
                           </thead>
@@ -817,22 +828,22 @@ function ManageInvestments() {
 
             <section className="card border-0 shadow-sm mb-4">
               <div className="card-body">
-                <h3 className="h5">{t('investments.year_one')}</h3>
+                <h3 className="h5">{yearLabels.year1}</h3>
                 {renderTable(
                   setYearOneRows,
                   yearOneDisplayRows,
-                  t('investments.year_one'),
+                  yearLabels.year1,
                 )}
               </div>
             </section>
 
             <section className="card border-0 shadow-sm mb-4">
               <div className="card-body">
-                <h3 className="h5">{t('investments.year_two')}</h3>
+                <h3 className="h5">{yearLabels.year2}</h3>
                 {renderTable(
                   setYearTwoRows,
                   yearTwoDisplayRows,
-                  t('investments.year_two'),
+                  yearLabels.year2,
                 )}
               </div>
             </section>
