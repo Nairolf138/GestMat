@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import AdminStats from './AdminStats';
 import ManageUsers from './admin/ManageUsers';
@@ -7,10 +7,14 @@ import ManageInventory from './admin/ManageInventory';
 import ManageVehicles from './admin/ManageVehicles';
 import ManageInvestments from './admin/ManageInvestments';
 import { api } from './api';
+import { GlobalContext } from './GlobalContext.jsx';
+import GlobalExportModal from './admin/GlobalExportModal.jsx';
 
 function AdminDashboard() {
   const { t } = useTranslation();
+  const { notify } = useContext(GlobalContext);
   const [tab, setTab] = useState('users');
+  const [showGlobalExportModal, setShowGlobalExportModal] = useState(false);
   const [summary, setSummary] = useState({
     activeUsers: 0,
     ongoingLoans: 0,
@@ -111,7 +115,16 @@ function AdminDashboard() {
           </div>
         </div>
       </section>
-      <ul className="nav nav-tabs mt-4">
+      <div className="d-flex justify-content-end mt-4 mb-2">
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm"
+          onClick={() => setShowGlobalExportModal(true)}
+        >
+          {t('admin_export.button')}
+        </button>
+      </div>
+      <ul className="nav nav-tabs">
         <li className="nav-item">
           <button className={`nav-link ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
             {t('admin_dashboard.tabs.users')}
@@ -154,6 +167,11 @@ function AdminDashboard() {
         {tab === 'investments' && <ManageInvestments />}
         {tab === 'stats' && <AdminStats />}
       </div>
+      <GlobalExportModal
+        open={showGlobalExportModal}
+        onClose={() => setShowGlobalExportModal(false)}
+        onSuccess={(message) => notify(message, 'success')}
+      />
     </>
   );
 }

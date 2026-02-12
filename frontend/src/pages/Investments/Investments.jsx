@@ -11,6 +11,7 @@ import {
   isRowEmpty,
   mapPlanToRows,
 } from '../../investments/investmentPlanUtils';
+import InvestmentsExportButton from '../../investments/InvestmentsExportButton.jsx';
 
 function Investments() {
   const { t } = useTranslation();
@@ -446,16 +447,23 @@ function Investments() {
   return (
     <div className="py-4">
       <header className="mb-4">
-        <h1 className="h3 fw-bold">{t('investments.title')}</h1>
-        <p className="text-muted mb-0">{t('investments.subtitle')}</p>
-        <button
-          type="button"
-          className="btn btn-outline-secondary btn-sm mt-3"
-          onClick={loadPlans}
-          disabled={loading}
-        >
-          {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
-        </button>
+        <div className="d-flex flex-wrap justify-content-between gap-3 align-items-end">
+          <div>
+            <h1 className="h3 fw-bold">{t('investments.title')}</h1>
+            <p className="text-muted mb-0">{t('investments.subtitle')}</p>
+          </div>
+          <div className="d-flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              onClick={loadPlans}
+              disabled={loading}
+            >
+              {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
+            </button>
+            <InvestmentsExportButton structureId={structureId} />
+          </div>
+        </div>
       </header>
 
       <Alert message={error} onClose={() => setError('')} />

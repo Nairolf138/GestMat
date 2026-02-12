@@ -15,6 +15,7 @@ import {
   createEmptyRow,
   mapPlanToRows,
 } from '../investments/investmentPlanUtils';
+import InvestmentsExportButton from '../investments/InvestmentsExportButton.jsx';
 
 const resolveStructureId = (value, structures) => {
   if (!value) return '';
@@ -609,14 +610,19 @@ function ManageInvestments() {
               <p className="text-muted mb-0">{t('users.select_structure')}</p>
             )}
           </div>
-          <button
-            type="button"
-            className="btn btn-outline-secondary align-self-lg-start"
-            onClick={viewMode === 'global' ? loadAllPlans : loadPlans}
-            disabled={loading || (viewMode === 'structure' && !selectedStructureId)}
-          >
-            {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
-          </button>
+          <div className="d-flex flex-wrap gap-2 align-items-end">
+            <button
+              type="button"
+              className="btn btn-outline-secondary align-self-lg-start"
+              onClick={viewMode === 'global' ? loadAllPlans : loadPlans}
+              disabled={loading || (viewMode === 'structure' && !selectedStructureId)}
+            >
+              {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
+            </button>
+            {viewMode === 'structure' && (
+              <InvestmentsExportButton structureId={selectedStructureId} />
+            )}
+          </div>
         </div>
 
         <Alert message={error} onClose={() => setError('')} />
