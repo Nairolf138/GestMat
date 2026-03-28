@@ -28,6 +28,14 @@ function createStubDb({
             collections.equipments.find(
               (e) => e._id?.toString?.() === query._id?.toString?.(),
             ) || null,
+          find: (query) => ({
+            toArray: async () =>
+              collections.equipments.filter((equipment) => {
+                const ids = query?._id?.$in;
+                if (!Array.isArray(ids)) return true;
+                return ids.some((id) => id?.toString?.() === equipment._id?.toString?.());
+              }),
+          }),
         };
       }
 
@@ -163,4 +171,40 @@ test('getLoanRecipients journalise explicitement en absence de destinataires', a
   );
 
   delete require.cache[loggerPath];
+});
+
+test('getLoanRecipientsByRole gère les demandes véhicule sans doublon equipment', async () => {
+  const ownerId = new ObjectId();
+  const borrowerId = new ObjectId();
+  const vehicleId = new ObjectId();
+  const db = createStubDb({
+    structures: [
+      { _id: ownerId, name: 'Owner' },
+      { _id: borrowerId, name: 'Borrower' },
+    ],
+    users: [
+      {
+        _id: new ObjectId(),
+        structure: ownerId,
+        email: 'owner.vehicle@example.test',
+        role: AUTRE_ROLE,
+      },
+    ],
+  });
+
+  const { getLoanRecipientsByRole } = require('../src/utils/getLoanRecipients');
+  const recipients = await getLoanRecipientsByRole(
+    db,
+    [{ kind: 'vehicle', vehicle: vehicleId }],
+    {
+      ownerId: ownerId.toString(),
+      borrowerId: borrowerId.toString(),
+      borrower: borrowerId,
+      requestedBy: null,
+      requestedById: null,
+    },
+    'loanStatusChanges',
+  );
+
+  assert.deepStrictEqual(recipients.ownerRecipients, ['owner.vehicle@example.test']);
 });

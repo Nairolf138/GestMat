@@ -24,7 +24,9 @@ export interface LoanRecipientGroups {
 }
 
 interface LoanItemRef {
-  equipment: any;
+  kind?: 'equipment' | 'vehicle';
+  equipment?: any;
+  vehicle?: any;
 }
 
 interface RecipientFilterOptions {
@@ -69,16 +71,20 @@ async function findOwnerRecipients(
 ): Promise<string[]> {
   if (!ownerId) return [];
 
-  const types = (
-    await Promise.all(
-      items.map(async (it) => {
-        const eq = await db
+  const equipmentIds = items
+    .filter((it) => (it.kind ?? 'equipment') === 'equipment' && it.equipment)
+    .map((it) => new ObjectId(it.equipment));
+  const types = equipmentIds.length
+    ? (
+        await db
           .collection('equipments')
-          .findOne<{ type?: string }>({ _id: new ObjectId(it.equipment) });
-        return eq?.type;
-      }),
-    )
-  ).filter(Boolean) as string[];
+          .find<{ type?: string }>({ _id: { $in: equipmentIds } }, { projection: { type: 1 } })
+          .toArray()
+      )
+        .map((eq) => eq?.type)
+        .filter(Boolean) as string[]
+    : [];
+  const hasVehicleItem = items.some((it) => (it.kind ?? 'equipment') === 'vehicle');
 
   const users = await db
     .collection('users')
@@ -108,7 +114,7 @@ async function findOwnerRecipients(
       return (
         u.email &&
         result.allowed &&
-        (!types.length || types.some((t) => canModify(u.role, t)))
+        (hasVehicleItem || !types.length || types.some((t) => canModify(u.role, t)))
       );
     })
     .map((u: any) => u.email as string);

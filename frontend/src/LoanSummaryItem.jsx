@@ -12,7 +12,7 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
   const ownerName = loan.owner?.name || t('home.activity.untitled');
   const borrowerName = loan.borrower?.name || t('home.activity.untitled');
   const totalItems = loan.items?.reduce(
-    (sum, it) => sum + (it.quantity || 0),
+    (sum, it) => sum + (it.kind === 'vehicle' ? 1 : (it.quantity || 0)),
     0,
   );
   const noteContent = loan.note?.trim();

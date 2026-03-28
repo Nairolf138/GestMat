@@ -112,9 +112,10 @@ function filterLoansForUser(
   structId: string,
 ): LoanRequest[] {
   const filterFn = (loan: LoanRequest) => {
-    const typeOk = (loan.items || []).some((item) =>
-      canModify(user.role, (item.equipment as any)?.type),
-    );
+    const typeOk = (loan.items || []).some((item) => {
+      if (item.kind === 'vehicle') return true;
+      return canModify(user.role, (item.equipment as any)?.type);
+    });
     if (!typeOk) return false;
 
     const req: any = loan.requestedBy;
@@ -536,6 +537,9 @@ export async function updateLoanRequest(
     const decisionAllowedKeys = ['status', 'decisionNote'];
     const types = await Promise.all(
       (loan.items || []).map(async (item: LoanItem) => {
+        if (item.kind === 'vehicle') {
+          return '__vehicle__';
+        }
         const eq = await db
           .collection('equipments')
           .findOne({ _id: item.equipment as any }, {
@@ -570,7 +574,7 @@ export async function updateLoanRequest(
             if (
               !isOwner ||
               keys.some((k) => !decisionAllowedKeys.includes(k)) ||
-              !types.every((t) => canModify(user.role, t))
+              !types.every((t) => t === '__vehicle__' || canModify(user.role, t))
             ) {
               throw forbidden('Access denied');
             }

@@ -11,11 +11,36 @@ export const confirmDialog = (message) => window.confirm(message);
 
 export const toLoanItemsPayload = (items = []) =>
   items
-    .filter((item) => item?.equipment?._id)
-    .map((item) => ({
-      equipment: item.equipment._id,
-      quantity: item.quantity,
-    }));
+    .map((item) => {
+      const kind = item?.kind === 'vehicle' ? 'vehicle' : 'equipment';
+      if (kind === 'vehicle' && item?.vehicle?._id) {
+        return {
+          kind,
+          vehicle: item.vehicle._id,
+          quantity: 1,
+        };
+      }
+      if (item?.equipment?._id) {
+        return {
+          kind,
+          equipment: item.equipment._id,
+          quantity: item.quantity,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
+export const formatLoanItemLabel = (item) => {
+  const kind = item?.kind === 'vehicle' ? 'vehicle' : 'equipment';
+  if (kind === 'vehicle') {
+    return item?.vehicle?.name || '';
+  }
+  const name = item?.equipment?.name;
+  if (!name) return '';
+  const quantity = item?.quantity;
+  return `${name}${quantity ? ` x${quantity}` : ''}`;
+};
 
 export const ALL_TYPES = ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'];
 
