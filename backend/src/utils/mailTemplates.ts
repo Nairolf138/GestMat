@@ -122,6 +122,25 @@ function formatDecisionNote(note?: string | null): { text: string; html: string 
   return formatNote(cleaned);
 }
 
+function getItemsLabel(items: LoanItem[] = []): string {
+  if (!items.length) {
+    return 'Matériel';
+  }
+
+  const hasVehicle = items.some((item) => item.kind === 'vehicle');
+  const hasEquipment = items.some((item) => item.kind !== 'vehicle');
+
+  if (hasVehicle && hasEquipment) {
+    return 'Éléments prêtés';
+  }
+
+  if (hasVehicle) {
+    return 'Véhicule';
+  }
+
+  return 'Matériel';
+}
+
 function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   if (!items.length) {
     return { text: '- Aucun matériel renseigné', html: '<li>Aucun matériel renseigné</li>' };
@@ -129,16 +148,33 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   const textItems: string[] = [];
   const htmlItems: string[] = [];
   for (const item of items) {
-    const equipment = item.equipment as any;
-    const equipmentId =
-      equipment?._id?.toString?.() || equipment?.toString?.() || undefined;
-    const label =
-      equipment?.name ||
-      equipment?.reference ||
-      equipment?.code ||
-      equipmentId ||
-      'Matériel';
-    const quantity = item.quantity ?? 'N/A';
+    const kind = item.kind === 'vehicle' ? 'vehicle' : 'equipment';
+    const quantity = kind === 'vehicle' ? 1 : item.quantity ?? 'N/A';
+
+    let label: string;
+    if (kind === 'vehicle') {
+      const vehicle = item.vehicle as any;
+      const vehicleId = vehicle?._id?.toString?.() || vehicle?.toString?.() || undefined;
+      const vehicleName = vehicle?.name;
+      const registrationNumber = vehicle?.registrationNumber;
+      label =
+        [vehicleName, registrationNumber].filter(Boolean).join(' - ') ||
+        vehicleName ||
+        registrationNumber ||
+        vehicleId ||
+        'Véhicule';
+    } else {
+      const equipment = item.equipment as any;
+      const equipmentId =
+        equipment?._id?.toString?.() || equipment?.toString?.() || undefined;
+      label =
+        equipment?.name ||
+        equipment?.reference ||
+        equipment?.code ||
+        equipmentId ||
+        'Matériel';
+    }
+
     textItems.push(`- ${label} (quantité : ${quantity})`);
     htmlItems.push(`<li><strong>${label}</strong> — quantité : ${quantity}</li>`);
   }
@@ -153,6 +189,7 @@ export function buildLoanSummary(loan: LoanRequest): { text: string; html: strin
   const start = formatDate(loan.startDate as any);
   const end = formatDate(loan.endDate as any);
   const { text: itemsText, html: itemsHtml } = formatItems(loan.items as LoanItem[]);
+  const itemsLabel = getItemsLabel(loan.items as LoanItem[]);
   const { text: noteText, html: noteHtml } = formatNote(loan.note as string | null);
 
   const text =
@@ -162,7 +199,7 @@ export function buildLoanSummary(loan: LoanRequest): { text: string; html: strin
     `Début : ${start}\n` +
     `Fin : ${end}\n` +
     `Statut : ${status}\n` +
-    `Matériel :\n${itemsText}\n` +
+    `${itemsLabel} :\n${itemsText}\n` +
     `Note : ${noteText}`;
 
   const html = [
@@ -173,7 +210,7 @@ export function buildLoanSummary(loan: LoanRequest): { text: string; html: strin
     `<li><strong>Début :</strong> ${start}</li>`,
     `<li><strong>Fin :</strong> ${end}</li>`,
     `<li><strong>Statut :</strong> ${status}</li>`,
-    `<li><strong>Matériel :</strong><ul>${itemsHtml}</ul></li>`,
+    `<li><strong>${itemsLabel} :</strong><ul>${itemsHtml}</ul></li>`,
     `<li><strong>Note :</strong> ${noteHtml}</li>`,
     '</ul>',
   ].join('');
