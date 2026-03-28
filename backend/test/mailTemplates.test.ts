@@ -62,6 +62,42 @@ const expectedSummaryHtml = [
   '</ul>',
 ].join('');
 
+const vehicleLoan = {
+  ...sampleLoan,
+  items: [
+    {
+      kind: 'vehicle',
+      vehicle: { name: 'Renault Kangoo', registrationNumber: 'AB-123-CD' },
+      quantity: 4,
+    },
+  ],
+};
+
+const expectedVehicleSummaryText = [
+  'Prêteur : Structure Prêteuse',
+  'Emprunteur : Structure Emprunteuse',
+  'Demandeur : Ada Lovelace',
+  `Début : ${dateFormatter(startDate)}`,
+  `Fin : ${dateFormatter(endDate)}`,
+  'Statut : en attente',
+  'Véhicule :',
+  '- Renault Kangoo - AB-123-CD (quantité : 1)',
+  'Note : Livraison avant midi.',
+].join('\n');
+
+const expectedVehicleSummaryHtml = [
+  '<ul aria-label="Détails du prêt">',
+  '<li><strong>Prêteur :</strong> Structure Prêteuse</li>',
+  '<li><strong>Emprunteur :</strong> Structure Emprunteuse</li>',
+  '<li><strong>Demandeur :</strong> Ada Lovelace</li>',
+  `<li><strong>Début :</strong> ${dateFormatter(startDate)}</li>`,
+  `<li><strong>Fin :</strong> ${dateFormatter(endDate)}</li>`,
+  '<li><strong>Statut :</strong> en attente</li>',
+  '<li><strong>Véhicule :</strong><ul><li><strong>Renault Kangoo - AB-123-CD</strong> — quantité : 1</li></ul></li>',
+  '<li><strong>Note :</strong> Livraison avant midi.</li>',
+  '</ul>',
+].join('');
+
 function buildExpectedTemplate({
   subject,
   preamble,
@@ -121,6 +157,34 @@ test('loanStartReminderTemplate conserve un gabarit harmonisé', () => {
   });
 
   assert.deepStrictEqual(template, expected);
+});
+
+test("buildLoanSummary gère les items de type kind='vehicle'", () => {
+  const summary = buildLoanSummary(vehicleLoan as any);
+
+  assert.deepStrictEqual(summary, {
+    text: expectedVehicleSummaryText,
+    html: expectedVehicleSummaryHtml,
+  });
+});
+
+test("buildLoanSummary utilise 'Éléments prêtés' quand les items sont mixtes", () => {
+  const mixedLoan = {
+    ...sampleLoan,
+    items: [
+      { kind: 'equipment', equipment: { name: 'Caméra 4K' }, quantity: 2 },
+      {
+        kind: 'vehicle',
+        vehicle: { name: 'Peugeot Partner', registrationNumber: 'EF-456-GH' },
+      },
+    ],
+  };
+
+  const summary = buildLoanSummary(mixedLoan as any);
+
+  assert.match(summary.text, /Éléments prêtés :/);
+  assert.match(summary.html, /<strong>Éléments prêtés :<\/strong>/);
+  assert.match(summary.text, /- Peugeot Partner - EF-456-GH \(quantité : 1\)/);
 });
 
 test('loanOverdueTemplate conserve un gabarit harmonisé', () => {
