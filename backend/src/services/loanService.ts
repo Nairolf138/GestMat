@@ -34,6 +34,65 @@ import {
 const CLOSED_STATUSES = ['refused', 'cancelled'];
 const DUE_SOON_DAYS = 7;
 
+function getVehicleIds(items: LoanItem[] = []): ObjectId[] {
+  return items
+    .filter((item) => item.kind === 'vehicle' && item.vehicle)
+    .map((item) => new ObjectId(item.vehicle as any));
+}
+
+async function addOrUpdateVehicleReservations(
+  db: Db,
+  loanRequestId: ObjectId,
+  items: LoanItem[] = [],
+  start: Date | null,
+  end: Date | null,
+  session: any,
+): Promise<void> {
+  if (!start || !end) return;
+  const vehicleIds = getVehicleIds(items);
+  await Promise.all(
+    vehicleIds.map(async (vehicleId) => {
+      await db.collection('vehicles').updateOne(
+        { _id: vehicleId },
+        { $pull: { reservations: { loanRequestId } } } as any,
+        { session },
+      );
+      await db.collection('vehicles').updateOne(
+        { _id: vehicleId },
+        ({
+          $push: {
+            reservations: {
+              start,
+              end,
+              loanRequestId,
+            },
+          },
+          $currentDate: { updatedAt: true },
+        } as any),
+        { session },
+      );
+    }),
+  );
+}
+
+async function removeVehicleReservationsByLoanRequest(
+  db: Db,
+  loanRequestId: ObjectId,
+  items: LoanItem[] = [],
+  session?: any,
+): Promise<void> {
+  const vehicleIds = getVehicleIds(items);
+  if (!vehicleIds.length) return;
+  await db.collection('vehicles').updateMany(
+    { _id: { $in: vehicleIds } },
+    ({
+      $pull: { reservations: { loanRequestId } },
+      $currentDate: { updatedAt: true },
+    } as any),
+    session ? { session } : undefined,
+  );
+}
+
 function filterLoansForUser(
   loans: LoanRequest[],
   user: AuthUser,
@@ -321,6 +380,17 @@ export async function createLoanRequest(
         },
         session,
       );
+
+      if (status === 'accepted' && loan._id) {
+        await addOrUpdateVehicleReservations(
+          db,
+          loan._id as ObjectId,
+          items as LoanItem[],
+          start,
+          end,
+          session,
+        );
+      }
       await session.commitTransaction();
       session.endSession();
 
@@ -439,8 +509,13 @@ export async function updateLoanRequest(
     const isRequester = loan.requestedBy?.toString() === user.id;
     const now = new Date();
     const releaseStatuses = ['refused', 'cancelled'];
+    const acceptedStatus = 'accepted';
     const keys = Object.keys(data);
     const status = (data as any).status;
+    const nextStatus = (status ?? loan.status) as string;
+    const nextStart = data.startDate ? new Date(data.startDate as any) : new Date(loan.startDate);
+    const nextEnd = data.endDate ? new Date(data.endDate as any) : new Date(loan.endDate);
+    const datesChanged = Boolean(data.startDate || data.endDate);
     const decisionAllowedKeys = ['status', 'decisionNote'];
     const types = await Promise.all(
       (loan.items || []).map(async (item: LoanItem) => {
@@ -535,6 +610,16 @@ export async function updateLoanRequest(
       !releaseStatuses.includes(loan.status as any)
     ) {
       for (const item of loan.items || []) {
+        if (item.kind === 'vehicle') {
+          await db
+            .collection('vehicles')
+            .updateOne(
+              { _id: item.vehicle },
+              { $currentDate: { updatedAt: true } },
+              { session },
+            );
+          continue;
+        }
         await db
           .collection('equipments')
           .updateOne(
@@ -552,6 +637,26 @@ export async function updateLoanRequest(
       const start = loan.startDate;
       const end = loan.endDate;
       for (const item of loan.items || []) {
+        if (item.kind === 'vehicle') {
+          const avail = await checkVehicleAvailability(
+            db,
+            item.vehicle as any,
+            start,
+            end,
+            session,
+          );
+          if (!avail?.available) {
+            throw badRequest('Vehicle not available');
+          }
+          await db
+            .collection('vehicles')
+            .updateOne(
+              { _id: item.vehicle },
+              { $currentDate: { updatedAt: true } },
+              { session },
+            );
+          continue;
+        }
         const avail = await checkEquipmentAvailability(
           db,
           item.equipment as any,
@@ -572,6 +677,51 @@ export async function updateLoanRequest(
           );
       }
     }
+
+    if (nextStatus === acceptedStatus) {
+      for (const item of loan.items || []) {
+        if (item.kind !== 'vehicle') continue;
+        const avail = await checkVehicleAvailability(
+          db,
+          item.vehicle as any,
+          nextStart,
+          nextEnd,
+          session,
+          loan._id as ObjectId,
+        );
+        if (!avail?.available) {
+          throw badRequest('Vehicle not available');
+        }
+      }
+      await addOrUpdateVehicleReservations(
+        db,
+        loan._id as ObjectId,
+        loan.items || [],
+        nextStart,
+        nextEnd,
+        session,
+      );
+    } else if (
+      (status && releaseStatuses.includes(status)) ||
+      (loan.status === acceptedStatus && status && status !== acceptedStatus)
+    ) {
+      await removeVehicleReservationsByLoanRequest(
+        db,
+        loan._id as ObjectId,
+        loan.items || [],
+        session,
+      );
+    } else if (datesChanged && loan.status === acceptedStatus) {
+      await addOrUpdateVehicleReservations(
+        db,
+        loan._id as ObjectId,
+        loan.items || [],
+        nextStart,
+        nextEnd,
+        session,
+      );
+    }
+
     updated = await updateLoan(db, id, data, session);
     await session.commitTransaction();
 
@@ -705,6 +855,16 @@ export async function deleteLoanRequest(
     }
 
     for (const item of loan.items || []) {
+      if (item.kind === 'vehicle') {
+        await db
+          .collection('vehicles')
+          .updateOne(
+            { _id: item.vehicle },
+            { $currentDate: { updatedAt: true } },
+            { session },
+          );
+        continue;
+      }
       await db
         .collection('equipments')
         .updateOne(
@@ -713,6 +873,13 @@ export async function deleteLoanRequest(
           { session },
         );
     }
+
+    await removeVehicleReservationsByLoanRequest(
+      db,
+      loan._id as ObjectId,
+      loan.items || [],
+      session,
+    );
 
     const removed = await deleteLoan(db, id, session);
     if (!removed) throw notFound('Loan request not found');

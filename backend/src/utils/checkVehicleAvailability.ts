@@ -7,10 +7,22 @@ function hasReservationConflict(
   reservations: VehicleReservation[] = [],
   start: Date | null,
   end: Date | null,
+  excludedLoanRequestId?: ObjectId,
 ): boolean {
   if (!start || !end) return false;
 
   return reservations.some((reservation) => {
+    const reservationLoanRequestId =
+      (reservation as any)?.loanRequestId?.toString?.() ||
+      (reservation as any)?.loanRequestId;
+    if (
+      excludedLoanRequestId &&
+      reservationLoanRequestId &&
+      reservationLoanRequestId.toString() === excludedLoanRequestId.toString()
+    ) {
+      return false;
+    }
+
     const reservationStart = new Date(reservation.start);
     const reservationEnd = new Date(reservation.end);
 
@@ -32,6 +44,7 @@ export async function checkVehicleAvailability(
   start: Date | null,
   end: Date | null,
   session?: ClientSession,
+  excludedLoanRequestId?: ObjectId,
 ): Promise<{ available: boolean } | null> {
   const vehicle = await db
     .collection<Vehicle>('vehicles')
@@ -51,7 +64,14 @@ export async function checkVehicleAvailability(
     return { available: false };
   }
 
-  if (hasReservationConflict(vehicle.reservations, start, end)) {
+  if (
+    hasReservationConflict(
+      vehicle.reservations,
+      start,
+      end,
+      excludedLoanRequestId,
+    )
+  ) {
     return { available: false };
   }
 

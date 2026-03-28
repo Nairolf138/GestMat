@@ -16,6 +16,7 @@ export interface VehicleReservation {
   end: Date;
   status?: VehicleStatus;
   note?: string;
+  loanRequestId?: ObjectId;
 }
 
 export interface VehicleMaintenance {
