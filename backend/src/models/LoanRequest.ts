@@ -1,7 +1,12 @@
 import { Db, ObjectId, ClientSession } from 'mongodb';
 
+export type LoanItemKind = 'equipment' | 'vehicle';
+
 export interface LoanItem {
+  kind?: LoanItemKind;
   equipment?: ObjectId | Record<string, unknown>;
+  vehicle?: ObjectId | Record<string, unknown>;
+  quantity?: number;
   [key: string]: unknown;
 }
 
@@ -42,6 +47,29 @@ const normalizeOverdueNotificationFields = (data: LoanRequest): void => {
 
   data.overdueNotifiedAt = overdueNotifiedAt;
 };
+
+const normalizeLoanItemKind = (item: LoanItem): LoanItemKind =>
+  item.kind === 'vehicle' ? 'vehicle' : 'equipment';
+
+const normalizeLoanItemsForPersistence = (items: LoanItem[]): LoanItem[] =>
+  items.map((item) => {
+    const kind = normalizeLoanItemKind(item);
+
+    if (kind === 'vehicle') {
+      return {
+        ...item,
+        kind,
+        vehicle: new ObjectId(item.vehicle as ObjectId),
+        quantity: 1,
+      };
+    }
+
+    return {
+      ...item,
+      kind,
+      equipment: new ObjectId(item.equipment as ObjectId),
+    };
+  });
 
 async function _populate(
   db: Db,
@@ -84,7 +112,17 @@ async function _populate(
     loan.items
       ? Promise.all(
           loan.items.map(async (item) => {
-            if (item.equipment) {
+            const kind = normalizeLoanItemKind(item);
+            item.kind = kind;
+
+            if (kind === 'vehicle' && item.vehicle) {
+              item.vehicle =
+                (await db
+                  .collection('vehicles')
+                  .findOne({ _id: item.vehicle as ObjectId }, { session })) ||
+                item.vehicle;
+              item.quantity = 1;
+            } else if (item.equipment) {
               item.equipment =
                 (await db
                   .collection('equipments')
@@ -173,10 +211,7 @@ export async function createLoan(
   if (data.processedBy)
     data.processedBy = new ObjectId(data.processedBy as ObjectId);
   if (data.items) {
-    data.items = data.items.map((it) => ({
-      ...it,
-      equipment: new ObjectId(it.equipment as ObjectId),
-    }));
+    data.items = normalizeLoanItemsForPersistence(data.items);
   }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
@@ -205,10 +240,7 @@ export async function updateLoan(
   if (data.processedBy)
     data.processedBy = new ObjectId(data.processedBy as ObjectId);
   if (data.items) {
-    data.items = data.items.map((it) => ({
-      ...it,
-      equipment: new ObjectId(it.equipment as ObjectId),
-    }));
+    data.items = normalizeLoanItemsForPersistence(data.items);
   }
   if (data.startDate) data.startDate = new Date(data.startDate);
   if (data.endDate) data.endDate = new Date(data.endDate);
