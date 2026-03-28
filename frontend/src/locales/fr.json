@@ -329,7 +329,19 @@
       "status_pending": "Statut non renseigné",
       "edit_title": "Mettre à jour",
       "edit_hint": "Cliquez sur \"Modifier le véhicule\" pour mettre à jour les informations.",
-      "not_provided": "Non renseigné"
+      "not_provided": "Non renseigné",
+      "request_title": "Demander ce véhicule",
+      "request_action": "Demander ce véhicule",
+      "request_submitting": "Envoi…",
+      "request_borrower_structure": "Structure emprunteuse",
+      "request_start_date": "Date de début",
+      "request_end_date": "Date de fin",
+      "request_note": "Note",
+      "request_missing_fields": "Merci de renseigner les champs obligatoires.",
+      "request_invalid_dates": "La date de début doit être antérieure ou égale à la date de fin.",
+      "request_conflict_dates": "Ce véhicule est déjà réservé sur cette période.",
+      "request_success": "Demande de véhicule envoyée.",
+      "request_error": "Impossible de créer la demande de véhicule."
     }
   },
   "admin_export": {

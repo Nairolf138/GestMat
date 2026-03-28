@@ -7,14 +7,27 @@ import Loading from '../../Loading.jsx';
 import VehicleForm from './VehicleForm.jsx';
 import { api } from '../../api';
 import { GlobalContext } from '../../GlobalContext.jsx';
+import { AuthContext } from '../../AuthContext.jsx';
 import { formatDate } from '../../utils/dateFormat.js';
 
 function VehicleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { notify } = useContext(GlobalContext);
+  const { notify, structures } = useContext(GlobalContext);
+  const { user } = useContext(AuthContext);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmittingLoan, setIsSubmittingLoan] = useState(false);
+  const [loanFormError, setLoanFormError] = useState('');
+  const [loanFieldErrors, setLoanFieldErrors] = useState({});
+  const defaultBorrowerId =
+    typeof user?.structure === 'string' ? user.structure : user?.structure?._id || '';
+  const [loanForm, setLoanForm] = useState({
+    borrower: defaultBorrowerId,
+    startDate: '',
+    endDate: '',
+    note: '',
+  });
 
   const { data: vehicle, isFetching, error } = useQuery({
     queryKey: ['vehicle', id],
@@ -24,6 +37,70 @@ function VehicleDetail() {
   const reservations = [...(vehicle?.reservations || [])].sort(
     (a, b) => new Date(b.start).getTime() - new Date(a.start).getTime(),
   );
+  const ownerStructureId =
+    typeof vehicle?.structure === 'string'
+      ? vehicle.structure
+      : vehicle?.structure?._id || '';
+
+  const updateLoanField = (field, value) => {
+    setLoanForm((prev) => ({ ...prev, [field]: value }));
+    setLoanFieldErrors((prev) => ({ ...prev, [field]: '' }));
+    setLoanFormError('');
+  };
+
+  const handleLoanSubmit = async (e) => {
+    e.preventDefault();
+    setLoanFormError('');
+    setLoanFieldErrors({});
+
+    if (!loanForm.borrower || !loanForm.startDate || !loanForm.endDate || !ownerStructureId) {
+      setLoanFormError(t('vehicles.detail.request_missing_fields'));
+      return;
+    }
+    if (new Date(loanForm.startDate) > new Date(loanForm.endDate)) {
+      setLoanFieldErrors({
+        startDate: t('vehicles.detail.request_invalid_dates'),
+        endDate: t('vehicles.detail.request_invalid_dates'),
+      });
+      return;
+    }
+
+    const payload = {
+      owner: ownerStructureId,
+      borrower: loanForm.borrower,
+      startDate: loanForm.startDate,
+      endDate: loanForm.endDate,
+      note: loanForm.note,
+      items: [{ kind: 'vehicle', vehicle: id }],
+    };
+
+    setIsSubmittingLoan(true);
+    try {
+      const created = await api('/loans', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      notify(t('vehicles.detail.request_success'), 'success');
+      navigate(created?._id ? `/loans/${created._id}` : '/loans');
+    } catch (err) {
+      const dateConflict =
+        err?.message === 'Vehicle not available' ||
+        err?.fields?.startDate ||
+        err?.fields?.endDate ||
+        err?.fields?.items;
+      if (dateConflict) {
+        const conflictMessage = t('vehicles.detail.request_conflict_dates');
+        setLoanFieldErrors({
+          startDate: err?.fields?.startDate || conflictMessage,
+          endDate: err?.fields?.endDate || conflictMessage,
+        });
+      } else {
+        setLoanFormError(err?.message || t('vehicles.detail.request_error'));
+      }
+    } finally {
+      setIsSubmittingLoan(false);
+    }
+  };
 
   return (
     <>
@@ -162,6 +239,86 @@ function VehicleDetail() {
           </div>
           <div className="col-lg-4">
             <div className="card shadow-sm mb-3">
+              <div className="card-body border-bottom">
+                <h3 className="h5 mb-3">{t('vehicles.detail.request_title')}</h3>
+                <Alert message={loanFormError} onClose={() => setLoanFormError('')} />
+                <form onSubmit={handleLoanSubmit} noValidate>
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="vehicle-loan-borrower">
+                      {t('vehicles.detail.request_borrower_structure')}
+                    </label>
+                    <select
+                      id="vehicle-loan-borrower"
+                      className={`form-select ${loanFieldErrors.borrower ? 'is-invalid' : ''}`}
+                      value={loanForm.borrower}
+                      onChange={(e) => updateLoanField('borrower', e.target.value)}
+                      required
+                    >
+                      <option value="">{t('common.choose')}</option>
+                      {structures.map((structure) => (
+                        <option key={structure._id} value={structure._id}>
+                          {structure.name || structure.label}
+                        </option>
+                      ))}
+                    </select>
+                    {loanFieldErrors.borrower && (
+                      <div className="invalid-feedback">{loanFieldErrors.borrower}</div>
+                    )}
+                  </div>
+                  <div className="row g-2">
+                    <div className="col-6">
+                      <label className="form-label" htmlFor="vehicle-loan-start">
+                        {t('vehicles.detail.request_start_date')}
+                      </label>
+                      <input
+                        id="vehicle-loan-start"
+                        type="date"
+                        className={`form-control ${loanFieldErrors.startDate ? 'is-invalid' : ''}`}
+                        value={loanForm.startDate}
+                        onChange={(e) => updateLoanField('startDate', e.target.value)}
+                        required
+                      />
+                      {loanFieldErrors.startDate && (
+                        <div className="invalid-feedback">{loanFieldErrors.startDate}</div>
+                      )}
+                    </div>
+                    <div className="col-6">
+                      <label className="form-label" htmlFor="vehicle-loan-end">
+                        {t('vehicles.detail.request_end_date')}
+                      </label>
+                      <input
+                        id="vehicle-loan-end"
+                        type="date"
+                        className={`form-control ${loanFieldErrors.endDate ? 'is-invalid' : ''}`}
+                        value={loanForm.endDate}
+                        onChange={(e) => updateLoanField('endDate', e.target.value)}
+                        required
+                      />
+                      {loanFieldErrors.endDate && (
+                        <div className="invalid-feedback">{loanFieldErrors.endDate}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="form-label" htmlFor="vehicle-loan-note">
+                      {t('vehicles.detail.request_note')}
+                    </label>
+                    <textarea
+                      id="vehicle-loan-note"
+                      className="form-control"
+                      rows="3"
+                      value={loanForm.note}
+                      onChange={(e) => updateLoanField('note', e.target.value)}
+                      maxLength={500}
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary mt-3" disabled={isSubmittingLoan}>
+                    {isSubmittingLoan
+                      ? t('vehicles.detail.request_submitting')
+                      : t('vehicles.detail.request_action')}
+                  </button>
+                </form>
+              </div>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <h3 className="h5 mb-0">{t('vehicles.detail.history')}</h3>
