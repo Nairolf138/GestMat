@@ -112,9 +112,23 @@ function filterLoansForUser(
   structId: string,
 ): LoanRequest[] {
   const filterFn = (loan: LoanRequest) => {
+    const ownerId =
+      (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+    const borrowerId =
+      (loan.borrower as any)?._id?.toString?.() ||
+      (loan.borrower as any)?.toString?.();
+    const isOwnerOrBorrower = ownerId === structId || borrowerId === structId;
+
     const typeOk = (loan.items || []).some((item) => {
-      if (item.kind === 'vehicle') return true;
-      return canModify(user.role, (item.equipment as any)?.type);
+      if (item.kind === 'vehicle') {
+        return roleHasPermission(user.role, VEHICLES_REQUEST) || isOwnerOrBorrower;
+      }
+
+      if (item.kind === 'equipment' || !item.kind) {
+        return canModify(user.role, (item.equipment as any)?.type);
+      }
+
+      return false;
     });
     if (!typeOk) return false;
 
@@ -122,9 +136,6 @@ function filterLoansForUser(
     const reqId = req?._id?.toString?.() || req?.toString?.();
 
     if (user.role === AUTRE_ROLE) {
-      const borrowerId =
-        (loan.borrower as any)?._id?.toString?.() ||
-        (loan.borrower as any)?.toString?.();
       if (borrowerId === structId) {
         return reqId === user.id;
       }
