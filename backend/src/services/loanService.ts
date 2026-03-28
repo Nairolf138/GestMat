@@ -26,6 +26,7 @@ import logger from '../utils/logger';
 import { canModify } from '../utils/roleAccess';
 import type { AuthUser } from '../types';
 import { NOTIFY_EMAIL } from '../config';
+import permissionsConfig, { PermissionRule } from '../config/permissions';
 import {
   loanCreationTemplate,
   loanStatusTemplate,
@@ -33,6 +34,18 @@ import {
 
 const CLOSED_STATUSES = ['refused', 'cancelled'];
 const DUE_SOON_DAYS = 7;
+const { PERMISSIONS, VEHICLES_REQUEST } = permissionsConfig as any;
+
+function isPermissionRule(rule: any): rule is PermissionRule {
+  return rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule;
+}
+
+function roleHasPermission(role: string, permission: string): boolean {
+  const rule = PERMISSIONS?.[permission];
+  if (!rule) return false;
+  const allowedRoles = isPermissionRule(rule) ? rule.roles : rule;
+  return Array.isArray(allowedRoles) && allowedRoles.includes(role);
+}
 
 function getVehicleIds(items: LoanItem[] = []): ObjectId[] {
   return items
@@ -263,6 +276,10 @@ export async function createLoanRequest(
   const start = data.startDate ? new Date(data.startDate) : null;
   const end = data.endDate ? new Date(data.endDate) : null;
   const items = data.items || [];
+  const hasVehicleItem = items.some((item) => item.kind === 'vehicle');
+  if (hasVehicleItem && !roleHasPermission(user.role, VEHICLES_REQUEST)) {
+    throw forbidden('Access denied');
+  }
   const { direct: directFlag, ...requestData } = data as any;
   const u = await findUserById(db, user.id);
   const userStruct = u?.structure?.toString();
