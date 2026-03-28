@@ -34,7 +34,12 @@ export const toLoanItemsPayload = (items = []) =>
 export const formatLoanItemLabel = (item) => {
   const kind = item?.kind === 'vehicle' ? 'vehicle' : 'equipment';
   if (kind === 'vehicle') {
-    return item?.vehicle?.name || '';
+    const vehicleName = item?.vehicle?.name;
+    if (!vehicleName) return '';
+    const registrationNumber =
+      item?.vehicle?.registrationNumber || item?.vehicle?.immatriculation;
+    const registrationSuffix = registrationNumber ? ` (${registrationNumber})` : '';
+    return `${vehicleName}${registrationSuffix} x1`;
   }
   const name = item?.equipment?.name;
   if (!name) return '';
