@@ -2,17 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import Loading from '../Loading.jsx';
+import { formatLoanItemLabel } from '../utils';
 
 const statusOptions = ['pending', 'accepted', 'refused', 'cancelled'];
 
 const summarizeItems = (items = []) =>
   items
-    .map((item) => {
-      const name = item?.equipment?.name;
-      if (!name) return '';
-      const quantity = item?.quantity;
-      return `${name}${quantity ? ` x${quantity}` : ''}`;
-    })
+    .map((item) => formatLoanItemLabel(item))
     .filter(Boolean)
     .join(', ');
 
@@ -272,4 +268,3 @@ function ManageLoans() {
 }
 
 export default ManageLoans;
-

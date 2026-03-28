@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import Alert from './Alert.jsx';
-import { toLoanItemsPayload } from './utils';
+import { formatLoanItemLabel, toLoanItemsPayload } from './utils';
 import { formatDate } from './utils/dateFormat.js';
 
 function LoanItem({ loan, isOwner, refresh }) {
@@ -118,9 +118,7 @@ function LoanItem({ loan, isOwner, refresh }) {
           </div>
           <div>
             {loan.items
-              ?.map((it) =>
-                it.equipment ? `${it.equipment.name} x${it.quantity}` : '',
-              )
+              ?.map((it) => formatLoanItemLabel(it))
               .join(', ')}
           </div>
           <div className="mt-1">

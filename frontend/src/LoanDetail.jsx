@@ -5,6 +5,7 @@ import { api } from './api';
 import Loading from './Loading.jsx';
 import Alert from './Alert.jsx';
 import { formatDate } from './utils/dateFormat.js';
+import { formatLoanItemLabel } from './utils';
 
 function LoanDetail() {
   const { id } = useParams();
@@ -64,7 +65,7 @@ function LoanDetail() {
       <ul className="list-group mb-3">
         {loan.items?.map((it) => (
           <li key={it._id} className="list-group-item">
-            {it.equipment ? `${it.equipment.name} x${it.quantity}` : ''}
+            {formatLoanItemLabel(it)}
           </li>
         ))}
       </ul>
