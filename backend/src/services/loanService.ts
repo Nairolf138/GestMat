@@ -21,6 +21,7 @@ import {
 } from '../config/roles';
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
+import { checkVehicleAvailability } from '../utils/checkVehicleAvailability';
 import logger from '../utils/logger';
 import { canModify } from '../utils/roleAccess';
 import type { AuthUser } from '../types';
@@ -212,8 +213,24 @@ export async function createLoanRequest(
     throw forbidden('Cannot request loan for own structure');
   }
 
-  const equipmentDetails = await Promise.all(
+  const itemDetails = await Promise.all(
     items.map(async (item: LoanItem) => {
+      const kind = item.kind === 'vehicle' ? 'vehicle' : 'equipment';
+      if (kind === 'vehicle') {
+        const vehicle = await db
+          .collection('vehicles')
+          .findOne<{ structure?: ObjectId }>({
+            _id: new ObjectId(item.vehicle as any),
+          });
+        if (!vehicle) {
+          throw notFound('Vehicle not found');
+        }
+        const structureId =
+          (vehicle.structure as any)?._id?.toString?.() ||
+          (vehicle.structure as any)?.toString?.();
+        return { kind, structureId };
+      }
+
       const equipment = await db
         .collection('equipments')
         .findOne<{ type?: string; structure?: ObjectId }>({
@@ -229,7 +246,7 @@ export async function createLoanRequest(
       const structureId =
         (equipment.structure as any)?._id?.toString?.() ||
         (equipment.structure as any)?.toString?.();
-      return { type, structureId };
+      return { kind, type, structureId };
     }),
   );
 
@@ -244,15 +261,36 @@ export async function createLoanRequest(
     try {
       session.startTransaction();
       for (const [index, item] of items.entries()) {
-        const detail = equipmentDetails[index];
+        const detail = itemDetails[index];
         if (
           isDirectOwner &&
           detail?.structureId &&
           owner &&
           detail.structureId !== owner
         ) {
-          throw forbidden('Equipment must belong to the owner structure');
+          throw forbidden('Item must belong to the owner structure');
         }
+        if (detail?.kind === 'vehicle') {
+          const avail = await checkVehicleAvailability(
+            db,
+            item.vehicle as any,
+            start,
+            end,
+            session,
+          );
+          if (!avail?.available) {
+            throw badRequest('Vehicle not available');
+          }
+          await db
+            .collection('vehicles')
+            .updateOne(
+              { _id: new ObjectId(item.vehicle as any) },
+              { $currentDate: { updatedAt: true } },
+              { session },
+            );
+          continue;
+        }
+
         const avail = await checkEquipmentAvailability(
           db,
           item.equipment as any,
