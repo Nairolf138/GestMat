@@ -329,7 +329,19 @@
       "status_pending": "Status not provided",
       "edit_title": "Update",
       "edit_hint": "Use \"Edit vehicle\" to update this record.",
-      "not_provided": "Not provided"
+      "not_provided": "Not provided",
+      "request_title": "Request this vehicle",
+      "request_action": "Request this vehicle",
+      "request_submitting": "Submitting…",
+      "request_borrower_structure": "Borrower structure",
+      "request_start_date": "Start date",
+      "request_end_date": "End date",
+      "request_note": "Note",
+      "request_missing_fields": "Please fill in the required fields.",
+      "request_invalid_dates": "The start date must be before or equal to the end date.",
+      "request_conflict_dates": "This vehicle is already booked for this period.",
+      "request_success": "Vehicle request submitted.",
+      "request_error": "Unable to create the vehicle request."
     }
   },
   "admin_export": {
