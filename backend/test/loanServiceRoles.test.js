@@ -40,6 +40,11 @@ test('role based loan service permissions', async (t) => {
       .collection('equipments')
       .insertOne({ name: 'EP2', type: 'Plateau', structure: s2Id }),
   ]);
+  const [vehicleS1, vehicleS2, vehicleS3] = await Promise.all([
+    db.collection('vehicles').insertOne({ name: 'V1', structure: s1Id }),
+    db.collection('vehicles').insertOne({ name: 'V2', structure: s2Id }),
+    db.collection('vehicles').insertOne({ name: 'V3', structure: new ObjectId() }),
+  ]);
   const userAutre = new ObjectId();
   const userRegSon = new ObjectId();
   const userRegGen = new ObjectId();
@@ -107,6 +112,22 @@ test('role based loan service permissions', async (t) => {
       startDate: new Date('2099-01-01'),
       endDate: new Date('2099-01-02'),
     },
+    {
+      owner: s1Id,
+      borrower: s2Id,
+      items: [{ kind: 'vehicle', vehicle: vehicleS1.insertedId }],
+      requestedBy: userRegGenS2,
+      startDate: new Date('2099-03-01'),
+      endDate: new Date('2099-03-02'),
+    },
+    {
+      owner: s2Id,
+      borrower: s1Id,
+      items: [{ kind: 'vehicle', vehicle: vehicleS2.insertedId }],
+      requestedBy: userRegSonS2,
+      startDate: new Date('2099-03-03'),
+      endDate: new Date('2099-03-04'),
+    },
   ]);
 
   await t.test('listLoans filters by equipment type while allowing specialized requester roles', async () => {
@@ -114,10 +135,12 @@ test('role based loan service permissions', async (t) => {
       id: userRegSon.toString(),
       role: REGISSEUR_SON_ROLE,
     });
-    assert.strictEqual(regSonLoans.length, 5);
+    assert.strictEqual(regSonLoans.length, 7);
     assert.ok(
       regSonLoans.every((l) =>
-        (l.items || []).every((it) => it.equipment.type !== 'Plateau'),
+        (l.items || []).every(
+          (it) => it.kind === 'vehicle' || it.equipment.type !== 'Plateau',
+        ),
       ),
     );
     assert.ok(
@@ -130,10 +153,12 @@ test('role based loan service permissions', async (t) => {
       id: userRegPlateau.toString(),
       role: REGISSEUR_PLATEAU_ROLE,
     });
-    assert.strictEqual(regPlateauLoans.length, 2);
+    assert.strictEqual(regPlateauLoans.length, 4);
     assert.ok(
       regPlateauLoans.every((l) =>
-        (l.items || []).every((it) => it.equipment.type === 'Plateau'),
+        (l.items || []).every(
+          (it) => it.kind === 'vehicle' || it.equipment.type === 'Plateau',
+        ),
       ),
     );
     assert.ok(
@@ -150,7 +175,7 @@ test('role based loan service permissions', async (t) => {
       id: userAutre.toString(),
       role: AUTRE_ROLE,
     });
-    assert.strictEqual(autreLoans.length, 4);
+    assert.strictEqual(autreLoans.length, 5);
     assert.ok(
       autreLoans.every((l) => {
         const borrowerId =
@@ -161,6 +186,61 @@ test('role based loan service permissions', async (t) => {
         }
         return true;
       }),
+    );
+  });
+
+
+  await t.test('Non-admin regisseur can list vehicle loans for owner/borrower structures', async () => {
+    const regSonLoans = await listLoans(db, {
+      id: userRegSon.toString(),
+      role: REGISSEUR_SON_ROLE,
+    });
+
+    const vehicleLoans = regSonLoans.filter((loan) =>
+      (loan.items || []).some((item) => item.kind === 'vehicle'),
+    );
+
+    assert.strictEqual(vehicleLoans.length, 2);
+    assert.ok(
+      vehicleLoans.every((loan) => {
+        const ownerId = (loan.owner._id || loan.owner).toString();
+        const borrowerId = (loan.borrower._id || loan.borrower).toString();
+        return ownerId === s1Id.toString() || borrowerId === s1Id.toString();
+      }),
+    );
+    assert.ok(
+      vehicleLoans.some((loan) =>
+        (loan.items || []).some(
+          (item) => (item.vehicle._id || item.vehicle).toString() === vehicleS1.insertedId.toString(),
+        ),
+      ),
+    );
+    assert.ok(
+      vehicleLoans.some((loan) =>
+        (loan.items || []).some(
+          (item) => (item.vehicle._id || item.vehicle).toString() === vehicleS2.insertedId.toString(),
+        ),
+      ),
+    );
+
+    const noRelationLoanId = (
+      await db.collection('loanrequests').insertOne({
+        owner: new ObjectId(),
+        borrower: new ObjectId(),
+        items: [{ kind: 'vehicle', vehicle: vehicleS3.insertedId }],
+        requestedBy: userRegGenS2,
+        startDate: new Date('2099-03-10'),
+        endDate: new Date('2099-03-11'),
+      })
+    ).insertedId.toString();
+
+    const refreshedLoans = await listLoans(db, {
+      id: userRegSon.toString(),
+      role: REGISSEUR_SON_ROLE,
+    });
+
+    assert.ok(
+      !refreshedLoans.some((loan) => loan._id.toString() === noRelationLoanId),
     );
   });
 
