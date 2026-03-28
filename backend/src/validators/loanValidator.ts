@@ -1,17 +1,64 @@
 import { body, query, ValidationChain } from 'express-validator';
+import { ObjectId } from 'mongodb';
 
 const statusValues = ['pending', 'accepted', 'refused', 'cancelled'];
+const loanItemKinds = ['equipment', 'vehicle'] as const;
+
+const isMongoId = (value: unknown): boolean =>
+  typeof value === 'string' && ObjectId.isValid(value);
+
+const validateLoanItem = (item: unknown): true => {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) {
+    throw new Error('each item must be an object');
+  }
+
+  const typedItem = item as Record<string, unknown>;
+  const kind = typedItem.kind ?? 'equipment';
+
+  if (!loanItemKinds.includes(kind as (typeof loanItemKinds)[number])) {
+    throw new Error('kind must be either equipment or vehicle');
+  }
+
+  if (kind === 'vehicle') {
+    if (!isMongoId(typedItem.vehicle)) {
+      throw new Error('vehicle must be a valid id when kind is vehicle');
+    }
+    if (
+      typedItem.quantity !== undefined &&
+      !(typedItem.quantity === 1 || typedItem.quantity === '1')
+    ) {
+      throw new Error('quantity must be 1 for vehicle items');
+    }
+    return true;
+  }
+
+  if (!isMongoId(typedItem.equipment)) {
+    throw new Error('equipment must be a valid id when kind is equipment');
+  }
+
+  const quantity = typedItem.quantity;
+  if (
+    quantity === undefined ||
+    quantity === null ||
+    !Number.isInteger(Number(quantity)) ||
+    Number(quantity) < 1
+  ) {
+    throw new Error('quantity must be >= 1 for equipment items');
+  }
+
+  return true;
+};
 
 export const createLoanValidator: ValidationChain[] = [
   body('owner').isMongoId().withMessage('owner must be a valid id'),
   body('borrower').isMongoId().withMessage('borrower must be a valid id'),
   body('items').isArray().withMessage('items must be an array'),
-  body('items.*.equipment')
-    .isMongoId()
-    .withMessage('equipment must be a valid id'),
-  body('items.*.quantity')
-    .isInt({ min: 1 })
-    .withMessage('quantity must be >= 1'),
+  body('items.*.kind')
+    .optional()
+    .default('equipment')
+    .isIn(loanItemKinds)
+    .withMessage('kind must be either equipment or vehicle'),
+  body('items.*').custom(validateLoanItem),
   body('startDate')
     .isISO8601()
     .withMessage('startDate must be a valid ISO8601 date'),
@@ -33,8 +80,14 @@ export const updateLoanValidator: ValidationChain[] = [
   body('owner').optional().isMongoId(),
   body('borrower').optional().isMongoId(),
   body('items').optional().isArray(),
-  body('items.*.equipment').optional().isMongoId(),
-  body('items.*.quantity').optional().isInt({ min: 1 }),
+  body('items.*.kind')
+    .optional()
+    .default('equipment')
+    .isIn(loanItemKinds)
+    .withMessage('kind must be either equipment or vehicle'),
+  body('items.*')
+    .if(body('items').exists())
+    .custom(validateLoanItem),
   body('startDate')
     .optional()
     .isISO8601()
