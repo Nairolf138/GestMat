@@ -54,7 +54,6 @@ function Loans() {
   );
   const [sectionsOpen, setSectionsOpen] = useState({
     pending: true,
-    finished: true,
     ongoing: true,
     upcoming: true,
   });
@@ -103,7 +102,6 @@ function Loans() {
 
   const categorize = (list) => {
     const now = new Date();
-    const finished = [];
     const ongoing = [];
     const upcoming = [];
     list.forEach((l) => {
@@ -114,7 +112,7 @@ function Loans() {
         l.status === 'cancelled' ||
         (end && end < now)
       ) {
-        finished.push(l);
+        return;
       } else if (start && start > now) {
         upcoming.push(l);
       } else {
@@ -122,7 +120,6 @@ function Loans() {
       }
     });
     return {
-      finished: sortLoans(finished),
       ongoing: sortLoans(ongoing),
       upcoming: sortLoans(upcoming),
     };
@@ -171,11 +168,6 @@ function Loans() {
   const borrowerPending = borrowerSplit.pending;
   const hasPending =
     tab === 'owner' ? ownerPending.length > 0 : borrowerPending.length > 0;
-
-  const finishedList =
-    tab === 'owner' ? ownerLoans.finished : borrowerLoans.finished;
-  const limitedFinished = finishedList.slice(0, 5);
-  const hasMoreFinished = finishedList.length > limitedFinished.length;
 
   const renderSection = (list, isOwner) => (
     <ul className="list-group mb-3">
@@ -269,20 +261,6 @@ function Loans() {
               {renderSection(
                 tab === 'owner' ? ownerLoans.ongoing : borrowerLoans.ongoing,
                 tab === 'owner',
-              )}
-            </CollapsibleSection>
-            <CollapsibleSection
-              title={t('loans.finished')}
-              isOpen={sectionsOpen.finished}
-              onToggle={() => toggleSection('finished')}
-            >
-              {renderSection(limitedFinished, tab === 'owner')}
-              {hasMoreFinished && (
-                <div className="d-flex justify-content-end">
-                  <Link className="btn btn-link p-0" to="/loans/history">
-                    {t('loans.history.view_all')}
-                  </Link>
-                </div>
               )}
             </CollapsibleSection>
           </div>
