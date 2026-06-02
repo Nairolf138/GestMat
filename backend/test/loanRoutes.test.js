@@ -354,6 +354,60 @@ test('Autre role can cancel and delete its own loan', async () => {
   await mongod.stop();
 });
 
+test('Autre role can cancel its own past pending loan without editing content', async () => {
+  const { app, client, mongod } = await createApp();
+  const db = client.db();
+  const owner = (await db.collection('structures').insertOne({ name: 'S1' }))
+    .insertedId;
+  const borrower = (await db.collection('structures').insertOne({ name: 'S2' }))
+    .insertedId;
+  const eqId = (
+    await db
+      .collection('equipments')
+      .insertOne({ name: 'E1', totalQty: 1, structure: owner })
+  ).insertedId;
+  await db
+    .collection('users')
+    .insertOne({ _id: new ObjectId(userId), structure: borrower });
+
+  const insertLoan = async (status = 'pending') => (
+    await db.collection('loanrequests').insertOne({
+      owner,
+      borrower,
+      items: [{ equipment: eqId, quantity: 1 }],
+      requestedBy: new ObjectId(userId),
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-02'),
+      status,
+    })
+  ).insertedId;
+
+  const pendingLoanId = await insertLoan();
+  const cancelled = await request(app)
+    .put(withApiPrefix(`/loans/${pendingLoanId}`))
+    .set(auth(AUTRE_ROLE))
+    .send({ status: 'cancelled' })
+    .expect(200);
+  assert.strictEqual(cancelled.body.status, 'cancelled');
+
+  const contentEditLoanId = await insertLoan();
+  await request(app)
+    .put(withApiPrefix(`/loans/${contentEditLoanId}`))
+    .set(auth(AUTRE_ROLE))
+    .send({ status: 'cancelled', note: 'also change content' })
+    .expect(403);
+
+  const acceptedLoanId = await insertLoan('accepted');
+  await request(app)
+    .put(withApiPrefix(`/loans/${acceptedLoanId}`))
+    .set(auth(AUTRE_ROLE))
+    .send({ status: 'cancelled' })
+    .expect(403);
+
+  await client.close();
+  await mongod.stop();
+});
+
 test('Autre role can accept and refuse loan for own structure', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();

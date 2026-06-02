@@ -546,6 +546,9 @@ export async function updateLoanRequest(
     const nextEnd = data.endDate ? new Date(data.endDate as any) : new Date(loan.endDate);
     const datesChanged = Boolean(data.startDate || data.endDate);
     const decisionAllowedKeys = ['status', 'decisionNote'];
+    const cancellationAllowedKeys = ['status'];
+    const isPendingCancellation = status === 'cancelled' && loan.status === 'pending';
+    const hasOnlyCancellationKeys = keys.every((k) => cancellationAllowedKeys.includes(k));
     const types = await Promise.all(
       (loan.items || []).map(async (item: LoanItem) => {
         if (item.kind === 'vehicle') {
@@ -566,6 +569,10 @@ export async function updateLoanRequest(
         case AUTRE_ROLE: {
           if (status === 'accepted' || status === 'refused') {
             if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
+              throw forbidden('Access denied');
+            }
+          } else if (isPendingCancellation) {
+            if (!isBorrower || !isRequester || !hasOnlyCancellationKeys) {
               throw forbidden('Access denied');
             }
           } else {
@@ -589,6 +596,10 @@ export async function updateLoanRequest(
             ) {
               throw forbidden('Access denied');
             }
+          } else if (isPendingCancellation) {
+            if (!isBorrower || !isRequester || !hasOnlyCancellationKeys) {
+              throw forbidden('Access denied');
+            }
           } else {
             if (status && status !== 'cancelled') {
               throw forbidden('Access denied');
@@ -602,6 +613,10 @@ export async function updateLoanRequest(
         case REGISSEUR_GENERAL_ROLE: {
           if (status === 'accepted' || status === 'refused') {
             if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
+              throw forbidden('Access denied');
+            }
+          } else if (isPendingCancellation) {
+            if (!isBorrower || !hasOnlyCancellationKeys) {
               throw forbidden('Access denied');
             }
           } else {
