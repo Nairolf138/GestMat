@@ -362,10 +362,11 @@ test('role based loan service permissions', async (t) => {
       await db.collection('loanrequests').insertOne({
         owner: s2Id,
         borrower: s1Id,
+        status: 'pending',
         items: [{ equipment: eqSonS2.insertedId }],
         requestedBy: userRegSon,
-        startDate: new Date('2099-01-01'),
-        endDate: new Date('2099-01-02'),
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-02'),
       })
     ).insertedId.toString();
     const cancelled = await updateLoanRequest(
@@ -375,6 +376,32 @@ test('role based loan service permissions', async (t) => {
       { status: 'cancelled' },
     );
     assert.strictEqual(cancelled.status, 'cancelled');
+    const storedCancelled = await db
+      .collection('loanrequests')
+      .findOne({ _id: new ObjectId(ownOutgoing) });
+    assert.strictEqual(storedCancelled.status, 'cancelled');
+
+    const otherPendingOutgoing = (
+      await db.collection('loanrequests').insertOne({
+        owner: s2Id,
+        borrower: s1Id,
+        status: 'pending',
+        items: [{ equipment: eqSonS2.insertedId }],
+        requestedBy: userAutre,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-02'),
+      })
+    ).insertedId.toString();
+    await assert.rejects(
+      () =>
+        updateLoanRequest(
+          db,
+          { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
+          otherPendingOutgoing,
+          { status: 'cancelled' },
+        ),
+    );
+
     const otherOutgoing = (
       await db.collection('loanrequests').insertOne({
         owner: s2Id,
