@@ -28,7 +28,8 @@ function LoanItem({ loan, isOwner, refresh }) {
     },
   };
 
-  const period = start && end ? `${formatDate(start)} – ${formatDate(end)}` : '';
+  const period =
+    start && end ? `${formatDate(start)} – ${formatDate(end)}` : '';
 
   const promptDecisionNote = (status) => {
     if (!['accepted', 'refused'].includes(status)) return '';
@@ -105,9 +106,12 @@ function LoanItem({ loan, isOwner, refresh }) {
     await changeStatus('cancelled');
   };
 
+  const closedStatuses = ['cancelled', 'refused'];
   const borrowerCanModify = isFuture && loan.status === 'pending';
   const borrowerCanCancel =
-    isFuture && loan.status && !['cancelled', 'refused'].includes(loan.status);
+    Boolean(loan.status) &&
+    !closedStatuses.includes(loan.status) &&
+    (loan.status === 'pending' || isFuture);
 
   return (
     <li className="list-group-item">
@@ -117,9 +121,7 @@ function LoanItem({ loan, isOwner, refresh }) {
             {loan.owner?.name} → {loan.borrower?.name} {period && `: ${period}`}
           </div>
           <div>
-            {loan.items
-              ?.map((it) => formatLoanItemLabel(it))
-              .join(', ')}
+            {loan.items?.map((it) => formatLoanItemLabel(it)).join(', ')}
           </div>
           <div className="mt-1">
             <strong>{t('loans.note_label')}:</strong>{' '}
@@ -131,7 +133,8 @@ function LoanItem({ loan, isOwner, refresh }) {
             <div className="mt-1">
               <strong>{t('loans.decision_note_label')}:</strong>{' '}
               <span style={{ whiteSpace: 'pre-wrap' }}>
-                {loan.decisionNote?.trim() || t('loans.decision_note_not_provided')}
+                {loan.decisionNote?.trim() ||
+                  t('loans.decision_note_not_provided')}
               </span>
             </div>
           )}
@@ -162,10 +165,7 @@ function LoanItem({ loan, isOwner, refresh }) {
           >
             {t('loans.refuse')}
           </button>
-          <button
-            onClick={cancelLoan}
-            className="btn btn-secondary btn-sm"
-          >
+          <button onClick={cancelLoan} className="btn btn-secondary btn-sm">
             {t('loans.cancel')}
           </button>
         </div>
@@ -181,10 +181,7 @@ function LoanItem({ loan, isOwner, refresh }) {
             </button>
           )}
           {borrowerCanCancel && (
-            <button
-              onClick={cancelLoan}
-              className="btn btn-danger btn-sm"
-            >
+            <button onClick={cancelLoan} className="btn btn-danger btn-sm">
               {t('loans.cancel')}
             </button>
           )}
