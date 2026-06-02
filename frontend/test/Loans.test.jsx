@@ -195,6 +195,42 @@ describe('Loans', () => {
     expect(screen.queryByText(/Finished Borrower Loan/)).not.toBeInTheDocument();
   });
 
+  it('lets a borrower cancel their pending loan request', async () => {
+    api.api
+      .mockResolvedValueOnce([
+        {
+          _id: 'borrower-pending-cancel',
+          owner: { _id: 's2', name: 'Owner S2' },
+          borrower: { _id: 's1', name: 'Borrower S1' },
+          items: [{ equipment: { name: 'Pending Borrower Loan' }, quantity: 1 }],
+          status: 'pending',
+          startDate: new Date().toISOString(),
+        },
+      ])
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce([]);
+
+    renderLoans();
+
+    await waitFor(() => expect(api.api).toHaveBeenCalledWith('/loans'));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('loans.as_borrower') }));
+
+    const cancelButton = screen.getByRole('button', { name: i18n.t('loans.cancel') });
+    expect(cancelButton).toBeInTheDocument();
+
+    fireEvent.click(cancelButton);
+
+    await waitFor(() =>
+      expect(api.api).toHaveBeenCalledWith(
+        '/loans/borrower-pending-cancel',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ status: 'cancelled' }),
+        }),
+      ),
+    );
+  });
+
   it('does not render completed loans in current sections when only completed loans are returned', async () => {
     api.api.mockResolvedValue([
       {
