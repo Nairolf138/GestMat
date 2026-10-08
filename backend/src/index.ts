@@ -39,7 +39,10 @@ import { scheduleOverdueLoanNotifications } from './services/overdueService';
 import { scheduleLoanArchiving } from './services/archiveService';
 import { scheduleAnnualReports } from './services/reportService';
 import { scheduleVehicleComplianceReminders } from './services/vehicleComplianceService';
-import { registerMonitoringMetrics, refreshMonitoringMetrics } from './utils/monitoring';
+import {
+  registerMonitoringMetrics,
+  refreshMonitoringMetrics,
+} from './utils/monitoring';
 
 const normalizeAllowOriginHeader = (
   value: string | string[] | number | undefined,
@@ -238,7 +241,9 @@ export async function start(
       if (LOAN_OVERDUE_NOTIFICATIONS_ENABLED) {
         overdueInterval = scheduleOverdueLoanNotifications(db);
       } else {
-        logger.info('Overdue loan notification scheduling disabled by configuration.');
+        logger.info(
+          'Overdue loan notification scheduling disabled by configuration.',
+        );
       }
       archiveInterval = scheduleLoanArchiving(db);
       reportInterval = scheduleAnnualReports(db);

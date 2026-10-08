@@ -56,7 +56,10 @@ function ActivityRail({ items = [], totalCount = 0, seeAllHref }) {
                 {item.title}
               </Link>
               {item.description && (
-                <p className="muted" aria-label={t('home.activity.description_label')}>
+                <p
+                  className="muted"
+                  aria-label={t('home.activity.description_label')}
+                >
                   {item.description}
                 </p>
               )}

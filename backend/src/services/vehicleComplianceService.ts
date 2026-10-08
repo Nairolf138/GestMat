@@ -40,14 +40,10 @@ function needsReminder(
       | string
       | undefined;
     const expiry = expiryValue ? new Date(expiryValue) : undefined;
-    const sentAt = (vehicle.complianceReminders as any)?.insuranceReminderSentAt as
-      | Date
-      | undefined;
+    const sentAt = (vehicle.complianceReminders as any)
+      ?.insuranceReminderSentAt as Date | undefined;
     return Boolean(
-      expiry &&
-        expiry >= new Date() &&
-        expiry <= threshold &&
-        !sentAt,
+      expiry && expiry >= new Date() && expiry <= threshold && !sentAt,
     );
   }
 
@@ -56,14 +52,10 @@ function needsReminder(
     | string
     | undefined;
   const expiry = expiryValue ? new Date(expiryValue) : undefined;
-  const sentAt = (vehicle.complianceReminders as any)?.technicalInspectionReminderSentAt as
-    | Date
-    | undefined;
+  const sentAt = (vehicle.complianceReminders as any)
+    ?.technicalInspectionReminderSentAt as Date | undefined;
   return Boolean(
-    expiry &&
-      expiry >= new Date() &&
-      expiry <= threshold &&
-      !sentAt,
+    expiry && expiry >= new Date() && expiry <= threshold && !sentAt,
   );
 }
 
@@ -96,7 +88,11 @@ async function sendComplianceReminder(
     return;
   }
 
-  const template = vehicleComplianceReminderTemplate({ vehicle, kind, expiryDate });
+  const template = vehicleComplianceReminderTemplate({
+    vehicle,
+    kind,
+    expiryDate,
+  });
   await sendMail({ to: recipients.join(','), ...template });
 
   const reminderField =
@@ -104,10 +100,12 @@ async function sendComplianceReminder(
       ? 'complianceReminders.insuranceReminderSentAt'
       : 'complianceReminders.technicalInspectionReminderSentAt';
 
-  await db.collection<Vehicle>('vehicles').updateOne(
-    { _id: new ObjectId(vehicle._id) },
-    { $set: { [reminderField]: new Date() } },
-  );
+  await db
+    .collection<Vehicle>('vehicles')
+    .updateOne(
+      { _id: new ObjectId(vehicle._id) },
+      { $set: { [reminderField]: new Date() } },
+    );
 }
 
 export async function processVehicleComplianceReminders(
@@ -129,7 +127,12 @@ export async function processVehicleComplianceReminders(
 
   for (const vehicle of vehicles) {
     if (needsReminder(vehicle, 'insurance', threshold)) {
-      await sendComplianceReminder(db, vehicle, 'insurance', vehicle.insurance!.expiryDate!);
+      await sendComplianceReminder(
+        db,
+        vehicle,
+        'insurance',
+        vehicle.insurance!.expiryDate!,
+      );
     }
     if (needsReminder(vehicle, 'technicalInspection', threshold)) {
       await sendComplianceReminder(
@@ -144,7 +147,11 @@ export async function processVehicleComplianceReminders(
 
 export function scheduleVehicleComplianceReminders(
   db: Db,
-  options: { intervalMinutes?: number; reminderOffsetDays?: number; dailyHour?: number } = {},
+  options: {
+    intervalMinutes?: number;
+    reminderOffsetDays?: number;
+    dailyHour?: number;
+  } = {},
 ): ReminderSchedule {
   const {
     intervalMinutes = VEHICLE_COMPLIANCE_REMINDER_INTERVAL_MINUTES,

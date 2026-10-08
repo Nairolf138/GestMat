@@ -50,29 +50,30 @@ test('CORS normalizes configured frontend origins with default ports', async (t)
 
   const server = await start(async () => mockDb);
 
-  t.after(() =>
-    new Promise((resolve) => {
-      if (originalCorsOrigin === undefined) {
-        delete process.env.CORS_ORIGIN;
-      } else {
-        process.env.CORS_ORIGIN = originalCorsOrigin;
-      }
-      if (originalJwtSecret === undefined) {
-        delete process.env.JWT_SECRET;
-      } else {
-        process.env.JWT_SECRET = originalJwtSecret;
-      }
-      if (originalNodeEnv === undefined) {
-        delete process.env.NODE_ENV;
-      } else {
-        process.env.NODE_ENV = originalNodeEnv;
-      }
-      server.close(() => {
-        delete require.cache[require.resolve('../src/index')];
-        delete require.cache[require.resolve('../src/config')];
-        resolve();
-      });
-    }),
+  t.after(
+    () =>
+      new Promise((resolve) => {
+        if (originalCorsOrigin === undefined) {
+          delete process.env.CORS_ORIGIN;
+        } else {
+          process.env.CORS_ORIGIN = originalCorsOrigin;
+        }
+        if (originalJwtSecret === undefined) {
+          delete process.env.JWT_SECRET;
+        } else {
+          process.env.JWT_SECRET = originalJwtSecret;
+        }
+        if (originalNodeEnv === undefined) {
+          delete process.env.NODE_ENV;
+        } else {
+          process.env.NODE_ENV = originalNodeEnv;
+        }
+        server.close(() => {
+          delete require.cache[require.resolve('../src/index')];
+          delete require.cache[require.resolve('../src/config')];
+          resolve();
+        });
+      }),
   );
 
   const responseDefaultPort = await request(server)
@@ -90,7 +91,10 @@ test('CORS normalizes configured frontend origins with default ports', async (t)
     .set('Origin', secureOrigin);
 
   assert.strictEqual(responseSecure.statusCode, 200);
-  assert.strictEqual(responseSecure.headers['access-control-allow-origin'], secureOrigin);
+  assert.strictEqual(
+    responseSecure.headers['access-control-allow-origin'],
+    secureOrigin,
+  );
 
   const responseCustomPort = await request(server)
     .get('/health')
@@ -135,34 +139,33 @@ test('CORS allows the required frontend when no whitelist is configured', async 
 
   const server = await start(async () => mockDb);
 
-  t.after(() =>
-    new Promise((resolve) => {
-      if (originalCorsOrigin === undefined) {
-        delete process.env.CORS_ORIGIN;
-      } else {
-        process.env.CORS_ORIGIN = originalCorsOrigin;
-      }
-      if (originalJwtSecret === undefined) {
-        delete process.env.JWT_SECRET;
-      } else {
-        process.env.JWT_SECRET = originalJwtSecret;
-      }
-      if (originalNodeEnv === undefined) {
-        delete process.env.NODE_ENV;
-      } else {
-        process.env.NODE_ENV = originalNodeEnv;
-      }
-      server.close(() => {
-        delete require.cache[require.resolve('../src/index')];
-        delete require.cache[require.resolve('../src/config')];
-        resolve();
-      });
-    }),
+  t.after(
+    () =>
+      new Promise((resolve) => {
+        if (originalCorsOrigin === undefined) {
+          delete process.env.CORS_ORIGIN;
+        } else {
+          process.env.CORS_ORIGIN = originalCorsOrigin;
+        }
+        if (originalJwtSecret === undefined) {
+          delete process.env.JWT_SECRET;
+        } else {
+          process.env.JWT_SECRET = originalJwtSecret;
+        }
+        if (originalNodeEnv === undefined) {
+          delete process.env.NODE_ENV;
+        } else {
+          process.env.NODE_ENV = originalNodeEnv;
+        }
+        server.close(() => {
+          delete require.cache[require.resolve('../src/index')];
+          delete require.cache[require.resolve('../src/config')];
+          resolve();
+        });
+      }),
   );
 
-  const response = await request(server)
-    .get('/health')
-    .set('Origin', origin);
+  const response = await request(server).get('/health').set('Origin', origin);
 
   assert.strictEqual(response.statusCode, 200);
   assert.strictEqual(response.headers['access-control-allow-origin'], origin);
@@ -200,37 +203,39 @@ test('CORS omits header when invalid origin is provided without whitelist', asyn
 
   const server = await start(async () => mockDb);
 
-  t.after(() =>
-    new Promise((resolve) => {
-      if (originalCorsOrigin === undefined) {
-        delete process.env.CORS_ORIGIN;
-      } else {
-        process.env.CORS_ORIGIN = originalCorsOrigin;
-      }
-      if (originalJwtSecret === undefined) {
-        delete process.env.JWT_SECRET;
-      } else {
-        process.env.JWT_SECRET = originalJwtSecret;
-      }
-      if (originalNodeEnv === undefined) {
-        delete process.env.NODE_ENV;
-      } else {
-        process.env.NODE_ENV = originalNodeEnv;
-      }
-      server.close(() => {
-        delete require.cache[require.resolve('../src/index')];
-        delete require.cache[require.resolve('../src/config')];
-        resolve();
-      });
-    }),
+  t.after(
+    () =>
+      new Promise((resolve) => {
+        if (originalCorsOrigin === undefined) {
+          delete process.env.CORS_ORIGIN;
+        } else {
+          process.env.CORS_ORIGIN = originalCorsOrigin;
+        }
+        if (originalJwtSecret === undefined) {
+          delete process.env.JWT_SECRET;
+        } else {
+          process.env.JWT_SECRET = originalJwtSecret;
+        }
+        if (originalNodeEnv === undefined) {
+          delete process.env.NODE_ENV;
+        } else {
+          process.env.NODE_ENV = originalNodeEnv;
+        }
+        server.close(() => {
+          delete require.cache[require.resolve('../src/index')];
+          delete require.cache[require.resolve('../src/config')];
+          resolve();
+        });
+      }),
   );
 
-  const response = await request(server)
-    .get('/health')
-    .set('Origin', origin);
+  const response = await request(server).get('/health').set('Origin', origin);
 
   assert.strictEqual(response.statusCode, 200);
-  assert.strictEqual(response.headers['access-control-allow-origin'], undefined);
+  assert.strictEqual(
+    response.headers['access-control-allow-origin'],
+    undefined,
+  );
 });
 
 test('CORS normalizes Access-Control-Allow-Origin when a proxy appends a value', async (t) => {
@@ -264,41 +269,43 @@ test('CORS normalizes Access-Control-Allow-Origin when a proxy appends a value',
     command: async () => ({ ok: 1 }),
   };
 
-  const server = await start(async () => mockDb, (app) => {
-    app.use((req, res, next) => {
-      next();
-      res.append('Access-Control-Allow-Origin', proxyOrigin);
-    });
-  });
-
-  t.after(() =>
-    new Promise((resolve) => {
-      if (originalCorsOrigin === undefined) {
-        delete process.env.CORS_ORIGIN;
-      } else {
-        process.env.CORS_ORIGIN = originalCorsOrigin;
-      }
-      if (originalJwtSecret === undefined) {
-        delete process.env.JWT_SECRET;
-      } else {
-        process.env.JWT_SECRET = originalJwtSecret;
-      }
-      if (originalNodeEnv === undefined) {
-        delete process.env.NODE_ENV;
-      } else {
-        process.env.NODE_ENV = originalNodeEnv;
-      }
-      server.close(() => {
-        delete require.cache[require.resolve('../src/index')];
-        delete require.cache[require.resolve('../src/config')];
-        resolve();
+  const server = await start(
+    async () => mockDb,
+    (app) => {
+      app.use((req, res, next) => {
+        next();
+        res.append('Access-Control-Allow-Origin', proxyOrigin);
       });
-    }),
+    },
   );
 
-  const response = await request(server)
-    .get('/health')
-    .set('Origin', origin);
+  t.after(
+    () =>
+      new Promise((resolve) => {
+        if (originalCorsOrigin === undefined) {
+          delete process.env.CORS_ORIGIN;
+        } else {
+          process.env.CORS_ORIGIN = originalCorsOrigin;
+        }
+        if (originalJwtSecret === undefined) {
+          delete process.env.JWT_SECRET;
+        } else {
+          process.env.JWT_SECRET = originalJwtSecret;
+        }
+        if (originalNodeEnv === undefined) {
+          delete process.env.NODE_ENV;
+        } else {
+          process.env.NODE_ENV = originalNodeEnv;
+        }
+        server.close(() => {
+          delete require.cache[require.resolve('../src/index')];
+          delete require.cache[require.resolve('../src/config')];
+          resolve();
+        });
+      }),
+  );
+
+  const response = await request(server).get('/health').set('Origin', origin);
 
   assert.strictEqual(response.statusCode, 200);
   assert.strictEqual(response.headers['access-control-allow-origin'], origin);

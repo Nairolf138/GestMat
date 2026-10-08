@@ -133,7 +133,9 @@ router.post(
       const normalizedType =
         type && type !== 'Tous'
           ? normalizeType(type as string) ||
-            ((type as string) === 'Autres' ? ('Autre' as EquipmentTypeFilter) : (type as EquipmentTypeFilter))
+            ((type as string) === 'Autres'
+              ? ('Autre' as EquipmentTypeFilter)
+              : (type as EquipmentTypeFilter))
           : undefined;
       if (!canModify(req.user!.role, normalizedType)) {
         return next(forbidden('Access denied'));
@@ -150,7 +152,10 @@ router.post(
         email: Boolean(email),
       });
       res.contentType(result.contentType);
-      res.setHeader('Content-Disposition', `attachment; filename=${result.filename}`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=${result.filename}`,
+      );
       res.send(result.buffer);
     } catch (err) {
       next(err);

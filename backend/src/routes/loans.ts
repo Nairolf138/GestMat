@@ -43,7 +43,13 @@ router.get(
         ? parseInt(req.query.limit as string)
         : undefined;
       const includeArchived = req.query.includeArchived === 'true';
-      const loans = await listLoans(db, req.user!, page, limit, includeArchived);
+      const loans = await listLoans(
+        db,
+        req.user!,
+        page,
+        limit,
+        includeArchived,
+      );
       res.json(loans);
     } catch (err) {
       next(err);

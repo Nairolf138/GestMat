@@ -11,7 +11,10 @@ const normalizeDateQueryParam = (
   param: unknown,
 ): string | string[] | undefined => {
   if (typeof param === 'string') return param;
-  if (Array.isArray(param) && param.every((value) => typeof value === 'string')) {
+  if (
+    Array.isArray(param) &&
+    param.every((value) => typeof value === 'string')
+  ) {
     return param as string[];
   }
   return undefined;
@@ -47,7 +50,12 @@ const normalizeDateRange = (
 const resolveDateRange = (
   from?: unknown,
   to?: unknown,
-): { from?: string | string[]; to?: string | string[]; fromDate?: Date; toDate?: Date } => {
+): {
+  from?: string | string[];
+  to?: string | string[];
+  fromDate?: Date;
+  toDate?: Date;
+} => {
   const normalizedFrom = normalizeDateQueryParam(from);
   const normalizedTo = normalizeDateQueryParam(to);
   const { fromDate, toDate } = normalizeDateRange(normalizedFrom, normalizedTo);
@@ -81,25 +89,29 @@ router.get(
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
     try {
-      const [activeUsers, ongoingLoans, completedLoansThisYear, totalEquipment] =
-        await Promise.all([
-          db
-            .collection('sessions')
-            .distinct('userId')
-            .then((users: string[]) => users.length),
-          db.collection('loanrequests').countDocuments({
-            status: 'accepted',
-            startDate: { $lte: now },
-            endDate: { $gte: now },
-            archived: { $ne: true },
-          }),
-          db.collection('loanrequests').countDocuments({
-            status: 'accepted',
-            endDate: { $gte: startOfYear, $lte: now },
-            archived: { $ne: true },
-          }),
-          db.collection('equipments').countDocuments(),
-        ]);
+      const [
+        activeUsers,
+        ongoingLoans,
+        completedLoansThisYear,
+        totalEquipment,
+      ] = await Promise.all([
+        db
+          .collection('sessions')
+          .distinct('userId')
+          .then((users: string[]) => users.length),
+        db.collection('loanrequests').countDocuments({
+          status: 'accepted',
+          startDate: { $lte: now },
+          endDate: { $gte: now },
+          archived: { $ne: true },
+        }),
+        db.collection('loanrequests').countDocuments({
+          status: 'accepted',
+          endDate: { $gte: startOfYear, $lte: now },
+          archived: { $ne: true },
+        }),
+        db.collection('equipments').countDocuments(),
+      ]);
 
       res.json({
         activeUsers,
@@ -403,7 +415,10 @@ router.get(
         { $project: { _id: 1, count: 1, name: '$structure.name' } },
       );
 
-      const agg = await db.collection('loanrequests').aggregate(pipeline).toArray();
+      const agg = await db
+        .collection('loanrequests')
+        .aggregate(pipeline)
+        .toArray();
       res.json(agg);
     } catch (err) {
       next(err);
@@ -440,7 +455,10 @@ router.get(
         { $project: { _id: 1, count: 1, name: '$structure.name' } },
       );
 
-      const agg = await db.collection('loanrequests').aggregate(pipeline).toArray();
+      const agg = await db
+        .collection('loanrequests')
+        .aggregate(pipeline)
+        .toArray();
       res.json(agg);
     } catch (err) {
       next(err);
@@ -518,7 +536,10 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
-      const { fromDate, toDate } = resolveDateRange(req.query.from, req.query.to);
+      const { fromDate, toDate } = resolveDateRange(
+        req.query.from,
+        req.query.to,
+      );
       const reservationMatch = buildReservationOverlapMatch(fromDate, toDate);
       const pipeline: any[] = [];
       if (reservationMatch) pipeline.push({ $match: reservationMatch });
@@ -526,7 +547,9 @@ router.get(
       pipeline.push(
         {
           $group: {
-            _id: { $toLower: { $toString: { $ifNull: ['$status', 'unknown'] } } },
+            _id: {
+              $toLower: { $toString: { $ifNull: ['$status', 'unknown'] } },
+            },
             count: { $sum: 1 },
           },
         },
@@ -552,7 +575,9 @@ router.get(
         .aggregate([
           {
             $project: {
-              usage: { $toLower: { $toString: { $ifNull: ['$usage', 'unknown'] } } },
+              usage: {
+                $toLower: { $toString: { $ifNull: ['$usage', 'unknown'] } },
+              },
             },
           },
           {
@@ -578,7 +603,10 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
-      const { fromDate, toDate } = resolveDateRange(req.query.from, req.query.to);
+      const { fromDate, toDate } = resolveDateRange(
+        req.query.from,
+        req.query.to,
+      );
 
       if (!fromDate || !toDate) {
         throw badRequest('Query parameters "from" and "to" are required');
@@ -612,7 +640,9 @@ router.get(
           {
             $group: {
               _id: null,
-              totalKilometers: { $sum: { $ifNull: ['$kilometersTraveled', 0] } },
+              totalKilometers: {
+                $sum: { $ifNull: ['$kilometersTraveled', 0] },
+              },
               totalDowntimeDays: { $sum: { $ifNull: ['$downtimeDays', 0] } },
             },
           },

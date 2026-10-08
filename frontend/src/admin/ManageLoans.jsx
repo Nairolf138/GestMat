@@ -197,7 +197,8 @@ function ManageLoans() {
               refused: 'bg-danger',
               cancelled: 'bg-secondary',
             };
-            const statusClass = statusClassMap[l.status] || 'bg-light text-dark';
+            const statusClass =
+              statusClassMap[l.status] || 'bg-light text-dark';
             return (
               <li
                 key={l._id}
@@ -205,11 +206,17 @@ function ManageLoans() {
                   compact ? 'align-items-center' : 'flex-column'
                 }`}
               >
-                <div className={compact ? 'd-flex align-items-center w-100' : ''}>
-                  <span className={`badge me-2 ${statusClass}`}>{statusLabel}</span>
+                <div
+                  className={compact ? 'd-flex align-items-center w-100' : ''}
+                >
+                  <span className={`badge me-2 ${statusClass}`}>
+                    {statusLabel}
+                  </span>
                   <div className="flex-grow-1">
                     <div className={compact ? 'text-truncate' : ''}>
-                      <strong>{items || t('loans.items', { count: itemCount })}</strong>
+                      <strong>
+                        {items || t('loans.items', { count: itemCount })}
+                      </strong>
                       {borrower && ` - ${borrower}`}
                     </div>
                     {!compact && (
@@ -247,11 +254,11 @@ function ManageLoans() {
           {loading
             ? t('common.loading')
             : totalPages !== null
-            ? t('admin_loans.pagination.page_total', {
-                page,
-                total: totalPages,
-              })
-            : ''}
+              ? t('admin_loans.pagination.page_total', {
+                  page,
+                  total: totalPages,
+                })
+              : ''}
         </span>
         <button
           className="btn btn-secondary ms-2"

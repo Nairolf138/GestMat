@@ -45,10 +45,15 @@ describe('Vehicles', () => {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={['/vehicles']}>
           <GlobalContext.Provider
-            value={{ structures: [{ _id: 's1', name: 'Structure 1' }], notify: vi.fn() }}
+            value={{
+              structures: [{ _id: 's1', name: 'Structure 1' }],
+              notify: vi.fn(),
+            }}
           >
             <AuthContext.Provider
-              value={{ user: { structure: { _id: 's1', name: 'Structure 1' } } }}
+              value={{
+                user: { structure: { _id: 's1', name: 'Structure 1' } },
+              }}
             >
               <Vehicles />
             </AuthContext.Provider>

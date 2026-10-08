@@ -60,7 +60,8 @@ export interface VehicleCharacteristics {
   [key: string]: unknown;
 }
 
-export type NewVehicle = Pick<Vehicle, 'name'> & Partial<Omit<Vehicle, '_id' | 'name'>>;
+export type NewVehicle = Pick<Vehicle, 'name'> &
+  Partial<Omit<Vehicle, '_id' | 'name'>>;
 
 export interface Vehicle {
   _id?: ObjectId;
@@ -134,7 +135,9 @@ function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
   if (normalized.technicalInspection?.lastInspectionDate) {
     normalized.technicalInspection = {
       ...normalized.technicalInspection,
-      lastInspectionDate: new Date(normalized.technicalInspection.lastInspectionDate),
+      lastInspectionDate: new Date(
+        normalized.technicalInspection.lastInspectionDate,
+      ),
     };
   }
   if (normalized.technicalInspection?.expiryDate) {
@@ -144,11 +147,13 @@ function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
     };
   }
   if (normalized.complianceDocuments) {
-    normalized.complianceDocuments = normalized.complianceDocuments.map((doc) => ({
-      ...doc,
-      uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
-      expiresAt: doc.expiresAt ? new Date(doc.expiresAt) : undefined,
-    }));
+    normalized.complianceDocuments = normalized.complianceDocuments.map(
+      (doc) => ({
+        ...doc,
+        uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
+        expiresAt: doc.expiresAt ? new Date(doc.expiresAt) : undefined,
+      }),
+    );
   }
   if (normalized.complianceReminders?.insuranceReminderSentAt) {
     normalized.complianceReminders = {
@@ -198,7 +203,10 @@ export function findVehicles(
   page = 1,
   limit = 0,
 ): Promise<Vehicle[]> {
-  const cursor = db.collection<Vehicle>('vehicles').find(filter).sort({ name: 1 });
+  const cursor = db
+    .collection<Vehicle>('vehicles')
+    .find(filter)
+    .sort({ name: 1 });
   if (limit > 0) {
     const skip = (page - 1) * limit;
     cursor.skip(skip).limit(limit);
@@ -244,11 +252,9 @@ export async function updateVehicle(
 
   const res = await db
     .collection<Vehicle>('vehicles')
-    .findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      updateDoc,
-      { returnDocument: 'after' },
-    );
+    .findOneAndUpdate({ _id: new ObjectId(id) }, updateDoc, {
+      returnDocument: 'after',
+    });
   return res.value;
 }
 
@@ -259,11 +265,6 @@ export async function deleteVehicle(db: Db, id: string): Promise<boolean> {
   return res.deletedCount > 0;
 }
 
-export function findVehicleById(
-  db: Db,
-  id: string,
-): Promise<Vehicle | null> {
-  return db
-    .collection<Vehicle>('vehicles')
-    .findOne({ _id: new ObjectId(id) });
+export function findVehicleById(db: Db, id: string): Promise<Vehicle | null> {
+  return db.collection<Vehicle>('vehicles').findOne({ _id: new ObjectId(id) });
 }

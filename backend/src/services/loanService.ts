@@ -37,7 +37,9 @@ const DUE_SOON_DAYS = 7;
 const { PERMISSIONS, VEHICLES_REQUEST } = permissionsConfig as any;
 
 function isPermissionRule(rule: any): rule is PermissionRule {
-  return rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule;
+  return (
+    rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule
+  );
 }
 
 function roleHasPermission(role: string, permission: string): boolean {
@@ -65,14 +67,16 @@ async function addOrUpdateVehicleReservations(
   const vehicleIds = getVehicleIds(items);
   await Promise.all(
     vehicleIds.map(async (vehicleId) => {
+      await db
+        .collection('vehicles')
+        .updateOne(
+          { _id: vehicleId },
+          { $pull: { reservations: { loanRequestId } } } as any,
+          { session },
+        );
       await db.collection('vehicles').updateOne(
         { _id: vehicleId },
-        { $pull: { reservations: { loanRequestId } } } as any,
-        { session },
-      );
-      await db.collection('vehicles').updateOne(
-        { _id: vehicleId },
-        ({
+        {
           $push: {
             reservations: {
               start,
@@ -81,7 +85,7 @@ async function addOrUpdateVehicleReservations(
             },
           },
           $currentDate: { updatedAt: true },
-        } as any),
+        } as any,
         { session },
       );
     }),
@@ -98,10 +102,10 @@ async function removeVehicleReservationsByLoanRequest(
   if (!vehicleIds.length) return;
   await db.collection('vehicles').updateMany(
     { _id: { $in: vehicleIds } },
-    ({
+    {
       $pull: { reservations: { loanRequestId } },
       $currentDate: { updatedAt: true },
-    } as any),
+    } as any,
     session ? { session } : undefined,
   );
 }
@@ -113,7 +117,8 @@ function filterLoansForUser(
 ): LoanRequest[] {
   const filterFn = (loan: LoanRequest) => {
     const ownerId =
-      (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+      (loan.owner as any)?._id?.toString?.() ||
+      (loan.owner as any)?.toString?.();
     const borrowerId =
       (loan.borrower as any)?._id?.toString?.() ||
       (loan.borrower as any)?.toString?.();
@@ -121,7 +126,9 @@ function filterLoansForUser(
 
     const typeOk = (loan.items || []).some((item) => {
       if (item.kind === 'vehicle') {
-        return roleHasPermission(user.role, VEHICLES_REQUEST) || isOwnerOrBorrower;
+        return (
+          roleHasPermission(user.role, VEHICLES_REQUEST) || isOwnerOrBorrower
+        );
       }
 
       if (item.kind === 'equipment' || !item.kind) {
@@ -143,9 +150,11 @@ function filterLoansForUser(
     }
 
     if (
-      [REGISSEUR_SON_ROLE, REGISSEUR_LUMIERE_ROLE, REGISSEUR_PLATEAU_ROLE].includes(
-        user.role,
-      )
+      [
+        REGISSEUR_SON_ROLE,
+        REGISSEUR_LUMIERE_ROLE,
+        REGISSEUR_PLATEAU_ROLE,
+      ].includes(user.role)
     ) {
       return true;
     }
@@ -162,7 +171,10 @@ function normalizeLoanResults(
   return Array.isArray(result) ? result : result.loans;
 }
 
-export async function countPendingLoans(db: Db, user: AuthUser): Promise<number> {
+export async function countPendingLoans(
+  db: Db,
+  user: AuthUser,
+): Promise<number> {
   if (user.role === ADMIN_ROLE) {
     return db.collection('loanrequests').countDocuments({
       status: 'pending',
@@ -274,10 +286,18 @@ export async function getLoanRequestById(
   const loan = Array.isArray(result) ? result[0] : result.loans[0];
   if (loan) return loan;
 
-  const archived = await findLoans(db, { _id: new ObjectId(id) }, undefined, undefined, {
-    includeArchived: true,
-  });
-  return Array.isArray(archived) ? archived[0] || null : archived.loans[0] || null;
+  const archived = await findLoans(
+    db,
+    { _id: new ObjectId(id) },
+    undefined,
+    undefined,
+    {
+      includeArchived: true,
+    },
+  );
+  return Array.isArray(archived)
+    ? archived[0] || null
+    : archived.loans[0] || null;
 }
 
 export async function createLoanRequest(
@@ -425,22 +445,29 @@ export async function createLoanRequest(
 
       try {
         const ownerId =
-          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+          (loan.owner as any)?._id?.toString?.() ||
+          (loan.owner as any)?.toString?.();
         const borrowerId =
-          (loan.borrower as any)?._id?.toString?.() || (loan.borrower as any)?.toString?.();
+          (loan.borrower as any)?._id?.toString?.() ||
+          (loan.borrower as any)?.toString?.();
         const requestedById =
           (loan.requestedBy as any)?._id?.toString?.() ||
           (loan.requestedBy as any)?.toString?.() ||
           (user.id as any)?.toString?.();
 
         const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-          await getLoanRecipientsByRole(db, items as any, {
-            ownerId,
-            borrowerId,
-            borrower: loan.borrower,
-            requestedById,
-            requestedBy: loan.requestedBy,
-          }, status === 'pending' ? 'loanRequests' : 'loanStatusChanges');
+          await getLoanRecipientsByRole(
+            db,
+            items as any,
+            {
+              ownerId,
+              borrowerId,
+              borrower: loan.borrower,
+              requestedById,
+              requestedBy: loan.requestedBy,
+            },
+            status === 'pending' ? 'loanRequests' : 'loanStatusChanges',
+          );
 
         const requesterSet = new Set(requesterRecipients);
         const borrowerSet = new Set(
@@ -542,24 +569,32 @@ export async function updateLoanRequest(
     const keys = Object.keys(data);
     const status = (data as any).status;
     const nextStatus = (status ?? loan.status) as string;
-    const nextStart = data.startDate ? new Date(data.startDate as any) : new Date(loan.startDate);
-    const nextEnd = data.endDate ? new Date(data.endDate as any) : new Date(loan.endDate);
+    const nextStart = data.startDate
+      ? new Date(data.startDate as any)
+      : new Date(loan.startDate);
+    const nextEnd = data.endDate
+      ? new Date(data.endDate as any)
+      : new Date(loan.endDate);
     const datesChanged = Boolean(data.startDate || data.endDate);
     const decisionAllowedKeys = ['status', 'decisionNote'];
     const cancellationAllowedKeys = ['status'];
-    const isPendingCancellation = status === 'cancelled' && loan.status === 'pending';
-    const hasOnlyCancellationKeys = keys.every((k) => cancellationAllowedKeys.includes(k));
+    const isPendingCancellation =
+      status === 'cancelled' && loan.status === 'pending';
+    const hasOnlyCancellationKeys = keys.every((k) =>
+      cancellationAllowedKeys.includes(k),
+    );
     const types = await Promise.all(
       (loan.items || []).map(async (item: LoanItem) => {
         if (item.kind === 'vehicle') {
           return '__vehicle__';
         }
-        const eq = await db
-          .collection('equipments')
-          .findOne({ _id: item.equipment as any }, {
+        const eq = await db.collection('equipments').findOne(
+          { _id: item.equipment as any },
+          {
             projection: { type: 1 },
             session,
-          });
+          },
+        );
         return (eq as any)?.type as string | undefined;
       }),
     );
@@ -568,7 +603,10 @@ export async function updateLoanRequest(
       switch (user.role) {
         case AUTRE_ROLE: {
           if (status === 'accepted' || status === 'refused') {
-            if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
+            if (
+              !isOwner ||
+              keys.some((k) => !decisionAllowedKeys.includes(k))
+            ) {
               throw forbidden('Access denied');
             }
           } else if (isPendingCancellation) {
@@ -579,7 +617,11 @@ export async function updateLoanRequest(
             if (status && status !== 'cancelled') {
               throw forbidden('Access denied');
             }
-            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
+            if (
+              !isBorrower ||
+              !isRequester ||
+              new Date(loan.startDate) <= now
+            ) {
               throw forbidden('Access denied');
             }
           }
@@ -592,7 +634,9 @@ export async function updateLoanRequest(
             if (
               !isOwner ||
               keys.some((k) => !decisionAllowedKeys.includes(k)) ||
-              !types.every((t) => t === '__vehicle__' || canModify(user.role, t))
+              !types.every(
+                (t) => t === '__vehicle__' || canModify(user.role, t),
+              )
             ) {
               throw forbidden('Access denied');
             }
@@ -604,7 +648,11 @@ export async function updateLoanRequest(
             if (status && status !== 'cancelled') {
               throw forbidden('Access denied');
             }
-            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
+            if (
+              !isBorrower ||
+              !isRequester ||
+              new Date(loan.startDate) <= now
+            ) {
               throw forbidden('Access denied');
             }
           }
@@ -612,7 +660,10 @@ export async function updateLoanRequest(
         }
         case REGISSEUR_GENERAL_ROLE: {
           if (status === 'accepted' || status === 'refused') {
-            if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
+            if (
+              !isOwner ||
+              keys.some((k) => !decisionAllowedKeys.includes(k))
+            ) {
               throw forbidden('Access denied');
             }
           } else if (isPendingCancellation) {
@@ -776,24 +827,32 @@ export async function updateLoanRequest(
       (loan.requestedBy as any)?._id?.toString?.() ||
       (loan.requestedBy as any)?.toString?.();
     const requester = requesterId ? await findUserById(db, requesterId) : null;
-    const actorName = `${u?.firstName ? `${u.firstName} ` : ''}${
-      u?.lastName ?? ''
-    }`.trim() || u?.username || undefined;
+    const actorName =
+      `${u?.firstName ? `${u.firstName} ` : ''}${u?.lastName ?? ''}`.trim() ||
+      u?.username ||
+      undefined;
 
     if (status) {
       try {
         const ownerId =
-          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+          (loan.owner as any)?._id?.toString?.() ||
+          (loan.owner as any)?.toString?.();
         const borrowerId =
-          (loan.borrower as any)?._id?.toString?.() || (loan.borrower as any)?.toString?.();
+          (loan.borrower as any)?._id?.toString?.() ||
+          (loan.borrower as any)?.toString?.();
         const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-          await getLoanRecipientsByRole(db, (loan.items || []) as any, {
-            ownerId,
-            borrowerId,
-            borrower: loan.borrower,
-            requestedById: requesterId,
-            requestedBy: requester ?? loan.requestedBy,
-          }, 'loanStatusChanges');
+          await getLoanRecipientsByRole(
+            db,
+            (loan.items || []) as any,
+            {
+              ownerId,
+              borrowerId,
+              borrower: loan.borrower,
+              requestedById: requesterId,
+              requestedBy: requester ?? loan.requestedBy,
+            },
+            'loanStatusChanges',
+          );
 
         const requesterSet = new Set(requesterRecipients);
         const borrowerSet = new Set(
@@ -867,7 +926,8 @@ export async function deleteLoanRequest(
       const u = await findUserById(db, user.id);
       const structId = u?.structure?.toString();
       const ownerId =
-        (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
+        (loan.owner as any)?._id?.toString?.() ||
+        (loan.owner as any)?.toString?.();
       const isBorrower = loan.borrower?.toString() === structId;
       const isRequester = loan.requestedBy?.toString() === user.id;
       const isOwner = ownerId === structId;

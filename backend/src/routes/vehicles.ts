@@ -22,7 +22,8 @@ import {
   updateVehicleValidator,
 } from '../validators/vehicleValidator';
 
-const { VEHICLES_CREATE, VEHICLES_UPDATE, VEHICLES_ASSIGN, VEHICLES_ARCHIVE } = permissions;
+const { VEHICLES_CREATE, VEHICLES_UPDATE, VEHICLES_ASSIGN, VEHICLES_ARCHIVE } =
+  permissions;
 
 const extractVehicleStructure = (req: Request): string | undefined => {
   if (typeof req.body?.structure === 'string') return req.body.structure;
@@ -76,18 +77,24 @@ function buildVehicleFilter(query: any): Filter<Vehicle> {
   return filter;
 }
 
-router.get('/', auth(), async (req: Request, res: Response, next: NextFunction) => {
-  const db = req.app.locals.db;
-  try {
-    const filter = buildVehicleFilter(req.query);
-    const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 0;
-    const vehicles = await findVehicles(db, filter, page, limit);
-    res.json(vehicles);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get(
+  '/',
+  auth(),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const filter = buildVehicleFilter(req.query);
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit
+        ? parseInt(req.query.limit as string, 10)
+        : 0;
+      const vehicles = await findVehicles(db, filter, page, limit);
+      res.json(vehicles);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 router.get(
   '/:id',
@@ -143,7 +150,11 @@ router.put(
     try {
       const vehicle = await updateVehicle(db, req.params.id, req.body);
       if (!vehicle) return next(notFound('Vehicle not found'));
-      logger.info('Vehicle %s updated by %s', req.params.id, req.user?.id ?? 'unknown');
+      logger.info(
+        'Vehicle %s updated by %s',
+        req.params.id,
+        req.user?.id ?? 'unknown',
+      );
       res.json(vehicle);
     } catch (err) {
       next(err);
@@ -164,7 +175,11 @@ router.delete(
     try {
       const removed = await deleteVehicle(db, req.params.id);
       if (!removed) return next(notFound('Vehicle not found'));
-      logger.info('Vehicle %s removed by %s', req.params.id, req.user?.id ?? 'unknown');
+      logger.info(
+        'Vehicle %s removed by %s',
+        req.params.id,
+        req.user?.id ?? 'unknown',
+      );
       res.json({ message: 'Vehicle deleted' });
     } catch (err) {
       next(err);

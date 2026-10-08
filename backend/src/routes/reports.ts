@@ -58,30 +58,34 @@ router.post(
   },
 );
 
-router.get('/', auth(MANAGE_STATS), async (req: Request, res: Response, next: NextFunction) => {
-  const db = req.app.locals.db;
-  try {
-    const reports = await listReports(db, {
-      structureId: req.query.structureId as string | undefined,
-      limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
-    });
-    res.json(
-      reports.map((r) => ({
-        _id: r._id,
-        structureId: r.structureId,
-        structureName: r.structureName,
-        periodStart: r.periodStart,
-        periodEnd: r.periodEnd,
-        createdAt: r.createdAt,
-        sentAt: r.sentAt,
-        recipients: r.recipients,
-        stats: r.stats,
-      })),
-    );
-  } catch (err) {
-    next(err);
-  }
-});
+router.get(
+  '/',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const reports = await listReports(db, {
+        structureId: req.query.structureId as string | undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
+      });
+      res.json(
+        reports.map((r) => ({
+          _id: r._id,
+          structureId: r.structureId,
+          structureName: r.structureName,
+          periodStart: r.periodStart,
+          periodEnd: r.periodEnd,
+          createdAt: r.createdAt,
+          sentAt: r.sentAt,
+          recipients: r.recipients,
+          stats: r.stats,
+        })),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 router.get(
   '/investments/export',
@@ -89,14 +93,17 @@ router.get(
     permissions: MANAGE_INVESTMENTS,
     action: 'investments:export',
     getStructureId: (req) =>
-      (typeof req.query?.structure === 'string' ? req.query.structure : undefined) ??
-      normalizeId(req.user?.structure),
+      (typeof req.query?.structure === 'string'
+        ? req.query.structure
+        : undefined) ?? normalizeId(req.user?.structure),
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
     try {
       const structureId =
-        typeof req.query.structure === 'string' ? req.query.structure : undefined;
+        typeof req.query.structure === 'string'
+          ? req.query.structure
+          : undefined;
       if (structureId) {
         if (!ObjectId.isValid(structureId)) {
           throw badRequest('Invalid structure id');
@@ -106,17 +113,24 @@ router.get(
         ensureStructureAccess(req, req.user?.structure);
       }
       const summary = await getInvestmentSummary(db, { structureId });
-      const format = typeof req.query.format === 'string' ? req.query.format : 'csv';
+      const format =
+        typeof req.query.format === 'string' ? req.query.format : 'csv';
       if (format === 'pdf') {
         const pdf = await renderInvestmentSummaryPdf(summary);
         res.contentType('application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=investissements.pdf');
+        res.setHeader(
+          'Content-Disposition',
+          'attachment; filename=investissements.pdf',
+        );
         res.send(pdf);
         return;
       }
       const csv = renderInvestmentSummaryCsv(summary);
       res.contentType('text/csv; charset=utf-8');
-      res.setHeader('Content-Disposition', 'attachment; filename=investissements.csv');
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename=investissements.csv',
+      );
       res.send(csv);
     } catch (err) {
       next(err);
@@ -147,28 +161,32 @@ router.get(
   },
 );
 
-router.get('/:id', auth(MANAGE_STATS), async (req: Request, res: Response, next: NextFunction) => {
-  const db = req.app.locals.db;
-  try {
-    const report = await findReportById(db, req.params.id);
-    if (!report) {
-      res.status(404).json({ message: 'Not found' });
-      return;
+router.get(
+  '/:id',
+  auth(MANAGE_STATS),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const db = req.app.locals.db;
+    try {
+      const report = await findReportById(db, req.params.id);
+      if (!report) {
+        res.status(404).json({ message: 'Not found' });
+        return;
+      }
+      res.json({
+        _id: report._id,
+        structureId: report.structureId,
+        structureName: report.structureName,
+        periodStart: report.periodStart,
+        periodEnd: report.periodEnd,
+        createdAt: report.createdAt,
+        sentAt: report.sentAt,
+        recipients: report.recipients,
+        stats: report.stats,
+      });
+    } catch (err) {
+      next(err);
     }
-    res.json({
-      _id: report._id,
-      structureId: report.structureId,
-      structureName: report.structureName,
-      periodStart: report.periodStart,
-      periodEnd: report.periodEnd,
-      createdAt: report.createdAt,
-      sentAt: report.sentAt,
-      recipients: report.recipients,
-      stats: report.stats,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 export default router;

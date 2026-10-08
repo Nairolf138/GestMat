@@ -41,7 +41,9 @@ function LoanPreviewSection({
               actionInProgressId={actionInProgressId}
             />
           ))}
-        {!loading && !loans.length && <div className="card">{emptyMessage}</div>}
+        {!loading && !loans.length && (
+          <div className="card">{emptyMessage}</div>
+        )}
       </div>
       <p className="loan-section-footer">
         <Link to="/loans">{t('home.view_all')}</Link>

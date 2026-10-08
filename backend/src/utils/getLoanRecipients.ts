@@ -75,16 +75,21 @@ async function findOwnerRecipients(
     .filter((it) => (it.kind ?? 'equipment') === 'equipment' && it.equipment)
     .map((it) => new ObjectId(it.equipment));
   const types = equipmentIds.length
-    ? (
+    ? ((
         await db
           .collection('equipments')
-          .find<{ type?: string }>({ _id: { $in: equipmentIds } }, { projection: { type: 1 } })
+          .find<{ type?: string }>(
+            { _id: { $in: equipmentIds } },
+            { projection: { type: 1 } },
+          )
           .toArray()
       )
         .map((eq) => eq?.type)
-        .filter(Boolean) as string[]
+        .filter(Boolean) as string[])
     : [];
-  const hasVehicleItem = items.some((it) => (it.kind ?? 'equipment') === 'vehicle');
+  const hasVehicleItem = items.some(
+    (it) => (it.kind ?? 'equipment') === 'vehicle',
+  );
 
   const users = await db
     .collection('users')
@@ -114,7 +119,9 @@ async function findOwnerRecipients(
       return (
         u.email &&
         result.allowed &&
-        (hasVehicleItem || !types.length || types.some((t) => canModify(u.role, t)))
+        (hasVehicleItem ||
+          !types.length ||
+          types.some((t) => canModify(u.role, t)))
       );
     })
     .map((u: any) => u.email as string);
@@ -128,16 +135,23 @@ async function findRequesterRecipients(
 ): Promise<string[]> {
   const requesterEmail = (requestedBy as any)?.email;
   const normalizedEmail =
-    typeof requesterEmail === 'string' && requesterEmail.trim() ? requesterEmail.trim() : null;
+    typeof requesterEmail === 'string' && requesterEmail.trim()
+      ? requesterEmail.trim()
+      : null;
   const shouldReload =
-    !requestedBy || !normalizedEmail || (requestedBy as any)?.preferences === undefined;
+    !requestedBy ||
+    !normalizedEmail ||
+    (requestedBy as any)?.preferences === undefined;
   const canReload = requestedById && ObjectId.isValid(requestedById);
 
   const requester =
     shouldReload && canReload
       ? await db
           .collection('users')
-          .findOne<{ email?: string; preferences?: any }>({ _id: new ObjectId(requestedById) })
+          .findOne<{
+            email?: string;
+            preferences?: any;
+          }>({ _id: new ObjectId(requestedById) })
       : (requestedBy as any);
 
   if (!normalizedEmail && !requester?.email) {
@@ -234,8 +248,18 @@ export async function getLoanRecipientsByRole(
     preference,
     options,
   );
-  const borrowerRecipients = await findBorrowerRecipients(db, context, preference, options);
-  const requesterRecipients = await findRequesterRecipients(db, context, preference, options);
+  const borrowerRecipients = await findBorrowerRecipients(
+    db,
+    context,
+    preference,
+    options,
+  );
+  const requesterRecipients = await findRequesterRecipients(
+    db,
+    context,
+    preference,
+    options,
+  );
 
   if (!ownerRecipients.length) {
     trace?.({
@@ -277,10 +301,17 @@ export async function getLoanRecipients(
     });
 
   const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-    await getLoanRecipientsByRole(db, items, context, preference, { ...options, trace });
+    await getLoanRecipientsByRole(db, items, context, preference, {
+      ...options,
+      trace,
+    });
 
   const recipients = Array.from(
-    new Set([...ownerRecipients, ...borrowerRecipients, ...requesterRecipients]),
+    new Set([
+      ...ownerRecipients,
+      ...borrowerRecipients,
+      ...requesterRecipients,
+    ]),
   );
 
   if (!recipients.length) {

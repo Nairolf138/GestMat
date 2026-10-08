@@ -12,7 +12,7 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
   const ownerName = loan.owner?.name || t('home.activity.untitled');
   const borrowerName = loan.borrower?.name || t('home.activity.untitled');
   const totalItems = loan.items?.reduce(
-    (sum, it) => sum + (it.kind === 'vehicle' ? 1 : (it.quantity || 0)),
+    (sum, it) => sum + (it.kind === 'vehicle' ? 1 : it.quantity || 0),
     0,
   );
   const noteContent = loan.note?.trim();
@@ -45,7 +45,8 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
   }, [loan.endDate, t]);
 
   const showActions =
-    loan.status === 'pending' && (typeof onAccept === 'function' || typeof onDecline === 'function');
+    loan.status === 'pending' &&
+    (typeof onAccept === 'function' || typeof onDecline === 'function');
   const isProcessing = actionInProgressId === loan._id;
 
   return (
@@ -59,14 +60,19 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
           <span className={`status-chip ${loan.status}`}>
             {t(`loans.status.${loan.status}`)}
           </span>
-          {urgency && <span className={`status-chip ${urgency.tone}`}>{urgency.label}</span>}
+          {urgency && (
+            <span className={`status-chip ${urgency.tone}`}>
+              {urgency.label}
+            </span>
+          )}
         </div>
         <span className="equipment-count">
           {t('loans.items', { count: totalItems || 0 })}
         </span>
       </div>
       <div className="mt-1 small" style={{ whiteSpace: 'pre-wrap' }}>
-        <strong>{t('loans.note_label')}:</strong> {noteContent || t('loans.note_not_provided')}
+        <strong>{t('loans.note_label')}:</strong>{' '}
+        {noteContent || t('loans.note_not_provided')}
       </div>
       {['accepted', 'refused'].includes(loan.status) && (
         <div className="mt-1 small" style={{ whiteSpace: 'pre-wrap' }}>

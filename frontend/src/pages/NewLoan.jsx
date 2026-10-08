@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
@@ -15,7 +21,8 @@ function NewLoan() {
   const { structures } = useContext(GlobalContext);
   const { user } = useContext(AuthContext);
   const isDirectMode =
-    searchParams.get('direct') === 'true' || searchParams.get('mode') === 'direct';
+    searchParams.get('direct') === 'true' ||
+    searchParams.get('mode') === 'direct';
   const userStructureId =
     typeof user?.structure === 'string'
       ? user.structure
@@ -25,10 +32,7 @@ function NewLoan() {
     (typeof user?.structure === 'object' ? user.structure : null);
 
   const today = useMemo(() => new Date(), []);
-  const defaultStart = useMemo(
-    () => new Date().toISOString().slice(0, 10),
-    [],
-  );
+  const defaultStart = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const defaultEnd = useMemo(
     () => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     [],
@@ -61,7 +65,9 @@ function NewLoan() {
   useEffect(() => {
     if (!isDirectMode || !userStructureId) return;
     setForm((prev) =>
-      prev.owner === userStructureId ? prev : { ...prev, owner: userStructureId },
+      prev.owner === userStructureId
+        ? prev
+        : { ...prev, owner: userStructureId },
     );
   }, [isDirectMode, userStructureId]);
 
@@ -97,7 +103,15 @@ function NewLoan() {
     } finally {
       setLoadingEquipments(false);
     }
-  }, [form.endDate, form.owner, form.startDate, isDirectMode, t, user?.role, userStructureId]);
+  }, [
+    form.endDate,
+    form.owner,
+    form.startDate,
+    isDirectMode,
+    t,
+    user?.role,
+    userStructureId,
+  ]);
 
   useEffect(() => {
     fetchEquipments();
@@ -204,15 +218,13 @@ function NewLoan() {
         {isDirectMode ? t('loans.new.direct_title') : t('loans.new.title')}
       </h1>
       <p className="text-muted">
-        {isDirectMode ? t('loans.new.direct_description') : t('loans.new.description')}
+        {isDirectMode
+          ? t('loans.new.direct_description')
+          : t('loans.new.description')}
       </p>
 
       <Alert message={error} onClose={() => setError('')} />
-      <Alert
-        message={success}
-        type="success"
-        onClose={() => setSuccess('')}
-      />
+      <Alert message={success} type="success" onClose={() => setSuccess('')} />
 
       <form className="card p-4" onSubmit={handleSubmit}>
         <div className="row g-3">
@@ -255,10 +267,16 @@ function NewLoan() {
               <input
                 id="owner-structure"
                 className="form-control"
-                value={ownerStructure?.name || ownerStructure?.label || t('common.not_available')}
+                value={
+                  ownerStructure?.name ||
+                  ownerStructure?.label ||
+                  t('common.not_available')
+                }
                 disabled
               />
-              <small className="text-muted">{t('loans.new.owner_locked')}</small>
+              <small className="text-muted">
+                {t('loans.new.owner_locked')}
+              </small>
             </div>
           )}
         </div>
@@ -364,9 +382,7 @@ function NewLoan() {
             value={form.note}
             onChange={(e) => updateField('note', e.target.value)}
           />
-          <small className="text-muted">
-            {t('loans.new.note_help')}
-          </small>
+          <small className="text-muted">{t('loans.new.note_help')}</small>
         </div>
 
         <div className="d-flex gap-3 mt-4">

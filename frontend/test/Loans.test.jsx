@@ -9,7 +9,8 @@ vi.mock('../src/api.js');
 import * as api from '../src/api.js';
 
 const dayMs = 24 * 60 * 60 * 1000;
-const isoDaysFromNow = (days) => new Date(Date.now() + days * dayMs).toISOString();
+const isoDaysFromNow = (days) =>
+  new Date(Date.now() + days * dayMs).toISOString();
 
 const renderLoans = ({ structureId = 's1', initialEntry = '/loans' } = {}) =>
   render(
@@ -17,7 +18,9 @@ const renderLoans = ({ structureId = 's1', initialEntry = '/loans' } = {}) =>
       initialEntries={[initialEntry]}
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
-      <AuthContext.Provider value={{ user: { structure: { _id: structureId } } }}>
+      <AuthContext.Provider
+        value={{ user: { structure: { _id: structureId } } }}
+      >
         <Loans />
       </AuthContext.Provider>
     </MemoryRouter>,
@@ -83,7 +86,9 @@ describe('Loans', () => {
 
     await waitFor(() => expect(api.api).toHaveBeenCalledWith('/loans'));
 
-    expect(screen.getByText('Camion atelier (AB-123-CD) x1')).toBeInTheDocument();
+    expect(
+      screen.getByText('Camion atelier (AB-123-CD) x1'),
+    ).toBeInTheDocument();
   });
 
   it('filters out finished/refused/cancelled loans while keeping pending/upcoming/ongoing and history link', async () => {
@@ -188,11 +193,15 @@ describe('Loans', () => {
     expect(screen.queryByText(/Refused Owner Loan/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Cancelled Owner Loan/)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('loans.as_borrower') }));
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('loans.as_borrower') }),
+    );
 
     expect(screen.getByText(/Upcoming Borrower Loan/)).toBeInTheDocument();
     expect(screen.getByText(/Active Borrower Loan/)).toBeInTheDocument();
-    expect(screen.queryByText(/Finished Borrower Loan/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Finished Borrower Loan/),
+    ).not.toBeInTheDocument();
   });
 
   it('lets a borrower cancel their pending loan request', async () => {
@@ -202,7 +211,9 @@ describe('Loans', () => {
           _id: 'borrower-pending-cancel',
           owner: { _id: 's2', name: 'Owner S2' },
           borrower: { _id: 's1', name: 'Borrower S1' },
-          items: [{ equipment: { name: 'Pending Borrower Loan' }, quantity: 1 }],
+          items: [
+            { equipment: { name: 'Pending Borrower Loan' }, quantity: 1 },
+          ],
           status: 'pending',
           startDate: new Date().toISOString(),
         },
@@ -213,9 +224,13 @@ describe('Loans', () => {
     renderLoans();
 
     await waitFor(() => expect(api.api).toHaveBeenCalledWith('/loans'));
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('loans.as_borrower') }));
+    fireEvent.click(
+      screen.getByRole('button', { name: i18n.t('loans.as_borrower') }),
+    );
 
-    const cancelButton = screen.getByRole('button', { name: i18n.t('loans.cancel') });
+    const cancelButton = screen.getByRole('button', {
+      name: i18n.t('loans.cancel'),
+    });
     expect(cancelButton).toBeInTheDocument();
 
     fireEvent.click(cancelButton);

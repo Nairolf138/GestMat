@@ -72,13 +72,14 @@ export interface GenerateReportsResult {
 export function getAnnualReportPeriod(now: Date = new Date()): ReportPeriod {
   const currentYear = now.getFullYear();
   const isPastCutoff =
-    now.getMonth() > AUGUST || (now.getMonth() === AUGUST && now.getDate() >= 31);
+    now.getMonth() > AUGUST ||
+    (now.getMonth() === AUGUST && now.getDate() >= 31);
   const endYear = isPastCutoff ? currentYear : currentYear - 1;
   const end = new Date(Date.UTC(endYear, AUGUST, 31, 23, 59, 59, 999));
   const start = new Date(Date.UTC(endYear - 1, AUGUST, 1, 0, 0, 0, 0));
-  const label = `Du ${start.toISOString().substring(0, 10)} au ${
-    end.toISOString().substring(0, 10)
-  }`;
+  const label = `Du ${start.toISOString().substring(0, 10)} au ${end
+    .toISOString()
+    .substring(0, 10)}`;
   const key = `${endYear}`;
   return { start, end, key, label };
 }
@@ -99,7 +100,10 @@ export async function collectStructureStats(
   const pipeline: Record<string, unknown>[] = [
     { $match: match },
     {
-      $unionWith: { coll: 'loanrequests_archive', pipeline: [{ $match: match }] },
+      $unionWith: {
+        coll: 'loanrequests_archive',
+        pipeline: [{ $match: match }],
+      },
     },
     {
       $facet: {
@@ -130,7 +134,11 @@ export async function collectStructureStats(
             },
           },
           {
-            $group: { _id: null, average: { $avg: '$durationDays' }, count: { $sum: 1 } },
+            $group: {
+              _id: null,
+              average: { $avg: '$durationDays' },
+              count: { $sum: 1 },
+            },
           },
         ],
         topEquipments: [
@@ -177,7 +185,10 @@ export async function collectStructureStats(
     ]),
   );
   const roleCounts = (result?.roleCounts || []).reduce(
-    (acc: { owner: number; borrower: number }, cur: { _id: string; count: number }) => {
+    (
+      acc: { owner: number; borrower: number },
+      cur: { _id: string; count: number },
+    ) => {
       if (cur._id === 'owner') acc.owner += cur.count;
       else acc.borrower += cur.count;
       return acc;
@@ -186,7 +197,12 @@ export async function collectStructureStats(
   );
   const averageDurationDays = result?.durations?.[0]?.average || 0;
   const topEquipments: EquipmentStat[] = (result?.topEquipments || []).map(
-    (e: { _id: ObjectId; totalQuantity: number; name?: string; type?: string }) => ({
+    (e: {
+      _id: ObjectId;
+      totalQuantity: number;
+      name?: string;
+      type?: string;
+    }) => ({
       id: e._id,
       name: e.name,
       type: e.type,
@@ -195,7 +211,13 @@ export async function collectStructureStats(
   );
   const totalLoans = result?.total?.[0]?.count || 0;
 
-  return { statusCounts, roleCounts, averageDurationDays, topEquipments, totalLoans };
+  return {
+    statusCounts,
+    roleCounts,
+    averageDurationDays,
+    topEquipments,
+    totalLoans,
+  };
 }
 
 export async function renderReportPdf(
@@ -207,9 +229,13 @@ export async function renderReportPdf(
   const buffers: Buffer[] = [];
   doc.on('data', (chunk) => buffers.push(chunk));
 
-  doc.fontSize(20).text('Rapport annuel des prêts/émprunts', { align: 'center' });
+  doc
+    .fontSize(20)
+    .text('Rapport annuel des prêts/émprunts', { align: 'center' });
   doc.moveDown();
-  doc.fontSize(14).text(structure.name ? String(structure.name) : 'Structure inconnue');
+  doc
+    .fontSize(14)
+    .text(structure.name ? String(structure.name) : 'Structure inconnue');
   doc.fontSize(12).text(period.label);
   doc.moveDown();
 
@@ -240,7 +266,9 @@ export async function renderReportPdf(
     doc.fontSize(11).text('Aucun équipement demandé sur la période');
   } else {
     stats.topEquipments.forEach((eq) => {
-      const label = eq.name ? `${eq.name} (${eq.type || 'type inconnu'})` : 'Équipement inconnu';
+      const label = eq.name
+        ? `${eq.name} (${eq.type || 'type inconnu'})`
+        : 'Équipement inconnu';
       doc.fontSize(11).text(`- ${label}: ${eq.totalQuantity} demande(s)`);
     });
   }
@@ -269,10 +297,12 @@ async function persistReport(
   db: Db,
   report: StoredReport,
 ): Promise<WithId<StoredReport>> {
-  const { insertedId } = await db.collection<StoredReport>('reports').insertOne({
-    ...report,
-    createdAt: report.createdAt ?? new Date(),
-  });
+  const { insertedId } = await db
+    .collection<StoredReport>('reports')
+    .insertOne({
+      ...report,
+      createdAt: report.createdAt ?? new Date(),
+    });
   return { ...report, _id: insertedId } as WithId<StoredReport>;
 }
 
@@ -292,9 +322,9 @@ async function sendReportEmail(
 
 Veuillez trouver en pièce jointe le rapport annuel pour ${
       structure.name || 'votre structure'
-    } (${report.periodStart.toISOString().substring(0, 10)} -> ${
-      report.periodEnd.toISOString().substring(0, 10)
-    }).\nTéléchargement: ${downloadUrl}\n\n--\nGestMat`,
+    } (${report.periodStart.toISOString().substring(0, 10)} -> ${report.periodEnd
+      .toISOString()
+      .substring(0, 10)}).\nTéléchargement: ${downloadUrl}\n\n--\nGestMat`,
     attachments: [
       {
         filename: `rapport-${report.structureName || 'structure'}.pdf`,
@@ -306,7 +336,12 @@ Veuillez trouver en pièce jointe le rapport annuel pour ${
 
 export async function generateAnnualReports(
   db: Db,
-  { now = new Date(), force = false, structureIds, sendEmails = true }: GenerateReportsOptions = {},
+  {
+    now = new Date(),
+    force = false,
+    structureIds,
+    sendEmails = true,
+  }: GenerateReportsOptions = {},
 ): Promise<GenerateReportsResult> {
   const period = getAnnualReportPeriod(now);
   const errors: string[] = [];
@@ -320,9 +355,14 @@ export async function generateAnnualReports(
   let emailed = 0;
 
   const jobKey = `annual-${period.key}`;
-  const meta = await db.collection<ReportJob>('reportJobs').findOne({ _id: jobKey });
+  const meta = await db
+    .collection<ReportJob>('reportJobs')
+    .findOne({ _id: jobKey });
   if (meta && !force) {
-    logger.info('Annual reports already generated for %s, skipping', period.key);
+    logger.info(
+      'Annual reports already generated for %s, skipping',
+      period.key,
+    );
     return { period, generated, skipped: filtered.length, emailed, errors };
   }
 
@@ -343,15 +383,23 @@ export async function generateAnnualReports(
       }
 
       const stats = await collectStructureStats(db, structureId, period);
-      const pdf = await renderReportPdf(structure as WithId<Structure>, stats, period);
+      const pdf = await renderReportPdf(
+        structure as WithId<Structure>,
+        stats,
+        period,
+      );
       const recipients = new Set<string>();
       const structureEmail = (structure as any).email;
       if (typeof structureEmail === 'string' && structureEmail.trim()) {
         recipients.add(structureEmail.trim());
       }
-      const memberEmails = await getStructureEmails(db, structureId.toString(), {
-        requireSystemAlerts: true,
-      });
+      const memberEmails = await getStructureEmails(
+        db,
+        structureId.toString(),
+        {
+          requireSystemAlerts: true,
+        },
+      );
       memberEmails.forEach((e) => recipients.add(e));
 
       const stored = await persistReport(db, {
@@ -367,7 +415,11 @@ export async function generateAnnualReports(
 
       if (sendEmails && recipients.size) {
         try {
-          await sendReportEmail(stored, structure as WithId<Structure>, Array.from(recipients));
+          await sendReportEmail(
+            stored,
+            structure as WithId<Structure>,
+            Array.from(recipients),
+          );
           await db
             .collection('reports')
             .updateOne({ _id: stored._id }, { $set: { sentAt: new Date() } });
@@ -383,7 +435,10 @@ export async function generateAnnualReports(
       }
 
       generated += 1;
-      logger.info('Generated annual report for structure %s', structureId.toString());
+      logger.info(
+        'Generated annual report for structure %s',
+        structureId.toString(),
+      );
     } catch (err) {
       const message = `Report generation failed for structure ${structureId}: ${(err as Error).message}`;
       errors.push(message);
@@ -401,7 +456,11 @@ export function scheduleAnnualReports(db: Db): NodeJS.Timeout {
     generateAnnualReports(db)
       .then((result) => {
         if (result.generated > 0) {
-          logger.info('Annual reports generated: %d (period %s)', result.generated, result.period.key);
+          logger.info(
+            'Annual reports generated: %d (period %s)',
+            result.generated,
+            result.period.key,
+          );
         }
       })
       .catch((err) => {
@@ -436,5 +495,7 @@ export async function findReportById(
   if (!ObjectId.isValid(id)) {
     return null;
   }
-  return db.collection<StoredReport>('reports').findOne({ _id: new ObjectId(id) });
+  return db
+    .collection<StoredReport>('reports')
+    .findOne({ _id: new ObjectId(id) });
 }

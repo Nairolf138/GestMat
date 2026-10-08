@@ -1,5 +1,9 @@
 import { ClientSession, Db, ObjectId } from 'mongodb';
-import type { Vehicle, VehicleReservation, VehicleStatus } from '../models/Vehicle';
+import type {
+  Vehicle,
+  VehicleReservation,
+  VehicleStatus,
+} from '../models/Vehicle';
 
 const UNAVAILABLE_STATUSES: VehicleStatus[] = ['maintenance', 'retired'];
 

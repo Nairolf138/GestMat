@@ -81,68 +81,76 @@ async function seedLoan(db, { requesterEmail, ownerHasContact }) {
 }
 
 test('loan status notification recipients', async (t) => {
-  await t.test('includes owner contacts, requester and NOTIFY_EMAIL', async () => {
-    const { db, client, mongod } = await createDb();
-    const { loanId } = await seedLoan(db, {
-      requesterEmail: 'requester@example.test',
-      ownerHasContact: true,
-    });
+  await t.test(
+    'includes owner contacts, requester and NOTIFY_EMAIL',
+    async () => {
+      const { db, client, mongod } = await createDb();
+      const { loanId } = await seedLoan(db, {
+        requesterEmail: 'requester@example.test',
+        ownerHasContact: true,
+      });
 
-    const mailer = require('../src/utils/sendMail');
-    const sent = [];
-    mailer.sendMail = async (options) => {
-      sent.push(options);
-    };
+      const mailer = require('../src/utils/sendMail');
+      const sent = [];
+      mailer.sendMail = async (options) => {
+        sent.push(options);
+      };
 
-    const { updateLoanRequest } = loadLoanServiceWithNotify('alert@example.test');
+      const { updateLoanRequest } =
+        loadLoanServiceWithNotify('alert@example.test');
 
-    await updateLoanRequest(
-      db,
-      { id: new ObjectId().toString(), role: ADMIN_ROLE },
-      loanId.toString(),
-      { status: 'accepted' },
-    );
+      await updateLoanRequest(
+        db,
+        { id: new ObjectId().toString(), role: ADMIN_ROLE },
+        loanId.toString(),
+        { status: 'accepted' },
+      );
 
-    assert.strictEqual(sent.length, 1);
-    const recipients = sent[0].to.split(',').sort();
-    assert.deepStrictEqual(recipients, [
-      'alert@example.test',
-      'owner@example.test',
-      'requester@example.test',
-    ]);
+      assert.strictEqual(sent.length, 1);
+      const recipients = sent[0].to.split(',').sort();
+      assert.deepStrictEqual(recipients, [
+        'alert@example.test',
+        'owner@example.test',
+        'requester@example.test',
+      ]);
 
-    await client.close();
-    await mongod.stop();
-  });
+      await client.close();
+      await mongod.stop();
+    },
+  );
 
-  await t.test('falls back to NOTIFY_EMAIL when requester is missing email', async () => {
-    const { db, client, mongod } = await createDb();
-    const { loanId } = await seedLoan(db, {
-      requesterEmail: undefined,
-      ownerHasContact: false,
-    });
+  await t.test(
+    'falls back to NOTIFY_EMAIL when requester is missing email',
+    async () => {
+      const { db, client, mongod } = await createDb();
+      const { loanId } = await seedLoan(db, {
+        requesterEmail: undefined,
+        ownerHasContact: false,
+      });
 
-    const mailer = require('../src/utils/sendMail');
-    const sent = [];
-    mailer.sendMail = async (options) => {
-      sent.push(options);
-    };
+      const mailer = require('../src/utils/sendMail');
+      const sent = [];
+      mailer.sendMail = async (options) => {
+        sent.push(options);
+      };
 
-    const { updateLoanRequest } = loadLoanServiceWithNotify('alert@example.test');
+      const { updateLoanRequest } =
+        loadLoanServiceWithNotify('alert@example.test');
 
-    await updateLoanRequest(
-      db,
-      { id: new ObjectId().toString(), role: ADMIN_ROLE },
-      loanId.toString(),
-      { status: 'accepted' },
-    );
+      await updateLoanRequest(
+        db,
+        { id: new ObjectId().toString(), role: ADMIN_ROLE },
+        loanId.toString(),
+        { status: 'accepted' },
+      );
 
-    assert.strictEqual(sent.length, 1);
-    assert.strictEqual(sent[0].to, 'alert@example.test');
+      assert.strictEqual(sent.length, 1);
+      assert.strictEqual(sent[0].to, 'alert@example.test');
 
-    await client.close();
-    await mongod.stop();
-  });
+      await client.close();
+      await mongod.stop();
+    },
+  );
 
   await t.test('logs when no recipients are available', async () => {
     const { db, client, mongod } = await createDb();
@@ -184,7 +192,9 @@ test('loan status notification recipients', async (t) => {
     assert.strictEqual(sent.length, 0);
     assert.ok(
       warnings.some((args) =>
-        String(args[0]).includes('Loan status notification not sent: no recipient email found'),
+        String(args[0]).includes(
+          'Loan status notification not sent: no recipient email found',
+        ),
       ),
     );
 

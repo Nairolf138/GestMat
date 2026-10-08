@@ -64,7 +64,11 @@ function formatDate(value?: string | Date | null): string {
 }
 
 function getStructureLabel(structure: any): string {
-  return (structure?.name as string) || (structure?._id as string) || 'Non renseignée';
+  return (
+    (structure?.name as string) ||
+    (structure?._id as string) ||
+    'Non renseignée'
+  );
 }
 
 function getUserLabel(user: any): string {
@@ -113,7 +117,10 @@ function formatNote(note?: string | null): { text: string; html: string } {
   };
 }
 
-function formatDecisionNote(note?: string | null): { text: string; html: string } {
+function formatDecisionNote(note?: string | null): {
+  text: string;
+  html: string;
+} {
   const cleaned = note?.toString().trim();
   if (!cleaned) {
     const fallback = 'Aucune note de décision renseignée';
@@ -143,18 +150,22 @@ function getItemsLabel(items: LoanItem[] = []): string {
 
 function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   if (!items.length) {
-    return { text: '- Aucun matériel renseigné', html: '<li>Aucun matériel renseigné</li>' };
+    return {
+      text: '- Aucun matériel renseigné',
+      html: '<li>Aucun matériel renseigné</li>',
+    };
   }
   const textItems: string[] = [];
   const htmlItems: string[] = [];
   for (const item of items) {
     const kind = item.kind === 'vehicle' ? 'vehicle' : 'equipment';
-    const quantity = kind === 'vehicle' ? 1 : item.quantity ?? 'N/A';
+    const quantity = kind === 'vehicle' ? 1 : (item.quantity ?? 'N/A');
 
     let label: string;
     if (kind === 'vehicle') {
       const vehicle = item.vehicle as any;
-      const vehicleId = vehicle?._id?.toString?.() || vehicle?.toString?.() || undefined;
+      const vehicleId =
+        vehicle?._id?.toString?.() || vehicle?.toString?.() || undefined;
       const vehicleName = vehicle?.name;
       const registrationNumber = vehicle?.registrationNumber;
       label =
@@ -176,21 +187,30 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
     }
 
     textItems.push(`- ${label} (quantité : ${quantity})`);
-    htmlItems.push(`<li><strong>${label}</strong> — quantité : ${quantity}</li>`);
+    htmlItems.push(
+      `<li><strong>${label}</strong> — quantité : ${quantity}</li>`,
+    );
   }
   return { text: textItems.join('\n'), html: htmlItems.join('') };
 }
 
-export function buildLoanSummary(loan: LoanRequest): { text: string; html: string } {
+export function buildLoanSummary(loan: LoanRequest): {
+  text: string;
+  html: string;
+} {
   const borrower = getStructureLabel(loan.borrower);
   const owner = getStructureLabel(loan.owner);
   const requester = getUserLabel(loan.requestedBy);
   const status = translateStatus(loan.status as string);
   const start = formatDate(loan.startDate as any);
   const end = formatDate(loan.endDate as any);
-  const { text: itemsText, html: itemsHtml } = formatItems(loan.items as LoanItem[]);
+  const { text: itemsText, html: itemsHtml } = formatItems(
+    loan.items as LoanItem[],
+  );
   const itemsLabel = getItemsLabel(loan.items as LoanItem[]);
-  const { text: noteText, html: noteHtml } = formatNote(loan.note as string | null);
+  const { text: noteText, html: noteHtml } = formatNote(
+    loan.note as string | null,
+  );
 
   const text =
     `Prêteur : ${owner}\n` +
@@ -300,7 +320,10 @@ function creationRoleCopy(role: LoanRecipientRole): {
   }
 }
 
-function statusRoleCopy(role: LoanRecipientRole, status?: string): {
+function statusRoleCopy(
+  role: LoanRecipientRole,
+  status?: string,
+): {
   subject: string;
   preamble: string;
   action: string;
@@ -349,7 +372,8 @@ function statusRoleCopy(role: LoanRecipientRole, status?: string): {
         subject: `Demande de prêt ${statusLabel} - prêteur`,
         preamble: 'Vous êtes le prêteur associé à ce prêt.',
         action: actionByStatus({
-          accepted: 'Préparer la mise à disposition et confirmer la remise du matériel.',
+          accepted:
+            'Préparer la mise à disposition et confirmer la remise du matériel.',
           refused: 'Aucune action supplémentaire requise.',
           cancelled: 'La demande a été annulée ; aucune action requise.',
           default: "Vérifier l'état du prêt dans GestMat.",
@@ -398,8 +422,10 @@ function overdueRoleCopy(role: LoanRecipientRole): {
     case 'borrower':
       return {
         subject: 'Prêt en retard - emprunteur',
-        preamble: 'Votre structure n’a pas restitué le matériel dans les délais.',
-        action: "Restituer le matériel au plus vite et prévenir le prêteur de l'avancement.",
+        preamble:
+          'Votre structure n’a pas restitué le matériel dans les délais.',
+        action:
+          "Restituer le matériel au plus vite et prévenir le prêteur de l'avancement.",
       };
     case 'requester':
       return {
@@ -419,7 +445,10 @@ function overdueRoleCopy(role: LoanRecipientRole): {
   }
 }
 
-export function loanCreationTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
+export function loanCreationTemplate({
+  loan,
+  role = 'owner',
+}: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const { subject, preamble, action } = creationRoleCopy(role);
   const loanLabel = getLoanLabel(loan);
@@ -441,7 +470,8 @@ export function loanStatusTemplate({
 }: LoanStatusContext & { role?: LoanRecipientRole }): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const hasDecisionNote =
-    typeof loan.decisionNote === 'string' && loan.decisionNote.trim().length > 0;
+    typeof loan.decisionNote === 'string' &&
+    loan.decisionNote.trim().length > 0;
   const decisionNote =
     hasDecisionNote && (status === 'accepted' || status === 'refused')
       ? formatDecisionNote(loan.decisionNote as string | null)
@@ -478,7 +508,10 @@ export function loanStartReminderTemplate({
   });
 }
 
-export function loanOverdueTemplate({ loan, role = 'owner' }: LoanMailContext): MailTemplate {
+export function loanOverdueTemplate({
+  loan,
+  role = 'owner',
+}: LoanMailContext): MailTemplate {
   const { text, html } = buildLoanSummary(loan);
   const { subject, preamble, action } = overdueRoleCopy(role);
   const loanLabel = getLoanLabel(loan);
@@ -498,7 +531,8 @@ export function vehicleComplianceReminderTemplate({
   expiryDate,
 }: VehicleComplianceContext): MailTemplate {
   const formattedDate = formatDate(expiryDate);
-  const kindLabel = kind === 'insurance' ? "d'assurance" : 'de contrôle technique';
+  const kindLabel =
+    kind === 'insurance' ? "d'assurance" : 'de contrôle technique';
   const vehicleLabel = `${vehicle.name || 'Véhicule'}${
     vehicle.registrationNumber ? ` (${vehicle.registrationNumber})` : ''
   }`;
@@ -554,7 +588,8 @@ export function accountUpdateTemplate({
   displayName,
   changedFields,
 }: AccountUpdateContext): MailTemplate {
-  const formattedChanges = changedFields.join(', ') || 'modifications de votre compte';
+  const formattedChanges =
+    changedFields.join(', ') || 'modifications de votre compte';
   return {
     subject: 'Mise à jour de votre compte GestMat',
     text:

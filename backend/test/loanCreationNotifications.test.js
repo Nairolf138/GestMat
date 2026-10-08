@@ -68,9 +68,7 @@ test('loan creation stores note and includes it in notification emails', async (
     payload,
   );
 
-  const stored = await db
-    .collection('loanrequests')
-    .findOne({ _id: loan._id });
+  const stored = await db.collection('loanrequests').findOne({ _id: loan._id });
   assert.strictEqual(loan.note, payload.note);
   assert.strictEqual(stored.note, payload.note);
 

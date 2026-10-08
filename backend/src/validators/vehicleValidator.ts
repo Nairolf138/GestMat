@@ -1,8 +1,5 @@
 import { body, ValidationChain } from 'express-validator';
-import {
-  VEHICLE_STATUSES,
-  VehicleComplianceDocument,
-} from '../models/Vehicle';
+import { VEHICLE_STATUSES, VehicleComplianceDocument } from '../models/Vehicle';
 import { VEHICLE_USAGE_TYPES } from '../config/permissions';
 
 const reservationValidator = body('reservations')
@@ -37,7 +34,10 @@ const complianceDocumentValidator = body('complianceDocuments')
       if (!doc.title) {
         throw new Error('Each compliance document must include a title');
       }
-      if (doc.type && !['insurance', 'technicalInspection', 'other'].includes(doc.type)) {
+      if (
+        doc.type &&
+        !['insurance', 'technicalInspection', 'other'].includes(doc.type)
+      ) {
         throw new Error('Invalid compliance document type');
       }
       if (doc.url && typeof doc.url !== 'string') {
@@ -117,7 +117,10 @@ export const updateVehicleValidator: ValidationChain[] = [
   body('insurance').optional().isObject(),
   body('insurance.expiryDate').optional().isISO8601().toDate(),
   body('technicalInspection').optional().isObject(),
-  body('technicalInspection.lastInspectionDate').optional().isISO8601().toDate(),
+  body('technicalInspection.lastInspectionDate')
+    .optional()
+    .isISO8601()
+    .toDate(),
   body('technicalInspection.expiryDate').optional().isISO8601().toDate(),
   body('kilometersTraveled').optional().isFloat({ min: 0 }),
   body('downtimeDays').optional().isFloat({ min: 0 }),

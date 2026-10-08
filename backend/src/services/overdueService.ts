@@ -26,7 +26,9 @@ function toObjectIdString(value: unknown): string | null {
 
 export async function processOverdueLoans(db: Db): Promise<void> {
   if (!LOAN_OVERDUE_NOTIFICATIONS_ENABLED) {
-    logger.info('Overdue loan notifications are disabled; skipping processing run.');
+    logger.info(
+      'Overdue loan notifications are disabled; skipping processing run.',
+    );
     return;
   }
 
@@ -48,13 +50,19 @@ export async function processOverdueLoans(db: Db): Promise<void> {
       const borrowerId = toObjectIdString(loan.borrower);
       const requestedById = toObjectIdString(loan.requestedBy);
       const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-        await getLoanRecipientsByRole(db, items, {
-          ownerId,
-          borrowerId,
-          borrower: loan.borrower,
-          requestedById,
-          requestedBy: loan.requestedBy,
-        }, 'loanStatusChanges', { requireSystemAlerts: true });
+        await getLoanRecipientsByRole(
+          db,
+          items,
+          {
+            ownerId,
+            borrowerId,
+            borrower: loan.borrower,
+            requestedById,
+            requestedBy: loan.requestedBy,
+          },
+          'loanStatusChanges',
+          { requireSystemAlerts: true },
+        );
 
       const requesterSet = new Set(requesterRecipients);
       const borrowerSet = new Set(
@@ -100,9 +108,16 @@ export async function processOverdueLoans(db: Db): Promise<void> {
 
       await db
         .collection<LoanRequest>('loanrequests')
-        .updateOne({ _id: loan._id }, { $set: { overdueNotifiedAt: new Date() } });
+        .updateOne(
+          { _id: loan._id },
+          { $set: { overdueNotifiedAt: new Date() } },
+        );
     } catch (err) {
-      logger.error('Overdue loan notification error for loan %s: %o', loan._id, err);
+      logger.error(
+        'Overdue loan notification error for loan %s: %o',
+        loan._id,
+        err,
+      );
     }
   }
 }

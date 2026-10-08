@@ -37,25 +37,26 @@ const withServer = async (t, configureApp) => {
 
   const server = await start(async () => mockDb, configureApp);
 
-  t.after(() =>
-    new Promise((resolve) => {
-      if (originalNodeEnv === undefined) {
-        delete process.env.NODE_ENV;
-      } else {
-        process.env.NODE_ENV = originalNodeEnv;
-      }
-      if (originalJwtSecret === undefined) {
-        delete process.env.JWT_SECRET;
-      } else {
-        process.env.JWT_SECRET = originalJwtSecret;
-      }
+  t.after(
+    () =>
+      new Promise((resolve) => {
+        if (originalNodeEnv === undefined) {
+          delete process.env.NODE_ENV;
+        } else {
+          process.env.NODE_ENV = originalNodeEnv;
+        }
+        if (originalJwtSecret === undefined) {
+          delete process.env.JWT_SECRET;
+        } else {
+          process.env.JWT_SECRET = originalJwtSecret;
+        }
 
-      server.close(() => {
-        delete require.cache[require.resolve('../src/index')];
-        delete require.cache[require.resolve('../src/config')];
-        resolve();
-      });
-    }),
+        server.close(() => {
+          delete require.cache[require.resolve('../src/index')];
+          delete require.cache[require.resolve('../src/config')];
+          resolve();
+        });
+      }),
   );
 
   return server;

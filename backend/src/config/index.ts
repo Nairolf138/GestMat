@@ -3,9 +3,7 @@ import { z } from 'zod';
 
 dotenv.config();
 
-const REQUIRED_CORS_ORIGINS = [
-  'https://gestmat.nairolfconcept.fr',
-] as const;
+const REQUIRED_CORS_ORIGINS = ['https://gestmat.nairolfconcept.fr'] as const;
 
 const normalizeCorsOrigins = (value: string | undefined): string[] => {
   if (!value) {
@@ -67,7 +65,11 @@ const normalizeSameSite = (
 
   const normalized = value.trim().toLowerCase();
 
-  if (normalized !== 'lax' && normalized !== 'strict' && normalized !== 'none') {
+  if (
+    normalized !== 'lax' &&
+    normalized !== 'strict' &&
+    normalized !== 'none'
+  ) {
     throw new Error('COOKIE_SAME_SITE must be one of lax, strict or none');
   }
 
@@ -77,7 +79,9 @@ const normalizeSameSite = (
 const strictBoolean = (defaultValue: boolean) =>
   z
     .union([z.boolean(), z.enum(['true', 'false'])])
-    .transform((value) => (typeof value === 'boolean' ? value : value === 'true'))
+    .transform((value) =>
+      typeof value === 'boolean' ? value : value === 'true',
+    )
     .default(defaultValue);
 
 const envSchema = z.object({
@@ -93,7 +97,10 @@ const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   API_PREFIX: z.string().optional(),
   API_URL: z.string().optional(),
-  COOKIE_SAME_SITE: z.string().optional().transform((val) => normalizeSameSite(val)),
+  COOKIE_SAME_SITE: z
+    .string()
+    .optional()
+    .transform((val) => normalizeSameSite(val)),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOAN_REMINDER_OFFSET_HOURS: z.coerce.number().positive().default(24),
   LOAN_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
@@ -105,8 +112,14 @@ const envSchema = z.object({
   LOAN_ARCHIVE_INTERVAL_DAYS: z.coerce.number().positive().default(1),
   LOAN_ARCHIVE_BATCH_SIZE: z.coerce.number().int().positive().default(100),
   REPORT_CHECK_INTERVAL_HOURS: z.coerce.number().positive().default(24),
-  VEHICLE_COMPLIANCE_REMINDER_OFFSET_DAYS: z.coerce.number().positive().default(30),
-  VEHICLE_COMPLIANCE_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(720),
+  VEHICLE_COMPLIANCE_REMINDER_OFFSET_DAYS: z.coerce
+    .number()
+    .positive()
+    .default(30),
+  VEHICLE_COMPLIANCE_REMINDER_INTERVAL_MINUTES: z.coerce
+    .number()
+    .positive()
+    .default(720),
   VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED: strictBoolean(true),
 });
 
@@ -172,23 +185,30 @@ const deriveCookieSecure = (apiUrl: string): boolean => {
 };
 
 export const PORT = env.PORT;
-export const CORS_ORIGIN = mergeCorsOrigins(env.CORS_ORIGIN, requiredCorsOrigins);
+export const CORS_ORIGIN = mergeCorsOrigins(
+  env.CORS_ORIGIN,
+  requiredCorsOrigins,
+);
 export const MONGODB_URI = env.MONGODB_URI;
 export const JWT_SECRET = env.JWT_SECRET;
 export const SMTP_URL = env.SMTP_URL;
 export const NOTIFY_EMAIL = env.NOTIFY_EMAIL;
 export const NODE_ENV = env.NODE_ENV;
 export const API_PREFIX = normalizeApiPrefix(env.API_PREFIX);
-export const API_URL = env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX || ''}`;
+export const API_URL =
+  env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX || ''}`;
 export const COOKIE_SAME_SITE = env.COOKIE_SAME_SITE;
 export const COOKIE_SECURE = deriveCookieSecure(API_URL);
 export const RATE_LIMIT_MAX = env.RATE_LIMIT_MAX;
 export const LOAN_REMINDER_OFFSET_HOURS = env.LOAN_REMINDER_OFFSET_HOURS;
-export const LOAN_REMINDER_INTERVAL_MINUTES = env.LOAN_REMINDER_INTERVAL_MINUTES;
-export const LOAN_REMINDER_DAILY_SCHEDULE_ENABLED = env.LOAN_REMINDER_DAILY_SCHEDULE_ENABLED;
+export const LOAN_REMINDER_INTERVAL_MINUTES =
+  env.LOAN_REMINDER_INTERVAL_MINUTES;
+export const LOAN_REMINDER_DAILY_SCHEDULE_ENABLED =
+  env.LOAN_REMINDER_DAILY_SCHEDULE_ENABLED;
 export const LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED =
   env.LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED;
-export const LOAN_OVERDUE_NOTIFICATIONS_ENABLED = env.LOAN_OVERDUE_NOTIFICATIONS_ENABLED;
+export const LOAN_OVERDUE_NOTIFICATIONS_ENABLED =
+  env.LOAN_OVERDUE_NOTIFICATIONS_ENABLED;
 export const LOAN_OVERDUE_CHECK_INTERVAL_MINUTES =
   env.LOAN_OVERDUE_CHECK_INTERVAL_MINUTES;
 export const LOAN_ARCHIVE_MIN_AGE_DAYS = env.LOAN_ARCHIVE_MIN_AGE_DAYS;

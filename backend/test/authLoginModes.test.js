@@ -23,7 +23,9 @@ async function createApp() {
   await db.collection('users').createIndex({ username: 1 }, { unique: true });
   app.use(withApiPrefix('/auth'), authRoutes);
   app.use((err, req, res, next) => {
-    res.status(err.status || 500).json({ message: err.message || 'Server error' });
+    res
+      .status(err.status || 500)
+      .json({ message: err.message || 'Server error' });
   });
   return { app, client, mongod, db };
 }
@@ -48,7 +50,9 @@ test('login keeps persistent session when stayLoggedIn is true', async () => {
     .expect(200);
 
   const cookies = response.headers['set-cookie'];
-  const refreshCookie = cookies.find((value) => value.startsWith('refreshToken='));
+  const refreshCookie = cookies.find((value) =>
+    value.startsWith('refreshToken='),
+  );
   assert.ok(refreshCookie?.includes('Max-Age=604800'));
   assert.ok(refreshCookie?.includes('HttpOnly'));
 
@@ -82,7 +86,9 @@ test('login without stayLoggedIn uses session refresh cookie and keeps other ses
     .expect(200);
 
   const cookies = response.headers['set-cookie'];
-  const refreshCookie = cookies.find((value) => value.startsWith('refreshToken='));
+  const refreshCookie = cookies.find((value) =>
+    value.startsWith('refreshToken='),
+  );
   assert.ok(refreshCookie);
   assert.ok(!refreshCookie.includes('Max-Age'));
   assert.ok(!refreshCookie.includes('Expires'));
@@ -121,7 +127,9 @@ test('multiple persistent logins retain independent refresh tokens', async () =>
     .send({ username: 'carol', password: 'pw12345', stayLoggedIn: true })
     .expect(200);
 
-  const sessionCountAfterLogin = await db.collection('sessions').countDocuments();
+  const sessionCountAfterLogin = await db
+    .collection('sessions')
+    .countDocuments();
   assert.strictEqual(sessionCountAfterLogin, 2);
 
   const refreshResponseA = await agentA
@@ -134,7 +142,9 @@ test('multiple persistent logins retain independent refresh tokens', async () =>
     .expect(200);
   assert.deepStrictEqual(refreshResponseB.body, {});
 
-  const sessionCountAfterRefresh = await db.collection('sessions').countDocuments();
+  const sessionCountAfterRefresh = await db
+    .collection('sessions')
+    .countDocuments();
   assert.strictEqual(sessionCountAfterRefresh, 2);
 
   await client.close();

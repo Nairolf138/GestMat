@@ -51,10 +51,10 @@ export const notifyAccountUpdate = async (
     return;
   }
 
-  const displayName = `${user.firstName ? `${user.firstName} ` : ''}${
-    user.lastName ?? ''
-  }`.trim()
-    || user.username;
+  const displayName =
+    `${user.firstName ? `${user.firstName} ` : ''}${
+      user.lastName ?? ''
+    }`.trim() || user.username;
 
   const { subject, text, html } = accountUpdateTemplate({
     displayName,
@@ -188,7 +188,10 @@ router.put(
       | undefined;
 
     if (preferencesUpdate !== undefined) {
-      data.preferences = mergePreferences(preferencesUpdate, existingUser.preferences);
+      data.preferences = mergePreferences(
+        preferencesUpdate,
+        existingUser.preferences,
+      );
     } else if (!existingUser.preferences) {
       data.preferences = currentPreferences;
     }
@@ -257,7 +260,10 @@ router.put(
       | undefined;
 
     if (preferencesUpdate !== undefined) {
-      data.preferences = mergePreferences(preferencesUpdate, existingUser.preferences);
+      data.preferences = mergePreferences(
+        preferencesUpdate,
+        existingUser.preferences,
+      );
     } else if (!existingUser.preferences) {
       data.preferences = currentPreferences;
     }
@@ -270,13 +276,22 @@ router.put(
     if (!updated) return next(notFound('User not found'));
 
     const changedFields: string[] = [];
-    if (data.username !== undefined && data.username !== existingUser.username) {
+    if (
+      data.username !== undefined &&
+      data.username !== existingUser.username
+    ) {
       changedFields.push("nom d'utilisateur");
     }
-    if (data.firstName !== undefined && data.firstName !== existingUser.firstName) {
+    if (
+      data.firstName !== undefined &&
+      data.firstName !== existingUser.firstName
+    ) {
       changedFields.push('prénom');
     }
-    if (data.lastName !== undefined && data.lastName !== existingUser.lastName) {
+    if (
+      data.lastName !== undefined &&
+      data.lastName !== existingUser.lastName
+    ) {
       changedFields.push('nom');
     }
     if (data.email !== undefined && data.email !== existingUser.email) {

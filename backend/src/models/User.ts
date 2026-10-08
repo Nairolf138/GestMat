@@ -51,7 +51,10 @@ export const mergePreferences = (
       keyof EmailNotificationPreferences,
       'structureUpdates'
     >;
-    type MutableEmailPreferences = Record<MappedPreferenceKey, boolean | undefined> &
+    type MutableEmailPreferences = Record<
+      MappedPreferenceKey,
+      boolean | undefined
+    > &
       Partial<Pick<EmailNotificationPreferences, 'structureUpdates'>>;
 
     const combined: MutableEmailPreferences = {
@@ -61,7 +64,10 @@ export const mergePreferences = (
     };
 
     const { structureUpdates, ...rest } = combined;
-    const restWithoutStructure: Record<MappedPreferenceKey, boolean | undefined> = rest;
+    const restWithoutStructure: Record<
+      MappedPreferenceKey,
+      boolean | undefined
+    > = rest;
 
     if (structureUpdates !== undefined) {
       const mappedPreferences: MappedPreferenceKey[] = [

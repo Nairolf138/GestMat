@@ -3,7 +3,9 @@ const assert = require('assert');
 
 const configPath = require.resolve('../src/config');
 const reminderServicePath = require.resolve('../src/services/reminderService');
-const vehicleServicePath = require.resolve('../src/services/vehicleComplianceService');
+const vehicleServicePath = require.resolve(
+  '../src/services/vehicleComplianceService',
+);
 
 const dbStub = {
   collection: () => ({
@@ -85,8 +87,14 @@ test('strict boolean env parsing for schedules', async (t) => {
         clearModules();
         const config = require('../src/config');
         assert.strictEqual(config.LOAN_REMINDER_DAILY_SCHEDULE_ENABLED, true);
-        assert.strictEqual(config.LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED, true);
-        assert.strictEqual(config.VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED, true);
+        assert.strictEqual(
+          config.LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED,
+          true,
+        );
+        assert.strictEqual(
+          config.VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED,
+          true,
+        );
       },
     );
   });
@@ -103,57 +111,73 @@ test('strict boolean env parsing for schedules', async (t) => {
         clearModules();
         const config = require('../src/config');
         assert.strictEqual(config.LOAN_REMINDER_DAILY_SCHEDULE_ENABLED, false);
-        assert.strictEqual(config.LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED, false);
-        assert.strictEqual(config.VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED, false);
+        assert.strictEqual(
+          config.LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED,
+          false,
+        );
+        assert.strictEqual(
+          config.VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED,
+          false,
+        );
       },
     );
   });
 });
 
 test('schedulers honour strict boolean flags', async (t) => {
-  await t.test('loan reminder daily and fallback schedules can be disabled', () => {
-    withEnv(
-      {
-        JWT_SECRET: 'test-secret',
-        LOAN_REMINDER_DAILY_SCHEDULE_ENABLED: 'false',
-        LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: 'false',
-      },
-      () => {
-        clearModules();
-        const timers = mockTimers();
-        const { scheduleLoanReminders } = require('../src/services/reminderService');
+  await t.test(
+    'loan reminder daily and fallback schedules can be disabled',
+    () => {
+      withEnv(
+        {
+          JWT_SECRET: 'test-secret',
+          LOAN_REMINDER_DAILY_SCHEDULE_ENABLED: 'false',
+          LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: 'false',
+        },
+        () => {
+          clearModules();
+          const timers = mockTimers();
+          const {
+            scheduleLoanReminders,
+          } = require('../src/services/reminderService');
 
-        const schedule = scheduleLoanReminders(dbStub);
-        schedule.cancel();
-        timers.restore();
+          const schedule = scheduleLoanReminders(dbStub);
+          schedule.cancel();
+          timers.restore();
 
-        assert.deepStrictEqual(timers.calls.setTimeout, []);
-        assert.deepStrictEqual(timers.calls.setInterval, []);
-      },
-    );
-  });
+          assert.deepStrictEqual(timers.calls.setTimeout, []);
+          assert.deepStrictEqual(timers.calls.setInterval, []);
+        },
+      );
+    },
+  );
 
-  await t.test('loan reminder daily and fallback schedules can be enabled', () => {
-    withEnv(
-      {
-        JWT_SECRET: 'test-secret',
-        LOAN_REMINDER_DAILY_SCHEDULE_ENABLED: 'true',
-        LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: 'true',
-      },
-      () => {
-        clearModules();
-        const timers = mockTimers();
-        const { scheduleLoanReminders } = require('../src/services/reminderService');
+  await t.test(
+    'loan reminder daily and fallback schedules can be enabled',
+    () => {
+      withEnv(
+        {
+          JWT_SECRET: 'test-secret',
+          LOAN_REMINDER_DAILY_SCHEDULE_ENABLED: 'true',
+          LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: 'true',
+        },
+        () => {
+          clearModules();
+          const timers = mockTimers();
+          const {
+            scheduleLoanReminders,
+          } = require('../src/services/reminderService');
 
-        const schedule = scheduleLoanReminders(dbStub);
-        schedule.cancel();
-        timers.restore();
+          const schedule = scheduleLoanReminders(dbStub);
+          schedule.cancel();
+          timers.restore();
 
-        assert.strictEqual(timers.calls.setTimeout.length, 1);
-        assert.strictEqual(timers.calls.setInterval.length, 1);
-      },
-    );
-  });
+          assert.strictEqual(timers.calls.setTimeout.length, 1);
+          assert.strictEqual(timers.calls.setInterval.length, 1);
+        },
+      );
+    },
+  );
 
   await t.test('vehicle compliance daily schedule can be toggled', () => {
     withEnv(
@@ -164,7 +188,9 @@ test('schedulers honour strict boolean flags', async (t) => {
       () => {
         clearModules();
         const timers = mockTimers();
-        const { scheduleVehicleComplianceReminders } = require('../src/services/vehicleComplianceService');
+        const {
+          scheduleVehicleComplianceReminders,
+        } = require('../src/services/vehicleComplianceService');
 
         const schedule = scheduleVehicleComplianceReminders(dbStub);
         schedule.cancel();
@@ -183,7 +209,9 @@ test('schedulers honour strict boolean flags', async (t) => {
       () => {
         clearModules();
         const timers = mockTimers();
-        const { scheduleVehicleComplianceReminders } = require('../src/services/vehicleComplianceService');
+        const {
+          scheduleVehicleComplianceReminders,
+        } = require('../src/services/vehicleComplianceService');
 
         const schedule = scheduleVehicleComplianceReminders(dbStub);
         schedule.cancel();

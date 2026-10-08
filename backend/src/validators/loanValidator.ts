@@ -85,9 +85,7 @@ export const updateLoanValidator: ValidationChain[] = [
     .default('equipment')
     .isIn(loanItemKinds)
     .withMessage('kind must be either equipment or vehicle'),
-  body('items.*')
-    .if(body('items').exists())
-    .custom(validateLoanItem),
+  body('items.*').if(body('items').exists()).custom(validateLoanItem),
   body('startDate')
     .optional()
     .isISO8601()
@@ -116,7 +114,9 @@ export const updateLoanValidator: ValidationChain[] = [
     .optional()
     .custom((value, { req }) => {
       if (!['accepted', 'refused'].includes(req.body.status)) {
-        throw new Error('decisionNote is only allowed when accepting or refusing a loan');
+        throw new Error(
+          'decisionNote is only allowed when accepting or refusing a loan',
+        );
       }
       return true;
     })

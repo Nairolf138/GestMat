@@ -59,7 +59,10 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
       name: vehicle?.name || '',
       type: vehicle?.type || '',
       usage: vehicle?.usage || '',
-      structure: typeof vehicle?.structure === 'object' ? vehicle?.structure?._id : vehicle?.structure || user?.structure?._id || '',
+      structure:
+        typeof vehicle?.structure === 'object'
+          ? vehicle?.structure?._id
+          : vehicle?.structure || user?.structure?._id || '',
       brand: vehicle?.brand || '',
       model: vehicle?.model || '',
       registrationNumber: vehicle?.registrationNumber || '',
@@ -70,10 +73,14 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
       transmission: vehicle?.characteristics?.transmission || '',
       color: vehicle?.characteristics?.color || '',
       lastServiceDate: vehicle?.maintenance?.lastServiceDate
-        ? new Date(vehicle.maintenance.lastServiceDate).toISOString().slice(0, 10)
+        ? new Date(vehicle.maintenance.lastServiceDate)
+            .toISOString()
+            .slice(0, 10)
         : '',
       nextServiceDate: vehicle?.maintenance?.nextServiceDate
-        ? new Date(vehicle.maintenance.nextServiceDate).toISOString().slice(0, 10)
+        ? new Date(vehicle.maintenance.nextServiceDate)
+            .toISOString()
+            .slice(0, 10)
         : '',
       maintenanceNotes: vehicle?.maintenance?.notes || '',
       insuranceProvider: vehicle?.insurance?.provider || '',
@@ -162,17 +169,25 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
     <FormCard
       role="form"
       aria-label={
-        vehicle ? t('vehicles.form.edit_title') : t('vehicles.form.create_title')
+        vehicle
+          ? t('vehicles.form.edit_title')
+          : t('vehicles.form.create_title')
       }
       onSubmit={handleSubmit}
       autoComplete="off"
     >
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="h2 mb-0">
-          {vehicle ? t('vehicles.form.edit_title') : t('vehicles.form.create_title')}
+          {vehicle
+            ? t('vehicles.form.edit_title')
+            : t('vehicles.form.create_title')}
         </h2>
         {onCancel && (
-          <button type="button" className="btn btn-outline-secondary" onClick={onCancel}>
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={onCancel}
+          >
             {t('common.cancel')}
           </button>
         )}
@@ -222,7 +237,11 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
             ))}
           </select>
           {errors.status && (
-            <div className="invalid-feedback" id="veh-status-error" role="alert">
+            <div
+              className="invalid-feedback"
+              id="veh-status-error"
+              role="alert"
+            >
               {errors.status}
             </div>
           )}
@@ -490,11 +509,19 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
       </div>
       <div className="d-flex justify-content-end gap-2 mt-3">
         {onCancel && (
-          <button type="button" className="btn btn-outline-secondary" onClick={onCancel}>
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={onCancel}
+          >
             {t('common.cancel')}
           </button>
         )}
-        <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={mutation.isPending}
+        >
           {mutation.isPending ? t('common.loading') : t('vehicles.form.submit')}
         </button>
       </div>

@@ -189,7 +189,9 @@ test('GET /api/stats/equipments/top-refused aggregates refused equipment quantit
     .expect(200);
 
   assert.strictEqual(res.body.length, 2);
-  const ranking = Object.fromEntries(res.body.map(({ name, count }) => [name, count]));
+  const ranking = Object.fromEntries(
+    res.body.map(({ name, count }) => [name, count]),
+  );
   assert.strictEqual(ranking['Refused 1'], 3);
   assert.strictEqual(ranking['Refused 2'], 1);
 
@@ -201,11 +203,15 @@ test('stats routes are restricted to admins', async () => {
   const { app, client, mongod } = await createApp();
   await request(app).get(withApiPrefix('/stats/loans/monthly')).expect(401);
   await request(app).get(withApiPrefix('/stats/equipments/top')).expect(401);
-  await request(app).get(withApiPrefix('/stats/equipments/top-refused')).expect(401);
+  await request(app)
+    .get(withApiPrefix('/stats/equipments/top-refused'))
+    .expect(401);
   await request(app).get(withApiPrefix('/stats/loans/duration')).expect(401);
   await request(app).get(withApiPrefix('/stats/vehicles/status')).expect(401);
   await request(app).get(withApiPrefix('/stats/vehicles/usage')).expect(401);
-  await request(app).get(withApiPrefix('/stats/vehicles/occupancy')).expect(401);
+  await request(app)
+    .get(withApiPrefix('/stats/vehicles/occupancy'))
+    .expect(401);
   await request(app).get(withApiPrefix('/stats/vehicles/mileage')).expect(401);
 
   const nonAdmin = auth(REGISSEUR_GENERAL_ROLE);
@@ -251,11 +257,15 @@ test('GET /api/stats/vehicles/status filters by reservation overlap', async () =
   await db.collection('vehicles').insertMany([
     {
       status: 'Available',
-      reservations: [{ start: new Date('2024-01-05'), end: new Date('2024-01-10') }],
+      reservations: [
+        { start: new Date('2024-01-05'), end: new Date('2024-01-10') },
+      ],
     },
     {
       status: 'maintenance',
-      reservations: [{ start: new Date('2024-02-01'), end: new Date('2024-02-05') }],
+      reservations: [
+        { start: new Date('2024-02-01'), end: new Date('2024-02-05') },
+      ],
     },
     {
       status: 'retired',
@@ -268,7 +278,9 @@ test('GET /api/stats/vehicles/status filters by reservation overlap', async () =
     .set(auth())
     .expect(200);
 
-  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  const counts = Object.fromEntries(
+    res.body.map(({ _id, count }) => [_id, count]),
+  );
   assert.strictEqual(counts.available, 1);
   assert.strictEqual(counts.maintenance, undefined);
   assert.strictEqual(counts.retired, undefined);
@@ -279,19 +291,23 @@ test('GET /api/stats/vehicles/status filters by reservation overlap', async () =
 
 test('GET /api/stats/vehicles/usage aggregates usages', async () => {
   const { app, client, mongod, db } = await createApp();
-  await db.collection('vehicles').insertMany([
-    { usage: 'Technique' },
-    { usage: 'technique' },
-    { usage: 'Logistique' },
-    {},
-  ]);
+  await db
+    .collection('vehicles')
+    .insertMany([
+      { usage: 'Technique' },
+      { usage: 'technique' },
+      { usage: 'Logistique' },
+      {},
+    ]);
 
   const res = await request(app)
     .get(withApiPrefix('/stats/vehicles/usage'))
     .set(auth())
     .expect(200);
 
-  const counts = Object.fromEntries(res.body.map(({ _id, count }) => [_id, count]));
+  const counts = Object.fromEntries(
+    res.body.map(({ _id, count }) => [_id, count]),
+  );
   assert.strictEqual(counts.technique, 2);
   assert.strictEqual(counts.logistique, 1);
   assert.strictEqual(counts.unknown, 1);
@@ -305,10 +321,14 @@ test('GET /api/stats/vehicles/occupancy validates parameters and computes ratio'
 
   await db.collection('vehicles').insertMany([
     {
-      reservations: [{ start: new Date('2024-03-01'), end: new Date('2024-03-05') }],
+      reservations: [
+        { start: new Date('2024-03-01'), end: new Date('2024-03-05') },
+      ],
     },
     {
-      reservations: [{ start: new Date('2024-04-10'), end: new Date('2024-04-12') }],
+      reservations: [
+        { start: new Date('2024-04-10'), end: new Date('2024-04-12') },
+      ],
     },
     { reservations: [] },
   ]);
@@ -319,7 +339,9 @@ test('GET /api/stats/vehicles/occupancy validates parameters and computes ratio'
     .expect(400);
 
   const res = await request(app)
-    .get(withApiPrefix('/stats/vehicles/occupancy?from=2024-03-01&to=2024-03-31'))
+    .get(
+      withApiPrefix('/stats/vehicles/occupancy?from=2024-03-01&to=2024-03-31'),
+    )
     .set(auth())
     .expect(200);
 
@@ -334,11 +356,13 @@ test('GET /api/stats/vehicles/occupancy validates parameters and computes ratio'
 test('GET /api/stats/vehicles/mileage sums kilometers and downtime days', async () => {
   const { app, client, mongod, db } = await createApp();
 
-  await db.collection('vehicles').insertMany([
-    { kilometersTraveled: 1000, downtimeDays: 3 },
-    { kilometersTraveled: 500 },
-    {},
-  ]);
+  await db
+    .collection('vehicles')
+    .insertMany([
+      { kilometersTraveled: 1000, downtimeDays: 3 },
+      { kilometersTraveled: 500 },
+      {},
+    ]);
 
   const res = await request(app)
     .get(withApiPrefix('/stats/vehicles/mileage'))

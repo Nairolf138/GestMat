@@ -4,11 +4,7 @@ const assert = require('assert');
 const { ObjectId } = require('mongodb');
 const { AUTRE_ROLE } = require('../src/config/roles');
 
-function createStubDb({
-  structures = [],
-  users = [],
-  equipments = [],
-} = {}) {
+function createStubDb({ structures = [], users = [], equipments = [] } = {}) {
   const collections = { structures, users, equipments };
 
   return {
@@ -33,7 +29,9 @@ function createStubDb({
               collections.equipments.filter((equipment) => {
                 const ids = query?._id?.$in;
                 if (!Array.isArray(ids)) return true;
-                return ids.some((id) => id?.toString?.() === equipment._id?.toString?.());
+                return ids.some(
+                  (id) => id?.toString?.() === equipment._id?.toString?.(),
+                );
               }),
           }),
         };
@@ -42,12 +40,15 @@ function createStubDb({
       if (name === 'users') {
         return {
           findOne: async (query) =>
-            collections.users.find((u) => u._id?.toString?.() === query._id?.toString?.()) ||
-            null,
+            collections.users.find(
+              (u) => u._id?.toString?.() === query._id?.toString?.(),
+            ) || null,
           find: (query) => ({
             toArray: async () =>
               collections.users.filter((u) =>
-                query?.structure ? u.structure?.toString?.() === query.structure?.toString?.() : true,
+                query?.structure
+                  ? u.structure?.toString?.() === query.structure?.toString?.()
+                  : true,
               ),
           }),
         };
@@ -67,7 +68,9 @@ test('getLoanRecipientsByRole respecte les opt-in/opt-out', async () => {
       { _id: ownerId, name: 'Owner' },
       { _id: borrowerId, name: 'Borrower' },
     ],
-    equipments: [{ _id: equipmentId, name: 'Console', type: 'Son', structure: ownerId }],
+    equipments: [
+      { _id: equipmentId, name: 'Console', type: 'Son', structure: ownerId },
+    ],
     users: [
       {
         _id: new ObjectId(),
@@ -158,7 +161,13 @@ test('getLoanRecipients journalise explicitement en absence de destinataires', a
   const recipients = await getLoanRecipients(
     db,
     [],
-    { ownerId: null, borrowerId: null, borrower: null, requestedById: null, requestedBy: null },
+    {
+      ownerId: null,
+      borrowerId: null,
+      borrower: null,
+      requestedById: null,
+      requestedBy: null,
+    },
     'loanStatusChanges',
     { requireSystemAlerts: true },
   );
@@ -206,5 +215,7 @@ test('getLoanRecipientsByRole gère les demandes véhicule sans doublon equipmen
     'loanStatusChanges',
   );
 
-  assert.deepStrictEqual(recipients.ownerRecipients, ['owner.vehicle@example.test']);
+  assert.deepStrictEqual(recipients.ownerRecipients, [
+    'owner.vehicle@example.test',
+  ]);
 });

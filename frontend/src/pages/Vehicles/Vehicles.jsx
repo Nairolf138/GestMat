@@ -28,12 +28,20 @@ function Vehicles() {
 
   useEffect(() => {
     if (user?.structure) {
-      const structureId = typeof user.structure === 'object' ? user.structure._id : user.structure;
+      const structureId =
+        typeof user.structure === 'object'
+          ? user.structure._id
+          : user.structure;
       setFilters((prev) => ({ ...prev, structure: structureId || '' }));
     }
   }, [user]);
 
-  const { data: vehicles = [], isFetching, error, refetch } = useQuery({
+  const {
+    data: vehicles = [],
+    isFetching,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['vehicles', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -52,7 +60,8 @@ function Vehicles() {
 
   const locationOptions = useMemo(() => {
     const values = new Set(vehicles.map((v) => v.location).filter(Boolean));
-    if (filters.location && !values.has(filters.location)) values.add(filters.location);
+    if (filters.location && !values.has(filters.location))
+      values.add(filters.location);
     return Array.from(values);
   }, [vehicles, filters.location]);
 
@@ -62,7 +71,15 @@ function Vehicles() {
   };
 
   const resetFilters = () => {
-    setFilters((prev) => ({ ...prev, search: '', status: '', usage: '', location: '', availableStart: '', availableEnd: '' }));
+    setFilters((prev) => ({
+      ...prev,
+      search: '',
+      status: '',
+      usage: '',
+      location: '',
+      availableStart: '',
+      availableEnd: '',
+    }));
     setTimeout(() => refetch(), 0);
   };
 
@@ -86,7 +103,11 @@ function Vehicles() {
           </h1>
           <p className="text-muted mb-0">{t('vehicles.subtitle')}</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => setShowForm((prev) => !prev)}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setShowForm((prev) => !prev)}
+        >
           {showForm ? t('common.close') : t('vehicles.form.create_title')}
         </button>
       </div>
@@ -127,8 +148,12 @@ function Vehicles() {
           >
             <option value="">{t('vehicles.filters.status')}</option>
             <option value="available">{t('vehicles.status.available')}</option>
-            <option value="unavailable">{t('vehicles.status.unavailable')}</option>
-            <option value="maintenance">{t('vehicles.status.maintenance')}</option>
+            <option value="unavailable">
+              {t('vehicles.status.unavailable')}
+            </option>
+            <option value="maintenance">
+              {t('vehicles.status.maintenance')}
+            </option>
             <option value="retired">{t('vehicles.status.retired')}</option>
           </select>
         </div>
@@ -223,7 +248,11 @@ function Vehicles() {
           <button type="submit" className="btn btn-primary">
             {t('vehicles.filters.apply')}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={resetFilters}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={resetFilters}
+          >
             {t('vehicles.filters.reset')}
           </button>
         </div>
@@ -231,7 +260,10 @@ function Vehicles() {
 
       {showForm && (
         <div className="mb-4">
-          <VehicleForm onCompleted={() => setShowForm(false)} onCancel={() => setShowForm(false)} />
+          <VehicleForm
+            onCompleted={() => setShowForm(false)}
+            onCancel={() => setShowForm(false)}
+          />
         </div>
       )}
 

@@ -179,7 +179,11 @@ function Cart() {
           onChange={(e) => handleNoteChange(e.target.value)}
         />
       </div>
-      <button disabled={!cart.length} onClick={validate} className="btn btn-primary">
+      <button
+        disabled={!cart.length}
+        onClick={validate}
+        className="btn btn-primary"
+      >
         {t('cart.send_requests')}
       </button>
     </>

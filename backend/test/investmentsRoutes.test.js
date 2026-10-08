@@ -65,19 +65,12 @@ test('GET /api/investments forces non-admin listing on own structure even with a
   ]);
 
   const res = await request(app)
-    .get(
-      withApiPrefix(
-        `/investments?structure=${otherStructure.toString()}`,
-      ),
-    )
+    .get(withApiPrefix(`/investments?structure=${otherStructure.toString()}`))
     .set(auth({ structure: ownStructure.toString() }))
     .expect(200);
 
   assert.strictEqual(res.body.length, 1);
-  assert.strictEqual(
-    res.body[0].structure.toString(),
-    ownStructure.toString(),
-  );
+  assert.strictEqual(res.body[0].structure.toString(), ownStructure.toString());
 
   await client.close();
   await mongod.stop();

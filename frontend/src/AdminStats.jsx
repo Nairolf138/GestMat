@@ -74,12 +74,18 @@ function AdminStats() {
           api('/stats/equipments/top-refused'),
           api('/stats/loans'),
           api(`/stats/loans/duration?${durationParams.toString()}`),
-          api(`/stats/structures/top-lenders${paramsStr ? `?${paramsStr}` : ''}`),
-          api(`/stats/structures/top-borrowers${paramsStr ? `?${paramsStr}` : ''}`),
+          api(
+            `/stats/structures/top-lenders${paramsStr ? `?${paramsStr}` : ''}`,
+          ),
+          api(
+            `/stats/structures/top-borrowers${paramsStr ? `?${paramsStr}` : ''}`,
+          ),
           api(`/stats/logins/monthly${paramsStr ? `?${paramsStr}` : ''}`),
           api(`/stats/vehicles/status${paramsStr ? `?${paramsStr}` : ''}`),
           api('/stats/vehicles/usage'),
-          from && to ? api(`/stats/vehicles/occupancy?${params.toString()}`) : null,
+          from && to
+            ? api(`/stats/vehicles/occupancy?${params.toString()}`)
+            : null,
           api('/stats/vehicles/mileage'),
         ]);
         setMonthly(monthlyData);
@@ -271,9 +277,7 @@ function AdminStats() {
     : 0;
   const occupancyChart = {
     labels: [
-      from && to
-        ? `${from} → ${to}`
-        : t('admin_stats.occupancy_period_label'),
+      from && to ? `${from} → ${to}` : t('admin_stats.occupancy_period_label'),
     ],
     datasets: [
       {
@@ -301,7 +305,7 @@ function AdminStats() {
             const value =
               typeof parsed === 'number'
                 ? parsed
-                : parsed?.y ?? parsed?.x ?? context.raw;
+                : (parsed?.y ?? parsed?.x ?? context.raw);
             const datasetLabel = context.dataset?.label;
             return datasetLabel && datasetLabel !== context.label
               ? `${datasetLabel} - ${context.label}: ${value}`
@@ -354,13 +358,11 @@ function AdminStats() {
               const value =
                 typeof context.parsed === 'number'
                   ? context.parsed
-                  : context.parsed?.y ?? context.raw;
+                  : (context.parsed?.y ?? context.raw);
               const reserved = vehicleOccupancy?.reserved ?? 0;
               const total = vehicleOccupancy?.total ?? 0;
               const ratioLabel =
-                typeof value === 'number'
-                  ? value.toFixed(1)
-                  : value ?? '0.0';
+                typeof value === 'number' ? value.toFixed(1) : (value ?? '0.0');
               return `${t('admin_stats.occupancy_rate')}: ${ratioLabel}% (${reserved}/${total})`;
             },
           },
@@ -401,10 +403,16 @@ function AdminStats() {
       <div className="card mb-4 shadow-sm">
         <div className="card-body">
           <h2 className="h4">{t('admin_stats.monthly_loans')}</h2>
-          <div className="mt-3 position-relative" style={{ minHeight: 320, maxHeight: 400 }}>
+          <div
+            className="mt-3 position-relative"
+            style={{ minHeight: 320, maxHeight: 400 }}
+          >
             <Bar
               data={monthlyChart}
-              options={barOptions(t('admin_stats.month'), t('admin_stats.count'))}
+              options={barOptions(
+                t('admin_stats.month'),
+                t('admin_stats.count'),
+              )}
             />
           </div>
         </div>
@@ -412,10 +420,16 @@ function AdminStats() {
       <div className="card mb-4 shadow-sm">
         <div className="card-body">
           <h2 className="h4">{t('admin_stats.monthly_logins')}</h2>
-          <div className="mt-3 position-relative" style={{ minHeight: 320, maxHeight: 400 }}>
+          <div
+            className="mt-3 position-relative"
+            style={{ minHeight: 320, maxHeight: 400 }}
+          >
             <Bar
               data={loginChart}
-              options={barOptions(t('admin_stats.month'), t('admin_stats.count'))}
+              options={barOptions(
+                t('admin_stats.month'),
+                t('admin_stats.count'),
+              )}
             />
           </div>
         </div>
@@ -423,7 +437,10 @@ function AdminStats() {
       <div className="card mb-4 shadow-sm">
         <div className="card-body">
           <h2 className="h4">{t('admin_stats.loan_duration')}</h2>
-          <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+          <div
+            className="mt-3 position-relative"
+            style={{ minHeight: 280, maxHeight: 360 }}
+          >
             <Bar
               data={durationChart}
               options={barOptions(
@@ -439,7 +456,10 @@ function AdminStats() {
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.top_lenders')}</h2>
-              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 280, maxHeight: 360 }}
+              >
                 <Bar
                   data={lendersChart}
                   options={barOptions(
@@ -455,7 +475,10 @@ function AdminStats() {
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.top_borrowers')}</h2>
-              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 280, maxHeight: 360 }}
+              >
                 <Bar
                   data={borrowersChart}
                   options={barOptions(
@@ -473,7 +496,10 @@ function AdminStats() {
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.top_equipments')}</h2>
-              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 280, maxHeight: 360 }}
+              >
                 <Pie data={equipmentChart} options={commonOptions} />
               </div>
             </div>
@@ -483,10 +509,16 @@ function AdminStats() {
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.top_refused_equipments')}</h2>
-              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 280, maxHeight: 360 }}
+              >
                 <Bar
                   data={refusedEquipmentChart}
-                  options={barOptions(t('admin_stats.equipments'), t('admin_stats.count'))}
+                  options={barOptions(
+                    t('admin_stats.equipments'),
+                    t('admin_stats.count'),
+                  )}
                 />
               </div>
             </div>
@@ -496,7 +528,10 @@ function AdminStats() {
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.status_breakdown')}</h2>
-              <div className="mt-3 position-relative" style={{ minHeight: 280, maxHeight: 360 }}>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 280, maxHeight: 360 }}
+              >
                 <Pie data={statusChart} options={commonOptions} />
               </div>
             </div>
@@ -507,8 +542,13 @@ function AdminStats() {
         <div className="col-12 col-xl-4">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
-              <h2 className="h4">{t('admin_stats.vehicle_status_breakdown')}</h2>
-              <div className="mt-3 position-relative" style={{ minHeight: 260, maxHeight: 340 }}>
+              <h2 className="h4">
+                {t('admin_stats.vehicle_status_breakdown')}
+              </h2>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 260, maxHeight: 340 }}
+              >
                 <Pie data={vehicleStatusChart} options={commonOptions} />
               </div>
             </div>
@@ -518,7 +558,10 @@ function AdminStats() {
           <div className="card h-100 shadow-sm">
             <div className="card-body">
               <h2 className="h4">{t('admin_stats.vehicle_usage_breakdown')}</h2>
-              <div className="mt-3 position-relative" style={{ minHeight: 260, maxHeight: 340 }}>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 260, maxHeight: 340 }}
+              >
                 <Pie data={vehicleUsageChart} options={commonOptions} />
               </div>
             </div>
@@ -547,7 +590,10 @@ function AdminStats() {
           <h2 className="h4">{t('admin_stats.occupancy_rate')}</h2>
           {from && to && vehicleOccupancy ? (
             <>
-              <div className="mt-3 position-relative" style={{ minHeight: 260, maxHeight: 340 }}>
+              <div
+                className="mt-3 position-relative"
+                style={{ minHeight: 260, maxHeight: 340 }}
+              >
                 <Bar data={occupancyChart} options={occupancyOptions} />
               </div>
               <p className="text-muted small mt-2 mb-0">

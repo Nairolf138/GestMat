@@ -112,7 +112,10 @@ test('POST /users allows admins to create accounts', async () => {
   const saved = await db.collection('users').findOne({ username: 'newuser' });
   assert(saved);
   assert.strictEqual(saved.structure.toString(), structureId.toString());
-  assert.strictEqual(await bcrypt.compare('StrongSecret123', saved.password), true);
+  assert.strictEqual(
+    await bcrypt.compare('StrongSecret123', saved.password),
+    true,
+  );
 
   const weakPassword = await request(app)
     .post(withApiPrefix('/users'))
@@ -120,9 +123,10 @@ test('POST /users allows admins to create accounts', async () => {
     .send({ username: 'weak', password: 'shortpass1A' });
   assert.strictEqual(weakPassword.status, 400);
   assert(
-    weakPassword.body.errors.some((error) =>
-      error.path === 'password' &&
-      error.msg.includes('Password must be at least 12 characters long'),
+    weakPassword.body.errors.some(
+      (error) =>
+        error.path === 'password' &&
+        error.msg.includes('Password must be at least 12 characters long'),
     ),
   );
 
@@ -208,7 +212,9 @@ test('DELETE users/:id respects authorization', async () => {
   ).insertedId;
 
   // missing token
-  await request(app).delete(withApiPrefix(`/users/${id}`)).expect(401);
+  await request(app)
+    .delete(withApiPrefix(`/users/${id}`))
+    .expect(401);
 
   // invalid token
   await request(app)

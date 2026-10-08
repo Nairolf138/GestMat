@@ -19,7 +19,9 @@ type AuthOptions = {
 type AuthInput = Permissions | AuthOptions;
 
 function isPermissionRule(rule: any): rule is PermissionRule {
-  return rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule;
+  return (
+    rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule
+  );
 }
 
 function normalizeId(value: unknown): string | undefined {
@@ -56,9 +58,9 @@ function checkUsageType(
 }
 
 const authorizationCounter =
-  (client.register.getSingleMetric('authorization_decisions_total') as Counter<
-    string
-  >) ||
+  (client.register.getSingleMetric(
+    'authorization_decisions_total',
+  ) as Counter<string>) ||
   new Counter({
     name: 'authorization_decisions_total',
     help: 'Count of authorization decisions by action and outcome',
@@ -84,8 +86,12 @@ function resolvePermissions(input: AuthInput): {
 }
 
 export default function auth(input: AuthInput = []) {
-  const { permissions: requiredPermissions, action, getStructureId, getUsageType } =
-    resolvePermissions(input);
+  const {
+    permissions: requiredPermissions,
+    action,
+    getStructureId,
+    getUsageType,
+  } = resolvePermissions(input);
   return (req: Request, res: Response, next: NextFunction) => {
     const token =
       req.headers.authorization?.split(' ')[1] || req.cookies?.token;
@@ -117,13 +123,21 @@ export default function auth(input: AuthInput = []) {
         });
         if (!hasPermission) {
           authorizationCounter.labels(actionLabel, 'denied').inc();
-          logger.warn('Authorization denied for %s on %s', decoded.id, actionLabel);
+          logger.warn(
+            'Authorization denied for %s on %s',
+            decoded.id,
+            actionLabel,
+          );
           return res.status(403).json({ message: 'Access denied' });
         }
       }
 
       authorizationCounter.labels(actionLabel, 'allowed').inc();
-      logger.info('Authorization allowed for %s on %s', decoded.id, actionLabel);
+      logger.info(
+        'Authorization allowed for %s on %s',
+        decoded.id,
+        actionLabel,
+      );
       next();
     } catch (err) {
       authorizationCounter.labels(actionLabel, 'invalid').inc();

@@ -34,7 +34,12 @@ describe('VehicleDetail', () => {
         notes: 'Vidange ok',
       },
       reservations: [
-        { start: '2099-02-10', end: '2099-02-12', status: 'available', note: 'Prêt local' },
+        {
+          start: '2099-02-10',
+          end: '2099-02-12',
+          status: 'available',
+          note: 'Prêt local',
+        },
       ],
     });
   });

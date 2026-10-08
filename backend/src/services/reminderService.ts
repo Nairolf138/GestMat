@@ -46,7 +46,10 @@ async function sendLoanReminder(
   db: Db,
   loan: LoanRequest,
   field: 'reminderSentAt' | 'startReminderSentAt',
-  templateFactory: (context: { loan: LoanRequest; role: 'owner' | 'borrower' | 'requester' }) => {
+  templateFactory: (context: {
+    loan: LoanRequest;
+    role: 'owner' | 'borrower' | 'requester';
+  }) => {
     subject: string;
     text: string;
     html: string;
@@ -58,13 +61,19 @@ async function sendLoanReminder(
     const requestedById = toObjectId(loan.requestedBy);
     const items = (loan.items || []) as any;
     const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-      await getLoanRecipientsByRole(db, items, {
-        ownerId,
-        borrowerId,
-        borrower: loan.borrower,
-        requestedById,
-        requestedBy: loan.requestedBy,
-      }, 'returnReminders', { requireSystemAlerts: true });
+      await getLoanRecipientsByRole(
+        db,
+        items,
+        {
+          ownerId,
+          borrowerId,
+          borrower: loan.borrower,
+          requestedById,
+          requestedBy: loan.requestedBy,
+        },
+        'returnReminders',
+        { requireSystemAlerts: true },
+      );
 
     const requesterSet = new Set(requesterRecipients);
     const borrowerSet = new Set(
@@ -91,7 +100,10 @@ async function sendLoanReminder(
     ) => {
       if (!recipients.size) return;
       const to = Array.from(recipients).join(',');
-      const { subject, text, html } = templateFactory({ loan: populatedLoan, role });
+      const { subject, text, html } = templateFactory({
+        loan: populatedLoan,
+        role,
+      });
       await sendMail({ to, subject, text, html });
     };
 
@@ -126,7 +138,12 @@ export async function processStartLoanReminders(
     .toArray();
 
   for (const loan of startLoans) {
-    await sendLoanReminder(db, loan, 'startReminderSentAt', loanStartReminderTemplate);
+    await sendLoanReminder(
+      db,
+      loan,
+      'startReminderSentAt',
+      loanStartReminderTemplate,
+    );
   }
 }
 

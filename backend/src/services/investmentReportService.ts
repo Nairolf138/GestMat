@@ -96,7 +96,10 @@ export async function getInvestmentSummary(
 }
 
 const formatAmount = (value: number) =>
-  value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  value.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
 

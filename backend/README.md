@@ -23,29 +23,29 @@ Environment variables are defined in `.env.example`.
 
 The API reads its configuration from the following variables:
 
-| Variable         | Description                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| `MONGODB_URI`    | MongoDB connection string. Defaults to `mongodb://localhost/gestmat`.                         |
-| `JWT_SECRET`     | **Required.** Secret key used to sign JSON Web Tokens.                                        |
-| `PORT`           | Port for the HTTP server. Defaults to `5000`.                                                 |
-| `CORS_ORIGIN`    | Comma-separated list of allowed origins for CORS. Each entry must be an absolute URL (scheme + host) or `*`. If unset, the API reflects the requester origin. When a whitelist is provided, the production frontend `https://gestmat.nairolfconcept.fr` is automatically appended to the list. |
-| `API_PREFIX`     | Path prefix for mounting API routes. Defaults to `/api`; set to an empty string to serve at the domain root. |
-| `API_URL`        | Public base URL of the API, including the prefix. Defaults to `http://localhost:<PORT><API_PREFIX>`. The cookie `secure` flag follows the protocol of this URL (`https` → `secure=true`). |
-| `COOKIE_SAME_SITE` | SameSite policy for authentication cookies. Accepts `lax`, `strict` or `none`; defaults to `lax`. Use `none` for cross-domain or webview/mobile clients and combine it with an HTTPS `API_URL` so browsers accept the cookie. |
-| `SMTP_URL`       | SMTP connection string to enable email notifications and derive a default sender.             |
-| `NOTIFY_EMAIL`   | Optional sender/recipient address for notification emails (overrides the derived sender).     |
-| `RATE_LIMIT_MAX` | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.         |
-| `LOAN_REMINDER_OFFSET_HOURS` | Hours before the start or end date to trigger reminder emails. Defaults to `24`. |
-| `LOAN_REMINDER_DAILY_SCHEDULE_ENABLED` | Enable the daily 9:00 reminder sweep. Accepts lowercase `true`/`false`; set to `false` to disable this schedule. |
-| `LOAN_REMINDER_INTERVAL_MINUTES` | Interval used for reminder retries when the fallback scheduler is enabled. Defaults to `60`. |
-| `LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED` | Toggle interval-based reminder retries alongside or instead of the daily 9:00 schedule. Accepts lowercase `true`/`false`; set to `false` to disable the job. Defaults to `false`. |
-| `LOAN_ARCHIVE_MIN_AGE_DAYS` | Age in days before a finished loan is eligible for archiving. Defaults to `365`. |
-| `LOAN_ARCHIVE_INTERVAL_DAYS` | Interval in days between archive jobs. Defaults to `1` (daily). |
-| `LOAN_ARCHIVE_BATCH_SIZE` | Maximum number of loans processed per archive run. Defaults to `100`. |
-| `REPORT_CHECK_INTERVAL_HOURS` | Interval in hours between checks for the annual report job (default: `24`). |
-| `VEHICLE_COMPLIANCE_REMINDER_OFFSET_DAYS` | Days before a vehicle compliance expiry to trigger reminder emails. Defaults to `30`. |
-| `VEHICLE_COMPLIANCE_REMINDER_INTERVAL_MINUTES` | Interval used for compliance reminder retries. Defaults to `720` (12 hours). |
-| `VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED` | Enable the daily 08:00 vehicle compliance sweep. Accepts lowercase `true`/`false`; set to `false` to disable the job. |
+| Variable                                       | Description                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MONGODB_URI`                                  | MongoDB connection string. Defaults to `mongodb://localhost/gestmat`.                                                                                                                                                                                                                          |
+| `JWT_SECRET`                                   | **Required.** Secret key used to sign JSON Web Tokens.                                                                                                                                                                                                                                         |
+| `PORT`                                         | Port for the HTTP server. Defaults to `5000`.                                                                                                                                                                                                                                                  |
+| `CORS_ORIGIN`                                  | Comma-separated list of allowed origins for CORS. Each entry must be an absolute URL (scheme + host) or `*`. If unset, the API reflects the requester origin. When a whitelist is provided, the production frontend `https://gestmat.nairolfconcept.fr` is automatically appended to the list. |
+| `API_PREFIX`                                   | Path prefix for mounting API routes. Defaults to `/api`; set to an empty string to serve at the domain root.                                                                                                                                                                                   |
+| `API_URL`                                      | Public base URL of the API, including the prefix. Defaults to `http://localhost:<PORT><API_PREFIX>`. The cookie `secure` flag follows the protocol of this URL (`https` → `secure=true`).                                                                                                      |
+| `COOKIE_SAME_SITE`                             | SameSite policy for authentication cookies. Accepts `lax`, `strict` or `none`; defaults to `lax`. Use `none` for cross-domain or webview/mobile clients and combine it with an HTTPS `API_URL` so browsers accept the cookie.                                                                  |
+| `SMTP_URL`                                     | SMTP connection string to enable email notifications and derive a default sender.                                                                                                                                                                                                              |
+| `NOTIFY_EMAIL`                                 | Optional sender/recipient address for notification emails (overrides the derived sender).                                                                                                                                                                                                      |
+| `RATE_LIMIT_MAX`                               | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.                                                                                                                                                                                                          |
+| `LOAN_REMINDER_OFFSET_HOURS`                   | Hours before the start or end date to trigger reminder emails. Defaults to `24`.                                                                                                                                                                                                               |
+| `LOAN_REMINDER_DAILY_SCHEDULE_ENABLED`         | Enable the daily 9:00 reminder sweep. Accepts lowercase `true`/`false`; set to `false` to disable this schedule.                                                                                                                                                                               |
+| `LOAN_REMINDER_INTERVAL_MINUTES`               | Interval used for reminder retries when the fallback scheduler is enabled. Defaults to `60`.                                                                                                                                                                                                   |
+| `LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED`      | Toggle interval-based reminder retries alongside or instead of the daily 9:00 schedule. Accepts lowercase `true`/`false`; set to `false` to disable the job. Defaults to `false`.                                                                                                              |
+| `LOAN_ARCHIVE_MIN_AGE_DAYS`                    | Age in days before a finished loan is eligible for archiving. Defaults to `365`.                                                                                                                                                                                                               |
+| `LOAN_ARCHIVE_INTERVAL_DAYS`                   | Interval in days between archive jobs. Defaults to `1` (daily).                                                                                                                                                                                                                                |
+| `LOAN_ARCHIVE_BATCH_SIZE`                      | Maximum number of loans processed per archive run. Defaults to `100`.                                                                                                                                                                                                                          |
+| `REPORT_CHECK_INTERVAL_HOURS`                  | Interval in hours between checks for the annual report job (default: `24`).                                                                                                                                                                                                                    |
+| `VEHICLE_COMPLIANCE_REMINDER_OFFSET_DAYS`      | Days before a vehicle compliance expiry to trigger reminder emails. Defaults to `30`.                                                                                                                                                                                                          |
+| `VEHICLE_COMPLIANCE_REMINDER_INTERVAL_MINUTES` | Interval used for compliance reminder retries. Defaults to `720` (12 hours).                                                                                                                                                                                                                   |
+| `VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED`    | Enable the daily 08:00 vehicle compliance sweep. Accepts lowercase `true`/`false`; set to `false` to disable the job.                                                                                                                                                                          |
 
 If `CORS_ORIGIN` is left unset, the API now reflects the caller's origin while still allowing credentials. Set `CORS_ORIGIN`
 to a comma-separated whitelist to lock the API down to trusted origins. The server always normalizes `Access-Control-Allow-Origin`
@@ -134,27 +134,27 @@ mongosh "mongodb+srv://<user>:<password>@cluster0.example.mongodb.net/gestmat"
 
 All roles can view the catalogue of other structures. The `Autre` role may accept or refuse requests for its structure but can only create, modify or cancel its own requests. Creation and updates are restricted by role:
 
-| Role             | Equipment types       |
-| ---------------- | --------------------- |
-| Administrateur   | all types             |
-| Régisseur(se) Général(e) | all types            |
-| Régisseur(se) Son    | Son, Vidéo, Autre     |
-| Régisseur(se) Lumière | Lumière, Vidéo, Autre |
-| Régisseur(se) Plateau | Plateau, Vidéo, Autre |
-| Autre            | none                  |
+| Role                     | Equipment types       |
+| ------------------------ | --------------------- |
+| Administrateur           | all types             |
+| Régisseur(se) Général(e) | all types             |
+| Régisseur(se) Son        | Son, Vidéo, Autre     |
+| Régisseur(se) Lumière    | Lumière, Vidéo, Autre |
+| Régisseur(se) Plateau    | Plateau, Vidéo, Autre |
+| Autre                    | none                  |
 
 Users created without an explicit role are assigned to `Autre`.
 
 ### Loan permissions
 
-| Role             | Outgoing loans | Incoming loans |
-| ---------------- | ------------- | -------------- |
-| Administrateur   | create, modify and cancel any request | accept or refuse any request |
-| Régisseur(se) Général(e) | manage all requests for their structure | accept or refuse requests for their structure |
-| Régisseur(se) Son    | create and cancel requests for Son, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
-| Régisseur(se) Lumière | create and cancel requests for Lumière, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
-| Régisseur(se) Plateau | create and cancel requests for Plateau, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
-| Autre            | create, modify and cancel own requests | accept or refuse requests for their structure |
+| Role                     | Outgoing loans                                                    | Incoming loans                                      |
+| ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------- |
+| Administrateur           | create, modify and cancel any request                             | accept or refuse any request                        |
+| Régisseur(se) Général(e) | manage all requests for their structure                           | accept or refuse requests for their structure       |
+| Régisseur(se) Son        | create and cancel requests for Son, Vidéo and Autre equipment     | accept or refuse requests for these equipment types |
+| Régisseur(se) Lumière    | create and cancel requests for Lumière, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
+| Régisseur(se) Plateau    | create and cancel requests for Plateau, Vidéo and Autre equipment | accept or refuse requests for these equipment types |
+| Autre                    | create, modify and cancel own requests                            | accept or refuse requests for their structure       |
 
 ## Indexes
 

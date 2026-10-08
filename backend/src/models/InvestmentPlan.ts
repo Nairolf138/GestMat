@@ -53,7 +53,10 @@ export async function findInvestmentPlans(
   db: Db,
   filter: Record<string, unknown> = {},
 ): Promise<InvestmentPlan[]> {
-  return db.collection<InvestmentPlan>('investmentplans').find(filter).toArray();
+  return db
+    .collection<InvestmentPlan>('investmentplans')
+    .find(filter)
+    .toArray();
 }
 
 export async function findInvestmentPlanById(

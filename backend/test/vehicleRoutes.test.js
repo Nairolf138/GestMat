@@ -164,7 +164,11 @@ test('allows vehicle assignment without usage or type', async () => {
   const { body: created } = await request(app)
     .post(withApiPrefix('/vehicles'))
     .set(auth(REGISSEUR_GENERAL_ROLE, structureId))
-    .send({ name: 'Assignable Van', structure: structureId, usage: 'technique' })
+    .send({
+      name: 'Assignable Van',
+      structure: structureId,
+      usage: 'technique',
+    })
     .expect(200);
 
   const { body } = await request(app)
@@ -270,8 +274,18 @@ test('supports search filters', async () => {
   const { app, client, mongod } = await createApp();
   const db = client.db();
   await db.collection('vehicles').insertMany([
-    { name: 'Logistics Van', brand: 'Renault', location: 'Hub', status: 'available' },
-    { name: 'City Car', brand: 'Toyota', location: 'Hub', status: 'unavailable' },
+    {
+      name: 'Logistics Van',
+      brand: 'Renault',
+      location: 'Hub',
+      status: 'available',
+    },
+    {
+      name: 'City Car',
+      brand: 'Toyota',
+      location: 'Hub',
+      status: 'unavailable',
+    },
   ]);
 
   const res = await request(app)

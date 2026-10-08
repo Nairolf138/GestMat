@@ -1,7 +1,8 @@
 import type { User, UserPreferences } from '../models/User';
 import { mergePreferences } from '../models/User';
 
-export type NotificationPreference = keyof UserPreferences['emailNotifications'];
+export type NotificationPreference =
+  keyof UserPreferences['emailNotifications'];
 
 export interface NotificationStatus {
   enabled: boolean;
@@ -9,7 +10,9 @@ export interface NotificationStatus {
   value: boolean;
 }
 
-export function resolvePreferences(user?: Pick<User, 'preferences'> | null): UserPreferences {
+export function resolvePreferences(
+  user?: Pick<User, 'preferences'> | null,
+): UserPreferences {
   return mergePreferences(undefined, user?.preferences);
 }
 

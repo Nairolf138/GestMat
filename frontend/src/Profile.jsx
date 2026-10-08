@@ -66,11 +66,13 @@ function Profile() {
         preferences.emailNotifications;
 
       if (structureUpdates !== undefined) {
-        ['loanRequests', 'loanStatusChanges', 'returnReminders'].forEach((key) => {
-          if (emailNotifications[key] === undefined) {
-            emailNotifications[key] = structureUpdates;
-          }
-        });
+        ['loanRequests', 'loanStatusChanges', 'returnReminders'].forEach(
+          (key) => {
+            if (emailNotifications[key] === undefined) {
+              emailNotifications[key] = structureUpdates;
+            }
+          },
+        );
       }
 
       preferences.emailNotifications = emailNotifications;
@@ -109,7 +111,7 @@ function Profile() {
         cursor[key] = { ...(cursor[key] || {}) };
         cursor = cursor[key];
       }
-    
+
       cursor[path[path.length - 1]] = inputValue;
       return updatedForm;
     });
@@ -159,7 +161,12 @@ function Profile() {
       <FormCard onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">{t('profile.username')}</label>
-          <input name="username" className="form-control" value={form.username} disabled />
+          <input
+            name="username"
+            className="form-control"
+            value={form.username}
+            disabled
+          />
         </div>
         <div className="row">
           <div className="col-md-6 mb-3">
@@ -170,10 +177,17 @@ function Profile() {
               value={form.firstName}
               onChange={handleChange}
               aria-invalid={errors.firstName ? 'true' : undefined}
-              aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+              aria-describedby={
+                errors.firstName ? 'firstName-error' : undefined
+              }
             />
             {errors.firstName && (
-              <div className="invalid-feedback" id="firstName-error" role="alert" aria-live="polite">
+              <div
+                className="invalid-feedback"
+                id="firstName-error"
+                role="alert"
+                aria-live="polite"
+              >
                 {errors.firstName}
               </div>
             )}
@@ -189,7 +203,12 @@ function Profile() {
               aria-describedby={errors.lastName ? 'lastName-error' : undefined}
             />
             {errors.lastName && (
-              <div className="invalid-feedback" id="lastName-error" role="alert" aria-live="polite">
+              <div
+                className="invalid-feedback"
+                id="lastName-error"
+                role="alert"
+                aria-live="polite"
+              >
                 {errors.lastName}
               </div>
             )}
@@ -207,7 +226,12 @@ function Profile() {
             aria-describedby={errors.email ? 'email-error' : undefined}
           />
           {errors.email && (
-            <div className="invalid-feedback" id="email-error" role="alert" aria-live="polite">
+            <div
+              className="invalid-feedback"
+              id="email-error"
+              role="alert"
+              aria-live="polite"
+            >
               {errors.email}
             </div>
           )}
@@ -225,7 +249,12 @@ function Profile() {
             aria-describedby={errors.password ? 'password-error' : undefined}
           />
           {errors.password && (
-            <div className="invalid-feedback" id="password-error" role="alert" aria-live="polite">
+            <div
+              className="invalid-feedback"
+              id="password-error"
+              role="alert"
+              aria-live="polite"
+            >
               {errors.password}
             </div>
           )}
@@ -233,17 +262,29 @@ function Profile() {
         <div className="row">
           <div className="col-md-6 mb-3">
             <label className="form-label">{t('profile.role')}</label>
-            <input name="role" className="form-control" value={t(`roles.${form.role}`)} disabled />
+            <input
+              name="role"
+              className="form-control"
+              value={t(`roles.${form.role}`)}
+              disabled
+            />
           </div>
           <div className="col-md-6 mb-3">
             <label className="form-label">{t('profile.structure')}</label>
-            <input name="structure" className="form-control" value={structureName} disabled />
+            <input
+              name="structure"
+              className="form-control"
+              value={structureName}
+              disabled
+            />
           </div>
         </div>
         <div className="mt-4">
           <h2 className="h5">{t('profile.preferences.title')}</h2>
           <div className="mb-3">
-            <h3 className="h6">{t('profile.preferences.email_notifications.title')}</h3>
+            <h3 className="h6">
+              {t('profile.preferences.email_notifications.title')}
+            </h3>
             <div className="form-check">
               <input
                 className="form-check-input"
@@ -257,7 +298,9 @@ function Profile() {
                 {t('profile.preferences.email_notifications.account_updates')}
               </label>
               <div className="form-text">
-                {t('profile.preferences.email_notifications.account_updates_help')}
+                {t(
+                  'profile.preferences.email_notifications.account_updates_help',
+                )}
               </div>
             </div>
             <div className="form-check">
@@ -273,7 +316,9 @@ function Profile() {
                 {t('profile.preferences.email_notifications.loan_requests')}
               </label>
               <div className="form-text">
-                {t('profile.preferences.email_notifications.loan_requests_help')}
+                {t(
+                  'profile.preferences.email_notifications.loan_requests_help',
+                )}
               </div>
             </div>
             <div className="form-check">
@@ -286,10 +331,14 @@ function Profile() {
                 onChange={handleChange}
               />
               <label className="form-check-label" htmlFor="loan-status-changes">
-                {t('profile.preferences.email_notifications.loan_status_changes')}
+                {t(
+                  'profile.preferences.email_notifications.loan_status_changes',
+                )}
               </label>
               <div className="form-text">
-                {t('profile.preferences.email_notifications.loan_status_changes_help')}
+                {t(
+                  'profile.preferences.email_notifications.loan_status_changes_help',
+                )}
               </div>
             </div>
             <div className="form-check">
@@ -305,7 +354,9 @@ function Profile() {
                 {t('profile.preferences.email_notifications.return_reminders')}
               </label>
               <div className="form-text">
-                {t('profile.preferences.email_notifications.return_reminders_help')}
+                {t(
+                  'profile.preferences.email_notifications.return_reminders_help',
+                )}
               </div>
             </div>
             <div className="form-check">
@@ -321,7 +372,9 @@ function Profile() {
                 {t('profile.preferences.email_notifications.system_alerts')}
               </label>
               <div className="form-text">
-                {t('profile.preferences.email_notifications.system_alerts_help')}
+                {t(
+                  'profile.preferences.email_notifications.system_alerts_help',
+                )}
               </div>
             </div>
           </div>
@@ -336,8 +389,12 @@ function Profile() {
               onChange={handleLanguageChange}
               aria-label={t('profile.preferences.language')}
             >
-              <option value="fr">{t('profile.preferences.languages.fr')}</option>
-              <option value="en">{t('profile.preferences.languages.en')}</option>
+              <option value="fr">
+                {t('profile.preferences.languages.fr')}
+              </option>
+              <option value="en">
+                {t('profile.preferences.languages.en')}
+              </option>
             </select>
           </div>
         </div>

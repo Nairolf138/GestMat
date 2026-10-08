@@ -45,13 +45,21 @@ describe('AdminStats', () => {
       if (url.startsWith('/stats/logins/monthly'))
         return Promise.resolve(defaultResponses['/stats/logins/monthly']);
       if (url.startsWith('/stats/loans/duration'))
-        return Promise.resolve(defaultResponses['/stats/loans/duration?median=true']);
+        return Promise.resolve(
+          defaultResponses['/stats/loans/duration?median=true'],
+        );
       if (url.startsWith('/stats/equipments/top-refused'))
-        return Promise.resolve(defaultResponses['/stats/equipments/top-refused']);
+        return Promise.resolve(
+          defaultResponses['/stats/equipments/top-refused'],
+        );
       if (url.startsWith('/stats/structures/top-lenders'))
-        return Promise.resolve(defaultResponses['/stats/structures/top-lenders']);
+        return Promise.resolve(
+          defaultResponses['/stats/structures/top-lenders'],
+        );
       if (url.startsWith('/stats/structures/top-borrowers'))
-        return Promise.resolve(defaultResponses['/stats/structures/top-borrowers']);
+        return Promise.resolve(
+          defaultResponses['/stats/structures/top-borrowers'],
+        );
       if (url.startsWith('/stats/vehicles/occupancy'))
         return Promise.resolve(defaultResponses['/stats/vehicles/occupancy']);
       if (url.startsWith('/stats/vehicles/status'))
@@ -71,7 +79,9 @@ describe('AdminStats', () => {
   it('renders charts', async () => {
     const { container } = render(<AdminStats />);
     await waitFor(() => {
-      expect(container.querySelectorAll('[data-testid="bar-chart"]').length).toBeGreaterThan(0);
+      expect(
+        container.querySelectorAll('[data-testid="bar-chart"]').length,
+      ).toBeGreaterThan(0);
       expect(
         container.querySelectorAll('[data-testid="pie-chart"]').length,
       ).toBe(4);
@@ -123,9 +133,7 @@ describe('AdminStats', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Véhicules réservés/)).toHaveTextContent(
-        '2 / 4',
-      );
+      expect(screen.getByText(/Véhicules réservés/)).toHaveTextContent('2 / 4');
     });
   });
 

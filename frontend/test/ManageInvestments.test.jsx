@@ -43,11 +43,17 @@ describe('ManageInvestments', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Appliquer' }));
 
     await waitFor(() => {
-      expect(api.api).toHaveBeenCalledWith('/investments?structure=structure-1');
+      expect(api.api).toHaveBeenCalledWith(
+        '/investments?structure=structure-1',
+      );
     });
 
-    expect(await screen.findByRole('heading', { name: yearOneLabel })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: yearTwoLabel })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: yearOneLabel }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: yearTwoLabel }),
+    ).toBeInTheDocument();
 
     expect(screen.getAllByText(yearOneLabel).length).toBeGreaterThan(1);
     expect(screen.getAllByText(yearTwoLabel).length).toBeGreaterThan(1);

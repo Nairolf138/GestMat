@@ -8,7 +8,11 @@ import CollapsibleSection from './CollapsibleSection.jsx';
 import { Link, useLocation } from 'react-router-dom';
 
 const getLoanDate = (loan) =>
-  loan.endDate || loan.startDate || loan.createdAt || loan.updatedAt || new Date();
+  loan.endDate ||
+  loan.startDate ||
+  loan.createdAt ||
+  loan.updatedAt ||
+  new Date();
 
 const sortLoans = (list) =>
   [...list].sort((a, b) => new Date(getLoanDate(a)) - new Date(getLoanDate(b)));
@@ -155,10 +159,14 @@ function Loans() {
 
   const structureId = user?.structure?._id || user?.structure;
   const ownerLoanList = filterLoansByStatus(
-    loans.filter((l) => l.owner?._id === structureId || l.owner === structureId),
+    loans.filter(
+      (l) => l.owner?._id === structureId || l.owner === structureId,
+    ),
   );
   const borrowerLoanList = filterLoansByStatus(
-    loans.filter((l) => l.borrower?._id === structureId || l.borrower === structureId),
+    loans.filter(
+      (l) => l.borrower?._id === structureId || l.borrower === structureId,
+    ),
   );
   const ownerSplit = splitPendingLoans(ownerLoanList);
   const borrowerSplit = splitPendingLoans(borrowerLoanList);

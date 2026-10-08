@@ -345,33 +345,43 @@ function NavBar() {
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 100)
+                    }
                     aria-label={t('nav.search_label')}
                   />
-                  {showSuggestions && (suggestions.length > 0 || searchQuery.trim()) && (
-                    <ul className="list-group position-absolute w-100 search-suggestions">
-                      {suggestions.length > 0 ? (
-                        suggestions.map((suggestion) => (
-                          <li
-                            key={suggestion._id}
-                            className="list-group-item list-group-item-action"
-                            onMouseDown={() => handleSuggestionSelect(suggestion)}
-                          >
-                            {suggestion.name}
+                  {showSuggestions &&
+                    (suggestions.length > 0 || searchQuery.trim()) && (
+                      <ul className="list-group position-absolute w-100 search-suggestions">
+                        {suggestions.length > 0 ? (
+                          suggestions.map((suggestion) => (
+                            <li
+                              key={suggestion._id}
+                              className="list-group-item list-group-item-action"
+                              onMouseDown={() =>
+                                handleSuggestionSelect(suggestion)
+                              }
+                            >
+                              {suggestion.name}
+                            </li>
+                          ))
+                        ) : (
+                          <li className="list-group-item">
+                            {t('home.no_results')}
                           </li>
-                        ))
-                      ) : (
-                        <li className="list-group-item">{t('home.no_results')}</li>
-                      )}
-                    </ul>
-                  )}
+                        )}
+                      </ul>
+                    )}
                 </div>
                 <button
                   type="submit"
                   className="btn btn-primary btn-sm ms-2 d-flex align-items-center justify-content-center"
                   aria-label={t('nav.search_button')}
                 >
-                  <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                  <i
+                    className="fa-solid fa-magnifying-glass"
+                    aria-hidden="true"
+                  ></i>
                 </button>
               </form>
               {user && (

@@ -138,8 +138,10 @@ router.post(
         ].filter((value): value is string => Boolean(value));
         if (recipients.length) {
           const displayName =
-            `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() || username;
-          const structureLabel = (structureData as any)?.name ?? structure ?? 'N/A';
+            `${firstName ? `${firstName} ` : ''}${lastName ?? ''}`.trim() ||
+            username;
+          const structureLabel =
+            (structureData as any)?.name ?? structure ?? 'N/A';
           const { subject, text, html } = accountCreationTemplate({
             username,
             displayName,
@@ -247,7 +249,12 @@ router.post(
         { expiresIn: '1h' },
       );
       const newRefreshToken = jwt.sign(
-        { id: payload.id, role: payload.role, structure: structureId, stayLoggedIn },
+        {
+          id: payload.id,
+          role: payload.role,
+          structure: structureId,
+          stayLoggedIn,
+        },
         JWT_SECRET,
         { expiresIn: stayLoggedIn ? '7d' : '1d' },
       );
@@ -284,7 +291,9 @@ router.post(
         (await findUserByEmail(db, identifier));
 
       if (!user?._id || !user.email) {
-        return res.json({ message: 'If an account exists, a reset link will be sent.' });
+        return res.json({
+          message: 'If an account exists, a reset link will be sent.',
+        });
       }
 
       const token = crypto.randomBytes(32).toString('hex');
@@ -298,7 +307,8 @@ router.post(
       });
 
       const displayName =
-        `${user.firstName ? `${user.firstName} ` : ''}${user.lastName ?? ''}`.trim() || user.username;
+        `${user.firstName ? `${user.firstName} ` : ''}${user.lastName ?? ''}`.trim() ||
+        user.username;
       const resetLink = buildResetUrl(token);
       const { subject, text, html } = passwordResetTemplate({
         displayName,
@@ -353,7 +363,9 @@ router.post(
         logger.info('Username reminder requested for unknown email: %s', email);
       }
 
-      res.json({ message: 'If an account exists, username details will be sent.' });
+      res.json({
+        message: 'If an account exists, username details will be sent.',
+      });
     } catch (err) {
       logger.error('Failed to process username reminder: %o', err);
       next(new ApiError(500, 'Unable to process username reminder'));
