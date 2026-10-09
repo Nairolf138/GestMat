@@ -52,7 +52,7 @@ const validateLoanItem = (item: unknown): true => {
 export const createLoanValidator: ValidationChain[] = [
   body('owner').isMongoId().withMessage('owner must be a valid id'),
   body('borrower').isMongoId().withMessage('borrower must be a valid id'),
-  body('items').isArray().withMessage('items must be an array'),
+  body('items').isArray({ min: 1 }).withMessage('items must be an array'),
   body('items.*.kind')
     .optional()
     .default('equipment')
@@ -79,15 +79,13 @@ export const createLoanValidator: ValidationChain[] = [
 export const updateLoanValidator: ValidationChain[] = [
   body('owner').optional().isMongoId(),
   body('borrower').optional().isMongoId(),
-  body('items').optional().isArray(),
+  body('items').optional().isArray({ min: 1 }),
   body('items.*.kind')
     .optional()
     .default('equipment')
     .isIn(loanItemKinds)
     .withMessage('kind must be either equipment or vehicle'),
-  body('items.*')
-    .if(body('items').exists())
-    .custom(validateLoanItem),
+  body('items.*').if(body('items').exists()).custom(validateLoanItem),
   body('startDate')
     .optional()
     .isISO8601()
@@ -112,11 +110,22 @@ export const updateLoanValidator: ValidationChain[] = [
     }),
   body('note').optional().isString().isLength({ max: 500 }),
   body('status').optional().isIn(statusValues),
+  body('decisions').optional().isArray({ min: 1 }),
+  body('decisions.*.lineId').isString().isLength({ min: 1, max: 80 }),
+  body('decisions.*.status').isIn(['accepted', 'refused', 'cancelled']),
+  body('decisions.*.note').optional().isString().isLength({ max: 500 }),
+  body('decisions.*.expectedStatus').optional().isIn(statusValues),
+  body('decisions.*.expectedVersion')
+    .optional()
+    .isString()
+    .isLength({ min: 1, max: 150 }),
   body('decisionNote')
     .optional()
     .custom((value, { req }) => {
       if (!['accepted', 'refused'].includes(req.body.status)) {
-        throw new Error('decisionNote is only allowed when accepting or refusing a loan');
+        throw new Error(
+          'decisionNote is only allowed when accepting or refusing a loan',
+        );
       }
       return true;
     })

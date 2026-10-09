@@ -18,7 +18,10 @@ const statusValidator = (value: unknown): boolean => {
 };
 
 export const createInvestmentValidator: ValidationChain[] = [
-  body('structure').optional().isMongoId().withMessage('structure must be a valid id'),
+  body('structure')
+    .optional()
+    .isMongoId()
+    .withMessage('structure must be a valid id'),
   body('targetYear').custom(targetYearValidator),
   body('status').optional().custom(statusValidator),
   body('lines').optional().isArray().withMessage('lines must be an array'),

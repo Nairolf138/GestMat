@@ -90,8 +90,8 @@ function ManageInventory() {
       availableBase !== undefined
         ? availableBase
         : totalQty !== undefined
-        ? totalQty
-        : undefined;
+          ? totalQty
+          : undefined;
     const availability =
       availableQty !== undefined && totalQty !== undefined
         ? `${availableQty}/${totalQty}`
@@ -200,7 +200,8 @@ function ManageInventory() {
           ? ''
           : String(normalized.totalQty),
       availableQty:
-        normalized.availableQty === undefined || normalized.availableQty === null
+        normalized.availableQty === undefined ||
+        normalized.availableQty === null
           ? ''
           : String(normalized.availableQty),
       condition: normalized.condition || '',
@@ -280,11 +281,7 @@ function ManageInventory() {
         autoHideDuration={false}
         onClose={() => setError('')}
       />
-      <Alert
-        type="success"
-        message={message}
-        onClose={() => setMessage('')}
-      />
+      <Alert type="success" message={message} onClose={() => setMessage('')} />
       <form className="row g-2 mb-3" onSubmit={create}>
         <div className="col-md">
           <input
@@ -537,12 +534,8 @@ function ManageInventory() {
                 </div>
                 <div className="small text-muted">
                   {[
-                    `${t('inventory.total_quantity')}: ${
-                      it.totalQty ?? '-'
-                    }`,
-                    `${t('inventory.availability')}: ${
-                      it.availability || '-'
-                    }`,
+                    `${t('inventory.total_quantity')}: ${it.totalQty ?? '-'}`,
+                    `${t('inventory.availability')}: ${it.availability || '-'}`,
                     it.availableQty !== undefined && it.availableQty !== null
                       ? `${t('inventory.available_quantity')}: ${it.availableQty}`
                       : null,

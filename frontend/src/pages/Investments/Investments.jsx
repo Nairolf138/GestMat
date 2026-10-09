@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import Alert from '../../Alert.jsx';
 import { api } from '../../api';
@@ -17,7 +23,10 @@ function Investments() {
   const { t } = useTranslation();
   const { user } = useContext(AuthContext);
   const { notify } = useContext(GlobalContext);
-  const structureId = useMemo(() => user?.structure?._id || user?.structure, [user]);
+  const structureId = useMemo(
+    () => user?.structure?._id || user?.structure,
+    [user],
+  );
   const [yearOneRows, setYearOneRows] = useState([createEmptyRow()]);
   const [yearTwoRows, setYearTwoRows] = useState([createEmptyRow()]);
   const [yearOneMeta, setYearOneMeta] = useState({
@@ -244,14 +253,24 @@ function Investments() {
   const summary = useMemo(() => {
     const totals = { year1: 0, year2: 0 };
     const byType = new Map();
-    const typeLabelMap = new Map(typeOptions.map((option) => [option.value, option.label]));
+    const typeLabelMap = new Map(
+      typeOptions.map((option) => [option.value, option.label]),
+    );
 
     const addRow = (row, targetYear) => {
       const amount = calculateRowTotal(row);
       const typeValue = row.type?.trim();
-      const typeLabel = typeLabelMap.get(typeValue) || typeValue || t('investments.summary.untyped');
+      const typeLabel =
+        typeLabelMap.get(typeValue) ||
+        typeValue ||
+        t('investments.summary.untyped');
       if (!byType.has(typeLabel)) {
-        byType.set(typeLabel, { type: typeLabel, year1: 0, year2: 0, total: 0 });
+        byType.set(typeLabel, {
+          type: typeLabel,
+          year1: 0,
+          year2: 0,
+          total: 0,
+        });
       }
       const entry = byType.get(typeLabel);
       if (!entry) return;
@@ -345,7 +364,9 @@ function Investments() {
                       onChange={updateEditForm('type')}
                       aria-label={`${ariaLabel} ${columnLabels.type}`}
                     >
-                      <option value="">{t('investments.placeholders.type')}</option>
+                      <option value="">
+                        {t('investments.placeholders.type')}
+                      </option>
                       {typeOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -382,8 +403,10 @@ function Investments() {
                       placeholder={t('investments.placeholders.unit_price')}
                       aria-label={`${ariaLabel} ${columnLabels.unitPrice}`}
                     />
+                  ) : row.unitPrice || row.unitPrice === 0 ? (
+                    formatCurrency(row.unitPrice)
                   ) : (
-                    row.unitPrice || row.unitPrice === 0 ? formatCurrency(row.unitPrice) : ''
+                    ''
                   )}
                 </td>
                 <td className="text-end">
@@ -429,7 +452,9 @@ function Investments() {
                       <button
                         type="button"
                         className="btn btn-outline-danger btn-sm"
-                        onClick={() => handleRemoveRow(setRows, tableKey, index)}
+                        onClick={() =>
+                          handleRemoveRow(setRows, tableKey, index)
+                        }
                       >
                         {t('investments.actions.delete')}
                       </button>
@@ -459,7 +484,9 @@ function Investments() {
               onClick={loadPlans}
               disabled={loading}
             >
-              {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
+              {loading
+                ? t('common.loading')
+                : t('admin_dashboard.summary.refresh')}
             </button>
             <InvestmentsExportButton structureId={structureId} />
           </div>
@@ -513,9 +540,15 @@ function Investments() {
                       <thead>
                         <tr>
                           <th>{t('investments.summary.type')}</th>
-                          <th className="text-end">{summaryYearLabels.year1}</th>
-                          <th className="text-end">{summaryYearLabels.year2}</th>
-                          <th className="text-end">{t('investments.summary.total')}</th>
+                          <th className="text-end">
+                            {summaryYearLabels.year1}
+                          </th>
+                          <th className="text-end">
+                            {summaryYearLabels.year2}
+                          </th>
+                          <th className="text-end">
+                            {t('investments.summary.total')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -523,8 +556,12 @@ function Investments() {
                           summary.typeTotals.map((type) => (
                             <tr key={type.type}>
                               <td>{type.type}</td>
-                              <td className="text-end">{formatCurrency(type.year1)}</td>
-                              <td className="text-end">{formatCurrency(type.year2)}</td>
+                              <td className="text-end">
+                                {formatCurrency(type.year1)}
+                              </td>
+                              <td className="text-end">
+                                {formatCurrency(type.year2)}
+                              </td>
                               <td className="text-end fw-semibold">
                                 {formatCurrency(type.total)}
                               </td>
@@ -586,7 +623,9 @@ function Investments() {
                     value={newWish.type}
                     onChange={updateNewWish('type')}
                   >
-                    <option value="">{t('investments.placeholders.type')}</option>
+                    <option value="">
+                      {t('investments.placeholders.type')}
+                    </option>
                     {typeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -670,17 +709,26 @@ function Investments() {
         <section className="card shadow-sm">
           <div className="card-body">
             <h2 className="h5">{yearLabels.year1}</h2>
-            {renderTable(yearOneRows, setYearOneRows, yearLabels.year1, 'year1')}
+            {renderTable(
+              yearOneRows,
+              setYearOneRows,
+              yearLabels.year1,
+              'year1',
+            )}
           </div>
         </section>
 
         <section className="card shadow-sm">
           <div className="card-body">
             <h2 className="h5">{yearLabels.year2}</h2>
-            {renderTable(yearTwoRows, setYearTwoRows, yearLabels.year2, 'year2')}
+            {renderTable(
+              yearTwoRows,
+              setYearTwoRows,
+              yearLabels.year2,
+              'year2',
+            )}
           </div>
         </section>
-
       </div>
     </div>
   );

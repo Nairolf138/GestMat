@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Alert from '../../Alert.jsx';
 import Loading from '../../Loading.jsx';
 import VehicleForm from './VehicleForm.jsx';
+import VehicleManagers from '../../components/VehicleManagers.jsx';
 import { api } from '../../api';
 import { GlobalContext } from '../../GlobalContext.jsx';
 import { AuthContext } from '../../AuthContext.jsx';
@@ -21,7 +22,9 @@ function VehicleDetail() {
   const [loanFormError, setLoanFormError] = useState('');
   const [loanFieldErrors, setLoanFieldErrors] = useState({});
   const defaultBorrowerId =
-    typeof user?.structure === 'string' ? user.structure : user?.structure?._id || '';
+    typeof user?.structure === 'string'
+      ? user.structure
+      : user?.structure?._id || '';
   const [loanForm, setLoanForm] = useState({
     borrower: defaultBorrowerId,
     startDate: '',
@@ -29,7 +32,11 @@ function VehicleDetail() {
     note: '',
   });
 
-  const { data: vehicle, isFetching, error } = useQuery({
+  const {
+    data: vehicle,
+    isFetching,
+    error,
+  } = useQuery({
     queryKey: ['vehicle', id],
     queryFn: () => api(`/vehicles/${id}`),
   });
@@ -53,7 +60,12 @@ function VehicleDetail() {
     setLoanFormError('');
     setLoanFieldErrors({});
 
-    if (!loanForm.borrower || !loanForm.startDate || !loanForm.endDate || !ownerStructureId) {
+    if (
+      !loanForm.borrower ||
+      !loanForm.startDate ||
+      !loanForm.endDate ||
+      !ownerStructureId
+    ) {
       setLoanFormError(t('vehicles.detail.request_missing_fields'));
       return;
     }
@@ -104,7 +116,11 @@ function VehicleDetail() {
 
   return (
     <>
-      <button type="button" className="btn btn-link mb-3" onClick={() => navigate(-1)}>
+      <button
+        type="button"
+        className="btn btn-link mb-3"
+        onClick={() => navigate(-1)}
+      >
         {t('common.back')}
       </button>
       <Alert message={error?.message} />
@@ -122,7 +138,8 @@ function VehicleDetail() {
                     </p>
                     <p className="mb-0">
                       <strong>{t('vehicles.detail.registration')}:</strong>{' '}
-                      {vehicle.registrationNumber || t('vehicles.detail.not_provided')}
+                      {vehicle.registrationNumber ||
+                        t('vehicles.detail.not_provided')}
                     </p>
                     <p className="mb-0">
                       <strong>{t('vehicles.detail.status')}:</strong>{' '}
@@ -131,7 +148,8 @@ function VehicleDetail() {
                   </div>
                   <div className="text-end">
                     <p className="mb-1">
-                      <strong>{t('vehicles.detail.location')}:</strong> {vehicle.location || '—'}
+                      <strong>{t('vehicles.detail.location')}:</strong>{' '}
+                      {vehicle.location || '—'}
                     </p>
                     <p className="mb-1">
                       <strong>{t('vehicles.detail.usage')}:</strong>{' '}
@@ -141,7 +159,8 @@ function VehicleDetail() {
                       <strong>{t('vehicles.detail.structure')}:</strong>{' '}
                       {typeof vehicle.structure === 'object'
                         ? vehicle.structure?.name
-                        : vehicle.structure || t('vehicles.detail.not_provided')}
+                        : vehicle.structure ||
+                          t('vehicles.detail.not_provided')}
                     </p>
                   </div>
                 </div>
@@ -150,10 +169,13 @@ function VehicleDetail() {
                   <div className="row g-3">
                     <div className="col-md-6">
                       <div className="border rounded p-3 h-100">
-                        <h4 className="h6 mb-2">{t('vehicles.detail.insurance')}</h4>
+                        <h4 className="h6 mb-2">
+                          {t('vehicles.detail.insurance')}
+                        </h4>
                         <p className="mb-1">
                           <strong>{t('vehicles.detail.provider')}:</strong>{' '}
-                          {vehicle.insurance?.provider || t('vehicles.detail.not_provided')}
+                          {vehicle.insurance?.provider ||
+                            t('vehicles.detail.not_provided')}
                         </p>
                         <p className="mb-1">
                           <strong>{t('vehicles.detail.policy')}:</strong>{' '}
@@ -169,7 +191,9 @@ function VehicleDetail() {
                     </div>
                     <div className="col-md-6">
                       <div className="border rounded p-3 h-100">
-                        <h4 className="h6 mb-2">{t('vehicles.detail.technical')}</h4>
+                        <h4 className="h6 mb-2">
+                          {t('vehicles.detail.technical')}
+                        </h4>
                         <p className="mb-1">
                           <strong>{t('vehicles.detail.last_service')}:</strong>{' '}
                           {vehicle.maintenance?.lastServiceDate
@@ -191,7 +215,9 @@ function VehicleDetail() {
                   </div>
                 </div>
                 <div className="mt-3">
-                  <h3 className="h5 mb-2">{t('vehicles.detail.characteristics')}</h3>
+                  <h3 className="h5 mb-2">
+                    {t('vehicles.detail.characteristics')}
+                  </h3>
                   <ul className="list-inline mb-0">
                     {vehicle.characteristics?.seats && (
                       <li className="list-inline-item me-3">
@@ -229,7 +255,9 @@ function VehicleDetail() {
                   </ul>
                 </div>
                 <div className="mt-3">
-                  <h3 className="h5 mb-2">{t('vehicles.detail.notes_title')}</h3>
+                  <h3 className="h5 mb-2">
+                    {t('vehicles.detail.notes_title')}
+                  </h3>
                   <p className="mb-0">
                     {vehicle.notes?.trim() || t('vehicles.detail.not_provided')}
                   </p>
@@ -240,18 +268,29 @@ function VehicleDetail() {
           <div className="col-lg-4">
             <div className="card shadow-sm mb-3">
               <div className="card-body border-bottom">
-                <h3 className="h5 mb-3">{t('vehicles.detail.request_title')}</h3>
-                <Alert message={loanFormError} onClose={() => setLoanFormError('')} />
+                <h3 className="h5 mb-3">
+                  {t('vehicles.detail.request_title')}
+                </h3>
+                <Alert
+                  message={loanFormError}
+                  onClose={() => setLoanFormError('')}
+                />
                 <form onSubmit={handleLoanSubmit} noValidate>
                   <div className="mb-3">
-                    <label className="form-label" htmlFor="vehicle-loan-borrower">
+                    <label
+                      className="form-label"
+                      htmlFor="vehicle-loan-borrower"
+                    >
                       {t('vehicles.detail.request_borrower_structure')}
                     </label>
                     <select
                       id="vehicle-loan-borrower"
                       className={`form-select ${loanFieldErrors.borrower ? 'is-invalid' : ''}`}
+                      disabled={user?.role !== 'Administrateur'}
                       value={loanForm.borrower}
-                      onChange={(e) => updateLoanField('borrower', e.target.value)}
+                      onChange={(e) =>
+                        updateLoanField('borrower', e.target.value)
+                      }
                       required
                     >
                       <option value="">{t('common.choose')}</option>
@@ -262,12 +301,17 @@ function VehicleDetail() {
                       ))}
                     </select>
                     {loanFieldErrors.borrower && (
-                      <div className="invalid-feedback">{loanFieldErrors.borrower}</div>
+                      <div className="invalid-feedback">
+                        {loanFieldErrors.borrower}
+                      </div>
                     )}
                   </div>
                   <div className="row g-2">
                     <div className="col-6">
-                      <label className="form-label" htmlFor="vehicle-loan-start">
+                      <label
+                        className="form-label"
+                        htmlFor="vehicle-loan-start"
+                      >
                         {t('vehicles.detail.request_start_date')}
                       </label>
                       <input
@@ -275,11 +319,15 @@ function VehicleDetail() {
                         type="date"
                         className={`form-control ${loanFieldErrors.startDate ? 'is-invalid' : ''}`}
                         value={loanForm.startDate}
-                        onChange={(e) => updateLoanField('startDate', e.target.value)}
+                        onChange={(e) =>
+                          updateLoanField('startDate', e.target.value)
+                        }
                         required
                       />
                       {loanFieldErrors.startDate && (
-                        <div className="invalid-feedback">{loanFieldErrors.startDate}</div>
+                        <div className="invalid-feedback">
+                          {loanFieldErrors.startDate}
+                        </div>
                       )}
                     </div>
                     <div className="col-6">
@@ -291,11 +339,15 @@ function VehicleDetail() {
                         type="date"
                         className={`form-control ${loanFieldErrors.endDate ? 'is-invalid' : ''}`}
                         value={loanForm.endDate}
-                        onChange={(e) => updateLoanField('endDate', e.target.value)}
+                        onChange={(e) =>
+                          updateLoanField('endDate', e.target.value)
+                        }
                         required
                       />
                       {loanFieldErrors.endDate && (
-                        <div className="invalid-feedback">{loanFieldErrors.endDate}</div>
+                        <div className="invalid-feedback">
+                          {loanFieldErrors.endDate}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -312,7 +364,11 @@ function VehicleDetail() {
                       maxLength={500}
                     />
                   </div>
-                  <button type="submit" className="btn btn-primary mt-3" disabled={isSubmittingLoan}>
+                  <button
+                    type="submit"
+                    className="btn btn-primary mt-3"
+                    disabled={isSubmittingLoan}
+                  >
                     {isSubmittingLoan
                       ? t('vehicles.detail.request_submitting')
                       : t('vehicles.detail.request_action')}
@@ -322,15 +378,23 @@ function VehicleDetail() {
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <h3 className="h5 mb-0">{t('vehicles.detail.history')}</h3>
-                  <Link to="/vehicles" className="btn btn-outline-secondary btn-sm">
+                  <Link
+                    to="/vehicles"
+                    className="btn btn-outline-secondary btn-sm"
+                  >
                     {t('vehicles.detail.back_to_list')}
                   </Link>
                 </div>
                 {reservations.length === 0 && (
-                  <p className="text-muted mb-0">{t('vehicles.detail.no_history')}</p>
+                  <p className="text-muted mb-0">
+                    {t('vehicles.detail.no_history')}
+                  </p>
                 )}
                 {reservations.map((entry) => (
-                  <div key={`${entry.start}-${entry.end}`} className="border rounded p-2 mb-2">
+                  <div
+                    key={`${entry.start}-${entry.end}`}
+                    className="border rounded p-2 mb-2"
+                  >
                     <div className="fw-semibold">
                       {formatDate(entry.start)} - {formatDate(entry.end)}
                     </div>
@@ -344,6 +408,9 @@ function VehicleDetail() {
                 ))}
               </div>
             </div>
+            {vehicle.permissions?.canAssign && (
+              <VehicleManagers vehicle={vehicle} />
+            )}
             <div className="card shadow-sm">
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -351,9 +418,12 @@ function VehicleDetail() {
                   <button
                     type="button"
                     className="btn btn-sm btn-primary"
+                    disabled={!vehicle.permissions?.canEdit}
                     onClick={() => setIsEditing((prev) => !prev)}
                   >
-                    {isEditing ? t('common.close') : t('vehicles.form.edit_title')}
+                    {isEditing
+                      ? t('common.close')
+                      : t('vehicles.form.edit_title')}
                   </button>
                 </div>
                 {isEditing ? (
@@ -362,12 +432,15 @@ function VehicleDetail() {
                     onCompleted={(updated) => {
                       notify(t('vehicles.form.update_success'), 'success');
                       setIsEditing(false);
-                      if (updated?.name) document.title = `${updated.name} - GestMat`;
+                      if (updated?.name)
+                        document.title = `${updated.name} - GestMat`;
                     }}
                     onCancel={() => setIsEditing(false)}
                   />
                 ) : (
-                  <p className="text-muted mb-0">{t('vehicles.detail.edit_hint')}</p>
+                  <p className="text-muted mb-0">
+                    {t('vehicles.detail.edit_hint')}
+                  </p>
                 )}
               </div>
             </div>

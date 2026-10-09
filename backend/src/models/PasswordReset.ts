@@ -11,7 +11,11 @@ export interface PasswordReset {
 
 export function createPasswordReset(
   db: Db,
-  { token, userId, expiresAt }: { token: string; userId: string; expiresAt: Date },
+  {
+    token,
+    userId,
+    expiresAt,
+  }: { token: string; userId: string; expiresAt: Date },
 ): Promise<InsertOneResult<PasswordReset>> {
   return db.collection<PasswordReset>('password_resets').insertOne({
     token: hashToken(token),

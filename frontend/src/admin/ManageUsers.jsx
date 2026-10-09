@@ -26,7 +26,9 @@ const roleKey = (r) => normalizeRoleValue(r).toLowerCase().replace(/\s+/g, '_');
 
 const roleTranslationKey = (role) => {
   const normalizedRole = normalizeRoleValue(role);
-  return normalizedRole ? `users.role_${roleKey(normalizedRole)}` : 'users.role';
+  return normalizedRole
+    ? `users.role_${roleKey(normalizedRole)}`
+    : 'users.role';
 };
 
 function ManageUsers() {
@@ -268,11 +270,7 @@ function ManageUsers() {
         autoHideDuration={false}
         onClose={() => setError('')}
       />
-      <Alert
-        type="success"
-        message={message}
-        onClose={() => setMessage('')}
-      />
+      <Alert type="success" message={message} onClose={() => setMessage('')} />
       <div className="input-group mb-3">
         <input
           className="form-control"
@@ -312,7 +310,10 @@ function ManageUsers() {
                   placeholder={t('users.first_name')}
                   value={newUserForm.firstName}
                   onChange={(e) =>
-                    setNewUserForm({ ...newUserForm, firstName: e.target.value })
+                    setNewUserForm({
+                      ...newUserForm,
+                      firstName: e.target.value,
+                    })
                   }
                   required
                 />
@@ -347,7 +348,10 @@ function ManageUsers() {
                   className="form-select"
                   value={newUserForm.structure}
                   onChange={(e) =>
-                    setNewUserForm({ ...newUserForm, structure: e.target.value })
+                    setNewUserForm({
+                      ...newUserForm,
+                      structure: e.target.value,
+                    })
                   }
                   required
                 >
@@ -386,9 +390,15 @@ function ManageUsers() {
                   type="password"
                   value={newUserForm.password}
                   onChange={(e) => {
-                    setNewUserForm({ ...newUserForm, password: e.target.value });
+                    setNewUserForm({
+                      ...newUserForm,
+                      password: e.target.value,
+                    });
                     if (newUserErrors.password)
-                      setNewUserErrors({ ...newUserErrors, password: undefined });
+                      setNewUserErrors({
+                        ...newUserErrors,
+                        password: undefined,
+                      });
                   }}
                   required
                 />
@@ -439,7 +449,9 @@ function ManageUsers() {
                   className="form-control mb-2"
                   placeholder={t('users.username')}
                   value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, username: e.target.value })
+                  }
                 />
                 <input
                   className="form-control mb-2"
@@ -467,7 +479,9 @@ function ManageUsers() {
                 <select
                   className="form-select mb-2"
                   value={form.structure}
-                  onChange={(e) => setForm({ ...form, structure: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, structure: e.target.value })
+                  }
                 >
                   <option value="">{t('users.select_structure')}</option>
                   {structures.map((s) => (

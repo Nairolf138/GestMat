@@ -27,8 +27,8 @@ export function AuthProvider({ children }) {
   const publicRoutes = ['/login', '/register'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
 
-  const [stayLoggedInPreference, setStayLoggedInPreferenceState] = useState(() =>
-    localStorage.getItem('stayLoggedIn') === 'true',
+  const [stayLoggedInPreference, setStayLoggedInPreferenceState] = useState(
+    () => localStorage.getItem('stayLoggedIn') === 'true',
   );
   const [isCheckingSession, setIsCheckingSession] = useState(false);
 
@@ -104,7 +104,12 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('lastActivity');
       }
     },
-    [queryClient, resetTimer, stayLoggedInPreference, setStayLoggedInPreference],
+    [
+      queryClient,
+      resetTimer,
+      stayLoggedInPreference,
+      setStayLoggedInPreference,
+    ],
   );
 
   useEffect(() => {
@@ -173,10 +178,7 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem('lastActivity', initialTimestamp.toString());
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(
-      logout,
-      DEFAULT_INACTIVITY_LIMIT - elapsed,
-    );
+    timerRef.current = setTimeout(logout, DEFAULT_INACTIVITY_LIMIT - elapsed);
 
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
     const handler = () => user && resetTimer();

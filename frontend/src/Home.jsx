@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useContext, useMemo, useCallback } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useMemo,
+  useCallback,
+} from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
@@ -31,7 +37,8 @@ function Home() {
     (loan) =>
       Boolean(
         structureId &&
-          (loan.owner?._id === structureId || loan.owner === structureId),
+          (loan.permissions?.asOwner ??
+            (loan.owner?._id === structureId || loan.owner === structureId)),
       ),
     [structureId],
   );
@@ -40,7 +47,9 @@ function Home() {
     (loan) =>
       Boolean(
         structureId &&
-          (loan.borrower?._id === structureId || loan.borrower === structureId),
+          (loan.permissions?.asBorrower ??
+            (loan.borrower?._id === structureId ||
+              loan.borrower === structureId)),
       ),
     [structureId],
   );
@@ -74,7 +83,8 @@ function Home() {
       const start = loan.startDate ? new Date(loan.startDate) : null;
       const end = loan.endDate ? new Date(loan.endDate) : null;
       if (!start || !end) return false;
-      if (['cancelled', 'refused', 'pending'].includes(loan.status)) return false;
+      if (['cancelled', 'refused', 'pending'].includes(loan.status))
+        return false;
       return start <= now && end >= now;
     },
     [now],
@@ -84,21 +94,28 @@ function Home() {
     (loan) => {
       const start = loan.startDate ? new Date(loan.startDate) : null;
       if (!start) return false;
-      if (['cancelled', 'refused', 'pending'].includes(loan.status)) return false;
+      if (['cancelled', 'refused', 'pending'].includes(loan.status))
+        return false;
       return start > now;
     },
     [now],
   );
 
   const pendingApprovals = useMemo(
-    () => loans.filter((l) => l.status === 'pending' && isOwnerLoan(l)),
+    () =>
+      loans.filter(
+        (l) => (l.hasPendingItems ?? l.status === 'pending') && isOwnerLoan(l),
+      ),
     [loans, isOwnerLoan],
   );
 
   const pendingUnderReview = useMemo(
     () =>
       loans.filter(
-        (l) => l.status === 'pending' && isBorrowerLoan(l) && !isOwnerLoan(l),
+        (l) =>
+          (l.hasPendingItems ?? l.status === 'pending') &&
+          isBorrowerLoan(l) &&
+          !isOwnerLoan(l),
       ),
     [isBorrowerLoan, isOwnerLoan, loans],
   );
@@ -147,7 +164,9 @@ function Home() {
           body: JSON.stringify(payload),
         });
         setMessage(
-          t('home.status_update_success', { status: t(`loans.status.${status}`) }),
+          t('home.status_update_success', {
+            status: t(`loans.status.${status}`),
+          }),
         );
         await refreshLoans();
       } catch (err) {
@@ -273,8 +292,10 @@ function Home() {
       const borrowerName = getStructureName(loan.borrower);
       const counterpartName = ownerRelated ? borrowerName : ownerName;
       const title =
-        loan.items?.map((item) => item.equipment?.name).filter(Boolean).join(', ') ||
-        t('home.activity.untitled');
+        loan.items
+          ?.map((item) => item.equipment?.name)
+          .filter(Boolean)
+          .join(', ') || t('home.activity.untitled');
       const href = loan._id ? `/loans/${loan._id}` : '/loans';
 
       const addEntry = (type, date, data) => {
@@ -303,7 +324,7 @@ function Home() {
         icon: 'fa-circle-plus',
       });
 
-      if (loan.status === 'accepted') {
+      if (['accepted', 'partial'].includes(loan.status)) {
         const descKey = ownerRelated
           ? 'home.activity.request_validated_description_owner'
           : 'home.activity.request_validated_description_borrower';
@@ -323,12 +344,16 @@ function Home() {
         const descKey = ownerRelated
           ? 'home.activity.request_cancelled_description_owner'
           : 'home.activity.request_cancelled_description_borrower';
-        addEntry('cancelled', loan.updatedAt || loan.endDate || loan.createdAt, {
-          label: t('home.activity.request_cancelled'),
-          description: t(descKey, { counterpart: counterpartName }),
-          tone: 'danger',
-          icon: 'fa-circle-xmark',
-        });
+        addEntry(
+          'cancelled',
+          loan.updatedAt || loan.endDate || loan.createdAt,
+          {
+            label: t('home.activity.request_cancelled'),
+            description: t(descKey, { counterpart: counterpartName }),
+            tone: 'danger',
+            icon: 'fa-circle-xmark',
+          },
+        );
       }
 
       if (loan.status === 'refused') {
@@ -342,7 +367,7 @@ function Home() {
         });
       }
 
-      if (loan.status === 'accepted' && loan.startDate) {
+      if (['accepted', 'partial'].includes(loan.status) && loan.startDate) {
         const startDate = new Date(loan.startDate);
         const isFutureStart = startDate > nowDate;
         const labelKey = isFutureStart
@@ -380,7 +405,9 @@ function Home() {
           : 'home.activity.loan_return_description_borrower';
         const descParts = [
           t(descKey, { counterpart: counterpartName }),
-          t('home.activity.return_date', { date: formatDateLabel(loan.endDate) }),
+          t('home.activity.return_date', {
+            date: formatDateLabel(loan.endDate),
+          }),
         ].filter(Boolean);
 
         addEntry('return', loan.endDate, {
@@ -392,13 +419,23 @@ function Home() {
       }
     });
 
-    const sorted = itemsList.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = itemsList.sort(
+      (a, b) => new Date(b.date) - new Date(a.date),
+    );
     const maxItems = 8;
     return {
       activityItems: sorted.slice(0, maxItems),
       totalActivityCount: sorted.length,
     };
-  }, [formatDateLabel, formatPeriod, getStructureName, isBorrowerLoan, isOwnerLoan, loans, t]);
+  }, [
+    formatDateLabel,
+    formatPeriod,
+    getStructureName,
+    isBorrowerLoan,
+    isOwnerLoan,
+    loans,
+    t,
+  ]);
 
   const shortcuts = useMemo(
     () => [
@@ -451,7 +488,10 @@ function Home() {
   return (
     <>
       <div className="d-flex justify-content-end mt-2">
-        <button className="btn btn-outline-secondary" onClick={() => setRunTour(true)}>
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => setRunTour(true)}
+        >
           {t('tour.help')}
         </button>
       </div>
@@ -476,7 +516,9 @@ function Home() {
             <Link key={shortcut.to} className="shortcut-card" to={shortcut.to}>
               <i className={`fa-solid ${shortcut.icon}`} aria-hidden="true"></i>
               <span className="shortcut-title">{shortcut.label}</span>
-              <span className="shortcut-description">{shortcut.description}</span>
+              <span className="shortcut-description">
+                {shortcut.description}
+              </span>
             </Link>
           ))}
         </div>

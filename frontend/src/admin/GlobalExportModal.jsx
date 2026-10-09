@@ -132,7 +132,10 @@ function GlobalExportModal({ open, onClose, onSuccess }) {
                     onChange={(e) => setEmail(e.target.checked)}
                     disabled={loading}
                   />
-                  <label className="form-check-label" htmlFor="admin-export-email">
+                  <label
+                    className="form-check-label"
+                    htmlFor="admin-export-email"
+                  >
                     {t('admin_export.email_me')}
                   </label>
                 </div>

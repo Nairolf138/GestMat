@@ -52,7 +52,13 @@ function ResetPassword() {
         body: JSON.stringify({ token, password }),
       });
       setStatus(data.message || t('reset_password.success'));
-      setTimeout(() => navigate('/login', { state: { message: t('reset_password.success') } }), 3000);
+      setTimeout(
+        () =>
+          navigate('/login', {
+            state: { message: t('reset_password.success') },
+          }),
+        3000,
+      );
     } catch (err) {
       setErrors(err.fieldErrors || {});
       setError(err.message || t('reset_password.error'));
@@ -69,7 +75,11 @@ function ResetPassword() {
         </h1>
         <p>{t('reset_password.description')}</p>
         <Alert type="success" message={status} onClose={() => setStatus('')} />
-        <Alert message={error} onClose={() => setError('')} autoHideDuration={false} />
+        <Alert
+          message={error}
+          onClose={() => setError('')}
+          autoHideDuration={false}
+        />
         <div className="mb-3">
           <label className="form-label" htmlFor="new-password">
             {t('reset_password.new_password')}
@@ -81,11 +91,14 @@ function ResetPassword() {
             value={password}
             onChange={(event) => {
               setPassword(event.target.value);
-              if (errors.password) setErrors({ ...errors, password: undefined });
+              if (errors.password)
+                setErrors({ ...errors, password: undefined });
             }}
             autoComplete="new-password"
             aria-invalid={errors.password ? 'true' : undefined}
-            aria-describedby={errors.password ? 'new-password-error' : undefined}
+            aria-describedby={
+              errors.password ? 'new-password-error' : undefined
+            }
           />
           {errors.password && (
             <div
@@ -133,7 +146,9 @@ function ResetPassword() {
           {loading ? t('common.loading') : t('reset_password.submit')}
         </button>
         <p className="mt-3">
-          <Link to="/forgot-password">{t('reset_password.back_to_forgot')}</Link>
+          <Link to="/forgot-password">
+            {t('reset_password.back_to_forgot')}
+          </Link>
         </p>
       </FormCard>
     </main>

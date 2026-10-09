@@ -138,8 +138,14 @@ function EquipmentsExportModal({ open, onClose, onSuccess }) {
                 >
                   {t('common.cancel')}
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? t('common.loading') : t('equipments.export.submit')}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                >
+                  {loading
+                    ? t('common.loading')
+                    : t('equipments.export.submit')}
                 </button>
               </div>
             </form>

@@ -22,3 +22,4 @@ jobs:
       - run: cd ${{ matrix.project }} && npm run lint
       - run: cd ${{ matrix.project }} && npm run format:check
       - run: cd ${{ matrix.project }} && npm test
+      - run: cd ${{ matrix.project }} && npm run build

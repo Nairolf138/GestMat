@@ -22,17 +22,26 @@ export interface ArchiveResult {
 
 export async function archiveOldLoans(
   db: Db,
-  { minAgeDays = LOAN_ARCHIVE_MIN_AGE_DAYS, batchSize = LOAN_ARCHIVE_BATCH_SIZE, now = new Date() }: ArchiveOptions = {},
+  {
+    minAgeDays = LOAN_ARCHIVE_MIN_AGE_DAYS,
+    batchSize = LOAN_ARCHIVE_BATCH_SIZE,
+    now = new Date(),
+  }: ArchiveOptions = {},
 ): Promise<ArchiveResult> {
   const threshold = new Date(now.getTime() - minAgeDays * DAYS_IN_MS);
   const session = (db as any).client.startSession();
   try {
     session.startTransaction();
     const collection = db.collection<LoanRequest>('loanrequests');
-    const archiveCollection = db.collection<LoanRequest>('loanrequests_archive');
+    const archiveCollection = db.collection<LoanRequest>(
+      'loanrequests_archive',
+    );
 
     const candidates = await collection
-      .find({ endDate: { $lte: threshold }, archived: { $ne: true } }, { session })
+      .find(
+        { endDate: { $lte: threshold }, archived: { $ne: true } },
+        { session },
+      )
       .limit(batchSize)
       .toArray();
 
@@ -64,7 +73,10 @@ export async function archiveOldLoans(
       archivedDocs.length,
       threshold.toISOString(),
     );
-    return { archivedCount: archivedDocs.length, considered: candidates.length };
+    return {
+      archivedCount: archivedDocs.length,
+      considered: candidates.length,
+    };
   } catch (err) {
     await session.abortTransaction();
     logger.error('Loan archiving failed: %o', err as Error);
@@ -74,7 +86,10 @@ export async function archiveOldLoans(
   }
 }
 
-export function scheduleLoanArchiving(db: Db, intervalDays: number = LOAN_ARCHIVE_INTERVAL_DAYS): NodeJS.Timeout {
+export function scheduleLoanArchiving(
+  db: Db,
+  intervalDays: number = LOAN_ARCHIVE_INTERVAL_DAYS,
+): NodeJS.Timeout {
   const intervalMs = Math.max(1, intervalDays) * DAYS_IN_MS;
 
   const run = () => {

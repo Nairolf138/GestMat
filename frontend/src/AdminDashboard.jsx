@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import AdminStats from './AdminStats';
 import ManageUsers from './admin/ManageUsers';
@@ -98,7 +104,9 @@ function AdminDashboard() {
                   <div className="text-muted small mb-1">
                     {t('admin_dashboard.summary.completed_loans')}
                   </div>
-                  <div className="display-6 mb-0">{summary.completedLoansThisYear}</div>
+                  <div className="display-6 mb-0">
+                    {summary.completedLoansThisYear}
+                  </div>
                 </div>
               </div>
             </div>
@@ -126,12 +134,18 @@ function AdminDashboard() {
       </div>
       <ul className="nav nav-tabs">
         <li className="nav-item">
-          <button className={`nav-link ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
+          <button
+            className={`nav-link ${tab === 'users' ? 'active' : ''}`}
+            onClick={() => setTab('users')}
+          >
             {t('admin_dashboard.tabs.users')}
           </button>
         </li>
         <li className="nav-item">
-          <button className={`nav-link ${tab === 'loans' ? 'active' : ''}`} onClick={() => setTab('loans')}>
+          <button
+            className={`nav-link ${tab === 'loans' ? 'active' : ''}`}
+            onClick={() => setTab('loans')}
+          >
             {t('admin_dashboard.tabs.loans')}
           </button>
         </li>
@@ -144,17 +158,26 @@ function AdminDashboard() {
           </button>
         </li>
         <li className="nav-item">
-          <button className={`nav-link ${tab === 'vehicles' ? 'active' : ''}`} onClick={() => setTab('vehicles')}>
+          <button
+            className={`nav-link ${tab === 'vehicles' ? 'active' : ''}`}
+            onClick={() => setTab('vehicles')}
+          >
             {t('admin_dashboard.tabs.vehicles')}
           </button>
         </li>
         <li className="nav-item">
-          <button className={`nav-link ${tab === 'investments' ? 'active' : ''}`} onClick={() => setTab('investments')}>
+          <button
+            className={`nav-link ${tab === 'investments' ? 'active' : ''}`}
+            onClick={() => setTab('investments')}
+          >
             {t('admin_dashboard.tabs.investments')}
           </button>
         </li>
         <li className="nav-item">
-          <button className={`nav-link ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>
+          <button
+            className={`nav-link ${tab === 'stats' ? 'active' : ''}`}
+            onClick={() => setTab('stats')}
+          >
             {t('admin_dashboard.tabs.stats')}
           </button>
         </li>

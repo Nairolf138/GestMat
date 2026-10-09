@@ -153,7 +153,8 @@ test('loanStartReminderTemplate conserve un gabarit harmonisé', () => {
     subject: 'Rappel : début de prêt imminent - emprunteur',
     preamble: 'Votre structure est sur le point de commencer un prêt.',
     eventLine: `Le prêt ${loanId.toString()} va bientôt commencer.`,
-    action: 'Préparer la réception du matériel et vérifier les modalités avec le prêteur.',
+    action:
+      'Préparer la réception du matériel et vérifier les modalités avec le prêteur.',
   });
 
   assert.deepStrictEqual(template, expected);
@@ -188,7 +189,10 @@ test("buildLoanSummary utilise 'Éléments prêtés' quand les items sont mixtes
 });
 
 test('loanOverdueTemplate conserve un gabarit harmonisé', () => {
-  const template = loanOverdueTemplate({ loan: sampleLoan as any, role: 'requester' });
+  const template = loanOverdueTemplate({
+    loan: sampleLoan as any,
+    role: 'requester',
+  });
   const expected = buildExpectedTemplate({
     subject: 'Prêt en retard - suivi de votre demande',
     preamble: 'Vous êtes le demandeur de ce prêt.',
@@ -203,7 +207,9 @@ test('loanOverdueTemplate conserve un gabarit harmonisé', () => {
 test('les templates de prêt ne contiennent pas de libellés par défaut', () => {
   const summary = buildLoanSummary(sampleLoan as any);
   const overdueTemplate = loanOverdueTemplate({ loan: sampleLoan as any });
-  const reminderTemplate = loanStartReminderTemplate({ loan: sampleLoan as any });
+  const reminderTemplate = loanStartReminderTemplate({
+    loan: sampleLoan as any,
+  });
 
   const forbiddenLabels = ['Non renseignée', 'Utilisateur inconnu'];
   for (const label of forbiddenLabels) {

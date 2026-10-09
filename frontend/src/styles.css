@@ -196,7 +196,8 @@ body {
   background-color: var(--color-navbar-bg);
   border-color: var(--color-primary);
   color: var(--color-text);
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 30%, transparent);
+  box-shadow: 0 0 0 0.2rem
+    color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 .form-control:focus::placeholder {
@@ -392,7 +393,11 @@ body {
 }
 
 .navbar-toggler-icon {
-  --navbar-toggler-color: color-mix(in srgb, var(--color-text) 92%, var(--color-bg) 8%);
+  --navbar-toggler-color: color-mix(
+    in srgb,
+    var(--color-text) 92%,
+    var(--color-bg) 8%
+  );
 
   width: 1.5rem;
   height: 1.5rem;
@@ -440,7 +445,10 @@ body {
 .navbar-search .search-suggestions {
   max-height: min(
     280px,
-    calc(100vh - var(--navbar-height) - max(env(safe-area-inset-top), var(--spacing-sm)))
+    calc(
+      100vh - var(--navbar-height) -
+        max(env(safe-area-inset-top), var(--spacing-sm))
+    )
   );
   overflow-y: auto;
 }
@@ -530,8 +538,16 @@ body {
 
 .table {
   --table-border-color: color-mix(in srgb, var(--color-text) 12%, transparent);
-  --table-stripe-color: color-mix(in srgb, var(--color-text) 6%, var(--color-navbar-bg));
-  --table-hover-color: color-mix(in srgb, var(--color-primary) 12%, var(--color-navbar-bg));
+  --table-stripe-color: color-mix(
+    in srgb,
+    var(--color-text) 6%,
+    var(--color-navbar-bg)
+  );
+  --table-hover-color: color-mix(
+    in srgb,
+    var(--color-primary) 12%,
+    var(--color-navbar-bg)
+  );
   color: var(--color-text);
   background-color: var(--color-navbar-bg);
   border-color: var(--table-border-color);
@@ -539,7 +555,11 @@ body {
 }
 
 .table thead {
-  background-color: color-mix(in srgb, var(--color-text) 4%, var(--color-navbar-bg));
+  background-color: color-mix(
+    in srgb,
+    var(--color-text) 4%,
+    var(--color-navbar-bg)
+  );
   color: var(--color-text);
 }
 
@@ -620,7 +640,10 @@ body {
   border: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
   text-decoration: none;
   color: inherit;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .badge-card:hover {

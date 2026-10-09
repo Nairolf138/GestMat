@@ -34,14 +34,18 @@ export const toLoanItemsPayload = (items = []) =>
 export const formatLoanItemLabel = (item) => {
   const kind = item?.kind === 'vehicle' ? 'vehicle' : 'equipment';
   if (kind === 'vehicle') {
-    const vehicleName = item?.vehicle?.name;
+    const vehicleName = item?.vehicle?.name || item?.resourceIdentity?.name;
     if (!vehicleName) return '';
     const registrationNumber =
-      item?.vehicle?.registrationNumber || item?.vehicle?.immatriculation;
-    const registrationSuffix = registrationNumber ? ` (${registrationNumber})` : '';
+      item?.vehicle?.registrationNumber ||
+      item?.vehicle?.immatriculation ||
+      item?.resourceIdentity?.registrationNumber;
+    const registrationSuffix = registrationNumber
+      ? ` (${registrationNumber})`
+      : '';
     return `${vehicleName}${registrationSuffix} x1`;
   }
-  const name = item?.equipment?.name;
+  const name = item?.equipment?.name || item?.resourceIdentity?.name;
   if (!name) return '';
   const quantity = item?.quantity;
   return `${name}${quantity ? ` x${quantity}` : ''}`;
@@ -55,7 +59,7 @@ const roleMap = {
   [REGISSEUR_SON_ROLE]: ['Son', 'Vidéo', 'Autre'],
   [REGISSEUR_LUMIERE_ROLE]: ['Lumière', 'Vidéo', 'Autre'],
   [REGISSEUR_PLATEAU_ROLE]: ['Plateau', 'Vidéo', 'Autre'],
-  [AUTRE_ROLE]: ALL_TYPES,
+  [AUTRE_ROLE]: ['Autre'],
 };
 
 const normalizeRole = (role = '') =>
@@ -70,7 +74,18 @@ export const canManageEquipment = (role, type) => {
   const allowed = roleMap[normalizeRole(role)];
   if (!allowed) return false;
   if (!type) return true;
-  return allowed.includes(type);
+  const normalized = String(type)
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
+  return allowed.some(
+    (candidate) =>
+      candidate
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase() === (normalized === 'autres' ? 'autre' : normalized),
+  );
 };
 
 export const downloadBlob = (blob, filename, fallbackName) => {

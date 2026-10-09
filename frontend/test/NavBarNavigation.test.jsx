@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -12,22 +13,28 @@ describe('NavBar navigation', () => {
       <AuthContext.Provider
         value={{ user: { username: 'u' }, setUser: () => {} }}
       >
-        <MemoryRouter
-          initialEntries={['/']}
-          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        <QueryClientProvider
+          client={
+            new QueryClient({ defaultOptions: { queries: { retry: false } } })
+          }
         >
-          <Routes>
-            <Route path="/" element={<NavBar />} />
-            <Route
-              path="/catalog"
-              element={
-                <PrivateRoute>
-                  <h1>Catalogue page</h1>
-                </PrivateRoute>
-              }
-            />
-          </Routes>
-        </MemoryRouter>
+          <MemoryRouter
+            initialEntries={['/']}
+            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+          >
+            <Routes>
+              <Route path="/" element={<NavBar />} />
+              <Route
+                path="/catalog"
+                element={
+                  <PrivateRoute>
+                    <h1>Catalogue page</h1>
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
       </AuthContext.Provider>,
     );
     fireEvent.click(screen.getByRole('link', { name: 'Catalogue' }));

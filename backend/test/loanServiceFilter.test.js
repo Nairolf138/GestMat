@@ -4,7 +4,7 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 process.env.JWT_SECRET = 'test';
 const { listLoans } = require('../src/services/loanService');
-const { ADMIN_ROLE, AUTRE_ROLE } = require('../src/config/roles');
+const { ADMIN_ROLE, REGISSEUR_GENERAL_ROLE } = require('../src/config/roles');
 
 async function createDb() {
   const mongod = await MongoMemoryReplSet.create();
@@ -20,9 +20,11 @@ test('listLoans filters documents by user structure', async () => {
   const struct2 = (await db.collection('structures').insertOne({ name: 'S2' }))
     .insertedId;
   const userId = new ObjectId().toString();
-  await db
-    .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: struct1 });
+  await db.collection('users').insertOne({
+    _id: new ObjectId(userId),
+    structure: struct1,
+    role: REGISSEUR_GENERAL_ROLE,
+  });
   const eq1 = (
     await db
       .collection('equipments')
@@ -53,8 +55,16 @@ test('listLoans filters documents by user structure', async () => {
   ]);
 
   const total = await db.collection('loanrequests').countDocuments();
-  const adminLoans = await listLoans(db, { role: ADMIN_ROLE });
-  const userLoans = await listLoans(db, { id: userId, role: AUTRE_ROLE });
+  const adminId = (await db.collection('users').insertOne({ role: ADMIN_ROLE }))
+    .insertedId;
+  const adminLoans = await listLoans(db, {
+    id: adminId.toString(),
+    role: ADMIN_ROLE,
+  });
+  const userLoans = await listLoans(db, {
+    id: userId,
+    role: REGISSEUR_GENERAL_ROLE,
+  });
 
   assert.strictEqual(adminLoans.length, total);
   assert.strictEqual(userLoans.length, 3);
@@ -71,9 +81,11 @@ test('listLoans returns filtered total when paginated for non-admin roles', asyn
   const struct2 = (await db.collection('structures').insertOne({ name: 'S2' }))
     .insertedId;
   const userId = new ObjectId().toString();
-  await db
-    .collection('users')
-    .insertOne({ _id: new ObjectId(userId), structure: struct1 });
+  await db.collection('users').insertOne({
+    _id: new ObjectId(userId),
+    structure: struct1,
+    role: REGISSEUR_GENERAL_ROLE,
+  });
 
   const eq1 = (
     await db
@@ -87,7 +99,12 @@ test('listLoans returns filtered total when paginated for non-admin roles', asyn
     { owner: struct1, borrower: struct2, items: [{ equipment: eq1 }] },
   ]);
 
-  const result = await listLoans(db, { id: userId, role: AUTRE_ROLE }, 1, 2);
+  const result = await listLoans(
+    db,
+    { id: userId, role: REGISSEUR_GENERAL_ROLE },
+    1,
+    2,
+  );
 
   assert.strictEqual(result.total, 3);
   assert.strictEqual(result.loans.length, 2);

@@ -1,298 +1,242 @@
 import { Db, ObjectId } from 'mongodb';
-import { canModify } from './roleAccess';
+import {
+  LoanItem,
+  LoanRequest,
+  populateLoanRequest,
+} from '../models/LoanRequest';
+import {
+  canAccessEquipmentLine,
+  idOf,
+  loanLines,
+  summarizeLines,
+} from './loanLines';
+import { vehicleManagerIds } from './vehicleAccess';
 import {
   NotificationPreference,
-  getNotificationStatus,
   isNotificationEnabled,
 } from './notificationPreferences';
+import { sendMail } from './sendMail';
 import logger from './logger';
+import { LOAN_ARCHIVE_EMAIL } from '../config';
 
-type LoanRecipientRole = 'owner' | 'borrower' | 'requester';
-
-interface LoanRecipientContext {
+type RecipientRole = 'owner' | 'borrower' | 'requester';
+interface Context {
   ownerId?: string | null;
   borrowerId?: string | null;
   borrower?: unknown;
   requestedById?: string | null;
   requestedBy?: unknown;
 }
-
+interface Options {
+  requireSystemAlerts?: boolean;
+  trace?: (value: any) => void;
+}
 export interface LoanRecipientGroups {
   ownerRecipients: string[];
   borrowerRecipients: string[];
   requesterRecipients: string[];
 }
-
-interface LoanItemRef {
-  kind?: 'equipment' | 'vehicle';
-  equipment?: any;
-  vehicle?: any;
+export interface LoanNotificationTarget {
+  email: string;
+  role: RecipientRole;
+  items: LoanItem[];
 }
 
-interface RecipientFilterOptions {
-  requireSystemAlerts?: boolean;
-  trace?: (details: RecipientTrace) => void;
-}
-
-interface RecipientTrace {
-  role: LoanRecipientRole | 'structure';
-  identifier?: string;
-  email?: string;
-  preference?: NotificationPreference;
-  reason: string;
-}
-
-function shouldNotify(
-  user: any,
-  preference: NotificationPreference,
-  { requireSystemAlerts = false }: RecipientFilterOptions = {},
-): { allowed: boolean; reason?: string } {
-  const preferenceStatus = getNotificationStatus(user, preference);
-  if (!preferenceStatus.enabled) {
-    return {
-      allowed: false,
-      reason: `opt-out for ${preference} (${preferenceStatus.source})`,
-    };
-  }
-
-  if (requireSystemAlerts && !isNotificationEnabled(user, 'systemAlerts')) {
-    return { allowed: false, reason: 'opt-out for systemAlerts' };
-  }
-
-  return { allowed: true };
-}
-
-async function findOwnerRecipients(
+export async function getLoanNotificationTargets(
   db: Db,
-  items: LoanItemRef[],
-  ownerId?: string | null,
-  preference: NotificationPreference = 'loanStatusChanges',
-  options: RecipientFilterOptions = {},
-): Promise<string[]> {
-  if (!ownerId) return [];
-
-  const equipmentIds = items
-    .filter((it) => (it.kind ?? 'equipment') === 'equipment' && it.equipment)
-    .map((it) => new ObjectId(it.equipment));
-  const types = equipmentIds.length
-    ? (
-        await db
-          .collection('equipments')
-          .find<{ type?: string }>({ _id: { $in: equipmentIds } }, { projection: { type: 1 } })
-          .toArray()
-      )
-        .map((eq) => eq?.type)
-        .filter(Boolean) as string[]
-    : [];
-  const hasVehicleItem = items.some((it) => (it.kind ?? 'equipment') === 'vehicle');
-
+  loan: LoanRequest,
+  preference: NotificationPreference,
+  options: Options = {},
+): Promise<LoanNotificationTarget[]> {
+  const populated = await populateLoanRequest(db, {
+    ...loan,
+    items: (loan.items || []).map((item) => ({ ...item })),
+  });
+  const items = loanLines(populated);
+  const managers = new Map<string, string[]>();
+  for (const item of items)
+    if (item.kind === 'vehicle') {
+      managers.set(
+        idOf(item.vehicle),
+        await vehicleManagerIds(db, item.vehicle),
+      );
+    }
+  const structureIds = [
+    ...new Set(
+      [idOf(loan.owner), idOf(loan.borrower)].filter((id) =>
+        ObjectId.isValid(id),
+      ),
+    ),
+  ];
+  const accountIds = [
+    ...new Set(
+      [idOf(loan.requestedBy), ...[...managers.values()].flat()].filter((id) =>
+        ObjectId.isValid(id),
+      ),
+    ),
+  ];
   const users = await db
     .collection('users')
-    .find({ structure: new ObjectId(ownerId) })
+    .find({
+      $or: [
+        { structure: { $in: structureIds.map((id) => new ObjectId(id)) } },
+        { _id: { $in: accountIds.map((id) => new ObjectId(id)) } },
+      ],
+    })
     .toArray();
-
-  return users
-    .filter((u: any) => {
-      const result = shouldNotify(u, preference, options);
-      if (!result.allowed) {
-        options.trace?.({
-          role: 'owner',
-          identifier: u._id?.toString?.(),
-          email: u.email,
-          preference,
-          reason: result.reason ?? 'notification disabled',
-        });
-      }
-      if (!u.email) {
-        options.trace?.({
-          role: 'owner',
-          identifier: u._id?.toString?.(),
-          preference,
-          reason: 'missing email',
-        });
-      }
-      return (
-        u.email &&
-        result.allowed &&
-        (hasVehicleItem || !types.length || types.some((t) => canModify(u.role, t)))
+  const byEmail = new Map<string, LoanNotificationTarget>();
+  for (const user of users) {
+    if (
+      !user.email ||
+      !isNotificationEnabled(user as any, preference) ||
+      (options.requireSystemAlerts &&
+        !isNotificationEnabled(user as any, 'systemAlerts'))
+    ) {
+      options.trace?.({
+        identifier: idOf(user),
+        role: idOf(user.structure) === idOf(loan.owner) ? 'owner' : 'borrower',
+        preference,
+        reason: 'missing email or opt-out',
+      });
+      continue;
+    }
+    const relevant = items.filter((item) =>
+      item.kind === 'vehicle'
+        ? idOf(user) === idOf(loan.requestedBy) ||
+          (managers.get(idOf(item.vehicle)) || []).includes(idOf(user))
+        : canAccessEquipmentLine(user, item, populated),
+    );
+    if (!relevant.length) continue;
+    const email = String(user.email).trim().toLowerCase();
+    const role: RecipientRole =
+      idOf(user.structure) === idOf(loan.owner) ||
+      relevant.some(
+        (item) =>
+          item.kind === 'vehicle' &&
+          (managers.get(idOf(item.vehicle)) || []).includes(idOf(user)),
+      )
+        ? 'owner'
+        : idOf(user) === idOf(loan.requestedBy) &&
+            relevant.some((item) => item.kind === 'vehicle')
+          ? 'requester'
+          : 'borrower';
+    const existing = byEmail.get(email);
+    if (existing) {
+      const known = new Set(existing.items.map((item) => item.lineId));
+      existing.items.push(
+        ...relevant.filter((item) => !known.has(item.lineId)),
       );
-    })
-    .map((u: any) => u.email as string);
-}
-
-async function findRequesterRecipients(
-  db: Db,
-  { requestedById, requestedBy }: LoanRecipientContext,
-  preference: NotificationPreference = 'loanStatusChanges',
-  options: RecipientFilterOptions = {},
-): Promise<string[]> {
-  const requesterEmail = (requestedBy as any)?.email;
-  const normalizedEmail =
-    typeof requesterEmail === 'string' && requesterEmail.trim() ? requesterEmail.trim() : null;
-  const shouldReload =
-    !requestedBy || !normalizedEmail || (requestedBy as any)?.preferences === undefined;
-  const canReload = requestedById && ObjectId.isValid(requestedById);
-
-  const requester =
-    shouldReload && canReload
-      ? await db
-          .collection('users')
-          .findOne<{ email?: string; preferences?: any }>({ _id: new ObjectId(requestedById) })
-      : (requestedBy as any);
-
-  if (!normalizedEmail && !requester?.email) {
-    return [];
+    } else byEmail.set(email, { email, role, items: relevant });
   }
-
-  const emailToUse = normalizedEmail ?? requester?.email;
-  const result = shouldNotify(requester, preference, options);
-  if (!result.allowed) {
-    options.trace?.({
-      role: 'requester',
-      identifier: requestedById ?? (requester as any)?._id?.toString?.(),
-      email: emailToUse,
-      preference,
-      reason: result.reason ?? 'notification disabled',
-    });
-    return [];
-  }
-
-  if (emailToUse) {
-    return [emailToUse];
-  }
-
-  return [];
-}
-
-async function findBorrowerRecipients(
-  db: Db,
-  { borrowerId, borrower }: LoanRecipientContext,
-  preference: NotificationPreference = 'loanStatusChanges',
-  options: RecipientFilterOptions = {},
-): Promise<string[]> {
-  const recipients: string[] = [];
-
-  const borrowerEmail = (borrower as any)?.email;
-  if (typeof borrowerEmail === 'string' && borrowerEmail.trim()) {
-    recipients.push(borrowerEmail.trim());
-  }
-
-  if (!borrowerId || !ObjectId.isValid(borrowerId)) return recipients;
-
-  const borrowerStructure = await db
-    .collection('structures')
-    .findOne<{ email?: string }>({ _id: new ObjectId(borrowerId) });
-
-  if (borrowerStructure?.email && typeof borrowerStructure.email === 'string') {
-    recipients.push(borrowerStructure.email);
-  }
-
-  const borrowerUsers = await db
-    .collection('users')
-    .find({ structure: new ObjectId(borrowerId) })
-    .toArray();
-
-  borrowerUsers
-    .filter((u: any) => {
-      const result = shouldNotify(u, preference, options);
-      if (!result.allowed) {
-        options.trace?.({
-          role: 'borrower',
-          identifier: u._id?.toString?.(),
-          email: u.email,
-          preference,
-          reason: result.reason ?? 'notification disabled',
-        });
-      }
-      if (!u.email) {
-        options.trace?.({
-          role: 'borrower',
-          identifier: u._id?.toString?.(),
-          preference,
-          reason: 'missing email',
-        });
-      }
-      return u.email && result.allowed;
-    })
-    .forEach((u: any) => recipients.push(u.email as string));
-
-  return recipients;
+  if (!byEmail.size) logger.warn('Loan notification: no recipients found');
+  return [...byEmail.values()];
 }
 
 export async function getLoanRecipientsByRole(
   db: Db,
-  items: LoanItemRef[],
-  context: LoanRecipientContext,
+  items: any[],
+  context: Context,
   preference: NotificationPreference = 'loanStatusChanges',
-  options: RecipientFilterOptions = {},
+  options: Options = {},
 ): Promise<LoanRecipientGroups> {
-  const trace = options.trace;
-  const ownerRecipients = await findOwnerRecipients(
-    db,
+  const loan: LoanRequest = {
     items,
-    context.ownerId,
+    owner: context.ownerId as any,
+    borrower: (context.borrowerId || context.borrower) as any,
+    requestedBy: (context.requestedById || context.requestedBy) as any,
+  };
+  const targets = await getLoanNotificationTargets(
+    db,
+    loan,
     preference,
     options,
   );
-  const borrowerRecipients = await findBorrowerRecipients(db, context, preference, options);
-  const requesterRecipients = await findRequesterRecipients(db, context, preference, options);
-
-  if (!ownerRecipients.length) {
-    trace?.({
-      role: 'owner',
-      identifier: context.ownerId ?? undefined,
-      reason: `no recipients resolved for preference ${preference}`,
-    });
-  }
-  if (!borrowerRecipients.length) {
-    trace?.({
-      role: 'borrower',
-      identifier: context.borrowerId ?? undefined,
-      reason: `no recipients resolved for preference ${preference}`,
-    });
-  }
-  if (!requesterRecipients.length) {
-    trace?.({
-      role: 'requester',
-      identifier: context.requestedById ?? undefined,
-      reason: `no recipients resolved for preference ${preference}`,
-    });
-  }
-
-  return { ownerRecipients, borrowerRecipients, requesterRecipients };
+  return {
+    ownerRecipients: targets
+      .filter((t) => t.role === 'owner')
+      .map((t) => t.email),
+    borrowerRecipients: targets
+      .filter((t) => t.role === 'borrower')
+      .map((t) => t.email),
+    requesterRecipients: targets
+      .filter((t) => t.role === 'requester')
+      .map((t) => t.email),
+  };
 }
 
 export async function getLoanRecipients(
   db: Db,
-  items: LoanItemRef[],
-  context: LoanRecipientContext,
+  items: any[],
+  context: Context,
   preference: NotificationPreference = 'loanStatusChanges',
-  options: RecipientFilterOptions = {},
+  options: Options = {},
 ): Promise<string[]> {
-  const traces: RecipientTrace[] = [];
-  const trace =
-    options.trace ??
-    ((details: RecipientTrace) => {
-      traces.push(details);
-    });
-
-  const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-    await getLoanRecipientsByRole(db, items, context, preference, { ...options, trace });
-
-  const recipients = Array.from(
-    new Set([...ownerRecipients, ...borrowerRecipients, ...requesterRecipients]),
+  const groups = await getLoanRecipientsByRole(
+    db,
+    items,
+    context,
+    preference,
+    options,
   );
+  return [
+    ...new Set([
+      ...groups.ownerRecipients,
+      ...groups.borrowerRecipients,
+      ...groups.requesterRecipients,
+    ]),
+  ];
+}
 
-  if (!recipients.length) {
-    logger.warn(
-      'Loan notification: no recipients found (owner: %s, borrower: %s, requester: %s, preference: %s). Trace: %o',
-      context.ownerId ?? 'unknown',
-      context.borrowerId ?? 'unknown',
-      context.requestedById ?? 'unknown',
-      preference,
-      traces,
+export async function deliverLoanNotification(
+  db: Db,
+  loan: LoanRequest,
+  template: (context: { loan: LoanRequest; role: RecipientRole }) => {
+    subject: string;
+    text: string;
+    html: string;
+  },
+  preference: NotificationPreference,
+  options: Options = {},
+): Promise<void> {
+  const populated = await populateLoanRequest(db, {
+    ...loan,
+    items: (loan.items || []).map((item) => ({ ...item })),
+  });
+  const targets = await getLoanNotificationTargets(
+    db,
+    populated,
+    preference,
+    options,
+  );
+  const archiveEmail = LOAN_ARCHIVE_EMAIL?.trim().toLowerCase();
+  const deliveries: Promise<unknown>[] = [];
+  for (const target of targets) {
+    if (target.email === archiveEmail) continue;
+    const lineIds = new Set(target.items.map((item) => item.lineId));
+    const scoped = {
+      ...populated,
+      items: target.items,
+      status: summarizeLines(target.items),
+      history: ((populated.history || []) as any[]).filter(
+        (entry) => !entry.lineId || lineIds.has(entry.lineId),
+      ),
+    };
+    deliveries.push(
+      sendMail({
+        to: target.email,
+        ...template({ loan: scoped, role: target.role }),
+      }),
     );
   }
-
-  return recipients;
+  // Separate BCC-only archive envelope: complete event, once, even if every user opted out.
+  if (archiveEmail)
+    deliveries.push(
+      sendMail({
+        bcc: archiveEmail,
+        ...template({ loan: populated, role: 'owner' }),
+      }),
+    );
+  for (const result of await Promise.allSettled(deliveries))
+    if (result.status === 'rejected')
+      logger.error('Loan mail delivery failed: %o', result.reason);
 }

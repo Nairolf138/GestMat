@@ -1,4 +1,5 @@
 import { Db, ObjectId, ClientSession } from 'mongodb';
+import { idOf, publicActor } from '../utils/loanLines';
 
 export type LoanItemKind = 'equipment' | 'vehicle';
 
@@ -80,7 +81,7 @@ async function _populate(
     loan.borrower
       ? db
           .collection('structures')
-          .findOne({ _id: loan.borrower as ObjectId }, { session })
+          .findOne({ _id: new ObjectId(idOf(loan.borrower)) }, { session })
           .then((s) => {
             loan.borrower = s || loan.borrower;
           })
@@ -88,7 +89,7 @@ async function _populate(
     loan.owner
       ? db
           .collection('structures')
-          .findOne({ _id: loan.owner as ObjectId }, { session })
+          .findOne({ _id: new ObjectId(idOf(loan.owner)) }, { session })
           .then((s) => {
             loan.owner = s || loan.owner;
           })
@@ -96,17 +97,44 @@ async function _populate(
     loan.requestedBy
       ? db
           .collection('users')
-          .findOne({ _id: loan.requestedBy as ObjectId }, { session })
+          .findOne(
+            { _id: new ObjectId(idOf(loan.requestedBy)) },
+            {
+              session,
+              projection: {
+                username: 1,
+                firstName: 1,
+                lastName: 1,
+                role: 1,
+                structure: 1,
+              },
+            },
+          )
           .then((u) => {
-            loan.requestedBy = u || loan.requestedBy;
+            loan.requestedBy =
+              (loan.requesterIdentity as any) ||
+              publicActor(u) ||
+              loan.requestedBy;
           })
       : null,
     loan.processedBy
       ? db
           .collection('users')
-          .findOne({ _id: loan.processedBy as ObjectId }, { session })
+          .findOne(
+            { _id: new ObjectId(idOf(loan.processedBy)) },
+            {
+              session,
+              projection: {
+                username: 1,
+                firstName: 1,
+                lastName: 1,
+                role: 1,
+                structure: 1,
+              },
+            },
+          )
           .then((u) => {
-            loan.processedBy = u || loan.processedBy;
+            loan.processedBy = publicActor(u) || loan.processedBy;
           })
       : null,
     loan.items
@@ -119,15 +147,19 @@ async function _populate(
               item.vehicle =
                 (await db
                   .collection('vehicles')
-                  .findOne({ _id: item.vehicle as ObjectId }, { session })) ||
-                item.vehicle;
+                  .findOne(
+                    { _id: new ObjectId(idOf(item.vehicle)) },
+                    { session },
+                  )) || item.vehicle;
               item.quantity = 1;
             } else if (item.equipment) {
               item.equipment =
                 (await db
                   .collection('equipments')
-                  .findOne({ _id: item.equipment as ObjectId }, { session })) ||
-                item.equipment;
+                  .findOne(
+                    { _id: new ObjectId(idOf(item.equipment)) },
+                    { session },
+                  )) || item.equipment;
             }
           }),
         )

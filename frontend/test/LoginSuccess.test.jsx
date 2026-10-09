@@ -54,7 +54,7 @@ describe('Login success', () => {
     );
     await waitFor(() => expect(api.api).toHaveBeenCalled());
     expect(
-      await screen.findByRole('heading', { name: 'Accueil' }),
+      await screen.findByRole('heading', { name: /Bonjour/ }),
     ).toBeTruthy();
     expect(screen.getByText('Connexion réussie')).toBeTruthy();
   });

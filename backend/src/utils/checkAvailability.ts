@@ -8,6 +8,7 @@ export async function checkEquipmentAvailability(
   end: Date | null,
   quantity: number,
   session?: ClientSession,
+  excludedLoanRequestId?: ObjectId,
 ): Promise<{ available: boolean; availableQty: number } | null> {
   const eq = await db
     .collection('equipments')
@@ -23,6 +24,9 @@ export async function checkEquipmentAvailability(
         [
           {
             $match: {
+              ...(excludedLoanRequestId
+                ? { _id: { $ne: excludedLoanRequestId } }
+                : {}),
               status: { $nin: ['refused', 'cancelled'] },
               // Overlap check treats loan end dates as exclusive to allow
               // back-to-back reservations without double counting the
@@ -33,7 +37,12 @@ export async function checkEquipmentAvailability(
             },
           },
           { $unwind: '$items' },
-          { $match: { 'items.equipment': eq._id } },
+          {
+            $match: {
+              'items.equipment': eq._id,
+              'items.decision.status': { $nin: ['refused', 'cancelled'] },
+            },
+          },
           { $group: { _id: null, qty: { $sum: '$items.quantity' } } },
         ],
         { session },

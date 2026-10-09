@@ -26,8 +26,12 @@ test('collectStructureStats aggregates active and archived loans', async () => {
   const equipmentId = new ObjectId();
   const period = getAnnualReportPeriod(new Date('2024-09-15T12:00:00Z'));
 
-  await db.collection('structures').insertOne({ _id: structureId, name: 'Test structure' });
-  await db.collection('equipments').insertOne({ _id: equipmentId, name: 'Caméra', type: 'Video' });
+  await db
+    .collection('structures')
+    .insertOne({ _id: structureId, name: 'Test structure' });
+  await db
+    .collection('equipments')
+    .insertOne({ _id: equipmentId, name: 'Caméra', type: 'Video' });
 
   await db.collection('loanrequests').insertOne({
     owner: structureId,
@@ -75,7 +79,9 @@ test('renderReportPdf embeds summary text', async () => {
     statusCounts: { accepted: 1, returned: 1 },
     roleCounts: { owner: 1, borrower: 1 },
     averageDurationDays: 3,
-    topEquipments: [{ id: new ObjectId(), name: 'Caméra', type: 'Video', totalQuantity: 3 }],
+    topEquipments: [
+      { id: new ObjectId(), name: 'Caméra', type: 'Video', totalQuantity: 3 },
+    ],
   };
 
   const buffer = await renderReportPdf(structure, stats, period);

@@ -25,6 +25,18 @@ describe('formatLoanItemLabel', () => {
     ).toBe('Renault Kangoo x1');
   });
 
+  it('keeps a deleted vehicle identifiable from its booking snapshot', () => {
+    expect(
+      formatLoanItemLabel({
+        kind: 'vehicle',
+        resourceIdentity: {
+          name: 'Camion atelier',
+          registrationNumber: 'AB-123-CD',
+        },
+      }),
+    ).toBe('Camion atelier (AB-123-CD) x1');
+  });
+
   it('keeps equipment formatting unchanged', () => {
     expect(
       formatLoanItemLabel({

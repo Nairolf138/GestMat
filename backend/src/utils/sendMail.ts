@@ -8,24 +8,6 @@ let transporter:
 
 let defaultSender: string | undefined;
 
-const deriveSenderFromSmtp = (smtpUrl: string | undefined): string | undefined => {
-  if (!smtpUrl) {
-    return undefined;
-  }
-
-  try {
-    const url = new URL(smtpUrl);
-    const hostname = url.hostname.replace(/^\[/u, '').replace(/\]$/u, '');
-    if (!hostname) {
-      return undefined;
-    }
-    return `no-reply@${hostname}`;
-  } catch (error) {
-    logger.warn('Unable to derive default sender from SMTP_URL: %o', error);
-    return undefined;
-  }
-};
-
 function getTransporter():
   | Transporter
   | { sendMail: (opts: SendMailOptions) => Promise<void> } {
@@ -49,11 +31,11 @@ function getTransporter():
               : undefined,
         });
 
-        defaultSender ??= NOTIFY_EMAIL ?? deriveSenderFromSmtp(SMTP_URL);
+        defaultSender ??= NOTIFY_EMAIL ?? 'notifications@nairolfconcept.fr';
       } catch (error) {
         logger.warn('Invalid SMTP_URL, falling back to raw string: %o', error);
         transporter = nodemailer.createTransport(SMTP_URL);
-        defaultSender ??= NOTIFY_EMAIL ?? deriveSenderFromSmtp(SMTP_URL);
+        defaultSender ??= NOTIFY_EMAIL ?? 'notifications@nairolfconcept.fr';
       }
     } else {
       transporter = {
@@ -61,7 +43,7 @@ function getTransporter():
           logger.info('Email disabled. Would send: %o', opts);
         },
       };
-      defaultSender ??= NOTIFY_EMAIL;
+      defaultSender ??= NOTIFY_EMAIL ?? 'notifications@nairolfconcept.fr';
     }
   }
   return transporter;

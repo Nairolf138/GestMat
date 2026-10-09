@@ -92,7 +92,11 @@ function Login() {
         <h1 id="login-title" className="h1">
           {t('login.title')}
         </h1>
-        <Alert type="success" message={message} onClose={() => setMessage('')} />
+        <Alert
+          type="success"
+          message={message}
+          onClose={() => setMessage('')}
+        />
         <Alert
           message={error}
           autoHideDuration={false}

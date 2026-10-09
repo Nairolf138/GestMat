@@ -38,17 +38,26 @@ function withEnv(envOverrides, callback) {
 }
 
 test('secure is true when API_URL uses https', () => {
-  const options = withEnv({ API_URL: 'https://example.com/api' }, loadCookieOptions);
+  const options = withEnv(
+    { API_URL: 'https://example.com/api' },
+    loadCookieOptions,
+  );
   assert.strictEqual(options.secure, true);
 });
 
 test('secure is false when API_URL uses http', () => {
-  const options = withEnv({ API_URL: 'http://localhost:5000/api' }, loadCookieOptions);
+  const options = withEnv(
+    { API_URL: 'http://localhost:5000/api' },
+    loadCookieOptions,
+  );
   assert.strictEqual(options.secure, false);
 });
 
 test('sameSite defaults to lax', () => {
-  const options = withEnv({ API_URL: 'http://localhost:5000/api', COOKIE_SAME_SITE: undefined }, loadCookieOptions);
+  const options = withEnv(
+    { API_URL: 'http://localhost:5000/api', COOKIE_SAME_SITE: undefined },
+    loadCookieOptions,
+  );
   assert.strictEqual(options.sameSite, 'lax');
 });
 

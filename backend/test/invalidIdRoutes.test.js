@@ -1,3 +1,5 @@
+const { accountHeaders } = require('./utils/accountFixture');
+let fixtureDb;
 const test = require('node:test');
 const request = require('supertest');
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
@@ -13,9 +15,8 @@ const userRoutes = require('../src/routes/users').default;
 const { ADMIN_ROLE } = require('../src/config/roles');
 const { withApiPrefix } = require('./utils/apiPrefix');
 
-function auth(role = ADMIN_ROLE) {
-  const token = jwt.sign({ id: 'u1', role }, 'test', { expiresIn: '1h' });
-  return { Authorization: `Bearer ${token}` };
+async function auth(role = ADMIN_ROLE) {
+  return accountHeaders(fixtureDb, 'u1', role, undefined);
 }
 
 async function createApp(route, path) {
@@ -27,25 +28,29 @@ async function createApp(route, path) {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
+  fixtureDb = db;
   app.use(withApiPrefix(path), route);
   return { app, client, mongod };
 }
 
 // Equipment
 test('equipment routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(equipmentRoutes, '/equipments');
+  const { app, client, mongod } = await createApp(
+    equipmentRoutes,
+    '/equipments',
+  );
   await request(app)
     .put(withApiPrefix('/equipments/badid'))
-    .set(auth())
+    .set(await auth())
     .send({})
     .expect(400);
   await request(app)
     .delete(withApiPrefix('/equipments/badid'))
-    .set(auth())
+    .set(await auth())
     .expect(400);
   await request(app)
     .get(withApiPrefix('/equipments/badid/availability'))
-    .set(auth())
+    .set(await auth())
     .expect(400);
   await client.close();
   await mongod.stop();
@@ -56,12 +61,12 @@ test('loan routes return 400 for invalid id', async () => {
   const { app, client, mongod } = await createApp(loanRoutes, '/loans');
   await request(app)
     .put(withApiPrefix('/loans/badid'))
-    .set(auth())
+    .set(await auth())
     .send({})
     .expect(400);
   await request(app)
     .delete(withApiPrefix('/loans/badid'))
-    .set(auth())
+    .set(await auth())
     .expect(400);
   await client.close();
   await mongod.stop();
@@ -69,15 +74,18 @@ test('loan routes return 400 for invalid id', async () => {
 
 // Structures
 test('structure routes return 400 for invalid id', async () => {
-  const { app, client, mongod } = await createApp(structureRoutes, '/structures');
+  const { app, client, mongod } = await createApp(
+    structureRoutes,
+    '/structures',
+  );
   await request(app)
     .put(withApiPrefix('/structures/badid'))
-    .set(auth())
+    .set(await auth())
     .send({ name: 's' })
     .expect(400);
   await request(app)
     .delete(withApiPrefix('/structures/badid'))
-    .set(auth())
+    .set(await auth())
     .expect(400);
   await client.close();
   await mongod.stop();
@@ -88,7 +96,7 @@ test('user routes return 400 for invalid id', async () => {
   const { app, client, mongod } = await createApp(userRoutes, '/users');
   await request(app)
     .delete(withApiPrefix('/users/badid'))
-    .set(auth())
+    .set(await auth())
     .expect(400);
   await client.close();
   await mongod.stop();

@@ -5,7 +5,7 @@ import { api } from './api';
 import Loading from './Loading.jsx';
 import Alert from './Alert.jsx';
 import { formatDate } from './utils/dateFormat.js';
-import { formatLoanItemLabel } from './utils';
+import LoanLineDecisions from './components/LoanLineDecisions.jsx';
 
 function LoanDetail() {
   const { id } = useParams();
@@ -62,13 +62,29 @@ function LoanDetail() {
           </span>
         </p>
       )}
-      <ul className="list-group mb-3">
-        {loan.items?.map((it) => (
-          <li key={it._id} className="list-group-item">
-            {formatLoanItemLabel(it)}
-          </li>
-        ))}
-      </ul>
+      <LoanLineDecisions
+        loan={loan}
+        refresh={() => api(`/loans/${id}`).then(setLoan)}
+      />
+      {!!loan.history?.length && (
+        <details className="mb-3">
+          <summary>Historique des actions</summary>
+          <ul>
+            {loan.history.map((event, index) => (
+              <li key={index}>
+                {formatDate(event.at)} —{' '}
+                {[event.actor?.firstName, event.actor?.lastName]
+                  .filter(Boolean)
+                  .join(' ') || event.actor?.username}{' '}
+                — {event.action}
+                {event.resourceName && ` — ${event.resourceName}`}
+                {event.quantity && ` ×${event.quantity}`}
+                {event.note && ` — ${event.note}`}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       <Link to="/loans">{t('home.view_all')}</Link>
     </>
   );

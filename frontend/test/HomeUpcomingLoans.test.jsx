@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Home from '../src/Home.jsx';
 import { AuthContext } from '../src/AuthContext.jsx';
@@ -71,10 +77,18 @@ describe('Home upcoming loans', () => {
 
     await waitFor(() => expect(api).toHaveBeenCalledWith('/loans'));
 
-    expect(await screen.findByText(/Owner Accepted/)).toBeTruthy();
-    expect(screen.queryByText(/Owner Pending/)).toBeNull();
-    expect(screen.queryByText(/Owner Cancelled/)).toBeNull();
-    expect(screen.queryByText(/Owner Refused/)).toBeNull();
+    fireEvent.click(await screen.findByRole('tab', { name: /à venir/i }));
+    await waitFor(() =>
+      expect(container.querySelector('.card.accepted')).toBeTruthy(),
+    );
+    expect(
+      within(container.querySelector('.card.accepted')).getByText(
+        /Owner Accepted/,
+      ),
+    ).toBeTruthy();
+    expect(container.querySelector('.card.pending')).toBeNull();
+    expect(container.querySelector('.card.cancelled')).toBeNull();
+    expect(container.querySelector('.card.refused')).toBeNull();
 
     const upcomingCards = container.querySelectorAll('.card.accepted');
     expect(upcomingCards.length).toBe(1);

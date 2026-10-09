@@ -1,4 +1,4 @@
-import { Db, Filter, ObjectId, WithId } from 'mongodb';
+import { Db, Filter, ObjectId, WithId, ClientSession } from 'mongodb';
 import { Structure } from './Structure';
 import { VEHICLE_USAGE_TYPES } from '../config/permissions';
 
@@ -60,11 +60,13 @@ export interface VehicleCharacteristics {
   [key: string]: unknown;
 }
 
-export type NewVehicle = Pick<Vehicle, 'name'> & Partial<Omit<Vehicle, '_id' | 'name'>>;
+export type NewVehicle = Pick<Vehicle, 'name'> &
+  Partial<Omit<Vehicle, '_id' | 'name'>>;
 
 export interface Vehicle {
   _id?: ObjectId;
   name: string;
+  managerIds?: ObjectId[];
   type?: string;
   usage?: (typeof VEHICLE_USAGE_TYPES)[number];
   structure?: ObjectId | Structure | string;
@@ -101,6 +103,8 @@ function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
   if (normalized.structure) {
     normalized.structure = new ObjectId(normalized.structure as any);
   }
+  if (normalized.managerIds)
+    normalized.managerIds = normalized.managerIds.map((id) => new ObjectId(id));
   if (normalized.usage) {
     normalized.usage = normalized.usage.toString().toLowerCase() as any;
   }
@@ -134,7 +138,9 @@ function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
   if (normalized.technicalInspection?.lastInspectionDate) {
     normalized.technicalInspection = {
       ...normalized.technicalInspection,
-      lastInspectionDate: new Date(normalized.technicalInspection.lastInspectionDate),
+      lastInspectionDate: new Date(
+        normalized.technicalInspection.lastInspectionDate,
+      ),
     };
   }
   if (normalized.technicalInspection?.expiryDate) {
@@ -144,11 +150,13 @@ function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
     };
   }
   if (normalized.complianceDocuments) {
-    normalized.complianceDocuments = normalized.complianceDocuments.map((doc) => ({
-      ...doc,
-      uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
-      expiresAt: doc.expiresAt ? new Date(doc.expiresAt) : undefined,
-    }));
+    normalized.complianceDocuments = normalized.complianceDocuments.map(
+      (doc) => ({
+        ...doc,
+        uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
+        expiresAt: doc.expiresAt ? new Date(doc.expiresAt) : undefined,
+      }),
+    );
   }
   if (normalized.complianceReminders?.insuranceReminderSentAt) {
     normalized.complianceReminders = {
@@ -187,7 +195,7 @@ export function buildAvailabilityFilter(
           },
         ],
       },
-      { status: { $ne: 'maintenance' } },
+      { status: { $nin: ['maintenance', 'retired', 'unavailable'] } },
     ],
   } as Filter<Vehicle>;
 }
@@ -198,7 +206,10 @@ export function findVehicles(
   page = 1,
   limit = 0,
 ): Promise<Vehicle[]> {
-  const cursor = db.collection<Vehicle>('vehicles').find(filter).sort({ name: 1 });
+  const cursor = db
+    .collection<Vehicle>('vehicles')
+    .find(filter)
+    .sort({ name: 1 });
   if (limit > 0) {
     const skip = (page - 1) * limit;
     cursor.skip(skip).limit(limit);
@@ -209,6 +220,7 @@ export function findVehicles(
 export async function createVehicle(
   db: Db,
   data: NewVehicle,
+  session?: ClientSession,
 ): Promise<WithId<Vehicle>> {
   const vehicle: Vehicle = {
     status: 'available',
@@ -218,7 +230,9 @@ export async function createVehicle(
     downtimeDays: 0,
     ...normalizeVehicleDates(data),
   };
-  const result = await db.collection<Vehicle>('vehicles').insertOne(vehicle);
+  const result = await db
+    .collection<Vehicle>('vehicles')
+    .insertOne(vehicle, { session });
   return { _id: result.insertedId, ...vehicle };
 }
 
@@ -226,6 +240,7 @@ export async function updateVehicle(
   db: Db,
   id: string,
   data: Partial<Vehicle>,
+  session?: ClientSession,
 ): Promise<Vehicle | null> {
   const updates = normalizeVehicleDates(data);
   const unset: Record<string, ''> = {};
@@ -244,26 +259,24 @@ export async function updateVehicle(
 
   const res = await db
     .collection<Vehicle>('vehicles')
-    .findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      updateDoc,
-      { returnDocument: 'after' },
-    );
+    .findOneAndUpdate({ _id: new ObjectId(id) }, updateDoc, {
+      returnDocument: 'after',
+      session,
+    });
   return res.value;
 }
 
-export async function deleteVehicle(db: Db, id: string): Promise<boolean> {
+export async function deleteVehicle(
+  db: Db,
+  id: string,
+  session?: ClientSession,
+): Promise<boolean> {
   const res = await db
     .collection('vehicles')
-    .deleteOne({ _id: new ObjectId(id) });
+    .deleteOne({ _id: new ObjectId(id) }, { session });
   return res.deletedCount > 0;
 }
 
-export function findVehicleById(
-  db: Db,
-  id: string,
-): Promise<Vehicle | null> {
-  return db
-    .collection<Vehicle>('vehicles')
-    .findOne({ _id: new ObjectId(id) });
+export function findVehicleById(db: Db, id: string): Promise<Vehicle | null> {
+  return db.collection<Vehicle>('vehicles').findOne({ _id: new ObjectId(id) });
 }

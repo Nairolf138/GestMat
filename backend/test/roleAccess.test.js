@@ -10,9 +10,13 @@ const {
   REGISSEUR_GENERAL_ROLE,
 } = roles;
 
-test('Autre role permissions allow all types', () => {
-  assert.strictEqual(canModify(AUTRE_ROLE, 'Son'), true);
-  assert.strictEqual(canModify(AUTRE_ROLE, 'Lumière'), true);
+test('Autre role permissions allow only Autre/Autres', () => {
+  assert.strictEqual(canModify(AUTRE_ROLE, 'Son'), false);
+  assert.strictEqual(canModify(AUTRE_ROLE, 'Lumière'), false);
+});
+
+test('Autre recognizes legacy Autres', () => {
+  assert.equal(canModify(AUTRE_ROLE, 'Autres'), true);
 });
 
 test('Regisseur Son permissions', () => {

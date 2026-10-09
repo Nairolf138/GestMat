@@ -1,210 +1,69 @@
-process.env.JWT_SECRET = 'test';
-const test = require('node:test');
-const assert = require('assert');
-const { ObjectId } = require('mongodb');
-const { AUTRE_ROLE } = require('../src/config/roles');
-
-function createStubDb({
-  structures = [],
-  users = [],
-  equipments = [],
-} = {}) {
-  const collections = { structures, users, equipments };
-
-  return {
-    collection: (name) => {
-      if (name === 'structures') {
-        return {
-          findOne: async (query) =>
-            collections.structures.find(
-              (s) => s._id?.toString?.() === query._id?.toString?.(),
-            ) || null,
-        };
-      }
-
-      if (name === 'equipments') {
-        return {
-          findOne: async (query) =>
-            collections.equipments.find(
-              (e) => e._id?.toString?.() === query._id?.toString?.(),
-            ) || null,
-          find: (query) => ({
-            toArray: async () =>
-              collections.equipments.filter((equipment) => {
-                const ids = query?._id?.$in;
-                if (!Array.isArray(ids)) return true;
-                return ids.some((id) => id?.toString?.() === equipment._id?.toString?.());
-              }),
-          }),
-        };
-      }
-
-      if (name === 'users') {
-        return {
-          findOne: async (query) =>
-            collections.users.find((u) => u._id?.toString?.() === query._id?.toString?.()) ||
-            null,
-          find: (query) => ({
-            toArray: async () =>
-              collections.users.filter((u) =>
-                query?.structure ? u.structure?.toString?.() === query.structure?.toString?.() : true,
-              ),
-          }),
-        };
-      }
-
-      throw new Error(`Unknown collection ${name}`);
-    },
-  };
-}
-
-test('getLoanRecipientsByRole respecte les opt-in/opt-out', async () => {
-  const ownerId = new ObjectId();
-  const borrowerId = new ObjectId();
-  const equipmentId = new ObjectId();
-  const db = createStubDb({
-    structures: [
-      { _id: ownerId, name: 'Owner' },
-      { _id: borrowerId, name: 'Borrower' },
-    ],
-    equipments: [{ _id: equipmentId, name: 'Console', type: 'Son', structure: ownerId }],
-    users: [
-      {
-        _id: new ObjectId(),
-        structure: ownerId,
-        email: 'owner@example.test',
-        role: AUTRE_ROLE,
-        preferences: {
-          emailNotifications: {
-            accountUpdates: true,
-            loanRequests: true,
-            loanStatusChanges: true,
-            returnReminders: true,
-            systemAlerts: true,
-            vehicleReminders: true,
-          },
-        },
-      },
-      {
-        _id: new ObjectId(),
-        structure: borrowerId,
-        email: 'borrower@example.test',
-        role: AUTRE_ROLE,
-        preferences: {
-          emailNotifications: {
-            accountUpdates: true,
-            loanRequests: true,
-            loanStatusChanges: true,
-            returnReminders: false,
-            systemAlerts: false,
-            vehicleReminders: true,
-          },
-        },
-      },
-    ],
-  });
-
-  const traces = [];
-  const { getLoanRecipientsByRole } = require('../src/utils/getLoanRecipients');
-  const recipients = await getLoanRecipientsByRole(
-    db,
-    [{ equipment: equipmentId }],
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { fixture } = require('./utils/workflowFixture');
+const {
+  getLoanNotificationTargets,
+  getLoanRecipientsByRole,
+} = require('../src/utils/getLoanRecipients');
+test('notification preferences and domains both restrict recipients', async (t) => {
+  const f = await fixture(t);
+  await f.db.collection('users').updateOne(
+    { _id: f.accounts.requester._id },
     {
-      ownerId: ownerId.toString(),
-      borrowerId: borrowerId.toString(),
-      borrower: borrowerId,
-      requestedBy: null,
-      requestedById: null,
+      $set: {
+        preferences: { emailNotifications: { returnReminders: false } },
+      },
     },
+  );
+  const trace = [];
+  const targets = await getLoanNotificationTargets(
+    f.db,
+    f.payload(['Son']),
     'returnReminders',
-    { requireSystemAlerts: true, trace: (detail) => traces.push(detail) },
+    { requireSystemAlerts: true, trace: (entry) => trace.push(entry) },
   );
-
-  assert.deepStrictEqual(recipients.ownerRecipients, ['owner@example.test']);
-  assert.deepStrictEqual(recipients.borrowerRecipients, []);
+  assert.deepEqual(targets.map((target) => target.email).sort(), [
+    'general@example.test',
+    'sound@example.test',
+  ]);
   assert.ok(
-    traces.some(
-      (trace) =>
-        trace.role === 'borrower' &&
-        trace.preference === 'returnReminders' &&
-        String(trace.reason || '').includes('opt-out'),
+    trace.some(
+      (entry) =>
+        entry.identifier === f.accounts.requester._id.toString() &&
+        entry.reason.includes('opt-out'),
     ),
   );
 });
-
-test('getLoanRecipients journalise explicitement en absence de destinataires', async () => {
-  const loggerPath = require.resolve('../src/utils/logger');
-  delete require.cache[loggerPath];
-  const warnings = [];
-  require.cache[loggerPath] = {
-    id: loggerPath,
-    filename: loggerPath,
-    loaded: true,
-    exports: {
-      __esModule: true,
-      default: {
-        warn: (...args) => warnings.push(args),
-        error: () => {},
-        info: () => {},
-        debug: () => {},
-      },
-    },
-  };
-
-  delete require.cache[require.resolve('../src/utils/getLoanRecipients')];
-  const { getLoanRecipients } = require('../src/utils/getLoanRecipients');
-  const db = createStubDb();
-
-  const recipients = await getLoanRecipients(
-    db,
-    [],
-    { ownerId: null, borrowerId: null, borrower: null, requestedById: null, requestedBy: null },
-    'loanStatusChanges',
-    { requireSystemAlerts: true },
-  );
-
-  assert.deepStrictEqual(recipients, []);
-  assert.ok(
-    warnings.some((args) =>
-      String(args[0]).includes('Loan notification: no recipients found'),
-    ),
-  );
-
-  delete require.cache[loggerPath];
-});
-
-test('getLoanRecipientsByRole gère les demandes véhicule sans doublon equipment', async () => {
-  const ownerId = new ObjectId();
-  const borrowerId = new ObjectId();
-  const vehicleId = new ObjectId();
-  const db = createStubDb({
-    structures: [
-      { _id: ownerId, name: 'Owner' },
-      { _id: borrowerId, name: 'Borrower' },
-    ],
-    users: [
-      {
-        _id: new ObjectId(),
-        structure: ownerId,
-        email: 'owner.vehicle@example.test',
-        role: AUTRE_ROLE,
-      },
-    ],
-  });
-
-  const { getLoanRecipientsByRole } = require('../src/utils/getLoanRecipients');
-  const recipients = await getLoanRecipientsByRole(
-    db,
-    [{ kind: 'vehicle', vehicle: vehicleId }],
+test('vehicles target only requester and named managers, deduplicating identical addresses', async (t) => {
+  const f = await fixture(t);
+  const vehicle = (
+    await f.db.collection('vehicles').insertOne({
+      name: 'Van',
+      structure: f.owner,
+      managerIds: [f.accounts.outside._id],
+    })
+  ).insertedId;
+  await f.db
+    .collection('users')
+    .updateOne(
+      { _id: f.accounts.requester._id },
+      { $set: { email: f.accounts.outside.email } },
+    );
+  const groups = await getLoanRecipientsByRole(
+    f.db,
+    [{ kind: 'vehicle', vehicle }],
     {
-      ownerId: ownerId.toString(),
-      borrowerId: borrowerId.toString(),
-      borrower: borrowerId,
-      requestedBy: null,
-      requestedById: null,
+      ownerId: f.owner.toString(),
+      borrowerId: f.borrower.toString(),
+      requestedById: f.accounts.requester._id.toString(),
     },
-    'loanStatusChanges',
   );
-
-  assert.deepStrictEqual(recipients.ownerRecipients, ['owner.vehicle@example.test']);
+  assert.deepEqual(
+    [
+      ...groups.ownerRecipients,
+      ...groups.borrowerRecipients,
+      ...groups.requesterRecipients,
+    ],
+    ['outside@example.test'],
+  );
 });

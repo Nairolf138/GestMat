@@ -62,15 +62,12 @@ test('loan creation stores note and includes it in notification emails', async (
   };
 
   const { createLoanRequest } = require('../src/services/loanService');
-  const loan = await createLoanRequest(
-    db,
-    { id: requesterId.toString(), role: ADMIN_ROLE },
-    payload,
-  );
+  const loan = await createLoanRequest(db, payload, {
+    id: requesterId.toString(),
+    role: ADMIN_ROLE,
+  });
 
-  const stored = await db
-    .collection('loanrequests')
-    .findOne({ _id: loan._id });
+  const stored = await db.collection('loanrequests').findOne({ _id: loan._id });
   assert.strictEqual(loan.note, payload.note);
   assert.strictEqual(stored.note, payload.note);
 

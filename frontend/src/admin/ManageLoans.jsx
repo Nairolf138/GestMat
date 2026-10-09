@@ -1,10 +1,18 @@
+import LoanLineDecisions from '../components/LoanLineDecisions.jsx';
+import { Link } from 'react-router-dom';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import Loading from '../Loading.jsx';
 import { formatLoanItemLabel } from '../utils';
 
-const statusOptions = ['pending', 'accepted', 'refused', 'cancelled'];
+const statusOptions = [
+  'pending',
+  'accepted',
+  'refused',
+  'cancelled',
+  'partial',
+];
 
 const summarizeItems = (items = []) =>
   items
@@ -197,7 +205,8 @@ function ManageLoans() {
               refused: 'bg-danger',
               cancelled: 'bg-secondary',
             };
-            const statusClass = statusClassMap[l.status] || 'bg-light text-dark';
+            const statusClass =
+              statusClassMap[l.status] || 'bg-light text-dark';
             return (
               <li
                 key={l._id}
@@ -205,11 +214,17 @@ function ManageLoans() {
                   compact ? 'align-items-center' : 'flex-column'
                 }`}
               >
-                <div className={compact ? 'd-flex align-items-center w-100' : ''}>
-                  <span className={`badge me-2 ${statusClass}`}>{statusLabel}</span>
+                <div
+                  className={compact ? 'd-flex align-items-center w-100' : ''}
+                >
+                  <span className={`badge me-2 ${statusClass}`}>
+                    {statusLabel}
+                  </span>
                   <div className="flex-grow-1">
                     <div className={compact ? 'text-truncate' : ''}>
-                      <strong>{items || t('loans.items', { count: itemCount })}</strong>
+                      <strong>
+                        {items || t('loans.items', { count: itemCount })}
+                      </strong>
                       {borrower && ` - ${borrower}`}
                     </div>
                     {!compact && (
@@ -219,17 +234,21 @@ function ManageLoans() {
                     )}
                   </div>
                 </div>
-                <select
-                  className={`form-select ${compact ? 'ms-3 w-auto' : 'w-auto mt-2'}`}
-                  value={l.status}
-                  onChange={(e) => update(l._id, e.target.value)}
+                <Link
+                  to={`/loans/${l._id}`}
+                  className="btn btn-outline-primary mt-2"
                 >
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {t(`loans.status.${status}`, { defaultValue: status })}
-                    </option>
-                  ))}
-                </select>
+                  Examiner la demande
+                </Link>
+                {!compact && <LoanLineDecisions loan={l} refresh={load} />}
+                {l.permissions?.canCancel && (
+                  <button
+                    className="btn btn-outline-danger mt-2"
+                    onClick={() => update(l._id, 'cancelled')}
+                  >
+                    Annuler les lignes actives
+                  </button>
+                )}
               </li>
             );
           })}
@@ -247,11 +266,11 @@ function ManageLoans() {
           {loading
             ? t('common.loading')
             : totalPages !== null
-            ? t('admin_loans.pagination.page_total', {
-                page,
-                total: totalPages,
-              })
-            : ''}
+              ? t('admin_loans.pagination.page_total', {
+                  page,
+                  total: totalPages,
+                })
+              : ''}
         </span>
         <button
           className="btn btn-secondary ms-2"

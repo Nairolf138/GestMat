@@ -5,6 +5,7 @@ const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 
 process.env.JWT_SECRET = 'test';
 
@@ -19,11 +20,14 @@ async function createApp() {
   const db = client.db();
   const app = express();
   app.use(express.json());
+  app.use(cookieParser());
   app.locals.db = db;
   await db.collection('users').createIndex({ username: 1 }, { unique: true });
   app.use(withApiPrefix('/auth'), authRoutes);
   app.use((err, req, res, next) => {
-    res.status(err.status || 500).json({ message: err.message || 'Server error' });
+    res
+      .status(err.status || 500)
+      .json({ message: err.message || 'Server error' });
   });
   return { app, client, mongod, db };
 }
@@ -39,16 +43,22 @@ test('login keeps persistent session when stayLoggedIn is true', async () => {
 
   await request(app)
     .post(withApiPrefix('/auth/register'))
-    .send({ username: 'alice', password: 'pw12345' })
+    .send({ username: 'alice', password: 'ValidPassword123' })
     .expect(200);
 
   const response = await request(app)
     .post(withApiPrefix('/auth/login'))
-    .send({ username: 'alice', password: 'pw12345', stayLoggedIn: true })
+    .send({
+      username: 'alice',
+      password: 'ValidPassword123',
+      stayLoggedIn: true,
+    })
     .expect(200);
 
   const cookies = response.headers['set-cookie'];
-  const refreshCookie = cookies.find((value) => value.startsWith('refreshToken='));
+  const refreshCookie = cookies.find((value) =>
+    value.startsWith('refreshToken='),
+  );
   assert.ok(refreshCookie?.includes('Max-Age=604800'));
   assert.ok(refreshCookie?.includes('HttpOnly'));
 
@@ -68,21 +78,27 @@ test('login without stayLoggedIn uses session refresh cookie and keeps other ses
 
   await request(app)
     .post(withApiPrefix('/auth/register'))
-    .send({ username: 'bob', password: 'pw12345' })
+    .send({ username: 'bob', password: 'ValidPassword123' })
     .expect(200);
 
   await request(app)
     .post(withApiPrefix('/auth/login'))
-    .send({ username: 'bob', password: 'pw12345', stayLoggedIn: true })
+    .send({ username: 'bob', password: 'ValidPassword123', stayLoggedIn: true })
     .expect(200);
 
   const response = await request(app)
     .post(withApiPrefix('/auth/login'))
-    .send({ username: 'bob', password: 'pw12345', stayLoggedIn: false })
+    .send({
+      username: 'bob',
+      password: 'ValidPassword123',
+      stayLoggedIn: false,
+    })
     .expect(200);
 
   const cookies = response.headers['set-cookie'];
-  const refreshCookie = cookies.find((value) => value.startsWith('refreshToken='));
+  const refreshCookie = cookies.find((value) =>
+    value.startsWith('refreshToken='),
+  );
   assert.ok(refreshCookie);
   assert.ok(!refreshCookie.includes('Max-Age'));
   assert.ok(!refreshCookie.includes('Expires'));
@@ -108,20 +124,30 @@ test('multiple persistent logins retain independent refresh tokens', async () =>
 
   await agentA
     .post(withApiPrefix('/auth/register'))
-    .send({ username: 'carol', password: 'pw12345' })
+    .send({ username: 'carol', password: 'ValidPassword123' })
     .expect(200);
 
   await agentA
     .post(withApiPrefix('/auth/login'))
-    .send({ username: 'carol', password: 'pw12345', stayLoggedIn: true })
+    .send({
+      username: 'carol',
+      password: 'ValidPassword123',
+      stayLoggedIn: true,
+    })
     .expect(200);
 
   await agentB
     .post(withApiPrefix('/auth/login'))
-    .send({ username: 'carol', password: 'pw12345', stayLoggedIn: true })
+    .send({
+      username: 'carol',
+      password: 'ValidPassword123',
+      stayLoggedIn: true,
+    })
     .expect(200);
 
-  const sessionCountAfterLogin = await db.collection('sessions').countDocuments();
+  const sessionCountAfterLogin = await db
+    .collection('sessions')
+    .countDocuments();
   assert.strictEqual(sessionCountAfterLogin, 2);
 
   const refreshResponseA = await agentA
@@ -134,7 +160,9 @@ test('multiple persistent logins retain independent refresh tokens', async () =>
     .expect(200);
   assert.deepStrictEqual(refreshResponseB.body, {});
 
-  const sessionCountAfterRefresh = await db.collection('sessions').countDocuments();
+  const sessionCountAfterRefresh = await db
+    .collection('sessions')
+    .countDocuments();
   assert.strictEqual(sessionCountAfterRefresh, 2);
 
   await client.close();

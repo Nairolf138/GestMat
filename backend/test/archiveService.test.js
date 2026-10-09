@@ -33,7 +33,11 @@ test('archiveOldLoans moves only expired loans into the archive collection', asy
     endDate: new Date('2023-05-01T00:00:00Z'),
   });
 
-  const result = await archiveOldLoans(db, { now, minAgeDays: 365, batchSize: 10 });
+  const result = await archiveOldLoans(db, {
+    now,
+    minAgeDays: 365,
+    batchSize: 10,
+  });
 
   assert.strictEqual(result.archivedCount, 2);
   assert.strictEqual(result.considered, 2);
@@ -43,15 +47,16 @@ test('archiveOldLoans moves only expired loans into the archive collection', asy
   assert(archived.every((loan) => loan.archived === true));
   assert(archived.every((loan) => loan.archivedAt.getTime() === now.getTime()));
   assert.deepStrictEqual(
-    archived
-      .map((loan) => loan.originalId.toString())
-      .sort(),
+    archived.map((loan) => loan.originalId.toString()).sort(),
     [oldLoan1.insertedId.toString(), oldLoan2.insertedId.toString()].sort(),
   );
 
   const remaining = await db.collection('loanrequests').find().toArray();
   assert.strictEqual(remaining.length, 1);
-  assert.strictEqual(remaining[0]._id.toString(), keepLoan.insertedId.toString());
+  assert.strictEqual(
+    remaining[0]._id.toString(),
+    keepLoan.insertedId.toString(),
+  );
 
   await client.close();
   await mongod.stop();
@@ -60,7 +65,9 @@ test('archiveOldLoans moves only expired loans into the archive collection', asy
 test('findLoans excludes archived loans unless explicitly requested', async () => {
   const { db, client, mongod } = await createDb();
 
-  await db.collection('loanrequests').insertOne({ _id: new ObjectId(), endDate: new Date() });
+  await db
+    .collection('loanrequests')
+    .insertOne({ _id: new ObjectId(), endDate: new Date() });
   await db.collection('loanrequests_archive').insertOne({
     _id: new ObjectId(),
     endDate: new Date('2020-01-01T00:00:00Z'),
@@ -71,9 +78,11 @@ test('findLoans excludes archived loans unless explicitly requested', async () =
   const activeOnly = await findLoans(db);
   assert.strictEqual(activeOnly.length, 1);
 
-  const archivedOnly = await findLoans(db, {}, undefined, undefined, { includeArchived: true });
-  assert.strictEqual(archivedOnly.length, 1);
-  assert.strictEqual(archivedOnly[0].archived, true);
+  const archivedOnly = await findLoans(db, {}, undefined, undefined, {
+    includeArchived: true,
+  });
+  assert.strictEqual(archivedOnly.length, 2);
+  assert.strictEqual(archivedOnly.filter((loan) => loan.archived).length, 1);
 
   await client.close();
   await mongod.stop();

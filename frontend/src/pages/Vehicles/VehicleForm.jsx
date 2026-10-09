@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import Alert from '../../Alert.jsx';
@@ -59,7 +59,14 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
       name: vehicle?.name || '',
       type: vehicle?.type || '',
       usage: vehicle?.usage || '',
-      structure: typeof vehicle?.structure === 'object' ? vehicle?.structure?._id : vehicle?.structure || user?.structure?._id || '',
+      structure:
+        typeof vehicle?.structure === 'object'
+          ? vehicle?.structure?._id
+          : vehicle?.structure ||
+            (typeof user?.structure === 'string'
+              ? user.structure
+              : user?.structure?._id) ||
+            '',
       brand: vehicle?.brand || '',
       model: vehicle?.model || '',
       registrationNumber: vehicle?.registrationNumber || '',
@@ -70,10 +77,14 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
       transmission: vehicle?.characteristics?.transmission || '',
       color: vehicle?.characteristics?.color || '',
       lastServiceDate: vehicle?.maintenance?.lastServiceDate
-        ? new Date(vehicle.maintenance.lastServiceDate).toISOString().slice(0, 10)
+        ? new Date(vehicle.maintenance.lastServiceDate)
+            .toISOString()
+            .slice(0, 10)
         : '',
       nextServiceDate: vehicle?.maintenance?.nextServiceDate
-        ? new Date(vehicle.maintenance.nextServiceDate).toISOString().slice(0, 10)
+        ? new Date(vehicle.maintenance.nextServiceDate)
+            .toISOString()
+            .slice(0, 10)
         : '',
       maintenanceNotes: vehicle?.maintenance?.notes || '',
       insuranceProvider: vehicle?.insurance?.provider || '',
@@ -83,11 +94,17 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
         : '',
       notes: vehicle?.notes || '',
     }),
-    [vehicle, user?.structure?._id],
+    [vehicle, user?.structure],
   );
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
+  const [managerIds, setManagerIds] = useState([]);
+  const candidates = useQuery({
+    queryKey: ['vehicle-manager-candidates'],
+    queryFn: () => api('/vehicles/manager-candidates'),
+    enabled: !vehicle,
+  });
 
   const mutation = useMutation({
     mutationFn: (payload) => {
@@ -149,6 +166,7 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
     if (!payload.characteristics) delete payload.characteristics;
     if (!payload.maintenance) delete payload.maintenance;
     if (!payload.insurance) delete payload.insurance;
+    if (!vehicle && managerIds.length) payload.managerIds = managerIds;
     return payload;
   };
 
@@ -162,22 +180,66 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
     <FormCard
       role="form"
       aria-label={
-        vehicle ? t('vehicles.form.edit_title') : t('vehicles.form.create_title')
+        vehicle
+          ? t('vehicles.form.edit_title')
+          : t('vehicles.form.create_title')
       }
       onSubmit={handleSubmit}
       autoComplete="off"
     >
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="h2 mb-0">
-          {vehicle ? t('vehicles.form.edit_title') : t('vehicles.form.create_title')}
+          {vehicle
+            ? t('vehicles.form.edit_title')
+            : t('vehicles.form.create_title')}
         </h2>
         {onCancel && (
-          <button type="button" className="btn btn-outline-secondary" onClick={onCancel}>
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={onCancel}
+          >
             {t('common.cancel')}
           </button>
         )}
       </div>
       <Alert message={error} />
+      {!vehicle && (
+        <div className="mb-3">
+          <label htmlFor="new-vehicle-managers" className="form-label">
+            Gestionnaires du véhicule
+          </label>
+          <select
+            id="new-vehicle-managers"
+            multiple
+            className="form-select"
+            value={managerIds}
+            onChange={(event) =>
+              setManagerIds(
+                [...event.target.selectedOptions].map((option) => option.value),
+              )
+            }
+          >
+            {(candidates.data || []).map((candidate) => (
+              <option key={candidate._id} value={candidate._id}>
+                {[candidate.firstName, candidate.lastName]
+                  .filter(Boolean)
+                  .join(' ') || candidate.username}{' '}
+                —{' '}
+                {structures.find(
+                  (structure) => structure._id === candidate.structure,
+                )?.name || candidate.role}
+              </option>
+            ))}
+          </select>
+          <p className="form-text">
+            Sans sélection, les régisseurs généraux de la structure propriétaire
+            seront désignés. Une sélection peut inclure des membres d’autres
+            structures.
+          </p>
+          <Alert message={candidates.error?.message} />
+        </div>
+      )}
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label" htmlFor="veh-name">
@@ -222,7 +284,11 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
             ))}
           </select>
           {errors.status && (
-            <div className="invalid-feedback" id="veh-status-error" role="alert">
+            <div
+              className="invalid-feedback"
+              id="veh-status-error"
+              role="alert"
+            >
               {errors.status}
             </div>
           )}
@@ -271,6 +337,7 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
             {t('vehicles.form.structure')}
           </label>
           <select
+            disabled={user?.role !== 'Administrateur'}
             id="veh-structure"
             name="structure"
             value={form.structure}
@@ -490,11 +557,19 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
       </div>
       <div className="d-flex justify-content-end gap-2 mt-3">
         {onCancel && (
-          <button type="button" className="btn btn-outline-secondary" onClick={onCancel}>
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={onCancel}
+          >
             {t('common.cancel')}
           </button>
         )}
-        <button type="submit" className="btn btn-primary" disabled={mutation.isPending}>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={mutation.isPending}
+        >
           {mutation.isPending ? t('common.loading') : t('vehicles.form.submit')}
         </button>
       </div>

@@ -1,5 +1,8 @@
 import { Db, ObjectId } from 'mongodb';
-import { NotificationPreference, isNotificationEnabled } from './notificationPreferences';
+import {
+  NotificationPreference,
+  isNotificationEnabled,
+} from './notificationPreferences';
 
 export async function getStructureEmails(
   db: Db,
@@ -7,7 +10,10 @@ export async function getStructureEmails(
   {
     requireSystemAlerts = false,
     preference,
-  }: { requireSystemAlerts?: boolean; preference?: NotificationPreference } = {},
+  }: {
+    requireSystemAlerts?: boolean;
+    preference?: NotificationPreference;
+  } = {},
 ): Promise<string[]> {
   if (!ObjectId.isValid(structureId)) {
     return [];

@@ -55,7 +55,8 @@ function ManageInvestments() {
   const [summarySortOrder, setSummarySortOrder] = useState('asc');
 
   const currencyFormatter = useMemo(
-    () => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }),
+    () =>
+      new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }),
     [],
   );
 
@@ -301,14 +302,24 @@ function ManageInvestments() {
   const summary = useMemo(() => {
     const totals = { year1: 0, year2: 0 };
     const byType = new Map();
-    const typeLabelMap = new Map(typeOptions.map((option) => [option.value, option.label]));
+    const typeLabelMap = new Map(
+      typeOptions.map((option) => [option.value, option.label]),
+    );
 
     const addRowToSummary = (row, targetYear) => {
       const amount = calculateRowTotal(row);
       const typeValue = row.type?.trim();
-      const typeLabel = typeLabelMap.get(typeValue) || typeValue || t('investments.summary.untyped');
+      const typeLabel =
+        typeLabelMap.get(typeValue) ||
+        typeValue ||
+        t('investments.summary.untyped');
       if (!byType.has(typeLabel)) {
-        byType.set(typeLabel, { type: typeLabel, year1: 0, year2: 0, total: 0 });
+        byType.set(typeLabel, {
+          type: typeLabel,
+          year1: 0,
+          year2: 0,
+          total: 0,
+        });
       }
       const entry = byType.get(typeLabel);
       if (!entry) return;
@@ -339,7 +350,9 @@ function ManageInvestments() {
       if (targetYear !== 'year1' && targetYear !== 'year2') return;
       const structureId = plan.structure?.toString() ?? plan.structure ?? '';
       const structureLabel =
-        structureNameById.get(structureId) ?? structureId ?? t('users.select_structure');
+        structureNameById.get(structureId) ??
+        structureId ??
+        t('users.select_structure');
       if (!structureLabel) return;
       const key = structureId || structureLabel;
       if (!totals.has(key)) {
@@ -371,9 +384,14 @@ function ManageInvestments() {
     }));
     return rows.sort((a, b) => {
       if (a.total !== b.total) {
-        return summarySortOrder === 'asc' ? a.total - b.total : b.total - a.total;
+        return summarySortOrder === 'asc'
+          ? a.total - b.total
+          : b.total - a.total;
       }
-      return (a.structureLabel ?? '').localeCompare(b.structureLabel ?? '', 'fr');
+      return (a.structureLabel ?? '').localeCompare(
+        b.structureLabel ?? '',
+        'fr',
+      );
     });
   }, [byStructure, summarySortOrder]);
 
@@ -408,7 +426,9 @@ function ManageInvestments() {
           {displayRows.map(({ row, index }) => {
             const rowTotal = calculateRowTotal(row);
             const displayTotal =
-              rowTotal || row.quantity || row.unitPrice ? rowTotal.toFixed(2) : '';
+              rowTotal || row.quantity || row.unitPrice
+                ? rowTotal.toFixed(2)
+                : '';
             return (
               <tr key={row._id ?? `row-${index}`}>
                 <td>
@@ -432,7 +452,9 @@ function ManageInvestments() {
                     }
                     aria-label={`${ariaLabel} ${columnLabels.type}`}
                   >
-                    <option value="">{t('investments.placeholders.type')}</option>
+                    <option value="">
+                      {t('investments.placeholders.type')}
+                    </option>
                     {typeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -615,9 +637,13 @@ function ManageInvestments() {
               type="button"
               className="btn btn-outline-secondary align-self-lg-start"
               onClick={viewMode === 'global' ? loadAllPlans : loadPlans}
-              disabled={loading || (viewMode === 'structure' && !selectedStructureId)}
+              disabled={
+                loading || (viewMode === 'structure' && !selectedStructureId)
+              }
             >
-              {loading ? t('common.loading') : t('admin_dashboard.summary.refresh')}
+              {loading
+                ? t('common.loading')
+                : t('admin_dashboard.summary.refresh')}
             </button>
             {viewMode === 'structure' && (
               <InvestmentsExportButton structureId={selectedStructureId} />
@@ -653,7 +679,10 @@ function ManageInvestments() {
             <div className="d-flex flex-wrap align-items-center gap-3">
               <span className="fw-semibold">{columnLabels.priority}</span>
               {priorityOptions.map((option) => (
-                <div key={option.value} className="form-check form-check-inline">
+                <div
+                  key={option.value}
+                  className="form-check form-check-inline"
+                >
                   <input
                     className="form-check-input"
                     type="checkbox"
@@ -689,7 +718,10 @@ function ManageInvestments() {
             }}
           >
             <div className="col-md-6">
-              <label className="form-label" htmlFor="admin-investments-structure">
+              <label
+                className="form-label"
+                htmlFor="admin-investments-structure"
+              >
                 {t('vehicles.filters.structure')}
               </label>
               <input
@@ -748,13 +780,16 @@ function ManageInvestments() {
                   </p>
                   <ul className="list-unstyled mb-0 d-flex flex-wrap gap-3">
                     <li>
-                      {yearLabels.summaryYear1}: {formatCurrency(summaryTotals.year1)}
+                      {yearLabels.summaryYear1}:{' '}
+                      {formatCurrency(summaryTotals.year1)}
                     </li>
                     <li>
-                      {yearLabels.summaryYear2}: {formatCurrency(summaryTotals.year2)}
+                      {yearLabels.summaryYear2}:{' '}
+                      {formatCurrency(summaryTotals.year2)}
                     </li>
                     <li className="fw-semibold">
-                      {t('investments.summary.total')}: {formatCurrency(summaryTotals.total)}
+                      {t('investments.summary.total')}:{' '}
+                      {formatCurrency(summaryTotals.total)}
                     </li>
                   </ul>
                 </div>

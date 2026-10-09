@@ -7,6 +7,7 @@ import { Equipment, findEquipments } from '../models/Equipment';
 import { Vehicle } from '../models/Vehicle';
 import { LoanRequest } from '../models/LoanRequest';
 import createEquipmentFilter from '../utils/createEquipmentFilter';
+import { canModify } from '../utils/roleAccess';
 import { sendMail } from '../utils/sendMail';
 
 type ExportFormat = 'pdf' | 'xlsx';
@@ -60,7 +61,9 @@ const buildPdfBuffer = async (doc: PDFKit.PDFDocument): Promise<Buffer> =>
     doc.end();
   });
 
-const normalizeTypeFilter = (type?: EquipmentTypeFilter): string | undefined => {
+const normalizeTypeFilter = (
+  type?: EquipmentTypeFilter,
+): string | undefined => {
   if (!type || type === 'Tous') return undefined;
   if (type === 'Autres') return 'Autre';
   return type;
@@ -80,7 +83,9 @@ const buildEquipmentRows = (
 ): Record<string, string>[] =>
   equipments.map((equipment) => {
     const totalQty =
-      equipment.totalQty ?? (equipment as Record<string, unknown>).totalQty ?? '';
+      equipment.totalQty ??
+      (equipment as Record<string, unknown>).totalQty ??
+      '';
     const availableQty =
       equipment.availableQty ??
       (equipment as Record<string, unknown>).availableQty ??
@@ -120,9 +125,7 @@ const addPdfSection = (
   const safeHeaders = headers.length ? headers : ['Data'];
   const columnWidths = safeHeaders.map(() => 100);
   const columnWidth = columnWidths.reduce((a, b) => a + b, 0) || 400;
-  doc
-    .text(safeHeaders.join(' | '), { width: columnWidth })
-    .moveDown(0.5);
+  doc.text(safeHeaders.join(' | '), { width: columnWidth }).moveDown(0.5);
   if (!rows.length) {
     doc.text('No data');
   } else {
@@ -142,7 +145,10 @@ const populateAdminSections = async (
   const result: Record<string, Array<Record<string, string>>> = {};
   const structures = await getStructures(db);
   const structureNames = new Map(
-    structures.map((s) => [s._id?.toString() ?? '', String((s as any).name ?? '')]),
+    structures.map((s) => [
+      s._id?.toString() ?? '',
+      String((s as any).name ?? ''),
+    ]),
   );
 
   for (const section of sections) {
@@ -157,7 +163,9 @@ const populateAdminSections = async (
           username: String((user as any).username ?? ''),
           email: String((user as any).email ?? ''),
           role: String((user as any).role ?? ''),
-          structure: structureNames.get((user as any).structure?.toString?.() ?? '') ?? '',
+          structure:
+            structureNames.get((user as any).structure?.toString?.() ?? '') ??
+            '',
         }));
         break;
       }
@@ -171,14 +179,16 @@ const populateAdminSections = async (
           name: String((equipment as any).name ?? ''),
           type: String((equipment as any).type ?? ''),
           availability:
-            equipment.availableQty !== undefined && equipment.totalQty !== undefined
+            equipment.availableQty !== undefined &&
+            equipment.totalQty !== undefined
               ? `${equipment.availableQty}/${equipment.totalQty}`
               : '',
           status: String((equipment as any).status ?? ''),
           condition: String((equipment as any).condition ?? ''),
           structure:
-            structureNames.get((equipment as any).structure?.toString?.() ?? '') ??
-            String((equipment as any).location ?? ''),
+            structureNames.get(
+              (equipment as any).structure?.toString?.() ?? '',
+            ) ?? String((equipment as any).location ?? ''),
         }));
         break;
       }
@@ -195,7 +205,9 @@ const populateAdminSections = async (
           usage: String(vehicle.usage ?? ''),
           location: String(vehicle.location ?? ''),
           structure:
-            structureNames.get((vehicle as any).structure?.toString?.() ?? '') ?? '',
+            structureNames.get(
+              (vehicle as any).structure?.toString?.() ?? '',
+            ) ?? '',
         }));
         break;
       }
@@ -212,9 +224,24 @@ const populateAdminSections = async (
           .toArray();
         const mapLoan = (loan: LoanRequest, archivedFlag: boolean) => ({
           status: String((loan as any).status ?? ''),
+          decisions: JSON.stringify(
+            (loan.items || []).map((item: any) => ({
+              lineId: item.lineId,
+              equipment: item.equipment,
+              vehicle: item.vehicle,
+              quantity: item.quantity,
+              decision: item.decision || {
+                status: loan.status,
+                actor: loan.processedBy,
+                note: loan.decisionNote,
+              },
+            })),
+          ),
           borrower:
-            structureNames.get((loan as any).borrower?.toString?.() ?? '') ?? '',
-          owner: structureNames.get((loan as any).owner?.toString?.() ?? '') ?? '',
+            structureNames.get((loan as any).borrower?.toString?.() ?? '') ??
+            '',
+          owner:
+            structureNames.get((loan as any).owner?.toString?.() ?? '') ?? '',
           startDate: formatDate((loan as any).startDate as Date),
           endDate: formatDate((loan as any).endDate as Date),
           archived: archivedFlag ? 'yes' : 'no',
@@ -251,7 +278,9 @@ export async function generateEquipmentExport(
     structure: structureId,
     type: normalizedType,
   });
-  const equipments = await findEquipments(db, filter, 1, 0);
+  const equipments = (await findEquipments(db, filter, 1, 0)).filter(
+    (equipment) => canModify(user.role || '', equipment.type),
+  );
   const rows = buildEquipmentRows(
     equipments,
     structure ? String((structure as any).name ?? '') : '',
@@ -266,6 +295,7 @@ export async function generateEquipmentExport(
       { header: 'Availability', key: 'availability', width: 18 },
       { header: 'Condition', key: 'condition', width: 18 },
       { header: 'Status', key: 'status', width: 15 },
+      { header: 'Line decisions', key: 'decisions', width: 50 },
       { header: 'Location', key: 'location', width: 20 },
     ];
     sheet.addRows(rows);
@@ -276,7 +306,12 @@ export async function generateEquipmentExport(
         subject: 'Export équipements',
         text: 'Votre export est disponible en pièce jointe.',
         attachments: [
-          { filename: `${filenameBase}.xlsx`, content: buffer, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+          {
+            filename: `${filenameBase}.xlsx`,
+            content: buffer,
+            contentType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
         ],
       });
     }
@@ -290,7 +325,9 @@ export async function generateEquipmentExport(
   const doc = new PDFDocument({ margin: 40 });
   doc.fontSize(20).text('Export équipements', { underline: true });
   doc.moveDown();
-  doc.fontSize(11).text(`Structure: ${((structure as any)?.name as string) || 'N/A'}`);
+  doc
+    .fontSize(11)
+    .text(`Structure: ${((structure as any)?.name as string) || 'N/A'}`);
   doc.text(`Date: ${formatDate(new Date())}`);
   doc.text(`Auteur: ${user.username}`);
   doc.moveDown();
@@ -351,7 +388,8 @@ export async function generateAdminExport(
           {
             filename: `${filenameBase}.xlsx`,
             content: buffer,
-            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            contentType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           },
         ],
       });

@@ -37,7 +37,10 @@ router.post(
         email: Boolean(email),
       });
       res.contentType(result.contentType);
-      res.setHeader('Content-Disposition', `attachment; filename=${result.filename}`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=${result.filename}`,
+      );
       res.send(result.buffer);
     } catch (err) {
       next(err);

@@ -75,112 +75,124 @@ test('email notification preferences', async (t) => {
     assert.strictEqual(sent.length, 0);
   });
 
-  await t.test('falls back to admin when user disabled account updates', async () => {
-    process.env.NOTIFY_EMAIL = 'admin@example.test';
-    clearModule('../src/config');
-    clearModule('../src/config/index');
+  await t.test(
+    'falls back to admin when user disabled account updates',
+    async () => {
+      process.env.NOTIFY_EMAIL = 'admin@example.test';
+      clearModule('../src/config');
+      clearModule('../src/config/index');
 
-    const mailer = require('../src/utils/sendMail');
-    const sent = [];
-    mailer.sendMail = async (options) => {
-      sent.push(options);
-    };
+      const mailer = require('../src/utils/sendMail');
+      const sent = [];
+      mailer.sendMail = async (options) => {
+        sent.push(options);
+      };
 
-    const { notifyAccountUpdate } = reloadUsersRoute();
+      const { notifyAccountUpdate } = reloadUsersRoute();
 
-    await notifyAccountUpdate(
-      {
-        username: 'bob',
-        email: 'bob@example.test',
-        preferences: {
-          emailNotifications: {
-            accountUpdates: false,
-            loanRequests: true,
-            loanStatusChanges: true,
-            returnReminders: true,
-            systemAlerts: true,
+      await notifyAccountUpdate(
+        {
+          username: 'bob',
+          email: 'bob@example.test',
+          preferences: {
+            emailNotifications: {
+              accountUpdates: false,
+              loanRequests: true,
+              loanStatusChanges: true,
+              returnReminders: true,
+              systemAlerts: true,
+            },
           },
         },
-      },
-      ['adresse e-mail'],
-    );
+        ['adresse e-mail'],
+      );
 
-    assert.strictEqual(sent.length, 1);
-    assert.strictEqual(sent[0].to, 'admin@example.test');
-  });
+      assert.strictEqual(sent.length, 1);
+      assert.strictEqual(sent[0].to, 'admin@example.test');
+    },
+  );
 
-  await t.test('ignores structure notifications when preferences are off', async () => {
-    const { db, client, mongod } = await createDb();
+  await t.test(
+    'ignores structure notifications when preferences are off',
+    async () => {
+      const { db, client, mongod } = await createDb();
 
-    const [owner, borrower] = await Promise.all([
-      db.collection('structures').insertOne({ name: 'Owner' }),
-      db.collection('structures').insertOne({ name: 'Borrower' }),
-    ]);
+      const [owner, borrower] = await Promise.all([
+        db.collection('structures').insertOne({ name: 'Owner' }),
+        db.collection('structures').insertOne({ name: 'Borrower' }),
+      ]);
 
-    const requesterId = new ObjectId();
-    const equipment = await db.collection('equipments').insertOne({
-      name: 'Console',
-      type: 'Lumiere',
-      structure: owner.insertedId,
-    });
-
-    await db.collection('users').insertMany([
-      {
-        _id: requesterId,
-        structure: borrower.insertedId,
-        role: AUTRE_ROLE,
-        email: 'requester@example.test',
-        preferences: {
-          emailNotifications: {
-            accountUpdates: true,
-            structureUpdates: false,
-            systemAlerts: true,
-          },
-        },
-      },
-      {
-        _id: new ObjectId(),
+      const requesterId = new ObjectId();
+      const equipment = await db.collection('equipments').insertOne({
+        name: 'Console',
+        type: 'Lumiere',
+        totalQty: 2,
         structure: owner.insertedId,
-        role: AUTRE_ROLE,
-        email: 'owner@example.test',
-        preferences: {
-          emailNotifications: {
-            accountUpdates: true,
-            structureUpdates: false,
-            systemAlerts: true,
+      });
+
+      await db.collection('users').insertMany([
+        {
+          _id: requesterId,
+          structure: borrower.insertedId,
+          role: AUTRE_ROLE,
+          email: 'requester@example.test',
+          preferences: {
+            emailNotifications: {
+              accountUpdates: true,
+              structureUpdates: false,
+              systemAlerts: true,
+            },
           },
         },
-      },
-    ]);
+        {
+          _id: new ObjectId(),
+          structure: owner.insertedId,
+          role: AUTRE_ROLE,
+          email: 'owner@example.test',
+          preferences: {
+            emailNotifications: {
+              accountUpdates: true,
+              structureUpdates: false,
+              systemAlerts: true,
+            },
+          },
+        },
+      ]);
 
-    const loan = await db.collection('loanrequests').insertOne({
-      owner: owner.insertedId,
-      borrower: borrower.insertedId,
-      items: [{ equipment: equipment.insertedId, quantity: 1 }],
-      requestedBy: requesterId,
-      status: 'pending',
-      startDate: new Date('2099-01-01'),
-      endDate: new Date('2099-01-02'),
-    });
+      const loan = await db.collection('loanrequests').insertOne({
+        owner: owner.insertedId,
+        borrower: borrower.insertedId,
+        items: [{ equipment: equipment.insertedId, quantity: 1 }],
+        requestedBy: requesterId,
+        status: 'pending',
+        startDate: new Date('2099-01-01'),
+        endDate: new Date('2099-01-02'),
+      });
 
-    const mailer = require('../src/utils/sendMail');
-    const sent = [];
-    mailer.sendMail = async (options) => {
-      sent.push(options);
-    };
+      const mailer = require('../src/utils/sendMail');
+      const sent = [];
+      mailer.sendMail = async (options) => {
+        sent.push(options);
+      };
 
-    const { updateLoanRequest } = loadLoanServiceWithNotify(undefined);
+      const { updateLoanRequest } = loadLoanServiceWithNotify(undefined);
 
-    await updateLoanRequest(
-      db,
-      { id: new ObjectId().toString(), role: ADMIN_ROLE },
-      loan.insertedId.toString(),
-      { status: 'accepted' },
-    );
+      const admin = (
+        await db.collection('users').insertOne({ role: ADMIN_ROLE })
+      ).insertedId;
+      await updateLoanRequest(
+        db,
+        { id: admin.toString(), role: ADMIN_ROLE },
+        loan.insertedId.toString(),
+        { status: 'accepted' },
+      );
 
-    assert.strictEqual(sent.length, 0);
+      assert.strictEqual(sent.length, 1);
+      assert.ok(sent[0].bcc);
+      assert.strictEqual(sent[0].to, undefined);
 
-    await client.close();
-    await mongod.stop();
-  });
+      await client.close();
+      await mongod.stop();
+    },
+  );
 });

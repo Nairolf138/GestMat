@@ -6,6 +6,9 @@ import { AuthUser } from '../types';
 import { ADMIN_ROLE } from '../config/roles';
 import permissionsConfig, { PermissionRule } from '../config/permissions';
 import logger from '../utils/logger';
+import { findUserById } from '../models/User';
+import { normalizeRole } from '../utils/roleAccess';
+import { ObjectId } from 'mongodb';
 
 const { PERMISSIONS } = permissionsConfig as any;
 
@@ -19,7 +22,9 @@ type AuthOptions = {
 type AuthInput = Permissions | AuthOptions;
 
 function isPermissionRule(rule: any): rule is PermissionRule {
-  return rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule;
+  return (
+    rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule
+  );
 }
 
 function normalizeId(value: unknown): string | undefined {
@@ -56,9 +61,9 @@ function checkUsageType(
 }
 
 const authorizationCounter =
-  (client.register.getSingleMetric('authorization_decisions_total') as Counter<
-    string
-  >) ||
+  (client.register.getSingleMetric(
+    'authorization_decisions_total',
+  ) as Counter<string>) ||
   new Counter({
     name: 'authorization_decisions_total',
     help: 'Count of authorization decisions by action and outcome',
@@ -84,9 +89,13 @@ function resolvePermissions(input: AuthInput): {
 }
 
 export default function auth(input: AuthInput = []) {
-  const { permissions: requiredPermissions, action, getStructureId, getUsageType } =
-    resolvePermissions(input);
-  return (req: Request, res: Response, next: NextFunction) => {
+  const {
+    permissions: requiredPermissions,
+    action,
+    getStructureId,
+    getUsageType,
+  } = resolvePermissions(input);
+  return async (req: Request, res: Response, next: NextFunction) => {
     const token =
       req.headers.authorization?.split(' ')[1] || req.cookies?.token;
     const actionLabel = action || 'unspecified';
@@ -97,6 +106,13 @@ export default function auth(input: AuthInput = []) {
 
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
+      if (!decoded.id || !ObjectId.isValid(decoded.id))
+        return res.status(401).json({ message: 'Invalid token' });
+      const current = await findUserById(req.app.locals.db, decoded.id);
+      if (!current || !current.role)
+        return res.status(401).json({ message: 'Account unavailable' });
+      decoded.role = normalizeRole(current.role);
+      decoded.structure = normalizeId(current.structure);
       req.user = decoded;
 
       const perms = Array.isArray(requiredPermissions)
@@ -117,13 +133,21 @@ export default function auth(input: AuthInput = []) {
         });
         if (!hasPermission) {
           authorizationCounter.labels(actionLabel, 'denied').inc();
-          logger.warn('Authorization denied for %s on %s', decoded.id, actionLabel);
+          logger.warn(
+            'Authorization denied for %s on %s',
+            decoded.id,
+            actionLabel,
+          );
           return res.status(403).json({ message: 'Access denied' });
         }
       }
 
       authorizationCounter.labels(actionLabel, 'allowed').inc();
-      logger.info('Authorization allowed for %s on %s', decoded.id, actionLabel);
+      logger.info(
+        'Authorization allowed for %s on %s',
+        decoded.id,
+        actionLabel,
+      );
       next();
     } catch (err) {
       authorizationCounter.labels(actionLabel, 'invalid').inc();

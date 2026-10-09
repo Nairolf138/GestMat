@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { normalizeType } from './roleAccess';
 
 function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -26,7 +27,17 @@ export default function createEquipmentFilter(
   } = query;
   const filter: Record<string, unknown> = {};
   if (search) filter.name = { $regex: escapeRegExp(search), $options: 'i' };
-  if (type) filter.type = { $regex: escapeRegExp(type), $options: 'i' };
+  if (type) {
+    const aliases: Record<string, string> = {
+      Vidéo: 'Vid[eé]o',
+      Lumière: 'Lumi[eè]re',
+      Autre: 'Autres?',
+    };
+    filter.type = {
+      $regex: aliases[normalizeType(type) || ''] || escapeRegExp(type),
+      $options: 'i',
+    };
+  }
   if (location)
     filter.location = { $regex: escapeRegExp(location), $options: 'i' };
   if (structure && ObjectId.isValid(structure)) {

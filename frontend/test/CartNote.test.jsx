@@ -30,7 +30,9 @@ describe('Cart note handling', () => {
     api.api.mockResolvedValue({});
 
     render(
-      <AuthContext.Provider value={{ user: { structure: { _id: 'borrower-1' } } }}>
+      <AuthContext.Provider
+        value={{ user: { structure: { _id: 'borrower-1' } } }}
+      >
         <Cart />
       </AuthContext.Provider>,
     );
@@ -65,7 +67,9 @@ describe('Cart note handling', () => {
     api.api.mockResolvedValue({});
 
     render(
-      <AuthContext.Provider value={{ user: { structure: { _id: 'borrower-1' } } }}>
+      <AuthContext.Provider
+        value={{ user: { structure: { _id: 'borrower-1' } } }}
+      >
         <Cart />
       </AuthContext.Provider>,
     );

@@ -96,7 +96,9 @@ function LoansHistory() {
       }
       if (statusFilter === 'finished') {
         const end = loan.endDate ? new Date(loan.endDate) : null;
-        return end && end < now && !['refused', 'cancelled'].includes(loan.status);
+        return (
+          end && end < now && !['refused', 'cancelled'].includes(loan.status)
+        );
       }
       return loan.status === statusFilter;
     });
@@ -164,7 +166,9 @@ function LoansHistory() {
                   <option value="all">{t('common.all')}</option>
                   <option value="finished">{t('loans.finished')}</option>
                   <option value="accepted">{t('loans.status.accepted')}</option>
-                  <option value="cancelled">{t('loans.status.cancelled')}</option>
+                  <option value="cancelled">
+                    {t('loans.status.cancelled')}
+                  </option>
                   <option value="refused">{t('loans.status.refused')}</option>
                 </select>
               </div>
@@ -193,7 +197,10 @@ function LoansHistory() {
                 />
               </div>
               <div className="d-flex align-items-end">
-                <button className="btn btn-secondary" onClick={handleResetFilters}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleResetFilters}
+                >
                   {t('common.reset')}
                 </button>
               </div>
@@ -228,13 +235,17 @@ function LoansHistory() {
                 />
               ))}
               {!paginatedLoans.length && (
-                <li className="list-group-item">{t('loans.history.no_results')}</li>
+                <li className="list-group-item">
+                  {t('loans.history.no_results')}
+                </li>
               )}
             </ul>
             <div className="d-flex justify-content-between align-items-center">
               <small className="text-muted">
                 {t('loans.history.pagination', {
-                  start: historyLoans.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0,
+                  start: historyLoans.length
+                    ? (currentPage - 1) * PAGE_SIZE + 1
+                    : 0,
                   end: Math.min(historyLoans.length, currentPage * PAGE_SIZE),
                   total: historyLoans.length,
                 })}

@@ -28,6 +28,7 @@ export const PERMISSIONS: Record<string, PermissionRule | string[]> = {
     AUTRE_ROLE,
   ],
   MANAGE_EQUIPMENTS: [
+    AUTRE_ROLE,
     REGISSEUR_GENERAL_ROLE,
     REGISSEUR_LUMIERE_ROLE,
     REGISSEUR_SON_ROLE,

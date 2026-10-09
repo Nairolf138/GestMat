@@ -61,7 +61,9 @@ router.get(
     try {
       const filter: Record<string, unknown> = {};
       const structureQuery =
-        typeof req.query.structure === 'string' ? req.query.structure : undefined;
+        typeof req.query.structure === 'string'
+          ? req.query.structure
+          : undefined;
       const userStructure = normalizeId(req.user?.structure);
       if (req.user?.role !== ADMIN_ROLE) {
         if (!userStructure || !ObjectId.isValid(userStructure)) {

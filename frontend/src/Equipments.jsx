@@ -31,7 +31,7 @@ function Equipments() {
     () => ({
       Neuf: t('equipments.add.conditions.new'),
       'Légèrement usé': t('equipments.add.conditions.used_lightly'),
-      'Usé': t('equipments.add.conditions.used'),
+      Usé: t('equipments.add.conditions.used'),
       'Très usé': t('equipments.add.conditions.very_used'),
     }),
     [t],
@@ -46,6 +46,7 @@ function Equipments() {
     queryKey: ['equipments', { search, type, sort, userStructure }],
     queryFn: async () => {
       const params = new URLSearchParams({
+        all: 'true',
         search,
         type,
         structure: userStructure,
@@ -117,7 +118,11 @@ function Equipments() {
     <>
       <Alert message={error?.message} />
       <Alert type="success" message={message} />
-      <Alert type="success" message={exportMessage} onClose={() => setExportMessage('')} />
+      <Alert
+        type="success"
+        message={exportMessage}
+        onClose={() => setExportMessage('')}
+      />
       <h1 className="h1">
         {t('equipments.title')}
         {structureName && ` - ${structureName}`}

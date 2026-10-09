@@ -23,7 +23,12 @@ function ManageVehicles() {
   const [editing, setEditing] = useState(null);
   const [actionError, setActionError] = useState('');
 
-  const { data: vehicles = [], isFetching, error, refetch } = useQuery({
+  const {
+    data: vehicles = [],
+    isFetching,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['vehicles', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -42,7 +47,8 @@ function ManageVehicles() {
 
   const locationOptions = useMemo(() => {
     const values = new Set(vehicles.map((v) => v.location).filter(Boolean));
-    if (filters.location && !values.has(filters.location)) values.add(filters.location);
+    if (filters.location && !values.has(filters.location))
+      values.add(filters.location);
     return Array.from(values);
   }, [vehicles, filters.location]);
 
@@ -52,7 +58,13 @@ function ManageVehicles() {
   };
 
   const resetFilters = () => {
-    setFilters({ search: '', status: '', usage: '', location: '', structure: '' });
+    setFilters({
+      search: '',
+      status: '',
+      usage: '',
+      location: '',
+      structure: '',
+    });
     setTimeout(() => refetch(), 0);
   };
 
@@ -65,7 +77,11 @@ function ManageVehicles() {
           : status === 'retired'
             ? 'badge bg-secondary'
             : 'badge bg-danger';
-    return <span className={className}>{t(`vehicles.status.${status || 'unavailable'}`)}</span>;
+    return (
+      <span className={className}>
+        {t(`vehicles.status.${status || 'unavailable'}`)}
+      </span>
+    );
   };
 
   const handleCompleted = () => {
@@ -118,7 +134,10 @@ function ManageVehicles() {
 
         {showForm && (
           <div className="mb-4">
-            <VehicleForm onCompleted={handleCompleted} onCancel={() => setShowForm(false)} />
+            <VehicleForm
+              onCompleted={handleCompleted}
+              onCancel={() => setShowForm(false)}
+            />
           </div>
         )}
 
@@ -167,9 +186,15 @@ function ManageVehicles() {
               onChange={handleChange}
             >
               <option value="">{t('vehicles.filters.status')}</option>
-              <option value="available">{t('vehicles.status.available')}</option>
-              <option value="unavailable">{t('vehicles.status.unavailable')}</option>
-              <option value="maintenance">{t('vehicles.status.maintenance')}</option>
+              <option value="available">
+                {t('vehicles.status.available')}
+              </option>
+              <option value="unavailable">
+                {t('vehicles.status.unavailable')}
+              </option>
+              <option value="maintenance">
+                {t('vehicles.status.maintenance')}
+              </option>
               <option value="retired">{t('vehicles.status.retired')}</option>
             </select>
           </div>
@@ -236,7 +261,11 @@ function ManageVehicles() {
             <button type="submit" className="btn btn-primary">
               {t('vehicles.filters.apply')}
             </button>
-            <button type="button" className="btn btn-outline-secondary" onClick={resetFilters}>
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={resetFilters}
+            >
               {t('vehicles.filters.reset')}
             </button>
           </div>
@@ -276,7 +305,11 @@ function ManageVehicles() {
                     <td>{vehicle.location || '—'}</td>
                     <td>{statusBadge(vehicle.status || 'unavailable')}</td>
                     <td className="text-end">
-                      <div className="btn-group" role="group" aria-label={t('inventory.actions')}>
+                      <div
+                        className="btn-group"
+                        role="group"
+                        aria-label={t('inventory.actions')}
+                      >
                         <button
                           type="button"
                           className="btn btn-outline-secondary btn-sm"

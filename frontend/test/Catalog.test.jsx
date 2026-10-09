@@ -83,8 +83,9 @@ describe('Catalog', () => {
 
     await waitFor(() =>
       expect(
-        api.api.mock.calls.some(([path]) =>
-          typeof path === 'string' && path.includes('/availability'),
+        api.api.mock.calls.some(
+          ([path]) =>
+            typeof path === 'string' && path.includes('/availability'),
         ),
       ).toBe(true),
     );
@@ -171,7 +172,8 @@ describe('Catalog', () => {
     await waitFor(() =>
       expect(
         api.api.mock.calls.filter(
-          ([path]) => typeof path === 'string' && path.includes('/availability'),
+          ([path]) =>
+            typeof path === 'string' && path.includes('/availability'),
         ).length,
       ).toBeGreaterThanOrEqual(2),
     );
@@ -247,8 +249,8 @@ describe('Catalog', () => {
     fireEvent.click(addButton);
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
-    const availabilityCalls = api.api.mock.calls.filter(([path]) =>
-      typeof path === 'string' && path.includes('/availability'),
+    const availabilityCalls = api.api.mock.calls.filter(
+      ([path]) => typeof path === 'string' && path.includes('/availability'),
     );
     expect(availabilityCalls.length).toBe(0);
     await waitFor(() =>

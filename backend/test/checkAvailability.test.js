@@ -3,7 +3,9 @@ const assert = require('assert');
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 
-const { checkEquipmentAvailability } = require('../src/utils/checkAvailability');
+const {
+  checkEquipmentAvailability,
+} = require('../src/utils/checkAvailability');
 
 async function createDb() {
   const mongod = await MongoMemoryReplSet.create();

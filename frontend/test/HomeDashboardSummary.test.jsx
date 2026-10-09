@@ -21,7 +21,9 @@ describe('Home dashboard summary', () => {
     });
 
     render(
-      <AuthContext.Provider value={{ user: { role: AUTRE_ROLE }, setUser: vi.fn() }}>
+      <AuthContext.Provider
+        value={{ user: { role: AUTRE_ROLE }, setUser: vi.fn() }}
+      >
         <MemoryRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
@@ -34,7 +36,9 @@ describe('Home dashboard summary', () => {
       expect(api).toHaveBeenCalledWith('/loans');
     });
 
-    const calledStats = api.mock.calls.some(([path]) => path === '/stats/loans');
+    const calledStats = api.mock.calls.some(
+      ([path]) => path === '/stats/loans',
+    );
     expect(calledStats).toBe(false);
   });
 });

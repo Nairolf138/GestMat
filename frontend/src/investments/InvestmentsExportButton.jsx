@@ -37,7 +37,9 @@ function InvestmentsExportButton({ structureId, className = '' }) {
   };
 
   return (
-    <div className={`d-flex flex-wrap align-items-end gap-2 ${className}`.trim()}>
+    <div
+      className={`d-flex flex-wrap align-items-end gap-2 ${className}`.trim()}
+    >
       <div>
         <label className="form-label mb-1" htmlFor={selectId}>
           {t('investments.export.format_label')}

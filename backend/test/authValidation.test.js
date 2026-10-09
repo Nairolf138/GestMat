@@ -50,11 +50,13 @@ test('register validates fields, defaults role and prevents duplicates', async (
     .post(withApiPrefix('/auth/register'))
     .send({ username: 'bob', password: 'ValidPassword123', structure: '123' })
     .expect(400);
-  const missingStruct = await request(app).post(withApiPrefix('/auth/register')).send({
-    username: 'bob',
-    password: 'ValidPassword123',
-    structure: new ObjectId().toString(),
-  });
+  const missingStruct = await request(app)
+    .post(withApiPrefix('/auth/register'))
+    .send({
+      username: 'bob',
+      password: 'ValidPassword123',
+      structure: new ObjectId().toString(),
+    });
   assert.strictEqual(missingStruct.status, 400);
   assert.strictEqual(missingStruct.body.message, 'Structure not found');
 
@@ -87,9 +89,10 @@ test('register validates fields, defaults role and prevents duplicates', async (
     .send({ username: 'weak', password: 'short' });
   assert.strictEqual(weakPassword.status, 400);
   assert(
-    weakPassword.body.errors.some((error) =>
-      error.path === 'password' &&
-      error.msg.includes('Password must be at least 12 characters long'),
+    weakPassword.body.errors.some(
+      (error) =>
+        error.path === 'password' &&
+        error.msg.includes('Password must be at least 12 characters long'),
     ),
   );
 
@@ -113,9 +116,10 @@ test('login validates required fields', async () => {
     .send({ token: 'abc', password: 'shortpass' });
   assert.strictEqual(weakResetPassword.status, 400);
   assert(
-    weakResetPassword.body.errors.some((error) =>
-      error.path === 'password' &&
-      error.msg.includes('Password must be at least 12 characters long'),
+    weakResetPassword.body.errors.some(
+      (error) =>
+        error.path === 'password' &&
+        error.msg.includes('Password must be at least 12 characters long'),
     ),
   );
   await client.close();

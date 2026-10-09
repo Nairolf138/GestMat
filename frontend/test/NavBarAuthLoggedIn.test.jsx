@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import NavBar from '../src/NavBar.jsx';
@@ -8,15 +9,21 @@ import '../src/i18n.js';
 describe('NavBar when logged in', () => {
   it('shows private links and account menu', () => {
     const { queryByRole, getByRole } = render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      <QueryClientProvider
+        client={
+          new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        }
       >
-        <AuthContext.Provider
-          value={{ user: { username: 'u' }, setUser: () => {} }}
+        <MemoryRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          <NavBar />
-        </AuthContext.Provider>
-      </MemoryRouter>,
+          <AuthContext.Provider
+            value={{ user: { username: 'u' }, setUser: () => {} }}
+          >
+            <NavBar />
+          </AuthContext.Provider>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
     expect(queryByRole('link', { name: 'Connexion' })).toBeNull();
     expect(queryByRole('link', { name: 'Inscription' })).toBeNull();

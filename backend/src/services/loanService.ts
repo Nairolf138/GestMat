@@ -1,189 +1,134 @@
-import { Db, ObjectId } from 'mongodb';
+import { ClientSession, Db, ObjectId } from 'mongodb';
 import {
   findLoans,
-  createLoan,
-  updateLoan,
-  deleteLoan,
-  LoanRequest,
   LoanItem,
+  LoanRequest,
   populateLoanRequest,
 } from '../models/LoanRequest';
-import { sendMail } from '../utils/sendMail';
-import { getLoanRecipientsByRole } from '../utils/getLoanRecipients';
 import { findUserById } from '../models/User';
-import {
-  ADMIN_ROLE,
-  REGISSEUR_GENERAL_ROLE,
-  REGISSEUR_LUMIERE_ROLE,
-  REGISSEUR_PLATEAU_ROLE,
-  REGISSEUR_SON_ROLE,
-  AUTRE_ROLE,
-} from '../config/roles';
+import { ADMIN_ROLE, REGISSEUR_GENERAL_ROLE, ROLES } from '../config/roles';
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
 import { checkVehicleAvailability } from '../utils/checkVehicleAvailability';
-import logger from '../utils/logger';
-import { canModify } from '../utils/roleAccess';
-import type { AuthUser } from '../types';
-import { NOTIFY_EMAIL } from '../config';
-import permissionsConfig, { PermissionRule } from '../config/permissions';
+import { canModify, normalizeRole } from '../utils/roleAccess';
+import { canManageVehicle } from '../utils/vehicleAccess';
+import {
+  canAccessEquipmentLine,
+  idOf,
+  loanLines,
+  lineStatus,
+  newLineId,
+  publicActor,
+  summarizeLines,
+} from '../utils/loanLines';
+import { deliverLoanNotification } from '../utils/getLoanRecipients';
 import {
   loanCreationTemplate,
   loanStatusTemplate,
 } from '../utils/mailTemplates';
+import logger from '../utils/logger';
+import type { AuthUser } from '../types';
 
-const CLOSED_STATUSES = ['refused', 'cancelled'];
-const DUE_SOON_DAYS = 7;
-const { PERMISSIONS, VEHICLES_REQUEST } = permissionsConfig as any;
+const CLOSED = ['refused', 'cancelled'];
 
-function isPermissionRule(rule: any): rule is PermissionRule {
-  return rule && typeof rule === 'object' && !Array.isArray(rule) && 'roles' in rule;
-}
-
-function roleHasPermission(role: string, permission: string): boolean {
-  const rule = PERMISSIONS?.[permission];
-  if (!rule) return false;
-  const allowedRoles = isPermissionRule(rule) ? rule.roles : rule;
-  return Array.isArray(allowedRoles) && allowedRoles.includes(role);
-}
-
-function getVehicleIds(items: LoanItem[] = []): ObjectId[] {
-  return items
-    .filter((item) => item.kind === 'vehicle' && item.vehicle)
-    .map((item) => new ObjectId(item.vehicle as any));
-}
-
-async function addOrUpdateVehicleReservations(
-  db: Db,
-  loanRequestId: ObjectId,
-  items: LoanItem[] = [],
-  start: Date | null,
-  end: Date | null,
-  session: any,
-): Promise<void> {
-  if (!start || !end) return;
-  const vehicleIds = getVehicleIds(items);
-  await Promise.all(
-    vehicleIds.map(async (vehicleId) => {
-      await db.collection('vehicles').updateOne(
-        { _id: vehicleId },
-        { $pull: { reservations: { loanRequestId } } } as any,
-        { session },
-      );
-      await db.collection('vehicles').updateOne(
-        { _id: vehicleId },
-        ({
-          $push: {
-            reservations: {
-              start,
-              end,
-              loanRequestId,
-            },
-          },
-          $currentDate: { updatedAt: true },
-        } as any),
-        { session },
-      );
-    }),
-  );
-}
-
-async function removeVehicleReservationsByLoanRequest(
-  db: Db,
-  loanRequestId: ObjectId,
-  items: LoanItem[] = [],
-  session?: any,
-): Promise<void> {
-  const vehicleIds = getVehicleIds(items);
-  if (!vehicleIds.length) return;
-  await db.collection('vehicles').updateMany(
-    { _id: { $in: vehicleIds } },
-    ({
-      $pull: { reservations: { loanRequestId } },
-      $currentDate: { updatedAt: true },
-    } as any),
-    session ? { session } : undefined,
-  );
-}
-
-function filterLoansForUser(
-  loans: LoanRequest[],
-  user: AuthUser,
-  structId: string,
-): LoanRequest[] {
-  const filterFn = (loan: LoanRequest) => {
-    const ownerId =
-      (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
-    const borrowerId =
-      (loan.borrower as any)?._id?.toString?.() ||
-      (loan.borrower as any)?.toString?.();
-    const isOwnerOrBorrower = ownerId === structId || borrowerId === structId;
-
-    const typeOk = (loan.items || []).some((item) => {
-      if (item.kind === 'vehicle') {
-        return roleHasPermission(user.role, VEHICLES_REQUEST) || isOwnerOrBorrower;
-      }
-
-      if (item.kind === 'equipment' || !item.kind) {
-        return canModify(user.role, (item.equipment as any)?.type);
-      }
-
-      return false;
-    });
-    if (!typeOk) return false;
-
-    const req: any = loan.requestedBy;
-    const reqId = req?._id?.toString?.() || req?.toString?.();
-
-    if (user.role === AUTRE_ROLE) {
-      if (borrowerId === structId) {
-        return reqId === user.id;
-      }
-      return true;
-    }
-
-    if (
-      [REGISSEUR_SON_ROLE, REGISSEUR_LUMIERE_ROLE, REGISSEUR_PLATEAU_ROLE].includes(
-        user.role,
-      )
-    ) {
-      return true;
-    }
-
-    return true;
+function decisionVersion(loan: LoanRequest, item: LoanItem): string {
+  const stamp = (value: unknown): string => {
+    const date = new Date(value as Date);
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString();
   };
-
-  return loans.filter(filterFn);
+  return JSON.stringify([
+    item.quantity ?? 1,
+    stamp(loan.startDate),
+    stamp(loan.endDate),
+  ]);
 }
 
-function normalizeLoanResults(
-  result: LoanRequest[] | { loans: LoanRequest[]; total?: number },
-): LoanRequest[] {
-  return Array.isArray(result) ? result : result.loans;
+async function account(db: Db, user: AuthUser): Promise<any> {
+  const current = await findUserById(db, user.id);
+  if (!current?.role || !ROLES.includes(normalizeRole(current.role)))
+    throw forbidden('Account unavailable');
+  return { ...current, id: user.id, role: normalizeRole(current.role) };
 }
 
-export async function countPendingLoans(db: Db, user: AuthUser): Promise<number> {
-  if (user.role === ADMIN_ROLE) {
-    return db.collection('loanrequests').countDocuments({
-      status: 'pending',
-      archived: { $ne: true },
-    });
+async function lineRights(
+  db: Db,
+  user: any,
+  item: LoanItem,
+  loan: LoanRequest,
+): Promise<any> {
+  if (item.kind === 'vehicle') {
+    const manager = await canManageVehicle(db, user, item.vehicle);
+    const requester = idOf(loan.requestedBy) === user.id;
+    return {
+      canRead: manager || requester,
+      canDecide: manager,
+      canCancel: manager || requester,
+      canEdit: requester || user.role === ADMIN_ROLE,
+    };
   }
-
-  const u = await findUserById(db, user.id);
-  const structId = u?.structure?.toString();
-  if (!structId) return 0;
-
-  const ownerId = new ObjectId(structId);
-  const filter = {
-    status: 'pending',
-    archived: { $ne: true },
-    $or: [{ owner: ownerId }, { 'owner._id': ownerId }],
+  const canRead = canAccessEquipmentLine(user, item, loan);
+  const admin = user.role === ADMIN_ROLE;
+  const borrower = idOf(loan.borrower) === idOf(user.structure);
+  return {
+    canRead,
+    canDecide: canRead && (admin || idOf(loan.owner) === idOf(user.structure)),
+    canCancel: canRead && (admin || borrower),
+    canEdit: canRead && (admin || borrower),
   };
+}
 
-  const result = await findLoans(db, filter);
-  const loans = normalizeLoanResults(result);
-  return filterLoansForUser(loans, user, structId).length;
+async function viewLoan(
+  db: Db,
+  loan: LoanRequest,
+  user: any,
+): Promise<LoanRequest | null> {
+  const visible: LoanItem[] = [];
+  for (const item of loanLines(loan)) {
+    const rights = await lineRights(db, user, item, loan);
+    if (rights.canRead)
+      visible.push({
+        ...item,
+        decisionVersion: decisionVersion(loan, item),
+        permissions: rights,
+      });
+  }
+  if (!visible.length) return null;
+  const lineIds = new Set(visible.map((it) => it.lineId));
+  const history = ((loan.history || []) as any[]).filter(
+    (entry) => !entry.lineId || lineIds.has(entry.lineId),
+  );
+  const editable =
+    !loan.archived &&
+    visible.length === (loan.items || []).length &&
+    visible.some((it) => lineStatus(it, loan) === 'pending') &&
+    visible.every(
+      (it) =>
+        (it.permissions as any).canEdit &&
+        ['pending', 'cancelled'].includes(lineStatus(it, loan)),
+    ) &&
+    new Date(loan.startDate as any) > new Date();
+  return {
+    ...loan,
+    items: visible,
+    history,
+    status: summarizeLines(visible),
+    hasPendingItems: visible.some((it) => lineStatus(it, loan) === 'pending'),
+    permissions: {
+      canEdit: editable,
+      asOwner: visible.some((it) => (it.permissions as any).canDecide),
+      asBorrower: visible.some((it) => (it.permissions as any).canEdit),
+      canCancel:
+        !loan.archived &&
+        visible.length === (loan.items || []).length &&
+        visible.every((it) => (it.permissions as any).canCancel) &&
+        (visible.every((it) => lineStatus(it, loan) === 'pending') ||
+          new Date(loan.startDate as any) > new Date()),
+    },
+  };
+}
+
+function results(value: any): LoanRequest[] {
+  return Array.isArray(value) ? value : value.loans;
 }
 
 export async function listLoans(
@@ -192,42 +137,72 @@ export async function listLoans(
   page?: number,
   limit?: number,
   includeArchived = false,
-): Promise<LoanRequest[] | { loans: LoanRequest[]; total: number }> {
-  // includeArchived=true merges active + archived loans, with pagination applied to the merged list.
-  if (user.role === ADMIN_ROLE) {
-    return findLoans(db, {}, page, limit, { includeArchived });
+): Promise<any> {
+  const current = await account(db, user);
+  // Filter before pagination. Vehicle managers can belong to any structure.
+  let filter: any = {};
+  if (current.role !== ADMIN_ROLE) {
+    const structure = idOf(current.structure);
+    const vehicles = await db
+      .collection('vehicles')
+      .find(
+        {
+          $or: [
+            { managerIds: new ObjectId(current.id) },
+            ...(current.role === REGISSEUR_GENERAL_ROLE &&
+            ObjectId.isValid(structure)
+              ? [
+                  {
+                    structure: new ObjectId(structure),
+                    managerIds: { $exists: false },
+                  },
+                ]
+              : []),
+          ],
+        },
+        { projection: { _id: 1 } },
+      )
+      .toArray();
+    filter = {
+      $or: [
+        ...(ObjectId.isValid(structure)
+          ? [
+              { owner: new ObjectId(structure) },
+              { borrower: new ObjectId(structure) },
+            ]
+          : []),
+        { requestedBy: new ObjectId(current.id) },
+        { 'items.vehicle': { $in: vehicles.map((vehicle) => vehicle._id) } },
+      ],
+    };
   }
-  const u = await findUserById(db, user.id);
-  const structId = u?.structure?.toString();
-  if (!structId)
-    return page !== undefined && limit !== undefined
-      ? { loans: [], total: 0 }
-      : [];
-  const id = new ObjectId(structId);
-  const filter = {
-    $or: [
-      { owner: id },
-      { 'owner._id': id },
-      { borrower: id },
-      { 'borrower._id': id },
-    ],
-  };
-  const res = await findLoans(db, filter, page, limit, { includeArchived });
-  if (Array.isArray(res)) {
-    return filterLoansForUser(res, user, structId);
-  }
-  const loans = filterLoansForUser(res.loans, user, structId);
+  const loans = results(
+    await findLoans(db, filter, undefined, undefined, { includeArchived }),
+  );
+  const visible = (
+    await Promise.all(loans.map((loan) => viewLoan(db, loan, current)))
+  ).filter(Boolean);
+  return page !== undefined && limit !== undefined
+    ? {
+        loans: visible.slice((page - 1) * limit, page * limit),
+        total: visible.length,
+      }
+    : visible;
+}
 
-  let total = loans.length;
-  if (page !== undefined && limit !== undefined) {
-    const fullResults = await findLoans(db, filter, undefined, undefined, {
-      includeArchived,
-    });
-    const allLoans = normalizeLoanResults(fullResults);
-    total = filterLoansForUser(allLoans, user, structId).length;
-  }
-
-  return { loans, total };
+export async function countPendingLoans(
+  db: Db,
+  user: AuthUser,
+): Promise<number> {
+  const loans = await listLoans(db, user);
+  return loans.filter(
+    (loan: any) =>
+      !loan.archived &&
+      loan.items.some(
+        (item: any) =>
+          item.decision.status === 'pending' && item.permissions.canDecide,
+      ),
+  ).length;
 }
 
 export async function listDueSoonLoans(
@@ -235,285 +210,299 @@ export async function listDueSoonLoans(
   user: AuthUser,
 ): Promise<LoanRequest[]> {
   const now = new Date();
-  const soon = new Date(now.getTime() + DUE_SOON_DAYS * 24 * 60 * 60 * 1000);
-  const baseFilter = {
-    endDate: { $gte: now, $lte: soon },
-    status: { $nin: CLOSED_STATUSES },
-  } as const;
-
-  if (user.role === ADMIN_ROLE) {
-    const result = await findLoans(db, baseFilter);
-    return normalizeLoanResults(result);
-  }
-
-  const u = await findUserById(db, user.id);
-  const structId = u?.structure?.toString();
-  if (!structId) return [];
-
-  const id = new ObjectId(structId);
-  const filter = {
-    ...baseFilter,
-    $or: [
-      { owner: id },
-      { 'owner._id': id },
-      { borrower: id },
-      { 'borrower._id': id },
-    ],
-  };
-
-  const result = await findLoans(db, filter);
-  const loans = normalizeLoanResults(result);
-  return filterLoansForUser(loans, user, structId);
+  const soon = new Date(now.getTime() + 7 * 86400000);
+  return (await listLoans(db, user)).filter(
+    (loan: any) =>
+      !CLOSED.includes(loan.status) &&
+      new Date(loan.endDate) >= now &&
+      new Date(loan.endDate) <= soon,
+  );
 }
 
 export async function getLoanRequestById(
   db: Db,
   id: string,
+  user: AuthUser,
 ): Promise<LoanRequest | null> {
-  const result = await findLoans(db, { _id: new ObjectId(id) });
-  const loan = Array.isArray(result) ? result[0] : result.loans[0];
-  if (loan) return loan;
-
-  const archived = await findLoans(db, { _id: new ObjectId(id) }, undefined, undefined, {
-    includeArchived: true,
-  });
-  return Array.isArray(archived) ? archived[0] || null : archived.loans[0] || null;
+  const current = await account(db, user);
+  const loan = results(
+    await findLoans(db, { _id: new ObjectId(id) }, undefined, undefined, {
+      includeArchived: true,
+    }),
+  )[0];
+  return loan ? viewLoan(db, loan, current) : null;
 }
+
+function dates(data: any): { start: Date; end: Date } {
+  const start = new Date(data.startDate),
+    end = new Date(data.endDate);
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    end < start
+  )
+    throw badRequest('Invalid loan dates');
+  return { start, end };
+}
+
+async function requestedItems(
+  db: Db,
+  data: any,
+  user: any,
+  session: ClientSession,
+  existingLines: LoanItem[] = [],
+): Promise<LoanItem[]> {
+  if (!Array.isArray(data.items) || !data.items.length)
+    throw badRequest('At least one item is required');
+  const seen = new Set<string>();
+  const items: LoanItem[] = [];
+  for (const input of data.items) {
+    const kind = input.kind === 'vehicle' ? 'vehicle' : 'equipment';
+    const id = idOf(input[kind]);
+    if (!ObjectId.isValid(id) || seen.has(`${kind}:${id}`))
+      throw badRequest('Invalid or duplicated item');
+    seen.add(`${kind}:${id}`);
+    const resource = await db
+      .collection(kind === 'vehicle' ? 'vehicles' : 'equipments')
+      .findOne({ _id: new ObjectId(id) }, { session });
+    if (!resource) throw notFound('Item not found');
+    if (idOf(resource.structure) !== idOf(data.owner))
+      throw forbidden('Item must belong to the owner structure');
+    const existing = existingLines.find(
+      (line) => line.kind === kind && idOf(line[kind]) === id,
+    );
+    const domain = existing?.equipmentType || resource.type;
+    if (kind === 'equipment' && (!domain || !canModify(user.role, domain)))
+      throw forbidden('Access denied');
+    const quantity = kind === 'vehicle' ? 1 : Number(input.quantity);
+    if (!Number.isSafeInteger(quantity) || quantity < 1)
+      throw badRequest('Invalid quantity');
+    items.push({
+      kind,
+      [kind]: resource._id,
+      quantity,
+      lineId: newLineId(),
+      equipmentType: resource.type,
+      resourceIdentity: {
+        name: resource.name,
+        type: resource.type,
+        structure: resource.structure,
+        ...(kind === 'vehicle'
+          ? { registrationNumber: resource.registrationNumber }
+          : {}),
+      },
+      decision: { status: 'pending' },
+    });
+  }
+  return items;
+}
+
+async function syncAvailability(
+  db: Db,
+  loan: any,
+  previous: any,
+  session: ClientSession,
+  checkPendingVehicles = false,
+): Promise<void> {
+  const { start, end } = dates(loan);
+  const vehicleIds = new Set<string>();
+  for (const item of [...(previous?.items || []), ...loan.items]) {
+    const kind = item.kind === 'vehicle' ? 'vehicle' : 'equipment';
+    await db
+      .collection(kind === 'vehicle' ? 'vehicles' : 'equipments')
+      .updateOne(
+        { _id: new ObjectId(idOf(item[kind])) },
+        { $currentDate: { updatedAt: true } },
+        { session },
+      );
+    if (kind === 'vehicle') vehicleIds.add(idOf(item.vehicle));
+  }
+  for (const id of vehicleIds) {
+    await db
+      .collection('vehicles')
+      .updateOne(
+        { _id: new ObjectId(id) },
+        { $pull: { reservations: { loanRequestId: loan._id } } } as any,
+        { session },
+      );
+  }
+  for (const item of loan.items) {
+    const status = lineStatus(item, loan);
+    if (CLOSED.includes(status)) continue;
+    if (item.kind === 'vehicle') {
+      if (status === 'accepted' || checkPendingVehicles) {
+        const available = await checkVehicleAvailability(
+          db,
+          idOf(item.vehicle),
+          start,
+          end,
+          session,
+          loan._id,
+        );
+        if (!available?.available) throw badRequest('Vehicle not available');
+      }
+      if (status === 'accepted')
+        await db.collection('vehicles').updateOne(
+          { _id: new ObjectId(idOf(item.vehicle)) },
+          {
+            $push: { reservations: { start, end, loanRequestId: loan._id } },
+          } as any,
+          { session },
+        );
+    } else {
+      const available = await checkEquipmentAvailability(
+        db,
+        idOf(item.equipment),
+        start,
+        end,
+        item.quantity,
+        session,
+        loan._id,
+      );
+      if (!available?.available) throw badRequest('Quantity not available');
+    }
+  }
+}
+
+async function transact<T>(
+  db: Db,
+  callback: (session: ClientSession) => Promise<T>,
+): Promise<T> {
+  const session = (db as any).client.startSession();
+  try {
+    let result!: T;
+    await session.withTransaction(async () => {
+      result = await callback(session);
+    });
+    return result;
+  } finally {
+    await session.endSession();
+  }
+}
+
+async function notify(
+  db: Db,
+  loan: LoanRequest,
+  action: string,
+  actor?: string,
+  creation = false,
+): Promise<void> {
+  try {
+    await deliverLoanNotification(
+      db,
+      loan,
+      ({ loan: scopedLoan, role }) =>
+        creation && action === 'pending'
+          ? loanCreationTemplate({ loan: scopedLoan, role })
+          : loanStatusTemplate({
+              loan: scopedLoan,
+              role,
+              status: action,
+              actor,
+            }),
+      creation && action === 'pending' ? 'loanRequests' : 'loanStatusChanges',
+    );
+  } catch (err) {
+    logger.error('Loan notification error for %s: %o', loan._id, err);
+  }
+}
+
+const actorName = (user: any): string =>
+  `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+  user.username ||
+  'Utilisateur';
 
 export async function createLoanRequest(
   db: Db,
   data: LoanRequest,
   user: AuthUser,
 ): Promise<LoanRequest> {
-  const start = data.startDate ? new Date(data.startDate) : null;
-  const end = data.endDate ? new Date(data.endDate) : null;
-  const items = data.items || [];
-  const hasVehicleItem = items.some((item) => item.kind === 'vehicle');
-  if (hasVehicleItem && !roleHasPermission(user.role, VEHICLES_REQUEST)) {
-    throw forbidden('Access denied');
+  const current = await account(db, user);
+  const { start, end } = dates(data);
+  const direct = Boolean(data.direct);
+  if (current.role !== ADMIN_ROLE) {
+    if (
+      direct
+        ? idOf(data.owner) !== idOf(current.structure)
+        : idOf(data.borrower) !== idOf(current.structure)
+    )
+      throw forbidden('Access denied');
   }
-  const { direct: directFlag, ...requestData } = data as any;
-  const u = await findUserById(db, user.id);
-  const userStruct = u?.structure?.toString();
-  const owner = (data.owner as any)?.toString();
-  const borrower = (data.borrower as any)?.toString();
-  if (owner && borrower && owner === borrower) {
-    throw forbidden('Cannot request loan for own structure');
-  }
-
-  const itemDetails = await Promise.all(
-    items.map(async (item: LoanItem) => {
-      const kind = item.kind === 'vehicle' ? 'vehicle' : 'equipment';
-      if (kind === 'vehicle') {
-        const vehicle = await db
-          .collection('vehicles')
-          .findOne<{ structure?: ObjectId }>({
-            _id: new ObjectId(item.vehicle as any),
-          });
-        if (!vehicle) {
-          throw notFound('Vehicle not found');
-        }
-        const structureId =
-          (vehicle.structure as any)?._id?.toString?.() ||
-          (vehicle.structure as any)?.toString?.();
-        return { kind, structureId };
-      }
-
-      const equipment = await db
-        .collection('equipments')
-        .findOne<{ type?: string; structure?: ObjectId }>({
-          _id: new ObjectId(item.equipment as any),
-        });
-      if (!equipment) {
-        throw notFound('Equipment not found');
-      }
-      const type = equipment.type;
-      if (!canModify(user.role, type)) {
-        throw forbidden('Access denied');
-      }
-      const structureId =
-        (equipment.structure as any)?._id?.toString?.() ||
-        (equipment.structure as any)?.toString?.();
-      return { kind, type, structureId };
-    }),
-  );
-
-  const isDirectOwner = Boolean(userStruct && owner === userStruct);
-  if (directFlag && !isDirectOwner) {
-    throw forbidden('Direct loan entry requires ownership');
-  }
-  const status = isDirectOwner ? 'accepted' : 'pending';
-
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const session = (db as any).client.startSession();
-    try {
-      session.startTransaction();
-      for (const [index, item] of items.entries()) {
-        const detail = itemDetails[index];
-        if (
-          isDirectOwner &&
-          detail?.structureId &&
-          owner &&
-          detail.structureId !== owner
-        ) {
-          throw forbidden('Item must belong to the owner structure');
-        }
-        if (detail?.kind === 'vehicle') {
-          const avail = await checkVehicleAvailability(
-            db,
-            item.vehicle as any,
-            start,
-            end,
-            session,
-          );
-          if (!avail?.available) {
-            throw badRequest('Vehicle not available');
-          }
-          await db
-            .collection('vehicles')
-            .updateOne(
-              { _id: new ObjectId(item.vehicle as any) },
-              { $currentDate: { updatedAt: true } },
-              { session },
-            );
-          continue;
-        }
-
-        const avail = await checkEquipmentAvailability(
-          db,
-          item.equipment as any,
-          start,
-          end,
-          item.quantity as number,
-          session,
-        );
-        if (!avail?.available) {
-          throw badRequest('Quantity not available');
-        }
-        await db
-          .collection('equipments')
-          .updateOne(
-            { _id: new ObjectId(item.equipment as any) },
-            { $currentDate: { updatedAt: true } },
-            { session },
-          );
-      }
-
-      const loan = await createLoan(
-        db,
-        {
-          ...requestData,
-          status,
-          requestedBy: user.id as any,
-          processedBy: isDirectOwner ? (user.id as any) : undefined,
-        },
-        session,
-      );
-
-      if (status === 'accepted' && loan._id) {
-        await addOrUpdateVehicleReservations(
-          db,
-          loan._id as ObjectId,
-          items as LoanItem[],
-          start,
-          end,
-          session,
-        );
-      }
-      await session.commitTransaction();
-      session.endSession();
-
-      try {
-        const ownerId =
-          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
-        const borrowerId =
-          (loan.borrower as any)?._id?.toString?.() || (loan.borrower as any)?.toString?.();
-        const requestedById =
-          (loan.requestedBy as any)?._id?.toString?.() ||
-          (loan.requestedBy as any)?.toString?.() ||
-          (user.id as any)?.toString?.();
-
-        const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-          await getLoanRecipientsByRole(db, items as any, {
-            ownerId,
-            borrowerId,
-            borrower: loan.borrower,
-            requestedById,
-            requestedBy: loan.requestedBy,
-          }, status === 'pending' ? 'loanRequests' : 'loanStatusChanges');
-
-        const requesterSet = new Set(requesterRecipients);
-        const borrowerSet = new Set(
-          borrowerRecipients.filter((email) => !requesterSet.has(email)),
-        );
-        const ownerSet = new Set(
-          ownerRecipients.filter(
-            (email) => !requesterSet.has(email) && !borrowerSet.has(email),
+  const loan = await transact(db, async (session) => {
+    if (
+      !ObjectId.isValid(idOf(data.owner)) ||
+      !ObjectId.isValid(idOf(data.borrower))
+    )
+      throw badRequest('Invalid structure');
+    const structureCount = await db.collection('structures').countDocuments(
+      {
+        _id: {
+          $in: [...new Set([idOf(data.owner), idOf(data.borrower)])].map(
+            (id) => new ObjectId(id),
           ),
-        );
-
-        if (!ownerSet.size && (borrowerSet.size || requesterSet.size)) {
-          logger.warn(
-            'Loan creation notification falling back to secondary recipients: %o',
-            Array.from(new Set([...borrowerSet, ...requesterSet])),
-          );
-        }
-
-        if (NOTIFY_EMAIL) {
-          ownerSet.add(NOTIFY_EMAIL);
-        }
-
-        if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
-          logger.warn(
-            'Loan creation notification not sent: no recipient email found for loan %s',
-            loan._id,
-          );
-        } else {
-          const populatedLoan = await populateLoanRequest(db, loan);
-          const sendCreationMail = async (
-            recipients: Set<string>,
-            role: 'owner' | 'borrower' | 'requester',
-          ) => {
-            if (!recipients.size) return;
-            const to = Array.from(recipients).join(',');
-            const { subject, text, html } =
-              status === 'pending'
-                ? loanCreationTemplate({ loan: populatedLoan, role })
-                : loanStatusTemplate({
-                    loan: populatedLoan,
-                    status,
-                    role,
-                    actor:
-                      `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim() ||
-                      u?.username ||
-                      undefined,
-                  });
-            await sendMail({ to, subject, text, html });
-          };
-
-          await Promise.all([
-            sendCreationMail(ownerSet, 'owner'),
-            sendCreationMail(borrowerSet, 'borrower'),
-            sendCreationMail(requesterSet, 'requester'),
-          ]);
-        }
-      } catch (err) {
-        logger.error('mail error %o', err);
-      }
-      return loan;
-    } catch (err: any) {
-      await session.abortTransaction();
-      session.endSession();
-      if (err.code && attempt < 4) {
-        continue; // retry on write conflict
-      }
-      if (err.code) {
-        throw badRequest('Quantity not available');
-      }
-      throw err;
-    }
-  }
-  throw badRequest('Unable to create loan request');
+        },
+      },
+      { session },
+    );
+    if (
+      structureCount !== new Set([idOf(data.owner), idOf(data.borrower)]).size
+    )
+      throw badRequest('Structure not found');
+    const items = await requestedItems(db, data, current, session);
+    if (
+      idOf(data.owner) === idOf(data.borrower) &&
+      items.some((item) => item.kind !== 'vehicle')
+    )
+      throw forbidden('Cannot request loan for own structure');
+    // A vehicle booking always needs a manager decision, including a booking at its home structure.
+    for (const item of items)
+      if (direct && item.kind !== 'vehicle')
+        item.decision = {
+          status: 'accepted',
+          actor: publicActor(current),
+          at: new Date(),
+        };
+    const raw: any = {
+      _id: new ObjectId(),
+      schemaVersion: 2,
+      owner: new ObjectId(idOf(data.owner)),
+      borrower: new ObjectId(idOf(data.borrower)),
+      requestedBy: new ObjectId(user.id),
+      requesterIdentity: publicActor(current),
+      items,
+      startDate: start,
+      endDate: end,
+      note: typeof data.note === 'string' ? data.note.trim() : '',
+      directEntry: direct,
+      status: summarizeLines(items),
+      createdAt: new Date(),
+      history: items.map((item) => ({
+        lineId: item.lineId,
+        action: direct && item.kind !== 'vehicle' ? 'accepted' : 'created',
+        quantity: item.quantity,
+        resourceName:
+          (item.resourceIdentity as any)?.name ||
+          (item.equipment as any)?.name ||
+          (item.vehicle as any)?.name,
+        actor: publicActor(current),
+        at: new Date(),
+      })),
+    };
+    if (direct && items.some((item) => item.kind !== 'vehicle'))
+      raw.processedBy = new ObjectId(user.id);
+    await syncAvailability(db, raw, null, session, true);
+    await db.collection('loanrequests').insertOne(raw, { session });
+    return raw;
+  });
+  const populated = await populateLoanRequest(db, loan);
+  await notify(
+    db,
+    populated,
+    populated.status as string,
+    actorName(current),
+    true,
+  );
+  return (await viewLoan(db, populated, current))!;
 }
 
 export async function updateLoanRequest(
@@ -522,332 +511,277 @@ export async function updateLoanRequest(
   id: string,
   data: LoanRequest,
 ): Promise<LoanRequest | null> {
-  const session = (db as any).client.startSession();
-  session.startTransaction();
-  let updated: LoanRequest | null;
-  try {
-    const loan = await db
+  const current = await account(db, user);
+  const allowed = [
+    'status',
+    'decisions',
+    'decisionNote',
+    'expectedRevision',
+    'startDate',
+    'endDate',
+    'items',
+    'note',
+  ];
+  if (Object.keys(data).some((key) => !allowed.includes(key)))
+    throw badRequest('Protected or unknown loan field');
+  let changedIds: string[] = [];
+  const updated = await transact(db, async (session) => {
+    changedIds = [];
+    const raw: any = await db
       .collection('loanrequests')
-      .findOne({ _id: new ObjectId(id) }, { session });
-    if (!loan) throw notFound('Loan request not found');
-
-    const u = await findUserById(db, user.id);
-    const structId = u?.structure?.toString();
-    const isOwner = loan.owner?.toString() === structId;
-    const isBorrower = loan.borrower?.toString() === structId;
-    const isRequester = loan.requestedBy?.toString() === user.id;
-    const now = new Date();
-    const releaseStatuses = ['refused', 'cancelled'];
-    const acceptedStatus = 'accepted';
-    const keys = Object.keys(data);
-    const status = (data as any).status;
-    const nextStatus = (status ?? loan.status) as string;
-    const nextStart = data.startDate ? new Date(data.startDate as any) : new Date(loan.startDate);
-    const nextEnd = data.endDate ? new Date(data.endDate as any) : new Date(loan.endDate);
-    const datesChanged = Boolean(data.startDate || data.endDate);
-    const decisionAllowedKeys = ['status', 'decisionNote'];
-    const cancellationAllowedKeys = ['status'];
-    const isPendingCancellation = status === 'cancelled' && loan.status === 'pending';
-    const hasOnlyCancellationKeys = keys.every((k) => cancellationAllowedKeys.includes(k));
-    const types = await Promise.all(
-      (loan.items || []).map(async (item: LoanItem) => {
-        if (item.kind === 'vehicle') {
-          return '__vehicle__';
-        }
-        const eq = await db
-          .collection('equipments')
-          .findOne({ _id: item.equipment as any }, {
-            projection: { type: 1 },
-            session,
-          });
-        return (eq as any)?.type as string | undefined;
-      }),
+      .findOne({ _id: new ObjectId(id), archived: { $ne: true } }, { session });
+    if (!raw) throw notFound('Loan request not found');
+    const populated = await populateLoanRequest(
+      db,
+      { ...raw, items: (raw.items || []).map((item: any) => ({ ...item })) },
+      session,
     );
-
-    if (user.role !== ADMIN_ROLE) {
-      switch (user.role) {
-        case AUTRE_ROLE: {
-          if (status === 'accepted' || status === 'refused') {
-            if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
-              throw forbidden('Access denied');
-            }
-          } else if (isPendingCancellation) {
-            if (!isBorrower || !isRequester || !hasOnlyCancellationKeys) {
-              throw forbidden('Access denied');
-            }
-          } else {
-            if (status && status !== 'cancelled') {
-              throw forbidden('Access denied');
-            }
-            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
-              throw forbidden('Access denied');
-            }
-          }
-          break;
-        }
-        case REGISSEUR_SON_ROLE:
-        case REGISSEUR_LUMIERE_ROLE:
-        case REGISSEUR_PLATEAU_ROLE: {
-          if (status === 'accepted' || status === 'refused') {
-            if (
-              !isOwner ||
-              keys.some((k) => !decisionAllowedKeys.includes(k)) ||
-              !types.every((t) => t === '__vehicle__' || canModify(user.role, t))
-            ) {
-              throw forbidden('Access denied');
-            }
-          } else if (isPendingCancellation) {
-            if (!isBorrower || !isRequester || !hasOnlyCancellationKeys) {
-              throw forbidden('Access denied');
-            }
-          } else {
-            if (status && status !== 'cancelled') {
-              throw forbidden('Access denied');
-            }
-            if (!isBorrower || !isRequester || new Date(loan.startDate) <= now) {
-              throw forbidden('Access denied');
-            }
-          }
-          break;
-        }
-        case REGISSEUR_GENERAL_ROLE: {
-          if (status === 'accepted' || status === 'refused') {
-            if (!isOwner || keys.some((k) => !decisionAllowedKeys.includes(k))) {
-              throw forbidden('Access denied');
-            }
-          } else if (isPendingCancellation) {
-            if (!isBorrower || !hasOnlyCancellationKeys) {
-              throw forbidden('Access denied');
-            }
-          } else {
-            if (status && status !== 'cancelled') {
-              throw forbidden('Access denied');
-            }
-            if (!isBorrower || new Date(loan.startDate) <= now) {
-              throw forbidden('Access denied');
-            }
-          }
-          break;
-        }
-        default:
-          throw forbidden('Access denied');
-      }
-    }
-
-    if (status === 'accepted' || status === 'refused') {
-      (data as any).processedBy = user.id;
-      const decisionNote = (data as any).decisionNote;
-      if (typeof decisionNote === 'string') {
-        const trimmed = decisionNote.trim();
-        if (trimmed) {
-          (data as any).decisionNote = trimmed;
-        } else {
-          delete (data as any).decisionNote;
-        }
-      } else {
-        delete (data as any).decisionNote;
-      }
-    } else {
-      delete (data as any).decisionNote;
-    }
-
-    if (
-      status &&
-      releaseStatuses.includes(status) &&
-      !releaseStatuses.includes(loan.status as any)
-    ) {
-      for (const item of loan.items || []) {
-        if (item.kind === 'vehicle') {
-          await db
-            .collection('vehicles')
-            .updateOne(
-              { _id: item.vehicle },
-              { $currentDate: { updatedAt: true } },
-              { session },
-            );
-          continue;
-        }
-        await db
-          .collection('equipments')
-          .updateOne(
-            { _id: item.equipment },
-            { $currentDate: { updatedAt: true } },
-            { session },
-          );
-      }
-    }
-    if (
-      status &&
-      !releaseStatuses.includes(status) &&
-      releaseStatuses.includes(loan.status as any)
-    ) {
-      const start = loan.startDate;
-      const end = loan.endDate;
-      for (const item of loan.items || []) {
-        if (item.kind === 'vehicle') {
-          const avail = await checkVehicleAvailability(
-            db,
-            item.vehicle as any,
-            start,
-            end,
-            session,
-          );
-          if (!avail?.available) {
-            throw badRequest('Vehicle not available');
-          }
-          await db
-            .collection('vehicles')
-            .updateOne(
-              { _id: item.vehicle },
-              { $currentDate: { updatedAt: true } },
-              { session },
-            );
-          continue;
-        }
-        const avail = await checkEquipmentAvailability(
+    const oldLines = loanLines(populated);
+    let items: any[] = loanLines(raw);
+    const history: any[] = [...(raw.history || [])];
+    const editing = ['items', 'startDate', 'endDate', 'note'].some(
+      (key) => data[key] !== undefined,
+    );
+    const deciding = data.decisions !== undefined || data.status !== undefined;
+    if (editing && deciding)
+      throw badRequest('Edit and decision must be separate operations');
+    if (editing) {
+      if (
+        data.expectedRevision !== undefined &&
+        data.expectedRevision !== (raw.revision || 0)
+      )
+        throw badRequest('Request has changed; reload before editing');
+      const rights = await Promise.all(
+        oldLines.map((item) => lineRights(db, current, item, populated)),
+      );
+      if (
+        new Date(raw.startDate) <= new Date() ||
+        !oldLines.some((item) => lineStatus(item, raw) === 'pending') ||
+        oldLines.some(
+          (item) => !['pending', 'cancelled'].includes(lineStatus(item, raw)),
+        ) ||
+        rights.some((right) => !right.canEdit)
+      )
+        throw forbidden('Request cannot be edited');
+      if (data.items) {
+        items = await requestedItems(
           db,
-          item.equipment as any,
-          start,
-          end,
-          item.quantity as number,
+          { ...raw, items: data.items },
+          current,
           session,
+          oldLines,
         );
-        if (!avail?.available) {
-          throw badRequest('Quantity not available');
-        }
-        await db
-          .collection('equipments')
-          .updateOne(
-            { _id: item.equipment },
-            { $currentDate: { updatedAt: true } },
-            { session },
+        for (const item of items) {
+          const existing = oldLines.find(
+            (old: any) =>
+              old.kind === item.kind &&
+              idOf(old[item.kind]) === idOf(item[item.kind]),
           );
-      }
-    }
-
-    if (nextStatus === acceptedStatus) {
-      for (const item of loan.items || []) {
-        if (item.kind !== 'vehicle') continue;
-        const avail = await checkVehicleAvailability(
-          db,
-          item.vehicle as any,
-          nextStart,
-          nextEnd,
-          session,
-          loan._id as ObjectId,
-        );
-        if (!avail?.available) {
-          throw badRequest('Vehicle not available');
+          if (existing && lineStatus(existing, raw) === 'pending') {
+            item.lineId = existing.lineId;
+            // Inventory reclassification cannot change an existing line's domain.
+            const original = loanLines(raw).find(
+              (line) => line.lineId === existing.lineId,
+            );
+            item.equipmentType =
+              original?.equipmentType || existing.equipmentType;
+            item.resourceIdentity =
+              original?.resourceIdentity || item.resourceIdentity;
+          }
         }
       }
-      await addOrUpdateVehicleReservations(
-        db,
-        loan._id as ObjectId,
-        loan.items || [],
-        nextStart,
-        nextEnd,
-        session,
-      );
-    } else if (
-      (status && releaseStatuses.includes(status)) ||
-      (loan.status === acceptedStatus && status && status !== acceptedStatus)
-    ) {
-      await removeVehicleReservationsByLoanRequest(
-        db,
-        loan._id as ObjectId,
-        loan.items || [],
-        session,
-      );
-    } else if (datesChanged && loan.status === acceptedStatus) {
-      await addOrUpdateVehicleReservations(
-        db,
-        loan._id as ObjectId,
-        loan.items || [],
-        nextStart,
-        nextEnd,
-        session,
-      );
-    }
-
-    updated = await updateLoan(db, id, data, session);
-    await session.commitTransaction();
-
-    const requesterId =
-      (loan.requestedBy as any)?._id?.toString?.() ||
-      (loan.requestedBy as any)?.toString?.();
-    const requester = requesterId ? await findUserById(db, requesterId) : null;
-    const actorName = `${u?.firstName ? `${u.firstName} ` : ''}${
-      u?.lastName ?? ''
-    }`.trim() || u?.username || undefined;
-
-    if (status) {
-      try {
-        const ownerId =
-          (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
-        const borrowerId =
-          (loan.borrower as any)?._id?.toString?.() || (loan.borrower as any)?.toString?.();
-        const { ownerRecipients, borrowerRecipients, requesterRecipients } =
-          await getLoanRecipientsByRole(db, (loan.items || []) as any, {
-            ownerId,
-            borrowerId,
-            borrower: loan.borrower,
-            requestedById: requesterId,
-            requestedBy: requester ?? loan.requestedBy,
-          }, 'loanStatusChanges');
-
-        const requesterSet = new Set(requesterRecipients);
-        const borrowerSet = new Set(
-          borrowerRecipients.filter((email) => !requesterSet.has(email)),
-        );
-        const ownerSet = new Set(
-          ownerRecipients.filter(
-            (email) => !requesterSet.has(email) && !borrowerSet.has(email),
-          ),
-        );
-
-        if (NOTIFY_EMAIL) {
-          ownerSet.add(NOTIFY_EMAIL);
-        }
-
-        const populatedLoan = await populateLoanRequest(db, updated ?? loan);
-        const sendStatusMail = async (
-          recipients: Set<string>,
-          role: 'owner' | 'borrower' | 'requester',
-        ) => {
-          if (!recipients.size) return;
-          const to = Array.from(recipients).join(',');
-          const { subject, text, html } = loanStatusTemplate({
-            loan: populatedLoan,
-            status,
-            actor: actorName,
-            role,
+      if (data.items) {
+        for (const old of loanLines(raw)) {
+          if (items.some((item) => item.lineId === old.lineId)) continue;
+          items.push({
+            ...old,
+            decision:
+              lineStatus(old, raw) === 'cancelled'
+                ? old.decision
+                : {
+                    status: 'cancelled',
+                    actor: publicActor(current),
+                    at: new Date(),
+                    note: 'Ligne retirée de la demande',
+                  },
           });
-          await sendMail({ to, subject, text, html });
-        };
-
-        if (!ownerSet.size && !borrowerSet.size && !requesterSet.size) {
-          logger.warn(
-            'Loan status notification not sent: no recipient email found for loan %s',
-            loan._id,
-          );
-        } else {
-          await Promise.all([
-            sendStatusMail(ownerSet, 'owner'),
-            sendStatusMail(borrowerSet, 'borrower'),
-            sendStatusMail(requesterSet, 'requester'),
-          ]);
         }
-      } catch (err) {
-        logger.error('mail error %o', err);
       }
-    }
-    session.endSession();
-    return updated;
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-    throw err;
+      const sharedFieldsChanged =
+        (data.startDate !== undefined &&
+          new Date(data.startDate).getTime() !==
+            new Date(raw.startDate).getTime()) ||
+        (data.endDate !== undefined &&
+          new Date(data.endDate).getTime() !==
+            new Date(raw.endDate).getTime()) ||
+        (data.note !== undefined &&
+          String(data.note).trim() !== String(raw.note || '').trim());
+      changedIds = items
+        .filter((item) => {
+          const previous = oldLines.find((old) => old.lineId === item.lineId);
+          return (
+            !previous ||
+            item.quantity !== previous.quantity ||
+            lineStatus(item, raw) !== lineStatus(previous, raw) ||
+            (sharedFieldsChanged && !CLOSED.includes(lineStatus(item, raw)))
+          );
+        })
+        .map((item) => String(item.lineId));
+      for (const lineId of changedIds)
+        history.push({
+          lineId,
+          action: 'modified',
+          resourceName: (
+            items.find((item) => item.lineId === lineId)
+              ?.resourceIdentity as any
+          )?.name,
+          quantity: items.find((item) => item.lineId === lineId)?.quantity,
+          actor: publicActor(current),
+          at: new Date(),
+        });
+    } else if (deciding) {
+      let decisions: any[];
+      if (Array.isArray(data.decisions)) decisions = data.decisions as any[];
+      else {
+        if (
+          !['accepted', 'refused', 'cancelled'].includes(data.status as string)
+        )
+          throw badRequest('Invalid decision');
+        decisions = [];
+        for (const item of oldLines) {
+          const rights = await lineRights(db, current, item, populated);
+          if (
+            data.status === 'cancelled' ? rights.canCancel : rights.canDecide
+          ) {
+            if (
+              data.status === 'cancelled'
+                ? !CLOSED.includes(lineStatus(item, raw))
+                : lineStatus(item, raw) === 'pending'
+            )
+              decisions.push({
+                lineId: item.lineId,
+                status: data.status,
+                note: data.decisionNote,
+              });
+          }
+        }
+      }
+      if (!decisions.length) throw forbidden('No eligible line to decide');
+      const seen = new Set<string>();
+      for (const decision of decisions) {
+        if (
+          Object.keys(decision).some(
+            (key) =>
+              ![
+                'lineId',
+                'status',
+                'note',
+                'expectedStatus',
+                'expectedVersion',
+              ].includes(key),
+          ) ||
+          seen.has(decision.lineId) ||
+          !['accepted', 'refused', 'cancelled'].includes(decision.status)
+        )
+          throw badRequest('Invalid or duplicated decision');
+        seen.add(decision.lineId);
+        const index = oldLines.findIndex(
+          (item) => item.lineId === decision.lineId,
+        );
+        if (index < 0) throw forbidden('Access denied');
+        const item = oldLines[index];
+        const rights = await lineRights(db, current, item, populated);
+        if (
+          decision.status === 'cancelled'
+            ? !rights.canCancel
+            : !rights.canDecide
+        )
+          throw forbidden('Access denied');
+        const existingStatus = lineStatus(item, raw);
+        if (existingStatus === decision.status) continue; // replay: no duplicate history or email
+        if (decision.status === 'cancelled') {
+          if (
+            existingStatus !== 'pending' &&
+            new Date(raw.startDate) <= new Date() &&
+            current.role !== ADMIN_ROLE
+          )
+            throw forbidden('Request has already started');
+        } else if (existingStatus !== 'pending')
+          throw badRequest('Line has already been decided');
+        if (
+          decision.expectedStatus &&
+          decision.expectedStatus !== existingStatus
+        )
+          throw badRequest('Line has changed; reload the request');
+        if (
+          decision.expectedVersion !== undefined &&
+          decision.expectedVersion !== decisionVersion(raw, item)
+        )
+          throw badRequest(
+            'Line quantity or dates changed; reload the request',
+          );
+        const note =
+          typeof decision.note === 'string' ? decision.note.trim() : '';
+        if (note.length > 500) throw badRequest('Decision note is too long');
+        items[index].decision = {
+          status: decision.status,
+          actor: publicActor(current),
+          at: new Date(),
+          note,
+        };
+        history.push({
+          lineId: item.lineId,
+          action: decision.status,
+          quantity: item.quantity,
+          resourceName:
+            (item.resourceIdentity as any)?.name ||
+            (item.equipment as any)?.name ||
+            (item.vehicle as any)?.name,
+          actor: publicActor(current),
+          at: new Date(),
+          note,
+        });
+        changedIds.push(String(item.lineId));
+      }
+    } else throw badRequest('No change provided');
+    if (!changedIds.length) return raw;
+    const next: any = {
+      ...raw,
+      schemaVersion: 2,
+      items,
+      history,
+      startDate: data.startDate ? new Date(data.startDate) : raw.startDate,
+      endDate: data.endDate ? new Date(data.endDate) : raw.endDate,
+      ...(data.note !== undefined ? { note: String(data.note).trim() } : {}),
+      status: summarizeLines(items),
+      updatedAt: new Date(),
+      revision: (raw.revision || 0) + 1,
+      ...(deciding ? { processedBy: new ObjectId(current.id) } : {}),
+    };
+    dates(next);
+    await syncAvailability(db, next, raw, session, editing);
+    await db
+      .collection('loanrequests')
+      .replaceOne({ _id: raw._id }, next, { session });
+    return next;
+  });
+  const populated = await populateLoanRequest(db, updated);
+  if (changedIds.length) {
+    const eventLoan = {
+      ...populated,
+      items: populated.items!.filter((item) =>
+        changedIds.includes(String(item.lineId)),
+      ),
+    };
+    // Removed lines must also appear in the edit/cancellation notification.
+    await notify(
+      db,
+      eventLoan,
+      (data.status as string) || (data.decisions ? 'updated' : 'modified'),
+      actorName(current),
+    );
   }
+  return viewLoan(db, populated, current);
 }
 
 export async function deleteLoanRequest(
@@ -855,89 +789,70 @@ export async function deleteLoanRequest(
   user: AuthUser,
   id: string,
 ): Promise<{ message: string }> {
-  const session = (db as any).client.startSession();
-  session.startTransaction();
-  try {
-    const loan = await db
+  const current = await account(db, user);
+  const archived = await transact(db, async (session) => {
+    const raw: any = await db
       .collection('loanrequests')
-      .findOne({ _id: new ObjectId(id) }, { session });
-    if (!loan) throw notFound('Loan request not found');
-
-    if (user.role !== ADMIN_ROLE) {
-      const u = await findUserById(db, user.id);
-      const structId = u?.structure?.toString();
-      const ownerId =
-        (loan.owner as any)?._id?.toString?.() || (loan.owner as any)?.toString?.();
-      const isBorrower = loan.borrower?.toString() === structId;
-      const isRequester = loan.requestedBy?.toString() === user.id;
-      const isOwner = ownerId === structId;
-      const isCancelled = loan.status === 'cancelled';
-
-      // Allow the lending structure to remove cancelled requests
-      if (!(isCancelled && isOwner)) {
-        switch (user.role) {
-          case AUTRE_ROLE:
-          case REGISSEUR_SON_ROLE:
-          case REGISSEUR_LUMIERE_ROLE:
-          case REGISSEUR_PLATEAU_ROLE:
-            if (!isBorrower || !isRequester) {
-              throw forbidden('Access denied');
-            }
-            break;
-          case REGISSEUR_GENERAL_ROLE:
-            if (!isBorrower) {
-              throw forbidden('Access denied');
-            }
-            break;
-          default:
-            if (!isBorrower) {
-              throw forbidden('Access denied');
-            }
-        }
-        const start = new Date(loan.startDate);
-        if (loan.status !== 'pending' && start <= new Date()) {
-          throw forbidden('Access denied');
-        }
-      }
-    }
-
-    for (const item of loan.items || []) {
-      if (item.kind === 'vehicle') {
-        await db
-          .collection('vehicles')
-          .updateOne(
-            { _id: item.vehicle },
-            { $currentDate: { updatedAt: true } },
-            { session },
-          );
-        continue;
-      }
-      await db
-        .collection('equipments')
-        .updateOne(
-          { _id: item.equipment },
-          { $currentDate: { updatedAt: true } },
-          { session },
-        );
-    }
-
-    await removeVehicleReservationsByLoanRequest(
+      .findOne({ _id: new ObjectId(id), archived: { $ne: true } }, { session });
+    if (!raw) throw notFound('Loan request not found');
+    const populated = await populateLoanRequest(
       db,
-      loan._id as ObjectId,
-      loan.items || [],
+      { ...raw, items: (raw.items || []).map((item: any) => ({ ...item })) },
       session,
     );
-
-    const removed = await deleteLoan(db, id, session);
-    if (!removed) throw notFound('Loan request not found');
-    await session.commitTransaction();
-    session.endSession();
-    return { message: 'Loan request deleted' };
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-    throw err;
-  }
+    const items: any[] = loanLines(raw);
+    for (const item of loanLines(populated)) {
+      const rights = await lineRights(db, current, item, populated);
+      if (
+        !rights.canCancel ||
+        (lineStatus(item, raw) !== 'pending' &&
+          new Date(raw.startDate) <= new Date() &&
+          current.role !== ADMIN_ROLE)
+      )
+        throw forbidden('Access denied');
+    }
+    const now = new Date();
+    const history = [...(raw.history || [])];
+    for (const item of items) {
+      history.push({
+        lineId: item.lineId,
+        action: 'deleted',
+        quantity: item.quantity,
+        resourceName:
+          (item.resourceIdentity as any)?.name ||
+          (item.equipment as any)?.name ||
+          (item.vehicle as any)?.name,
+        actor: publicActor(current),
+        at: now,
+      });
+      item.decision = {
+        status: 'cancelled',
+        actor: publicActor(current),
+        at: now,
+      };
+    }
+    const next = {
+      ...raw,
+      schemaVersion: 2,
+      items,
+      history,
+      status: 'cancelled',
+      archived: true,
+      archivedAt: now,
+    };
+    await syncAvailability(db, next, raw, session);
+    await db
+      .collection('loanrequests')
+      .replaceOne({ _id: raw._id }, next, { session });
+    return next;
+  });
+  await notify(
+    db,
+    await populateLoanRequest(db, archived),
+    'cancelled',
+    actorName(current),
+  );
+  return { message: 'Loan request deleted' };
 }
 
 export default {

@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import { it, expect, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,9 +17,11 @@ it('does not call /auth/logout when no user is logged in', async () => {
   const queryClient = new QueryClient();
   render(
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <div />
-      </AuthProvider>
+      <MemoryRouter>
+        <AuthProvider>
+          <div />
+        </AuthProvider>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
   await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));

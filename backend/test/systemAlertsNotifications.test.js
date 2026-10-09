@@ -16,7 +16,9 @@ async function createDb() {
 test('overdue loan alerts respect systemAlerts preference', async () => {
   const { db, client, mongod } = await createDb();
   const owner = await db.collection('structures').insertOne({ name: 'Owner' });
-  const borrower = await db.collection('structures').insertOne({ name: 'Borrower' });
+  const borrower = await db
+    .collection('structures')
+    .insertOne({ name: 'Borrower' });
   const equipment = await db.collection('equipments').insertOne({
     name: 'Console',
     type: 'Lumiere',
@@ -66,7 +68,9 @@ test('overdue loan alerts respect systemAlerts preference', async () => {
 test('annual report emails exclude members without system alerts', async () => {
   const { db, client, mongod } = await createDb();
   const structureId = new ObjectId();
-  await db.collection('structures').insertOne({ _id: structureId, name: 'Structure A' });
+  await db
+    .collection('structures')
+    .insertOne({ _id: structureId, name: 'Structure A' });
 
   await db.collection('users').insertOne({
     structure: structureId,

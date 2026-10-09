@@ -43,7 +43,13 @@ router.get(
         ? parseInt(req.query.limit as string)
         : undefined;
       const includeArchived = req.query.includeArchived === 'true';
-      const loans = await listLoans(db, req.user!, page, limit, includeArchived);
+      const loans = await listLoans(
+        db,
+        req.user!,
+        page,
+        limit,
+        includeArchived,
+      );
       res.json(loans);
     } catch (err) {
       next(err);
@@ -72,7 +78,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const db = req.app.locals.db;
-      const loan = await getLoanRequestById(db, req.params.id);
+      const loan = await getLoanRequestById(db, req.params.id, req.user!);
       if (!loan) {
         return next(notFound('Loan request not found'));
       }
