@@ -23,6 +23,7 @@ import {
 } from '../validators/equipmentValidator';
 import { forbidden, notFound, badRequest } from '../utils/errors';
 import { checkEquipmentAvailability } from '../utils/checkAvailability';
+import { parseReservationPeriod } from '../utils/reservationPeriod';
 import {
   EquipmentTypeFilter,
   generateEquipmentExport,
@@ -55,8 +56,12 @@ router.get('/', auth(), async (req: Request, res: Response) => {
   });
   const page = query.page ? parseInt(query.page as string, 10) : 1;
   const limit = query.limit ? parseInt(query.limit as string, 10) : 0;
-  const start = query.startDate ? new Date(query.startDate) : new Date();
-  const end = query.endDate ? new Date(query.endDate) : start;
+  const period =
+    query.startDate && query.endDate
+      ? parseReservationPeriod(query.startDate, query.endDate)
+      : null;
+  const start = period?.start || new Date();
+  const end = period?.endExclusive || new Date(start.getTime() + 1);
   const equipments = await findEquipments(db, filter as any, page, limit);
   await Promise.all(
     equipments.map(async (eq) => {
@@ -73,7 +78,6 @@ router.get('/', auth(), async (req: Request, res: Response) => {
       );
       if (!eq.status) eq.status = defaultStatus;
       eq.availability = `${avail?.availableQty ?? 0}/${eq.totalQty || 0}`;
-      delete eq.availableQty;
     }),
   );
   res.json(equipments);
@@ -199,6 +203,12 @@ router.put(
       const updateData = req.body.type
         ? { ...req.body, type: newType }
         : req.body;
+      const total = Number(updateData.totalQty ?? current.totalQty);
+      const available = Number(
+        updateData.availableQty ?? current.availableQty ?? total,
+      );
+      if (available > total)
+        return next(badRequest('availableQty cannot exceed totalQty'));
       const updated = await updateEquipment(db, req.params.id, updateData);
       if (!updated) return next(notFound('Equipment not found'));
       res.json(updated);
@@ -246,8 +256,12 @@ router.get(
   checkId(),
   async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
-    const start = req.query.start ? new Date(req.query.start as string) : null;
-    const end = req.query.end ? new Date(req.query.end as string) : null;
+    const period =
+      req.query.start && req.query.end
+        ? parseReservationPeriod(req.query.start, req.query.end)
+        : null;
+    const start = period?.start || null;
+    const end = period?.endExclusive || null;
     const quantity = Number(req.query.quantity) || 1;
     const avail = await checkEquipmentAvailability(
       db,

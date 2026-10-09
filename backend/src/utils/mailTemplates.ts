@@ -54,12 +54,13 @@ interface MailTemplate {
 const SIGNATURE = "L'équipe GestMat";
 const GREETING = 'Bonjour,';
 
-function formatDate(value?: string | Date | null): string {
+function formatDate(value?: string | Date | null, timeZone?: string): string {
   if (!value) return 'Non renseignée';
   const date = value instanceof Date ? value : new Date(value);
   return date.toLocaleString('fr-FR', {
     dateStyle: 'full',
     timeStyle: 'short',
+    ...(timeZone ? { timeZone } : {}),
   });
 }
 
@@ -214,8 +215,15 @@ export function buildLoanSummary(loan: LoanRequest): {
   const owner = getStructureLabel(loan.owner);
   const requester = getUserLabel(loan.requestedBy);
   const status = translateStatus(loan.status as string);
-  const start = formatDate(loan.startDate as any);
-  const end = formatDate(loan.endDate as any);
+  const loanDate = (value: any) =>
+    loan.reservationMode === 'day'
+      ? new Date(value).toLocaleDateString('fr-FR', {
+          dateStyle: 'full',
+          timeZone: 'UTC',
+        })
+      : `${formatDate(value, loan.timeZone as string | undefined)}${loan.timeZone ? ` (${loan.timeZone})` : ''}`;
+  const start = loanDate(loan.startDate);
+  const end = loanDate(loan.endDate);
   const { text: itemsText, html: itemsHtml } = formatItems(
     loan.items as LoanItem[],
   );

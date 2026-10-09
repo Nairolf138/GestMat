@@ -4,6 +4,7 @@ import type {
   VehicleReservation,
   VehicleStatus,
 } from '../models/Vehicle';
+import { reservationEnd, reservationMode } from './reservationPeriod';
 
 const UNAVAILABLE_STATUSES: VehicleStatus[] = [
   'maintenance',
@@ -11,7 +12,7 @@ const UNAVAILABLE_STATUSES: VehicleStatus[] = [
   'unavailable',
 ];
 
-function hasReservationConflict(
+export function hasReservationConflict(
   reservations: VehicleReservation[] = [],
   start: Date | null,
   end: Date | null,
@@ -32,17 +33,22 @@ function hasReservationConflict(
     }
 
     const reservationStart = new Date(reservation.start);
-    const reservationEnd = new Date(reservation.end);
+    const endDate = new Date(reservation.end);
 
     if (
       Number.isNaN(reservationStart.getTime()) ||
-      Number.isNaN(reservationEnd.getTime())
+      Number.isNaN(endDate.getTime())
     ) {
       return false;
     }
 
     // End dates are treated as exclusive to allow back-to-back reservations.
-    return reservationStart < end && reservationEnd > start;
+    const mode = reservationMode({
+      startDate: reservation.start,
+      endDate: reservation.end,
+      mode: reservation.mode,
+    });
+    return reservationStart < end && reservationEnd(endDate, mode) > start;
   });
 }
 

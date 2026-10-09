@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  cleanup,
+  fireEvent,
+} from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import VehicleDetail from '../src/pages/Vehicles/VehicleDetail.jsx';
 import { GlobalContext } from '../src/GlobalContext.jsx';
+import { AuthContext } from '../src/AuthContext.jsx';
 import '../src/i18n.js';
 vi.mock('../src/api.js');
 import * as api from '../src/api.js';
@@ -18,6 +25,7 @@ describe('VehicleDetail', () => {
     });
     api.api.mockResolvedValue({
       _id: 'veh1',
+      structure: 'owner',
       name: 'Camion atelier',
       registrationNumber: 'AB-123-CD',
       status: 'maintenance',
@@ -48,10 +56,24 @@ describe('VehicleDetail', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={['/vehicles/veh1']}>
-          <GlobalContext.Provider value={{ notify: vi.fn(), structures: [] }}>
-            <Routes>
-              <Route path="/vehicles/:id" element={<VehicleDetail />} />
-            </Routes>
+          <GlobalContext.Provider
+            value={{
+              notify: vi.fn(),
+              structures: [{ _id: 'borrower', name: 'Borrower' }],
+            }}
+          >
+            <AuthContext.Provider
+              value={{
+                user: {
+                  structure: { _id: 'borrower' },
+                  role: 'Regisseur General',
+                },
+              }}
+            >
+              <Routes>
+                <Route path="/vehicles/:id" element={<VehicleDetail />} />
+              </Routes>
+            </AuthContext.Provider>
           </GlobalContext.Provider>
         </MemoryRouter>
       </QueryClientProvider>,
@@ -68,5 +90,29 @@ describe('VehicleDetail', () => {
     expect(screen.getByText('POL123')).toBeTruthy();
     expect(screen.getByText('Vidange ok')).toBeTruthy();
     expect(screen.getByText(/Prêt local/)).toBeTruthy();
+  });
+
+  it('sends a same-day vehicle slot with precise hours', async () => {
+    renderDetail();
+    await screen.findByText('Camion atelier');
+    fireEvent.change(screen.getByLabelText('Début (date et heure)'), {
+      target: { value: '2099-01-01T09:00' },
+    });
+    fireEvent.change(screen.getByLabelText('Fin (date et heure)'), {
+      target: { value: '2099-01-01T12:00' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Demander ce véhicule' }),
+    );
+    await waitFor(() =>
+      expect(api.api.mock.calls.some(([path]) => path === '/loans')).toBe(true),
+    );
+    const [, options] = api.api.mock.calls.find(([path]) => path === '/loans');
+    const body = JSON.parse(options.body);
+    expect(body.startDate).toBe(new Date('2099-01-01T09:00').toISOString());
+    expect(body.endDate).toBe(new Date('2099-01-01T12:00').toISOString());
+    expect(body.timeZone).toBe(
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
   });
 });

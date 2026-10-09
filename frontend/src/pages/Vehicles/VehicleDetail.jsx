@@ -9,7 +9,7 @@ import VehicleManagers from '../../components/VehicleManagers.jsx';
 import { api } from '../../api';
 import { GlobalContext } from '../../GlobalContext.jsx';
 import { AuthContext } from '../../AuthContext.jsx';
-import { formatDate } from '../../utils/dateFormat.js';
+import { formatDate, formatDateTime } from '../../utils/dateFormat.js';
 
 function VehicleDetail() {
   const { id } = useParams();
@@ -69,7 +69,7 @@ function VehicleDetail() {
       setLoanFormError(t('vehicles.detail.request_missing_fields'));
       return;
     }
-    if (new Date(loanForm.startDate) > new Date(loanForm.endDate)) {
+    if (new Date(loanForm.startDate) >= new Date(loanForm.endDate)) {
       setLoanFieldErrors({
         startDate: t('vehicles.detail.request_invalid_dates'),
         endDate: t('vehicles.detail.request_invalid_dates'),
@@ -80,8 +80,9 @@ function VehicleDetail() {
     const payload = {
       owner: ownerStructureId,
       borrower: loanForm.borrower,
-      startDate: loanForm.startDate,
-      endDate: loanForm.endDate,
+      startDate: new Date(loanForm.startDate).toISOString(),
+      endDate: new Date(loanForm.endDate).toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       note: loanForm.note,
       items: [{ kind: 'vehicle', vehicle: id }],
     };
@@ -316,7 +317,7 @@ function VehicleDetail() {
                       </label>
                       <input
                         id="vehicle-loan-start"
-                        type="date"
+                        type="datetime-local"
                         className={`form-control ${loanFieldErrors.startDate ? 'is-invalid' : ''}`}
                         value={loanForm.startDate}
                         onChange={(e) =>
@@ -336,7 +337,7 @@ function VehicleDetail() {
                       </label>
                       <input
                         id="vehicle-loan-end"
-                        type="date"
+                        type="datetime-local"
                         className={`form-control ${loanFieldErrors.endDate ? 'is-invalid' : ''}`}
                         value={loanForm.endDate}
                         onChange={(e) =>
@@ -350,6 +351,11 @@ function VehicleDetail() {
                         </div>
                       )}
                     </div>
+                  </div>
+                  <div className="form-text">
+                    {t('vehicles.detail.local_time_zone', {
+                      zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    })}
                   </div>
                   <div className="mt-3">
                     <label className="form-label" htmlFor="vehicle-loan-note">
@@ -396,7 +402,16 @@ function VehicleDetail() {
                     className="border rounded p-2 mb-2"
                   >
                     <div className="fw-semibold">
-                      {formatDate(entry.start)} - {formatDate(entry.end)}
+                      {entry.mode === 'time'
+                        ? formatDateTime(entry.start, entry.timeZone)
+                        : formatDate(entry.start)}
+                      {' - '}
+                      {entry.mode === 'time'
+                        ? formatDateTime(entry.end, entry.timeZone)
+                        : formatDate(entry.end)}
+                      {entry.mode === 'time' &&
+                        entry.timeZone &&
+                        ` (${entry.timeZone})`}
                     </div>
                     <div className="text-muted small">
                       {entry.status

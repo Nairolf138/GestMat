@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import Loading from './Loading.jsx';
 import Alert from './Alert.jsx';
-import { formatDate } from './utils/dateFormat.js';
+import { formatDate, formatLoanDate } from './utils/dateFormat.js';
 import LoanLineDecisions from './components/LoanLineDecisions.jsx';
 
 function LoanDetail() {
@@ -33,8 +33,8 @@ function LoanDetail() {
     return <p>{t('home.no_loans')}</p>;
   }
 
-  const start = formatDate(loan.startDate);
-  const end = formatDate(loan.endDate);
+  const start = formatLoanDate(loan.startDate, loan);
+  const end = formatLoanDate(loan.endDate, loan);
   const noteContent = loan.note?.trim();
   const decisionNoteContent = loan.decisionNote?.trim();
 
@@ -47,6 +47,9 @@ function LoanDetail() {
       <p>
         {start}
         {end && ` – ${end}`}
+        {loan.reservationMode === 'time' &&
+          loan.timeZone &&
+          ` (${loan.timeZone})`}
       </p>
       <p>
         <strong>{t('loans.note_label')}:</strong>{' '}

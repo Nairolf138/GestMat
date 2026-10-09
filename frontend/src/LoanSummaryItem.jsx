@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { formatDate } from './utils/dateFormat.js';
+import { formatLoanDate } from './utils/dateFormat.js';
 
 function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
   const { t } = useTranslation();
-  const start = formatDate(loan.startDate);
-  const end = formatDate(loan.endDate);
-  const period = start && end ? ` (${start} – ${end})` : '';
+  const start = formatLoanDate(loan.startDate, loan);
+  const end = formatLoanDate(loan.endDate, loan);
+  const period =
+    start && end
+      ? ` (${start} – ${end}${loan.reservationMode === 'time' && loan.timeZone ? ` ${loan.timeZone}` : ''})`
+      : '';
   const link = loan._id ? `/loans/${loan._id}` : '/loans';
   const ownerName = loan.owner?.name || t('home.activity.untitled');
   const borrowerName = loan.borrower?.name || t('home.activity.untitled');

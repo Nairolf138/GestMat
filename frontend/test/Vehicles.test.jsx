@@ -74,20 +74,30 @@ describe('Vehicles', () => {
     expect(screen.getByText('AB-123-CD')).toBeTruthy();
     expect(screen.getAllByText('Disponible')).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText('Début de période'), {
-      target: { value: '2099-01-09' },
-    });
-    fireEvent.change(screen.getByLabelText('Fin de période'), {
-      target: { value: '2099-01-11' },
+    fireEvent.change(
+      screen.getByLabelText('Début du créneau (date et heure)'),
+      {
+        target: { value: '2099-01-09T09:00' },
+      },
+    );
+    fireEvent.change(screen.getByLabelText('Fin du créneau (date et heure)'), {
+      target: { value: '2099-01-11T12:00' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Appliquer' }));
 
-    await waitFor(() =>
-      expect(api.api).toHaveBeenLastCalledWith(
-        expect.stringContaining('availableStart=2099-01-09'),
-      ),
-    );
-    expect(await screen.findByText('Réservé sur cette période')).toBeTruthy();
+    await waitFor(() => {
+      const url = api.api.mock.lastCall[0];
+      const params = new URLSearchParams(url.split('?')[1]);
+      expect(params.get('availableStart')).toBe(
+        new Date('2099-01-09T09:00').toISOString(),
+      );
+      expect(params.get('availableEnd')).toBe(
+        new Date('2099-01-11T12:00').toISOString(),
+      );
+    });
+    expect(
+      await screen.findByText('Disponible sur cette période'),
+    ).toBeTruthy();
   });
 
   it('allows resetting filters', async () => {

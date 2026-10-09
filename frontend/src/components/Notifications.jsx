@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
-import { formatDate } from '../utils/dateFormat.js';
+import { formatLoanDate } from '../utils/dateFormat.js';
 import { formatLoanItemLabel } from '../utils.js';
 
 function Notifications() {
@@ -37,7 +37,7 @@ function Notifications() {
       <h5 className="alert-heading">{t('notifications.title')}</h5>
       <ul className="mb-0">
         {activeLoans.map((loan) => {
-          const end = formatDate(loan.endDate);
+          const end = formatLoanDate(loan.endDate, loan);
           const names = loan.items
             ?.filter(
               (it) => (it.decision?.status || loan.status) === 'accepted',

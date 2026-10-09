@@ -72,6 +72,22 @@ export const createLoanValidator: ValidationChain[] = [
       return true;
     }),
   body('note').optional().isString().isLength({ max: 500 }),
+  body('clientRequestId')
+    .optional()
+    .isUUID()
+    .withMessage('clientRequestId must be a UUID'),
+  body('timeZone')
+    .optional()
+    .isString()
+    .isLength({ max: 64 })
+    .custom((value) => {
+      try {
+        new Intl.DateTimeFormat('en', { timeZone: value });
+        return true;
+      } catch {
+        throw new Error('timeZone must be a valid IANA time zone');
+      }
+    }),
   body('status').optional().isIn(statusValues),
   body('direct').optional().isBoolean(),
 ];

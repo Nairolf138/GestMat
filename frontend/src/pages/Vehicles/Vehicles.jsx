@@ -36,7 +36,13 @@ function Vehicles() {
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.set(key, value);
+        if (value)
+          params.set(
+            key,
+            ['availableStart', 'availableEnd'].includes(key)
+              ? new Date(value).toISOString()
+              : value,
+          );
       });
       return api(`/vehicles?${params.toString()}`);
     },
@@ -196,7 +202,7 @@ function Vehicles() {
           <input
             id="veh-start"
             name="availableStart"
-            type="date"
+            type="datetime-local"
             className="form-control"
             value={filters.availableStart}
             onChange={handleChange}
@@ -210,7 +216,7 @@ function Vehicles() {
           <input
             id="veh-end"
             name="availableEnd"
-            type="date"
+            type="datetime-local"
             className="form-control"
             value={filters.availableEnd}
             onChange={handleChange}

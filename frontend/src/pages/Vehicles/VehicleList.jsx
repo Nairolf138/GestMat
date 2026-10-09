@@ -3,18 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Loading from '../../Loading.jsx';
-import { formatDate } from '../../utils/dateFormat.js';
-
-function hasOverlap(reservations = [], start, end) {
-  if (!start || !end) return false;
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  return reservations.some((slot) => {
-    const slotStart = new Date(slot.start);
-    const slotEnd = new Date(slot.end);
-    return slotStart < endDate && slotEnd > startDate;
-  });
-}
+import { formatDate, formatDateTime } from '../../utils/dateFormat.js';
 
 function nextReservation(reservations = []) {
   const now = new Date();
@@ -44,14 +33,15 @@ function VehicleList({ vehicles, isFetching, availableStart, availableEnd }) {
 
   const availabilityLabel = (vehicle) => {
     if (availableStart && availableEnd) {
-      return hasOverlap(vehicle.reservations, availableStart, availableEnd)
-        ? t('vehicles.availability.unavailable_range')
-        : t('vehicles.availability.available_range');
+      return t('vehicles.availability.available_range');
     }
     const upcoming = nextReservation(vehicle.reservations);
     if (!upcoming) return t('vehicles.availability.no_reservations');
     return t('vehicles.availability.next_reservation', {
-      date: formatDate(upcoming.start),
+      date:
+        upcoming.mode === 'time'
+          ? `${formatDateTime(upcoming.start, upcoming.timeZone)}${upcoming.timeZone ? ` (${upcoming.timeZone})` : ''}`
+          : formatDate(upcoming.start),
     });
   };
 

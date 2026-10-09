@@ -1,4 +1,5 @@
 import { ClientSession, Db, ObjectId } from 'mongodb';
+import { createHash } from 'node:crypto';
 import {
   findLoans,
   LoanItem,
@@ -27,6 +28,11 @@ import {
   loanStatusTemplate,
 } from '../utils/mailTemplates';
 import logger from '../utils/logger';
+import {
+  parseReservationPeriod,
+  reservationMode,
+  storedReservationPeriod,
+} from '../utils/reservationPeriod';
 import type { AuthUser } from '../types';
 
 const CLOSED = ['refused', 'cancelled'];
@@ -233,16 +239,45 @@ export async function getLoanRequestById(
   return loan ? viewLoan(db, loan, current) : null;
 }
 
-function dates(data: any): { start: Date; end: Date } {
-  const start = new Date(data.startDate),
-    end = new Date(data.endDate);
+function dates(data: any) {
+  const period = storedReservationPeriod(data);
   if (
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(end.getTime()) ||
-    end < start
+    period.mode === 'day'
+      ? period.end < period.start
+      : period.end <= period.start
   )
     throw badRequest('Invalid loan dates');
-  return { start, end };
+  return period;
+}
+
+function requestFingerprint(
+  data: LoanRequest,
+  start: Date,
+  end: Date,
+  mode: string,
+): string {
+  const items = (data.items || [])
+    .map((item: any) => ({
+      kind: item.kind === 'vehicle' ? 'vehicle' : 'equipment',
+      id: idOf(item.kind === 'vehicle' ? item.vehicle : item.equipment),
+      quantity: item.kind === 'vehicle' ? 1 : Number(item.quantity),
+    }))
+    .sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        owner: idOf(data.owner),
+        borrower: idOf(data.borrower),
+        start: start.toISOString(),
+        end: end.toISOString(),
+        mode,
+        timeZone: data.timeZone || '',
+        note: typeof data.note === 'string' ? data.note.trim() : '',
+        direct: Boolean(data.direct),
+        items,
+      }),
+    )
+    .digest('hex');
 }
 
 async function requestedItems(
@@ -304,7 +339,7 @@ async function syncAvailability(
   session: ClientSession,
   checkPendingVehicles = false,
 ): Promise<void> {
-  const { start, end } = dates(loan);
+  const { start, endExclusive } = dates(loan);
   const vehicleIds = new Set<string>();
   for (const item of [...(previous?.items || []), ...loan.items]) {
     const kind = item.kind === 'vehicle' ? 'vehicle' : 'equipment';
@@ -335,7 +370,7 @@ async function syncAvailability(
           db,
           idOf(item.vehicle),
           start,
-          end,
+          endExclusive,
           session,
           loan._id,
         );
@@ -345,7 +380,15 @@ async function syncAvailability(
         await db.collection('vehicles').updateOne(
           { _id: new ObjectId(idOf(item.vehicle)) },
           {
-            $push: { reservations: { start, end, loanRequestId: loan._id } },
+            $push: {
+              reservations: {
+                start,
+                end: loan.endDate,
+                mode: reservationMode(loan),
+                ...(loan.timeZone ? { timeZone: loan.timeZone } : {}),
+                loanRequestId: loan._id,
+              },
+            },
           } as any,
           { session },
         );
@@ -354,7 +397,7 @@ async function syncAvailability(
         db,
         idOf(item.equipment),
         start,
-        end,
+        endExclusive,
         item.quantity,
         session,
         loan._id,
@@ -418,7 +461,10 @@ export async function createLoanRequest(
   user: AuthUser,
 ): Promise<LoanRequest> {
   const current = await account(db, user);
-  const { start, end } = dates(data);
+  const { start, end, mode } = parseReservationPeriod(
+    data.startDate,
+    data.endDate,
+  );
   const direct = Boolean(data.direct);
   if (current.role !== ADMIN_ROLE) {
     if (
@@ -428,72 +474,105 @@ export async function createLoanRequest(
     )
       throw forbidden('Access denied');
   }
-  const loan = await transact(db, async (session) => {
-    if (
-      !ObjectId.isValid(idOf(data.owner)) ||
-      !ObjectId.isValid(idOf(data.borrower))
-    )
-      throw badRequest('Invalid structure');
-    const structureCount = await db.collection('structures').countDocuments(
-      {
-        _id: {
-          $in: [...new Set([idOf(data.owner), idOf(data.borrower)])].map(
-            (id) => new ObjectId(id),
-          ),
+  const clientRequestId =
+    typeof data.clientRequestId === 'string' ? data.clientRequestId : undefined;
+  const fingerprint = clientRequestId
+    ? requestFingerprint(data, start, end, mode)
+    : undefined;
+  const replay = async (): Promise<LoanRequest | null> => {
+    if (!clientRequestId) return null;
+    const prior = await db.collection<LoanRequest>('loanrequests').findOne({
+      requestedBy: new ObjectId(user.id),
+      clientRequestId,
+    });
+    if (!prior) return null;
+    if (prior.requestFingerprint !== fingerprint)
+      throw badRequest('Request id already used for different content');
+    const populated = await populateLoanRequest(db, prior);
+    return viewLoan(db, populated, current);
+  };
+  const existing = await replay();
+  if (existing) return existing;
+  let loan: any;
+  try {
+    loan = await transact(db, async (session) => {
+      if (
+        !ObjectId.isValid(idOf(data.owner)) ||
+        !ObjectId.isValid(idOf(data.borrower))
+      )
+        throw badRequest('Invalid structure');
+      const structureCount = await db.collection('structures').countDocuments(
+        {
+          _id: {
+            $in: [...new Set([idOf(data.owner), idOf(data.borrower)])].map(
+              (id) => new ObjectId(id),
+            ),
+          },
         },
-      },
-      { session },
-    );
-    if (
-      structureCount !== new Set([idOf(data.owner), idOf(data.borrower)]).size
-    )
-      throw badRequest('Structure not found');
-    const items = await requestedItems(db, data, current, session);
-    if (
-      idOf(data.owner) === idOf(data.borrower) &&
-      items.some((item) => item.kind !== 'vehicle')
-    )
-      throw forbidden('Cannot request loan for own structure');
-    // A vehicle booking always needs a manager decision, including a booking at its home structure.
-    for (const item of items)
-      if (direct && item.kind !== 'vehicle')
-        item.decision = {
-          status: 'accepted',
+        { session },
+      );
+      if (
+        structureCount !== new Set([idOf(data.owner), idOf(data.borrower)]).size
+      )
+        throw badRequest('Structure not found');
+      const items = await requestedItems(db, data, current, session);
+      if (
+        idOf(data.owner) === idOf(data.borrower) &&
+        items.some((item) => item.kind !== 'vehicle')
+      )
+        throw forbidden('Cannot request loan for own structure');
+      // A vehicle booking always needs a manager decision, including a booking at its home structure.
+      for (const item of items)
+        if (direct && item.kind !== 'vehicle')
+          item.decision = {
+            status: 'accepted',
+            actor: publicActor(current),
+            at: new Date(),
+          };
+      const raw: any = {
+        _id: new ObjectId(),
+        schemaVersion: 2,
+        owner: new ObjectId(idOf(data.owner)),
+        borrower: new ObjectId(idOf(data.borrower)),
+        requestedBy: new ObjectId(user.id),
+        requesterIdentity: publicActor(current),
+        items,
+        startDate: start,
+        endDate: end,
+        reservationMode: mode,
+        ...(mode === 'time' && data.timeZone
+          ? { timeZone: data.timeZone }
+          : {}),
+        ...(clientRequestId
+          ? { clientRequestId, requestFingerprint: fingerprint }
+          : {}),
+        note: typeof data.note === 'string' ? data.note.trim() : '',
+        directEntry: direct,
+        status: summarizeLines(items),
+        createdAt: new Date(),
+        history: items.map((item) => ({
+          lineId: item.lineId,
+          action: direct && item.kind !== 'vehicle' ? 'accepted' : 'created',
+          quantity: item.quantity,
+          resourceName:
+            (item.resourceIdentity as any)?.name ||
+            (item.equipment as any)?.name ||
+            (item.vehicle as any)?.name,
           actor: publicActor(current),
           at: new Date(),
-        };
-    const raw: any = {
-      _id: new ObjectId(),
-      schemaVersion: 2,
-      owner: new ObjectId(idOf(data.owner)),
-      borrower: new ObjectId(idOf(data.borrower)),
-      requestedBy: new ObjectId(user.id),
-      requesterIdentity: publicActor(current),
-      items,
-      startDate: start,
-      endDate: end,
-      note: typeof data.note === 'string' ? data.note.trim() : '',
-      directEntry: direct,
-      status: summarizeLines(items),
-      createdAt: new Date(),
-      history: items.map((item) => ({
-        lineId: item.lineId,
-        action: direct && item.kind !== 'vehicle' ? 'accepted' : 'created',
-        quantity: item.quantity,
-        resourceName:
-          (item.resourceIdentity as any)?.name ||
-          (item.equipment as any)?.name ||
-          (item.vehicle as any)?.name,
-        actor: publicActor(current),
-        at: new Date(),
-      })),
-    };
-    if (direct && items.some((item) => item.kind !== 'vehicle'))
-      raw.processedBy = new ObjectId(user.id);
-    await syncAvailability(db, raw, null, session, true);
-    await db.collection('loanrequests').insertOne(raw, { session });
-    return raw;
-  });
+        })),
+      };
+      if (direct && items.some((item) => item.kind !== 'vehicle'))
+        raw.processedBy = new ObjectId(user.id);
+      await syncAvailability(db, raw, null, session, true);
+      await db.collection('loanrequests').insertOne(raw, { session });
+      return raw;
+    });
+  } catch (err) {
+    const concurrent = await replay();
+    if (concurrent) return concurrent;
+    throw err;
+  }
   const populated = await populateLoanRequest(db, loan);
   await notify(
     db,
@@ -752,6 +831,13 @@ export async function updateLoanRequest(
       history,
       startDate: data.startDate ? new Date(data.startDate) : raw.startDate,
       endDate: data.endDate ? new Date(data.endDate) : raw.endDate,
+      reservationMode:
+        data.startDate || data.endDate
+          ? typeof data.startDate === 'string' &&
+            typeof data.endDate === 'string'
+            ? parseReservationPeriod(data.startDate, data.endDate).mode
+            : reservationMode(raw)
+          : reservationMode(raw),
       ...(data.note !== undefined ? { note: String(data.note).trim() } : {}),
       status: summarizeLines(items),
       updatedAt: new Date(),
