@@ -12,6 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import Loading from './Loading';
 import { api } from './api';
+import Alert from './Alert.jsx';
 
 ChartJS.register(
   CategoryScale,
@@ -373,7 +374,7 @@ function AdminStats() {
 
   return (
     <div>
-      {error && <div className="alert alert-danger">{error}</div>}
+      <Alert message={error} onClose={() => setError('')} />
       <div className="d-flex flex-wrap gap-3 mb-3">
         <div className="flex-grow-1" style={{ minWidth: 200, maxWidth: 320 }}>
           <label htmlFor="from" className="form-label">

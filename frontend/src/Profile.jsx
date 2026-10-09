@@ -156,8 +156,8 @@ function Profile() {
   return (
     <>
       <h1 className="h1">{t('profile.title')}</h1>
-      <Alert message={error} />
-      <Alert type="success" message={success} />
+      <Alert message={error} onClose={() => setError('')} />
+      <Alert type="success" message={success} onClose={() => setSuccess('')} />
       <FormCard onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">{t('profile.username')}</label>

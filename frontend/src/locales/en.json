@@ -492,6 +492,7 @@
     "search_button": "Search",
     "add_to_cart": "Add to cart",
     "quantity_prompt": "Quantity?",
+    "invalid_quantity": "Enter a whole quantity greater than zero",
     "select_period": "Please select a period",
     "invalid_period": "Invalid period",
     "unavailable": "Quantity unavailable for this period",
@@ -610,6 +611,7 @@
   },
   "cart": {
     "title": "Cart",
+    "invalid_quantity": "Enter a whole quantity greater than zero",
     "remove": "Remove",
     "send_requests": "Submit loan request",
     "requests_sent": "Requests sent",

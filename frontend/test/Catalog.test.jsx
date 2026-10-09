@@ -107,6 +107,56 @@ describe('Catalog', () => {
         endDate: '2024-01-02',
       },
     ]);
+    expect(screen.getByRole('status').textContent).toContain(
+      'Ajouté au panier : Eq1',
+    );
+    expect(screen.getByRole('status').parentElement.parentElement).toBe(
+      document.body,
+    );
+  });
+
+  it('shows validation errors in the viewport before contacting availability', async () => {
+    api.api.mockResolvedValue([
+      {
+        _id: 'eq1',
+        name: 'Eq1',
+        status: 'Disponible',
+        structure: { _id: 's1', name: 'S1' },
+      },
+    ]);
+    const { container } = render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        <GlobalContext.Provider value={{ structures: [] }}>
+          <Catalog />
+        </GlobalContext.Provider>
+      </MemoryRouter>,
+    );
+    const addButton = await screen.findByRole('button', {
+      name: 'Ajouter au panier',
+    });
+    fireEvent.click(addButton);
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Veuillez sélectionner une période',
+    );
+
+    fireEvent.change(container.querySelector('input[name="quantity-eq1"]'), {
+      target: { value: '0' },
+    });
+    fireEvent.click(addButton);
+    expect(
+      screen
+        .getAllByRole('alert')
+        .some((alert) =>
+          alert.textContent.includes(
+            'Saisissez une quantité entière supérieure à zéro',
+          ),
+        ),
+    ).toBe(true);
+    expect(
+      api.api.mock.calls.some(([path]) => path.includes('/availability')),
+    ).toBe(false);
   });
 
   it('increments quantity when same item and dates are added twice', async () => {

@@ -105,7 +105,7 @@ function Register() {
         <h1 id="register-title" className="h1">
           {t('register.title')}
         </h1>
-        <Alert message={error} />
+        <Alert message={error} onClose={() => setError('')} />
         <div className="mb-3">
           <label className="form-label" htmlFor="reg-username">
             {t('login.username')}

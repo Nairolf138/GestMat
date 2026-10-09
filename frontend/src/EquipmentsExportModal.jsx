@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDownload } from './api';
 import { downloadBlob } from './utils';
+import Alert from './Alert.jsx';
 
 const TYPE_OPTIONS = [
   { value: 'Tous', labelKey: 'equipments.export.type.all' },
@@ -74,11 +75,7 @@ function EquipmentsExportModal({ open, onClose, onSuccess }) {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                {error && (
-                  <div className="alert alert-danger" role="alert">
-                    {error}
-                  </div>
-                )}
+                <Alert message={error} onClose={() => setError('')} />
                 <div className="mb-3">
                   <label className="form-label" htmlFor="export-type">
                     {t('equipments.export.type_label')}

@@ -5,6 +5,7 @@ import Alert from './Alert.jsx';
 import LoanLineDecisions from './components/LoanLineDecisions.jsx';
 import { formatLoanItemLabel, toLoanItemsPayload } from './utils';
 import { formatDate } from './utils/dateFormat.js';
+import { showToast } from './toast';
 
 function LoanItem({ loan, isOwner, refresh }) {
   const { t } = useTranslation();
@@ -49,8 +50,7 @@ function LoanItem({ loan, isOwner, refresh }) {
         return decisionNote;
       }
       lastInput = decisionNote.slice(0, 500);
-      // eslint-disable-next-line no-alert
-      window.alert(t('loans.decision_note_too_long'));
+      showToast(t('loans.decision_note_too_long'));
     }
   };
 

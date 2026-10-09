@@ -21,7 +21,7 @@ function Equipments() {
   const [type, setType] = useState('');
   const [sort, setSort] = useState('');
   const [userStructure, setUserStructure] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [addFormPosition, setAddFormPosition] = useState(null);
   const [editing, setEditing] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -99,18 +99,13 @@ function Equipments() {
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [items, type]);
 
-  const toggleAddForm = () => {
-    setShowForm((prev) => {
-      const next = !prev;
-      if (next) {
-        setEditing(null);
-      }
-      return next;
-    });
+  const toggleAddForm = (position) => {
+    setEditing(null);
+    setAddFormPosition((previous) => (previous === position ? null : position));
   };
 
   const handleEditSelect = (equipment) => {
-    setShowForm(false);
+    setAddFormPosition(null);
     setEditing(equipment);
   };
 
@@ -123,10 +118,28 @@ function Equipments() {
         message={exportMessage}
         onClose={() => setExportMessage('')}
       />
-      <h1 className="h1">
-        {t('equipments.title')}
-        {structureName && ` - ${structureName}`}
-      </h1>
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h1 className="h1 mb-0">
+          {t('equipments.title')}
+          {structureName && ` - ${structureName}`}
+        </h1>
+        {canManageEquipment(user?.role) && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => toggleAddForm('top')}
+            aria-expanded={addFormPosition === 'top'}
+            aria-controls="add-equipment-top"
+          >
+            {t('equipments.add.title')}
+          </button>
+        )}
+      </div>
+      {addFormPosition === 'top' && (
+        <div id="add-equipment-top" className="mb-3">
+          <AddEquipment onCreated={() => setAddFormPosition(null)} />
+        </div>
+      )}
       <form
         className="row g-2 mb-3"
         autoComplete="off"
@@ -308,13 +321,19 @@ function Equipments() {
       {canManageEquipment(user?.role) && (
         <>
           <button
-            onClick={toggleAddForm}
+            onClick={() => toggleAddForm('bottom')}
             className="btn btn-secondary mb-3"
             type="button"
+            aria-expanded={addFormPosition === 'bottom'}
+            aria-controls="add-equipment-bottom"
           >
             {t('equipments.add.title')}
           </button>
-          {showForm && <AddEquipment onCreated={() => setShowForm(false)} />}
+          {addFormPosition === 'bottom' && (
+            <div id="add-equipment-bottom">
+              <AddEquipment onCreated={() => setAddFormPosition(null)} />
+            </div>
+          )}
         </>
       )}
       {editing && canManageEquipment(user?.role, editing.type) && (

@@ -15,6 +15,7 @@ import HomeHeader from './components/HomeHeader.jsx';
 import ActivityRail from './components/ActivityRail.jsx';
 import Notifications from './components/Notifications.jsx';
 import OnboardingTour from './components/OnboardingTour.jsx';
+import { showToast } from './toast';
 import { formatDate } from './utils/dateFormat.js';
 
 function Home() {
@@ -138,8 +139,7 @@ function Home() {
           return decisionNote;
         }
         lastInput = decisionNote.slice(0, 500);
-        // eslint-disable-next-line no-alert
-        window.alert(t('loans.decision_note_too_long'));
+        showToast(t('loans.decision_note_too_long'));
       }
     },
     [t],
@@ -499,8 +499,8 @@ function Home() {
         <Notifications />
       </div>
       <HomeHeader user={user} counts={badgeCounts} />
-      <Alert message={error} />
-      <Alert type="success" message={message} />
+      <Alert message={error} onClose={() => setError('')} />
+      <Alert type="success" message={message} onClose={() => setMessage('')} />
       <LoanSectionsTabs
         sections={tabSections}
         loading={loading}

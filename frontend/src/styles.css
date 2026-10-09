@@ -1110,75 +1110,58 @@ body {
   width: auto;
 }
 
-.add-toast {
+.gestmat-toast-layer {
   position: fixed;
-  right: var(--spacing-md);
-  bottom: var(--spacing-md);
-  display: inline-flex;
-  gap: var(--spacing-sm);
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-success);
-  color: #fff;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  right: calc(0.75rem + env(safe-area-inset-right, 0px));
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(26rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.gestmat-toast {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border-radius: var(--radius-sm);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-  transform-origin: center;
-  animation:
-    add-toast-in 200ms ease,
-    add-toast-out 220ms ease 1.4s forwards;
-  z-index: 1200;
+  background: var(--color-danger);
+  color: #fff;
+  pointer-events: auto;
 }
 
-.add-toast__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background-color: color-mix(in srgb, #000 16%, var(--color-success));
-  font-weight: bold;
+.gestmat-toast--success {
+  background: var(--color-success);
 }
 
-.add-toast__title {
-  margin: 0;
-  font-weight: 700;
-  line-height: 1.2;
+.gestmat-toast--primary {
+  background: var(--color-primary);
 }
 
-.add-toast__subtitle {
-  margin: 0;
-  opacity: 0.9;
-  font-size: 0.9rem;
-  line-height: 1.2;
+.gestmat-toast--secondary {
+  background: var(--color-secondary);
+}
+
+.gestmat-toast__message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gestmat-toast .btn-close {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 576px) {
-  .add-toast {
-    left: var(--spacing-sm);
-    right: var(--spacing-sm);
-    justify-content: center;
-  }
-}
-
-@keyframes add-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes add-toast-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(4px) scale(0.99);
+  .gestmat-toast-layer {
+    left: calc(0.75rem + env(safe-area-inset-left, 0px));
+    right: calc(0.75rem + env(safe-area-inset-right, 0px));
+    width: auto;
   }
 }

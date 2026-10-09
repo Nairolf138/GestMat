@@ -74,7 +74,7 @@ function AddEquipment({ onCreated }) {
       <h2 id="add-equip-title" className="h2">
         {t('equipments.add.title')}
       </h2>
-      <Alert message={error} />
+      <Alert message={error} onClose={() => setError('')} />
       <div className="mb-3">
         <label className="form-label" htmlFor="eq-name">
           {t('equipments.add.name')}

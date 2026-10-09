@@ -15,6 +15,7 @@ import ManageInvestments from './admin/ManageInvestments';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext.jsx';
 import GlobalExportModal from './admin/GlobalExportModal.jsx';
+import Alert from './Alert.jsx';
 
 function AdminDashboard() {
   const { t } = useTranslation();
@@ -72,11 +73,7 @@ function AdminDashboard() {
                 : t('admin_dashboard.summary.refresh')}
             </button>
           </div>
-          {summaryError && (
-            <div className="alert alert-danger py-2" role="alert">
-              {summaryError}
-            </div>
-          )}
+          <Alert message={summaryError} onClose={() => setSummaryError('')} />
           <div className="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3">
             <div className="col">
               <div className="card shadow-sm h-100">

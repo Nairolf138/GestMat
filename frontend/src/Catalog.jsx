@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { api } from './api';
 import { GlobalContext } from './GlobalContext';
-import Alert from './Alert.jsx';
+import { showToast } from './toast';
 import { useTranslation } from 'react-i18next';
 import { addToCart as addCartItem } from './Cart.jsx';
 import Loading from './Loading.jsx';
@@ -20,7 +20,7 @@ const filterUnavailableItems = (data) =>
 
 function Catalog() {
   const { t } = useTranslation();
-  const { structures } = useContext(GlobalContext);
+  const { structures, notify = showToast } = useContext(GlobalContext);
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
   const [items, setItems] = useState([]);
@@ -32,16 +32,12 @@ function Catalog() {
     startDate: '',
     endDate: '',
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [addAnimation, setAddAnimation] = useState(null);
   const [quantities, setQuantities] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef(null);
-  const addAnimationTimeoutRef = useRef(null);
   const PAGE_SIZE = 20;
   const isInvalidPeriod =
     filters.startDate && filters.endDate && filters.startDate > filters.endDate;
@@ -144,14 +140,6 @@ function Catalog() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (addAnimationTimeoutRef.current) {
-        clearTimeout(addAnimationTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilters({ ...filters, [name]: value });
@@ -188,40 +176,19 @@ function Catalog() {
     setQuantities({ ...quantities, [id]: value });
   };
 
-  const clearAddAnimation = useCallback(() => {
-    if (addAnimationTimeoutRef.current) {
-      clearTimeout(addAnimationTimeoutRef.current);
-      addAnimationTimeoutRef.current = null;
-    }
-    setAddAnimation(null);
-  }, []);
-
-  const triggerAddAnimation = useCallback(
-    (itemName) => {
-      clearAddAnimation();
-      setAddAnimation({ itemName });
-      addAnimationTimeoutRef.current = setTimeout(() => {
-        setAddAnimation(null);
-        addAnimationTimeoutRef.current = null;
-      }, 1700);
-    },
-    [clearAddAnimation],
-  );
-
   const addToCart = async (eq) => {
     const qtyValue = quantities[eq._id];
-    const qty = Number(
-      qtyValue === '' || qtyValue === undefined ? 1 : qtyValue,
-    );
-    if (Number.isNaN(qty) || qty < 1) return;
+    const qty = Number(qtyValue === undefined ? 1 : qtyValue);
+    if (!Number.isSafeInteger(qty) || qty < 1) {
+      notify(t('catalog.invalid_quantity'));
+      return;
+    }
     if (!filters.startDate || !filters.endDate) {
-      setError(t('catalog.select_period'));
-      setSuccess('');
+      notify(t('catalog.select_period'));
       return;
     }
     if (isInvalidPeriod) {
-      setError(t('catalog.invalid_period'));
-      setSuccess('');
+      notify(t('catalog.invalid_period'));
       return;
     }
     try {
@@ -229,9 +196,7 @@ function Catalog() {
         `/equipments/${eq._id}/availability?start=${filters.startDate}&end=${filters.endDate}&quantity=${qty}`,
       );
       if (!res.available) {
-        setError(t('catalog.unavailable'));
-        setSuccess('');
-        clearAddAnimation();
+        notify(t('catalog.unavailable'));
         return;
       }
       addCartItem({
@@ -240,37 +205,15 @@ function Catalog() {
         startDate: filters.startDate,
         endDate: filters.endDate,
       });
-      setError('');
-      setSuccess(t('catalog.added'));
-      triggerAddAnimation(eq.name);
+      notify(`${t('catalog.added')} : ${eq.name}`, 'success');
     } catch (err) {
-      setError(err.message || t('catalog.error'));
-      setSuccess('');
-      clearAddAnimation();
+      notify(err.message || t('catalog.error'));
     }
   };
 
   return (
     <>
       <h1 className="h1">{t('catalog.title')}</h1>
-      <Alert message={error} />
-      <Alert type="success" message={success} />
-      {addAnimation && (
-        <div
-          className="add-toast"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <span className="add-toast__icon" aria-hidden="true">
-            ✓
-          </span>
-          <div className="add-toast__content">
-            <p className="add-toast__title">{t('catalog.added')}</p>
-            <p className="add-toast__subtitle">{addAnimation.itemName}</p>
-          </div>
-        </div>
-      )}
       <div
         className="row"
         style={{

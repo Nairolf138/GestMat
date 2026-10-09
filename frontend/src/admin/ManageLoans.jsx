@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import Loading from '../Loading.jsx';
+import Alert from '../Alert.jsx';
 import { formatLoanItemLabel } from '../utils';
 
 const statusOptions = [
@@ -97,7 +98,7 @@ function ManageLoans() {
 
   return (
     <div>
-      {error && <div className="alert alert-danger">{error}</div>}
+      <Alert message={error} onClose={() => setError('')} />
       <div className="card mb-3">
         <div className="card-body">
           <div className="row g-2 align-items-end">

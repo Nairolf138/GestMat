@@ -71,8 +71,13 @@ describe('Equipments', () => {
     await screen.findByText('Eq1');
 
     expect(screen.getByText('Available')).toBeTruthy();
+    const addButtons = screen.getAllByRole('button', {
+      name: 'Nouvel équipement',
+    });
+    expect(addButtons).toHaveLength(2);
     expect(
-      screen.getByRole('button', { name: 'Nouvel équipement' }),
+      addButtons[0].compareDocumentPosition(addButtons[1]) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Éditer' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Supprimer' })).toBeTruthy();
@@ -107,12 +112,22 @@ describe('Equipments', () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nouvel équipement' }));
+    fireEvent.click(addButtons[0]);
     const addForm = screen.getByRole('form', { name: 'Nouvel équipement' });
+    expect(addForm.closest('#add-equipment-top')).not.toBeNull();
     expect(addForm.getAttribute('autocomplete')).toBe('off');
     expect(
       screen.getByRole('heading', { name: 'Nouvel équipement' }),
     ).toBeTruthy();
+    fireEvent.click(addButtons[1]);
+    expect(
+      screen.getAllByRole('form', { name: 'Nouvel équipement' }),
+    ).toHaveLength(1);
+    expect(
+      screen
+        .getByRole('form', { name: 'Nouvel équipement' })
+        .closest('#add-equipment-bottom'),
+    ).not.toBeNull();
   });
   it('uses cached data on remount', async () => {
     api.api.mockResolvedValue([
@@ -181,8 +196,8 @@ describe('Equipments', () => {
 
     await screen.findByText('Eq1');
     expect(
-      screen.getByRole('button', { name: 'Nouvel équipement' }),
-    ).toBeTruthy();
+      screen.getAllByRole('button', { name: 'Nouvel équipement' }),
+    ).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Éditer' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
   });
@@ -217,8 +232,8 @@ describe('Equipments', () => {
 
     await screen.findByText('Eq1');
     expect(
-      screen.queryByRole('button', { name: 'Nouvel équipement' }),
-    ).toBeTruthy();
+      screen.getAllByRole('button', { name: 'Nouvel équipement' }),
+    ).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Éditer' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
   });
