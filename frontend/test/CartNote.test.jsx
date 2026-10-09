@@ -90,4 +90,22 @@ describe('Cart note handling', () => {
     expect(body.note).toBe('Nouveau commentaire');
     expect(body.items).toEqual([{ equipment: 'eq1', quantity: 1 }]);
   });
+
+  it('keeps the cart intact and reports an invalid quantity', () => {
+    localStorage.setItem('cart', JSON.stringify(sampleCart));
+    render(
+      <AuthContext.Provider
+        value={{ user: { structure: { _id: 'borrower-1' } } }}
+      >
+        <Cart />
+      </AuthContext.Provider>,
+    );
+    fireEvent.change(screen.getByRole('spinbutton'), {
+      target: { value: '0' },
+    });
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Saisissez une quantité entière supérieure à zéro',
+    );
+    expect(JSON.parse(localStorage.getItem('cart'))).toEqual(sampleCart);
+  });
 });

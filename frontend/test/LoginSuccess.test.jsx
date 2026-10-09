@@ -56,6 +56,6 @@ describe('Login success', () => {
     expect(
       await screen.findByRole('heading', { name: /Bonjour/ }),
     ).toBeTruthy();
-    expect(screen.getByText('Connexion réussie')).toBeTruthy();
+    expect(await screen.findByText('Connexion réussie')).toBeTruthy();
   });
 });

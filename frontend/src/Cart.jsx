@@ -4,6 +4,7 @@ import Alert from './Alert.jsx';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from './AuthContext.jsx';
 import { formatDate } from './utils/dateFormat.js';
+import { showToast } from './toast';
 
 export function addToCart(newItem) {
   const equipmentStructure = newItem.equipment?.structure;
@@ -61,8 +62,8 @@ function Cart() {
 
   const updateQuantity = (idx, quantity) => {
     const value = Number(quantity);
-    if (value <= 0) {
-      removeItem(idx);
+    if (!Number.isSafeInteger(value) || value < 1) {
+      showToast(t('cart.invalid_quantity'));
       return;
     }
     const newCart = cart.map((item, i) =>
@@ -120,8 +121,8 @@ function Cart() {
   return (
     <>
       <h1 className="h1">{t('cart.title')}</h1>
-      <Alert message={error} />
-      <Alert type="success" message={success} />
+      <Alert message={error} onClose={() => setError('')} />
+      <Alert type="success" message={success} onClose={() => setSuccess('')} />
       <ul className="list-group mb-3">
         {cart.map((it, idx) => {
           const structure =

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiDownload } from '../api';
 import { downloadBlob } from '../utils';
+import Alert from '../Alert.jsx';
 
 const SECTION_KEYS = [
   'users',
@@ -81,11 +82,7 @@ function GlobalExportModal({ open, onClose, onSuccess }) {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                {error && (
-                  <div className="alert alert-danger" role="alert">
-                    {error}
-                  </div>
-                )}
+                <Alert message={error} onClose={() => setError('')} />
                 <div className="row">
                   {SECTION_KEYS.map((key) => (
                     <div className="col-md-6" key={key}>

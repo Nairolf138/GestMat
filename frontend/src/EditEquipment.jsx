@@ -86,7 +86,7 @@ function EditEquipment({ equipment, onUpdated, onCancel }) {
       <h2 id="edit-equip-title" className="h2">
         {t('equipments.edit.title')}
       </h2>
-      <Alert message={error} />
+      <Alert message={error} onClose={() => setError('')} />
       <div className="mb-3">
         <label className="form-label" htmlFor="edit-eq-name">
           {t('equipments.add.name')}

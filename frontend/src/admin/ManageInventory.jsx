@@ -276,11 +276,7 @@ function ManageInventory() {
 
   return (
     <div>
-      <Alert
-        message={error}
-        autoHideDuration={false}
-        onClose={() => setError('')}
-      />
+      <Alert message={error} onClose={() => setError('')} />
       <Alert type="success" message={message} onClose={() => setMessage('')} />
       <form className="row g-2 mb-3" onSubmit={create}>
         <div className="col-md">

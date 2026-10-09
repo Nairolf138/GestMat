@@ -203,7 +203,7 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
           </button>
         )}
       </div>
-      <Alert message={error} />
+      <Alert message={error} onClose={() => setError('')} />
       {!vehicle && (
         <div className="mb-3">
           <label htmlFor="new-vehicle-managers" className="form-label">

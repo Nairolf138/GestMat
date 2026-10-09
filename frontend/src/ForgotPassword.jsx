@@ -42,11 +42,7 @@ function ForgotPassword() {
         </h1>
         <p>{t('forgot_password.description')}</p>
         <Alert type="success" message={status} onClose={() => setStatus('')} />
-        <Alert
-          message={error}
-          onClose={() => setError('')}
-          autoHideDuration={false}
-        />
+        <Alert message={error} onClose={() => setError('')} />
         <div className="mb-3">
           <label className="form-label" htmlFor="identifier">
             {t('forgot_password.identifier')}

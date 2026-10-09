@@ -75,11 +75,7 @@ function ResetPassword() {
         </h1>
         <p>{t('reset_password.description')}</p>
         <Alert type="success" message={status} onClose={() => setStatus('')} />
-        <Alert
-          message={error}
-          onClose={() => setError('')}
-          autoHideDuration={false}
-        />
+        <Alert message={error} onClose={() => setError('')} />
         <div className="mb-3">
           <label className="form-label" htmlFor="new-password">
             {t('reset_password.new_password')}

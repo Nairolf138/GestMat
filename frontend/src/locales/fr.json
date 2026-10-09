@@ -492,6 +492,7 @@
     "search_button": "Rechercher",
     "add_to_cart": "Ajouter au panier",
     "quantity_prompt": "Quantité ?",
+    "invalid_quantity": "Saisissez une quantité entière supérieure à zéro",
     "select_period": "Veuillez sélectionner une période",
     "invalid_period": "Période invalide",
     "unavailable": "Quantité indisponible pour cette période",
@@ -610,6 +611,7 @@
   },
   "cart": {
     "title": "Panier",
+    "invalid_quantity": "Saisissez une quantité entière supérieure à zéro",
     "remove": "Supprimer",
     "send_requests": "Valider la demande de prêt",
     "requests_sent": "Demandes envoyées",

@@ -71,7 +71,7 @@ export default function VehicleManagers({ vehicle }) {
       >
         Enregistrer les gestionnaires
       </button>
-      <Alert message={error} />
+      <Alert message={error} onClose={() => setError('')} />
     </form>
   );
 }

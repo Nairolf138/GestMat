@@ -97,11 +97,7 @@ function Login() {
           message={message}
           onClose={() => setMessage('')}
         />
-        <Alert
-          message={error}
-          autoHideDuration={false}
-          onClose={() => setError('')}
-        />
+        <Alert message={error} onClose={() => setError('')} />
         <div className="mb-3">
           <label className="form-label" htmlFor="username">
             {t('login.username')}

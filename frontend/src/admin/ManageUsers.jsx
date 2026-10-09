@@ -265,11 +265,7 @@ function ManageUsers() {
 
   return (
     <div>
-      <Alert
-        message={error}
-        autoHideDuration={false}
-        onClose={() => setError('')}
-      />
+      <Alert message={error} onClose={() => setError('')} />
       <Alert type="success" message={message} onClose={() => setMessage('')} />
       <div className="input-group mb-3">
         <input
