@@ -238,6 +238,7 @@ function NewLoan() {
               value={form.borrower}
               onChange={(e) => updateField('borrower', e.target.value)}
               required
+              disabled={!isDirectMode && user?.role !== 'Administrateur'}
             >
               <option value="">{t('common.choose')}</option>
               {renderStructureOptions()}

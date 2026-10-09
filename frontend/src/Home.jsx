@@ -37,7 +37,8 @@ function Home() {
     (loan) =>
       Boolean(
         structureId &&
-          (loan.owner?._id === structureId || loan.owner === structureId),
+          (loan.permissions?.asOwner ??
+            (loan.owner?._id === structureId || loan.owner === structureId)),
       ),
     [structureId],
   );
@@ -46,7 +47,9 @@ function Home() {
     (loan) =>
       Boolean(
         structureId &&
-          (loan.borrower?._id === structureId || loan.borrower === structureId),
+          (loan.permissions?.asBorrower ??
+            (loan.borrower?._id === structureId ||
+              loan.borrower === structureId)),
       ),
     [structureId],
   );
@@ -99,14 +102,20 @@ function Home() {
   );
 
   const pendingApprovals = useMemo(
-    () => loans.filter((l) => l.status === 'pending' && isOwnerLoan(l)),
+    () =>
+      loans.filter(
+        (l) => (l.hasPendingItems ?? l.status === 'pending') && isOwnerLoan(l),
+      ),
     [loans, isOwnerLoan],
   );
 
   const pendingUnderReview = useMemo(
     () =>
       loans.filter(
-        (l) => l.status === 'pending' && isBorrowerLoan(l) && !isOwnerLoan(l),
+        (l) =>
+          (l.hasPendingItems ?? l.status === 'pending') &&
+          isBorrowerLoan(l) &&
+          !isOwnerLoan(l),
       ),
     [isBorrowerLoan, isOwnerLoan, loans],
   );
@@ -315,7 +324,7 @@ function Home() {
         icon: 'fa-circle-plus',
       });
 
-      if (loan.status === 'accepted') {
+      if (['accepted', 'partial'].includes(loan.status)) {
         const descKey = ownerRelated
           ? 'home.activity.request_validated_description_owner'
           : 'home.activity.request_validated_description_borrower';
@@ -358,7 +367,7 @@ function Home() {
         });
       }
 
-      if (loan.status === 'accepted' && loan.startDate) {
+      if (['accepted', 'partial'].includes(loan.status) && loan.startDate) {
         const startDate = new Date(loan.startDate);
         const isFutureStart = startDate > nowDate;
         const labelKey = isFutureStart

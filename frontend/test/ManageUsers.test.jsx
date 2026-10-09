@@ -47,6 +47,7 @@ describe('ManageUsers', () => {
       expect(call[1].body).toBe(
         JSON.stringify({
           username: 'u1',
+          email: '',
           firstName: '',
           lastName: '',
           structure: 's1',
@@ -56,7 +57,7 @@ describe('ManageUsers', () => {
     });
   });
 
-  it('does not allow Autre role to manage equipment', () => {
-    expect(canManageEquipment(AUTRE_ROLE)).toBe(false);
+  it('allows Autre inventory access with category restrictions', () => {
+    expect(canManageEquipment(AUTRE_ROLE)).toBe(true);
   });
 });

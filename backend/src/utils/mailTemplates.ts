@@ -87,6 +87,11 @@ function translateStatus(status: string | undefined): string {
       return 'refusée';
     case 'cancelled':
       return 'annulée';
+    case 'partial':
+      return 'partiellement acceptée';
+    case 'modified':
+    case 'updated':
+      return 'modifiée';
     case 'pending':
       return 'en attente';
     default:
@@ -166,8 +171,10 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
       const vehicle = item.vehicle as any;
       const vehicleId =
         vehicle?._id?.toString?.() || vehicle?.toString?.() || undefined;
-      const vehicleName = vehicle?.name;
-      const registrationNumber = vehicle?.registrationNumber;
+      const vehicleName = vehicle?.name || (item.resourceIdentity as any)?.name;
+      const registrationNumber =
+        vehicle?.registrationNumber ||
+        (item.resourceIdentity as any)?.registrationNumber;
       label =
         [vehicleName, registrationNumber].filter(Boolean).join(' - ') ||
         vehicleName ||
@@ -180,15 +187,20 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
         equipment?._id?.toString?.() || equipment?.toString?.() || undefined;
       label =
         equipment?.name ||
+        (item.resourceIdentity as any)?.name ||
         equipment?.reference ||
         equipment?.code ||
         equipmentId ||
         'Matériel';
     }
 
-    textItems.push(`- ${label} (quantité : ${quantity})`);
+    const decision: any = item.decision;
+    const detail = decision
+      ? ` — ${translateStatus(decision.status)}${decision.actor ? ` — ${getUserLabel(decision.actor)}` : ''}${decision.note ? ` — ${decision.note}` : ''}`
+      : '';
+    textItems.push(`- ${label} (quantité : ${quantity})${detail}`);
     htmlItems.push(
-      `<li><strong>${label}</strong> — quantité : ${quantity}</li>`,
+      `<li><strong>${escapeHtml(String(label))}</strong> — quantité : ${quantity}${escapeHtml(detail)}</li>`,
     );
   }
   return { text: textItems.join('\n'), html: htmlItems.join('') };

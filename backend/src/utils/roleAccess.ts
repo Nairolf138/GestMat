@@ -19,11 +19,12 @@ export function normalizeRole(role = ''): string {
 }
 
 export function normalizeType(type = ''): string | undefined {
-  const norm = type
+  const norm = String(type)
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .trim();
+  if (norm === 'autres') return 'Autre';
   return ALL_TYPES.find(
     (t) =>
       t
@@ -39,12 +40,13 @@ export const roleMap: Record<string, string[]> = {
   [REGISSEUR_SON_ROLE]: ['Son', 'Vidéo', 'Autre'],
   [REGISSEUR_LUMIERE_ROLE]: ['Lumière', 'Vidéo', 'Autre'],
   [REGISSEUR_PLATEAU_ROLE]: ['Plateau', 'Vidéo', 'Autre'],
-  [AUTRE_ROLE]: ALL_TYPES,
+  [AUTRE_ROLE]: ['Autre'],
 };
 
 export function canModify(role: string, type?: string): boolean {
   const allowed = roleMap[normalizeRole(role)];
   if (!allowed) return false;
   if (!type) return true; // if type not specified, allow as long as role is known
-  return allowed.includes(type);
+  const normalizedType = normalizeType(type);
+  return Boolean(normalizedType && allowed.includes(normalizedType));
 }

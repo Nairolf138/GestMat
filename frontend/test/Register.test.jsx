@@ -28,7 +28,7 @@ describe('Register', () => {
       target: { value: 'bob' },
     });
     fireEvent.change(container.querySelector('input[name="password"]'), {
-      target: { value: 'pw' },
+      target: { value: 'ValidPassword123' },
     });
     fireEvent.change(container.querySelector('select[name="role"]'), {
       target: { value: AUTRE_ROLE },
@@ -69,7 +69,7 @@ describe('Register', () => {
       target: { value: 'bob' },
     });
     fireEvent.change(screen.getByLabelText('Mot de passe'), {
-      target: { value: 'pw' },
+      target: { value: 'ValidPassword123' },
     });
     fireEvent.change(screen.getByLabelText('Rôle'), {
       target: { value: AUTRE_ROLE },

@@ -6,6 +6,9 @@ import { AuthUser } from '../types';
 import { ADMIN_ROLE } from '../config/roles';
 import permissionsConfig, { PermissionRule } from '../config/permissions';
 import logger from '../utils/logger';
+import { findUserById } from '../models/User';
+import { normalizeRole } from '../utils/roleAccess';
+import { ObjectId } from 'mongodb';
 
 const { PERMISSIONS } = permissionsConfig as any;
 
@@ -92,7 +95,7 @@ export default function auth(input: AuthInput = []) {
     getStructureId,
     getUsageType,
   } = resolvePermissions(input);
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     const token =
       req.headers.authorization?.split(' ')[1] || req.cookies?.token;
     const actionLabel = action || 'unspecified';
@@ -103,6 +106,13 @@ export default function auth(input: AuthInput = []) {
 
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
+      if (!decoded.id || !ObjectId.isValid(decoded.id))
+        return res.status(401).json({ message: 'Invalid token' });
+      const current = await findUserById(req.app.locals.db, decoded.id);
+      if (!current || !current.role)
+        return res.status(401).json({ message: 'Account unavailable' });
+      decoded.role = normalizeRole(current.role);
+      decoded.structure = normalizeId(current.structure);
       req.user = decoded;
 
       const perms = Array.isArray(requiredPermissions)

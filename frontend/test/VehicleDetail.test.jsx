@@ -61,8 +61,8 @@ describe('VehicleDetail', () => {
     renderDetail();
     await waitFor(() => expect(api.api).toHaveBeenCalled());
 
-    expect(screen.getByText('Camion atelier')).toBeTruthy();
-    expect(screen.getByText('Immatriculation')).toBeTruthy();
+    expect(await screen.findByText('Camion atelier')).toBeTruthy();
+    expect(screen.getByText('Immatriculation:')).toBeTruthy();
     expect(screen.getByText('Contrôle technique')).toBeTruthy();
     expect(screen.getByText('Maif')).toBeTruthy();
     expect(screen.getByText('POL123')).toBeTruthy();

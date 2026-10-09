@@ -1,473 +1,63 @@
-process.env.JWT_SECRET = 'test';
-const test = require('node:test');
-const assert = require('assert');
-const { MongoMemoryReplSet } = require('mongodb-memory-server');
-const { MongoClient, ObjectId } = require('mongodb');
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { fixture } = require('./utils/workflowFixture');
 const {
+  createLoanRequest,
   listLoans,
   updateLoanRequest,
   deleteLoanRequest,
 } = require('../src/services/loanService');
-const {
-  AUTRE_ROLE,
-  REGISSEUR_SON_ROLE,
-  REGISSEUR_GENERAL_ROLE,
-  REGISSEUR_PLATEAU_ROLE,
-} = require('../src/config/roles');
-
-async function createDb() {
-  const mongod = await MongoMemoryReplSet.create();
-  const client = new MongoClient(mongod.getUri());
-  await client.connect();
-  return { db: client.db(), client, mongod };
-}
-
-test('role based loan service permissions', async (t) => {
-  const { db, client, mongod } = await createDb();
-  const [s1, s2] = await Promise.all([
-    db.collection('structures').insertOne({ name: 'S1' }),
-    db.collection('structures').insertOne({ name: 'S2' }),
-  ]);
-  const s1Id = s1.insertedId;
-  const s2Id = s2.insertedId;
-  const [eqSonS1, eqPlateauS1, eqSonS2, eqPlateauS2] = await Promise.all([
-    db
-      .collection('equipments')
-      .insertOne({ name: 'ES1', type: 'Son', structure: s1Id }),
-    db
-      .collection('equipments')
-      .insertOne({ name: 'EP1', type: 'Plateau', structure: s1Id }),
-    db
-      .collection('equipments')
-      .insertOne({ name: 'ES2', type: 'Son', structure: s2Id }),
-    db
-      .collection('equipments')
-      .insertOne({ name: 'EP2', type: 'Plateau', structure: s2Id }),
-  ]);
-  const [vehicleS1, vehicleS2, vehicleS3] = await Promise.all([
-    db.collection('vehicles').insertOne({ name: 'V1', structure: s1Id }),
-    db.collection('vehicles').insertOne({ name: 'V2', structure: s2Id }),
-    db
-      .collection('vehicles')
-      .insertOne({ name: 'V3', structure: new ObjectId() }),
-  ]);
-  const userAutre = new ObjectId();
-  const userRegSon = new ObjectId();
-  const userRegGen = new ObjectId();
-  const userRegGenS2 = new ObjectId();
-  const userRegSonS2 = new ObjectId();
-  const userRegPlateau = new ObjectId();
-  await db.collection('users').insertMany([
-    { _id: userAutre, structure: s1Id, role: AUTRE_ROLE },
-    { _id: userRegSon, structure: s1Id, role: REGISSEUR_SON_ROLE },
-    { _id: userRegGen, structure: s1Id, role: REGISSEUR_GENERAL_ROLE },
-    { _id: userRegGenS2, structure: s2Id, role: REGISSEUR_GENERAL_ROLE },
-    { _id: userRegSonS2, structure: s2Id, role: REGISSEUR_SON_ROLE },
-    { _id: userRegPlateau, structure: s1Id, role: REGISSEUR_PLATEAU_ROLE },
-  ]);
-
-  // seed loans for listLoans test
-  await db.collection('loanrequests').insertMany([
-    {
-      owner: s1Id,
-      borrower: s2Id,
-      items: [{ equipment: eqSonS1.insertedId }],
-      requestedBy: userRegGenS2,
-    },
-    {
-      owner: s1Id,
-      borrower: s2Id,
-      items: [{ equipment: eqPlateauS1.insertedId }],
-      requestedBy: userRegGenS2,
-    },
-    {
-      owner: s1Id,
-      borrower: s2Id,
-      items: [{ equipment: eqSonS1.insertedId }],
-      requestedBy: userRegSonS2,
-    },
-    {
-      owner: s2Id,
-      borrower: s1Id,
-      items: [{ equipment: eqSonS2.insertedId }],
-      requestedBy: userAutre,
-      startDate: new Date('2099-01-01'),
-      endDate: new Date('2099-01-02'),
-    },
-    {
-      owner: s2Id,
-      borrower: s1Id,
-      items: [{ equipment: eqSonS2.insertedId }],
-      requestedBy: userRegSon,
-      startDate: new Date('2099-01-01'),
-      endDate: new Date('2099-01-02'),
-    },
-    {
-      owner: s2Id,
-      borrower: s1Id,
-      items: [{ equipment: eqSonS2.insertedId }],
-      requestedBy: userRegGen,
-      startDate: new Date('2099-01-01'),
-      endDate: new Date('2099-01-02'),
-    },
-    {
-      owner: s2Id,
-      borrower: s1Id,
-      items: [{ equipment: eqPlateauS2.insertedId }],
-      requestedBy: userRegGenS2,
-      startDate: new Date('2099-01-01'),
-      endDate: new Date('2099-01-02'),
-    },
-    {
-      owner: s1Id,
-      borrower: s2Id,
-      items: [{ kind: 'vehicle', vehicle: vehicleS1.insertedId }],
-      requestedBy: userRegGenS2,
-      startDate: new Date('2099-03-01'),
-      endDate: new Date('2099-03-02'),
-    },
-    {
-      owner: s2Id,
-      borrower: s1Id,
-      items: [{ kind: 'vehicle', vehicle: vehicleS2.insertedId }],
-      requestedBy: userRegSonS2,
-      startDate: new Date('2099-03-03'),
-      endDate: new Date('2099-03-04'),
-    },
-  ]);
-
-  await t.test(
-    'listLoans filters by equipment type while allowing specialized requester roles',
-    async () => {
-      const regSonLoans = await listLoans(db, {
-        id: userRegSon.toString(),
-        role: REGISSEUR_SON_ROLE,
-      });
-      assert.strictEqual(regSonLoans.length, 7);
-      assert.ok(
-        regSonLoans.every((l) =>
-          (l.items || []).every(
-            (it) => it.kind === 'vehicle' || it.equipment.type !== 'Plateau',
-          ),
-        ),
-      );
-      assert.ok(
-        regSonLoans.some(
-          (l) => l.requestedBy._id.toString() === userRegSonS2.toString(),
-        ),
-      );
-
-      const regPlateauLoans = await listLoans(db, {
-        id: userRegPlateau.toString(),
-        role: REGISSEUR_PLATEAU_ROLE,
-      });
-      assert.strictEqual(regPlateauLoans.length, 4);
-      assert.ok(
-        regPlateauLoans.every((l) =>
-          (l.items || []).every(
-            (it) => it.kind === 'vehicle' || it.equipment.type === 'Plateau',
-          ),
-        ),
-      );
-      assert.ok(
-        regPlateauLoans.some(
-          (l) => (l.owner._id || l.owner).toString() === s1Id.toString(),
-        ),
-      );
-      assert.ok(
-        regPlateauLoans.some(
-          (l) => (l.borrower._id || l.borrower).toString() === s1Id.toString(),
-        ),
-      );
-      const autreLoans = await listLoans(db, {
-        id: userAutre.toString(),
-        role: AUTRE_ROLE,
-      });
-      assert.strictEqual(autreLoans.length, 5);
-      assert.ok(
-        autreLoans.every((l) => {
-          const borrowerId = (l.borrower._id || l.borrower).toString();
-          const reqId = l.requestedBy._id.toString();
-          if (borrowerId === s1Id.toString()) {
-            return reqId === userAutre.toString();
-          }
-          return true;
-        }),
-      );
-    },
+test('equipment requests follow the complete current role/domain matrix', async (t) => {
+  const f = await fixture(t);
+  await createLoanRequest(
+    f.db,
+    f.payload(['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre']),
+    f.user('requester'),
   );
-
-  await t.test(
-    'Non-admin regisseur can list vehicle loans for owner/borrower structures',
-    async () => {
-      const regSonLoans = await listLoans(db, {
-        id: userRegSon.toString(),
-        role: REGISSEUR_SON_ROLE,
-      });
-
-      const vehicleLoans = regSonLoans.filter((loan) =>
-        (loan.items || []).some((item) => item.kind === 'vehicle'),
-      );
-
-      assert.strictEqual(vehicleLoans.length, 2);
-      assert.ok(
-        vehicleLoans.every((loan) => {
-          const ownerId = (loan.owner._id || loan.owner).toString();
-          const borrowerId = (loan.borrower._id || loan.borrower).toString();
-          return ownerId === s1Id.toString() || borrowerId === s1Id.toString();
-        }),
-      );
-      assert.ok(
-        vehicleLoans.some((loan) =>
-          (loan.items || []).some(
-            (item) =>
-              (item.vehicle._id || item.vehicle).toString() ===
-              vehicleS1.insertedId.toString(),
-          ),
-        ),
-      );
-      assert.ok(
-        vehicleLoans.some((loan) =>
-          (loan.items || []).some(
-            (item) =>
-              (item.vehicle._id || item.vehicle).toString() ===
-              vehicleS2.insertedId.toString(),
-          ),
-        ),
-      );
-
-      const noRelationLoanId = (
-        await db.collection('loanrequests').insertOne({
-          owner: new ObjectId(),
-          borrower: new ObjectId(),
-          items: [{ kind: 'vehicle', vehicle: vehicleS3.insertedId }],
-          requestedBy: userRegGenS2,
-          startDate: new Date('2099-03-10'),
-          endDate: new Date('2099-03-11'),
-        })
-      ).insertedId.toString();
-
-      const refreshedLoans = await listLoans(db, {
-        id: userRegSon.toString(),
-        role: REGISSEUR_SON_ROLE,
-      });
-
-      assert.ok(
-        !refreshedLoans.some(
-          (loan) => loan._id.toString() === noRelationLoanId,
-        ),
-      );
-    },
+  const matrix = {
+    general: ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'],
+    sound: ['Son', 'Vidéo', 'Autre'],
+    light: ['Lumière', 'Vidéo', 'Autre'],
+    stage: ['Plateau', 'Vidéo', 'Autre'],
+    other: ['Autre'],
+    outside: [],
+  };
+  for (const [name, types] of Object.entries(matrix)) {
+    const loans = await listLoans(f.db, f.user(name));
+    assert.deepEqual(
+      loans.flatMap((loan) => loan.items.map((item) => item.equipment.type)),
+      types,
+      name,
+    );
+  }
+});
+test('a new occupant handles preceding requests regardless of their author; Autre never gains Son rights', async (t) => {
+  const f = await fixture(t);
+  const loan = await createLoanRequest(
+    f.db,
+    f.payload(['Autre']),
+    f.user('requester'),
   );
-
-  await t.test('Autre role permissions', async () => {
-    // outgoing request owned by Autre user: can cancel but cannot accept
-    const loanId = (
-      await db.collection('loanrequests').insertOne({
-        owner: s2Id,
-        borrower: s1Id,
-        items: [{ equipment: eqSonS2.insertedId }],
-        requestedBy: userAutre,
-        startDate: new Date('2099-01-01'),
-        endDate: new Date('2099-01-02'),
-      })
-    ).insertedId.toString();
-    const upd = await updateLoanRequest(
-      db,
-      {
-        id: userAutre.toString(),
-        role: AUTRE_ROLE,
-      },
-      loanId,
-      { status: 'cancelled' },
-    );
-    assert.strictEqual(upd.status, 'cancelled');
-    await assert.rejects(() =>
-      updateLoanRequest(
-        db,
-        { id: userAutre.toString(), role: AUTRE_ROLE },
-        loanId,
-        { status: 'accepted' },
-      ),
-    );
-    const loan2 = (
-      await db.collection('loanrequests').insertOne({
-        owner: s2Id,
-        borrower: s1Id,
-        items: [{ equipment: eqSonS2.insertedId }],
-        requestedBy: userRegSon,
-        startDate: new Date('2099-01-01'),
-        endDate: new Date('2099-01-02'),
-      })
-    ).insertedId.toString();
-    await assert.rejects(() =>
-      deleteLoanRequest(
-        db,
-        { id: userAutre.toString(), role: AUTRE_ROLE },
-        loan2,
-      ),
-    );
-
-    // incoming request for Autre user's structure: can accept or refuse
-    const incoming1 = (
-      await db.collection('loanrequests').insertOne({
-        owner: s1Id,
-        borrower: s2Id,
-        items: [{ equipment: eqSonS1.insertedId }],
-        startDate: new Date('2099-01-01'),
-        endDate: new Date('2099-01-02'),
-      })
-    ).insertedId.toString();
-    const accepted = await updateLoanRequest(
-      db,
-      { id: userAutre.toString(), role: AUTRE_ROLE },
-      incoming1,
-      { status: 'accepted' },
-    );
-    assert.strictEqual(accepted.status, 'accepted');
-    const incoming2 = (
-      await db.collection('loanrequests').insertOne({
-        owner: s1Id,
-        borrower: s2Id,
-        items: [{ equipment: eqSonS1.insertedId }],
-        startDate: new Date('2099-01-01'),
-        endDate: new Date('2099-01-02'),
-      })
-    ).insertedId.toString();
-    const refused = await updateLoanRequest(
-      db,
-      { id: userAutre.toString(), role: AUTRE_ROLE },
-      incoming2,
-      { status: 'refused' },
-    );
-    assert.strictEqual(refused.status, 'refused');
-  });
-
-  await t.test('Regisseur Son role restrictions', async () => {
-    const incomingSon = (
-      await db.collection('loanrequests').insertOne({
-        owner: s1Id,
-        borrower: s2Id,
-        items: [{ equipment: eqSonS1.insertedId }],
-      })
-    ).insertedId.toString();
-    const accepted = await updateLoanRequest(
-      db,
-      { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
-      incomingSon,
-      { status: 'accepted' },
-    );
-    assert.strictEqual(accepted.status, 'accepted');
-    const incomingPlateau = (
-      await db.collection('loanrequests').insertOne({
-        owner: s1Id,
-        borrower: s2Id,
-        items: [{ equipment: eqPlateauS1.insertedId }],
-      })
-    ).insertedId.toString();
-    await assert.rejects(() =>
-      updateLoanRequest(
-        db,
-        { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
-        incomingPlateau,
-        { status: 'accepted' },
-      ),
-    );
-    const ownOutgoing = (
-      await db.collection('loanrequests').insertOne({
-        owner: s2Id,
-        borrower: s1Id,
-        status: 'pending',
-        items: [{ equipment: eqSonS2.insertedId }],
-        requestedBy: userRegSon,
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-01-02'),
-      })
-    ).insertedId.toString();
-    const cancelled = await updateLoanRequest(
-      db,
-      { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
-      ownOutgoing,
-      { status: 'cancelled' },
-    );
-    assert.strictEqual(cancelled.status, 'cancelled');
-    const storedCancelled = await db
-      .collection('loanrequests')
-      .findOne({ _id: new ObjectId(ownOutgoing) });
-    assert.strictEqual(storedCancelled.status, 'cancelled');
-
-    const otherPendingOutgoing = (
-      await db.collection('loanrequests').insertOne({
-        owner: s2Id,
-        borrower: s1Id,
-        status: 'pending',
-        items: [{ equipment: eqSonS2.insertedId }],
-        requestedBy: userAutre,
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-01-02'),
-      })
-    ).insertedId.toString();
-    await assert.rejects(() =>
-      updateLoanRequest(
-        db,
-        { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
-        otherPendingOutgoing,
-        { status: 'cancelled' },
-      ),
-    );
-
-    const otherOutgoing = (
-      await db.collection('loanrequests').insertOne({
-        owner: s2Id,
-        borrower: s1Id,
-        items: [{ equipment: eqSonS2.insertedId }],
-        requestedBy: userAutre,
-        startDate: new Date('2099-01-01'),
-        endDate: new Date('2099-01-02'),
-      })
-    ).insertedId.toString();
-    await assert.rejects(() =>
-      deleteLoanRequest(
-        db,
-        { id: userRegSon.toString(), role: REGISSEUR_SON_ROLE },
-        otherOutgoing,
-      ),
-    );
-  });
-
-  await t.test('Regisseur General can manage all structure loans', async () => {
-    const incomingPlateau = (
-      await db.collection('loanrequests').insertOne({
-        owner: s1Id,
-        borrower: s2Id,
-        items: [{ equipment: eqPlateauS1.insertedId }],
-      })
-    ).insertedId.toString();
-    const accepted = await updateLoanRequest(
-      db,
-      { id: userRegGen.toString(), role: REGISSEUR_GENERAL_ROLE },
-      incomingPlateau,
-      { status: 'accepted' },
-    );
-    assert.strictEqual(accepted.status, 'accepted');
-    const otherOutgoing = (
-      await db.collection('loanrequests').insertOne({
-        owner: s2Id,
-        borrower: s1Id,
-        items: [{ equipment: eqSonS2.insertedId }],
-        requestedBy: userAutre,
-        startDate: new Date('2099-01-01'),
-        endDate: new Date('2099-01-02'),
-      })
-    ).insertedId.toString();
-    const del = await deleteLoanRequest(
-      db,
-      { id: userRegGen.toString(), role: REGISSEUR_GENERAL_ROLE },
-      otherOutgoing,
-    );
-    assert.strictEqual(del.message, 'Loan request deleted');
-  });
-
-  await client.close();
-  await mongod.stop();
+  const decision = await updateLoanRequest(
+    f.db,
+    f.user('other'),
+    loan._id.toString(),
+    { status: 'accepted' },
+  );
+  assert.equal(decision.status, 'accepted');
+  const sound = await createLoanRequest(
+    f.db,
+    f.payload(['Son']),
+    f.user('requester'),
+  );
+  await assert.rejects(
+    updateLoanRequest(f.db, f.user('other'), sound._id.toString(), {
+      status: 'accepted',
+    }),
+    /eligible|denied/,
+  );
+  await assert.rejects(
+    deleteLoanRequest(f.db, f.user('outside'), sound._id.toString()),
+    /denied/,
+  );
 });

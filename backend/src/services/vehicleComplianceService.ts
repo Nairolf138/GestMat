@@ -5,7 +5,8 @@ import {
   VEHICLE_COMPLIANCE_DAILY_SCHEDULE_ENABLED,
 } from '../config';
 import type { Vehicle } from '../models/Vehicle';
-import { getStructureEmails } from '../utils/getStructureEmails';
+import { vehicleManagerIds } from '../utils/vehicleAccess';
+import { isNotificationEnabled } from '../utils/notificationPreferences';
 import logger from '../utils/logger';
 import { vehicleComplianceReminderTemplate } from '../utils/mailTemplates';
 import { sendMail } from '../utils/sendMail';
@@ -65,19 +66,22 @@ async function sendComplianceReminder(
   kind: ComplianceKind,
   expiryDate: Date,
 ): Promise<void> {
-  const structureId = (vehicle.structure as any)?.toString?.();
-  if (!structureId) {
-    logger.warn(
-      'No structure associated with vehicle %s; skipping %s reminder',
-      vehicle._id,
-      kind,
-    );
-    return;
-  }
-
-  const recipients = await getStructureEmails(db, structureId, {
-    preference: 'vehicleReminders',
-  });
+  const managerIds = await vehicleManagerIds(db, vehicle);
+  const users = await db
+    .collection('users')
+    .find({ _id: { $in: managerIds.map((id) => new ObjectId(id)) } })
+    .toArray();
+  const recipients = [
+    ...new Set(
+      users
+        .filter(
+          (user) =>
+            user.email &&
+            isNotificationEnabled(user as any, 'vehicleReminders'),
+        )
+        .map((user) => String(user.email).trim().toLowerCase()),
+    ),
+  ];
 
   if (!recipients.length) {
     logger.warn(

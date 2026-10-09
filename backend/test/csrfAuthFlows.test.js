@@ -52,7 +52,7 @@ test('register and login succeed when CSRF token is provided', async () => {
   await agent
     .post(withApiPrefix('/auth/register'))
     .set('CSRF-Token', csrfToken)
-    .send({ username: 'alice', password: 'pw12345' })
+    .send({ username: 'alice', password: 'ValidPassword123' })
     .expect(200);
 
   const refreshedTokenResponse = await agent
@@ -64,7 +64,7 @@ test('register and login succeed when CSRF token is provided', async () => {
   const loginResponse = await agent
     .post(withApiPrefix('/auth/login'))
     .set('CSRF-Token', refreshedToken)
-    .send({ username: 'alice', password: 'pw12345' })
+    .send({ username: 'alice', password: 'ValidPassword123' })
     .expect(200);
 
   assert.strictEqual(loginResponse.body.user.username, 'alice');

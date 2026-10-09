@@ -78,7 +78,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const db = req.app.locals.db;
-      const loan = await getLoanRequestById(db, req.params.id);
+      const loan = await getLoanRequestById(db, req.params.id, req.user!);
       if (!loan) {
         return next(notFound('Loan request not found'));
       }

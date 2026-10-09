@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import Alert from './Alert.jsx';
+import LoanLineDecisions from './components/LoanLineDecisions.jsx';
 import { formatLoanItemLabel, toLoanItemsPayload } from './utils';
 import { formatDate } from './utils/dateFormat.js';
 
@@ -86,9 +87,14 @@ function LoanItem({ loan, isOwner, refresh }) {
 
     setActionError('');
     const payload = {
+      ...(loan.permissions ? { expectedRevision: loan.revision || 0 } : {}),
       startDate: loan.startDate,
       endDate: loan.endDate,
-      items: toLoanItemsPayload(loan.items),
+      items: toLoanItemsPayload(
+        loan.items?.filter(
+          (item) => !['cancelled', 'refused'].includes(item.decision?.status),
+        ),
+      ),
     };
 
     try {
@@ -107,11 +113,13 @@ function LoanItem({ loan, isOwner, refresh }) {
   };
 
   const closedStatuses = ['cancelled', 'refused'];
-  const borrowerCanModify = isFuture && loan.status === 'pending';
+  const borrowerCanModify =
+    loan.permissions?.canEdit ?? (isFuture && loan.status === 'pending');
   const borrowerCanCancel =
-    Boolean(loan.status) &&
-    !closedStatuses.includes(loan.status) &&
-    (loan.status === 'pending' || isFuture);
+    loan.permissions?.canCancel ??
+    (Boolean(loan.status) &&
+      !closedStatuses.includes(loan.status) &&
+      (loan.status === 'pending' || isFuture));
 
   return (
     <li className="list-group-item">
@@ -121,7 +129,8 @@ function LoanItem({ loan, isOwner, refresh }) {
             {loan.owner?.name} → {loan.borrower?.name} {period && `: ${period}`}
           </div>
           <div>
-            {loan.items?.map((it) => formatLoanItemLabel(it)).join(', ')}
+            {!loan.permissions &&
+              loan.items?.map((it) => formatLoanItemLabel(it)).join(', ')}
           </div>
           <div className="mt-1">
             <strong>{t('loans.note_label')}:</strong>{' '}
@@ -151,7 +160,8 @@ function LoanItem({ loan, isOwner, refresh }) {
           {t(`loans.status.${loan.status}`)}
         </span>
       </div>
-      {isOwner && loan.status === 'pending' && (
+      {loan.permissions && <LoanLineDecisions loan={loan} refresh={refresh} />}
+      {!loan.permissions && isOwner && loan.status === 'pending' && (
         <div className="mt-2">
           <button
             onClick={() => changeStatus('accepted')}

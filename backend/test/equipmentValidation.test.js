@@ -1,3 +1,5 @@
+const { accountHeaders } = require('./utils/accountFixture');
+let fixtureDb;
 const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
@@ -20,15 +22,13 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
+  fixtureDb = db;
   app.use(withApiPrefix('/equipments'), equipmentRoutes);
   return { app, client, mongod };
 }
 
-function auth(role = ADMIN_ROLE) {
-  const token = jwt.sign({ id: 'u1', role }, 'test', {
-    expiresIn: '1h',
-  });
-  return { Authorization: `Bearer ${token}` };
+async function auth(role = ADMIN_ROLE) {
+  return accountHeaders(fixtureDb, 'u1', role, undefined);
 }
 
 test('availableQty cannot exceed totalQty on create and update', async () => {
@@ -42,7 +42,7 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
   };
   const res1 = await request(app)
     .post(withApiPrefix('/equipments'))
-    .set(auth())
+    .set(await auth())
     .send(payload)
     .expect(400);
   if (!res1.body.errors?.some((e) => e.msg.includes('cannot exceed'))) {
@@ -51,7 +51,7 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
 
   const valid = await request(app)
     .post(withApiPrefix('/equipments'))
-    .set(auth())
+    .set(await auth())
     .send({
       name: 'Mic',
       type: 'Son',
@@ -63,7 +63,7 @@ test('availableQty cannot exceed totalQty on create and update', async () => {
 
   await request(app)
     .put(withApiPrefix(`/equipments/${valid.body._id}`))
-    .set(auth())
+    .set(await auth())
     .send({ totalQty: 2, availableQty: 3 })
     .expect(400);
 
@@ -77,7 +77,7 @@ test('reject invalid type values and normalize case/accents', async () => {
   // invalid type on create
   const res1 = await request(app)
     .post(withApiPrefix('/equipments'))
-    .set(auth())
+    .set(await auth())
     .send({ name: 'Mic', type: 'Unknown', condition: 'Neuf', totalQty: 1 })
     .expect(400);
   if (!res1.body.errors?.some((e) => e.msg.includes('Type'))) {
@@ -87,7 +87,7 @@ test('reject invalid type values and normalize case/accents', async () => {
   // valid type variation on create
   const res2 = await request(app)
     .post(withApiPrefix('/equipments'))
-    .set(auth())
+    .set(await auth())
     .send({
       name: 'Light',
       type: 'lumiere',
@@ -103,14 +103,14 @@ test('reject invalid type values and normalize case/accents', async () => {
   // invalid type on update
   await request(app)
     .put(withApiPrefix(`/equipments/${id}`))
-    .set(auth())
+    .set(await auth())
     .send({ type: 'bad' })
     .expect(400);
 
   // valid type variation on update
   const res3 = await request(app)
     .put(withApiPrefix(`/equipments/${id}`))
-    .set(auth())
+    .set(await auth())
     .send({ type: 'son' })
     .expect(200);
   assert.strictEqual(res3.body.type, 'Son');

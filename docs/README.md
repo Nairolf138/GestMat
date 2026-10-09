@@ -9,49 +9,11 @@ GestMat S&C repose sur deux applications distinctes :
 
 Les deux services communiquent en HTTP ; par défaut l’API écoute sur le port `5000` et le frontend sur `3000`.
 
-## Flux fonctionnels
+## Règles fonctionnelles
 
-1. Une structure ajoute ou met à jour son matériel (nom, type, localisation, quantités totale et disponible).
-2. Un·e régisseur·se sélectionne des équipements et crée une demande de prêt vers une autre structure.
-3. Tant que la date de début n’est pas passée, l’emprunteur peut modifier ou annuler sa demande. Les demandes en attente ou programmées restent supprimables par l’emprunteur.
-4. La structure propriétaire (ou un administrateur) accepte ou refuse la demande.
-5. En cas d’acceptation, les quantités disponibles sont ajustées ; un refus rétablit les stocks initiaux.
-6. Des notifications e‑mail peuvent être envoyées si `SMTP_URL` est configuré. Si `NOTIFY_EMAIL` est renseigné, il devient l’expéditeur et le destinataire par défaut ; sinon le système utilise `no-reply@<hôte SMTP>`.
+Voir [Rôles, décisions et notifications](ROLES_NOTIFICATIONS.md) pour les domaines autorisés, les décisions par ligne, les préférences, le suivi selon le poste actuel et les gestionnaires de véhicules.
 
-## Rôles
-
-Tous les rôles peuvent consulter le catalogue des autres structures. Le rôle *Autre* peut accepter ou refuser les demandes adressées à sa structure, mais il ne peut créer, modifier ou annuler que ses propres demandes. L'ajout ou la modification d'équipements est limitée selon le rôle :
-
-| Rôle | Types d’équipement modifiables |
-| --- | --- |
-| Administrateur | tous |
-| Régisseur(se) Général(e) | tous |
-| Régisseur(se) Son | Son, Vidéo, Autre |
-| Régisseur(se) Lumière | Lumière, Vidéo, Autre |
-| Régisseur(se) Plateau | Plateau, Vidéo, Autre |
-| Autre | aucun |
-
-### Permissions de prêt
-
-| Rôle | Prêts sortants | Prêts entrants |
-| --- | --- | --- |
-| Administrateur | créer, modifier et annuler toutes les demandes | accepter ou refuser toutes les demandes |
-| Régisseur(se) Général(e) | gérer toutes les demandes pour sa structure | accepter ou refuser les demandes pour sa structure |
-| Régisseur(se) Son | créer et annuler des demandes pour les équipements Son, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
-| Régisseur(se) Lumière | créer et annuler des demandes pour les équipements Lumière, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
-| Régisseur(se) Plateau | créer et annuler des demandes pour les équipements Plateau, Vidéo et Autre | accepter ou refuser des demandes concernant ces équipements |
-| Autre | créer, modifier et annuler ses propres demandes | accepter ou refuser les demandes pour sa structure |
-
-### Permissions véhicules
-
-Les véhicules sont soumis à des autorisations plus fines :
-
-- **Création** : Administrateur et régisseurs (général, son, lumière, plateau) peuvent créer des véhicules, quel que soit le type d’usage (transport **technique** ou **logistique**).
-- **Mise à jour** : mêmes rôles, mais l’opération est limitée aux véhicules rattachés à leur structure lorsque le champ `structure` est renseigné.
-- **Affectation** (réservation/attribution) : Administrateur et Régisseur·se Général·e peuvent affecter un véhicule, uniquement si son usage correspond à ceux autorisés (technique/logistique) et si la structure ciblée correspond à leur propre structure.
-- **Archivage** : Administrateur et Régisseur·se Général·e peuvent archiver/supprimer un véhicule de leur structure.
-
-Les middlewares d’accès contrôlent désormais le rôle **et** le contexte (structure cible ou type d’usage) lorsqu’ils sont fournis dans la requête (`structure`, `usage` ou `type`). Si aucun usage ou type n’est renseigné, le contrôle par usage est ignoré.
+Voir [Mise en service et retour arrière](DEPLOYMENT_ROLLBACK.md) avant de déployer sur Docker Compose avec MongoDB Atlas Free.
 
 ## Configurations essentielles
 

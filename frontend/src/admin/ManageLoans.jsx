@@ -1,10 +1,18 @@
+import LoanLineDecisions from '../components/LoanLineDecisions.jsx';
+import { Link } from 'react-router-dom';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import Loading from '../Loading.jsx';
 import { formatLoanItemLabel } from '../utils';
 
-const statusOptions = ['pending', 'accepted', 'refused', 'cancelled'];
+const statusOptions = [
+  'pending',
+  'accepted',
+  'refused',
+  'cancelled',
+  'partial',
+];
 
 const summarizeItems = (items = []) =>
   items
@@ -226,17 +234,21 @@ function ManageLoans() {
                     )}
                   </div>
                 </div>
-                <select
-                  className={`form-select ${compact ? 'ms-3 w-auto' : 'w-auto mt-2'}`}
-                  value={l.status}
-                  onChange={(e) => update(l._id, e.target.value)}
+                <Link
+                  to={`/loans/${l._id}`}
+                  className="btn btn-outline-primary mt-2"
                 >
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {t(`loans.status.${status}`, { defaultValue: status })}
-                    </option>
-                  ))}
-                </select>
+                  Examiner la demande
+                </Link>
+                {!compact && <LoanLineDecisions loan={l} refresh={load} />}
+                {l.permissions?.canCancel && (
+                  <button
+                    className="btn btn-outline-danger mt-2"
+                    onClick={() => update(l._id, 'cancelled')}
+                  >
+                    Annuler les lignes actives
+                  </button>
+                )}
               </li>
             );
           })}

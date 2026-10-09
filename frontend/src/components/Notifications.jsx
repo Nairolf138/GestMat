@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import { formatDate } from '../utils/dateFormat.js';
+import { formatLoanItemLabel } from '../utils.js';
 
 function Notifications() {
   const { t } = useTranslation();
@@ -23,7 +24,7 @@ function Notifications() {
 
   if (error) return <div className="alert alert-danger">{error}</div>;
 
-  const activeStatuses = ['accepted', 'ongoing'];
+  const activeStatuses = ['accepted', 'partial', 'ongoing'];
   const activeLoans = loans.filter((loan) =>
     activeStatuses.includes(loan.status),
   );
@@ -38,7 +39,10 @@ function Notifications() {
         {activeLoans.map((loan) => {
           const end = formatDate(loan.endDate);
           const names = loan.items
-            ?.map((it) => it.equipment?.name)
+            ?.filter(
+              (it) => (it.decision?.status || loan.status) === 'accepted',
+            )
+            .map(formatLoanItemLabel)
             .filter(Boolean)
             .join(', ');
           return (

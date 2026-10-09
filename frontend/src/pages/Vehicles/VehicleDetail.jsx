@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Alert from '../../Alert.jsx';
 import Loading from '../../Loading.jsx';
 import VehicleForm from './VehicleForm.jsx';
+import VehicleManagers from '../../components/VehicleManagers.jsx';
 import { api } from '../../api';
 import { GlobalContext } from '../../GlobalContext.jsx';
 import { AuthContext } from '../../AuthContext.jsx';
@@ -285,6 +286,7 @@ function VehicleDetail() {
                     <select
                       id="vehicle-loan-borrower"
                       className={`form-select ${loanFieldErrors.borrower ? 'is-invalid' : ''}`}
+                      disabled={user?.role !== 'Administrateur'}
                       value={loanForm.borrower}
                       onChange={(e) =>
                         updateLoanField('borrower', e.target.value)
@@ -406,6 +408,9 @@ function VehicleDetail() {
                 ))}
               </div>
             </div>
+            {vehicle.permissions?.canAssign && (
+              <VehicleManagers vehicle={vehicle} />
+            )}
             <div className="card shadow-sm">
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -413,6 +418,7 @@ function VehicleDetail() {
                   <button
                     type="button"
                     className="btn btn-sm btn-primary"
+                    disabled={!vehicle.permissions?.canEdit}
                     onClick={() => setIsEditing((prev) => !prev)}
                   >
                     {isEditing

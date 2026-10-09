@@ -7,6 +7,7 @@ import { Equipment, findEquipments } from '../models/Equipment';
 import { Vehicle } from '../models/Vehicle';
 import { LoanRequest } from '../models/LoanRequest';
 import createEquipmentFilter from '../utils/createEquipmentFilter';
+import { canModify } from '../utils/roleAccess';
 import { sendMail } from '../utils/sendMail';
 
 type ExportFormat = 'pdf' | 'xlsx';
@@ -223,6 +224,19 @@ const populateAdminSections = async (
           .toArray();
         const mapLoan = (loan: LoanRequest, archivedFlag: boolean) => ({
           status: String((loan as any).status ?? ''),
+          decisions: JSON.stringify(
+            (loan.items || []).map((item: any) => ({
+              lineId: item.lineId,
+              equipment: item.equipment,
+              vehicle: item.vehicle,
+              quantity: item.quantity,
+              decision: item.decision || {
+                status: loan.status,
+                actor: loan.processedBy,
+                note: loan.decisionNote,
+              },
+            })),
+          ),
           borrower:
             structureNames.get((loan as any).borrower?.toString?.() ?? '') ??
             '',
@@ -264,7 +278,9 @@ export async function generateEquipmentExport(
     structure: structureId,
     type: normalizedType,
   });
-  const equipments = await findEquipments(db, filter, 1, 0);
+  const equipments = (await findEquipments(db, filter, 1, 0)).filter(
+    (equipment) => canModify(user.role || '', equipment.type),
+  );
   const rows = buildEquipmentRows(
     equipments,
     structure ? String((structure as any).name ?? '') : '',
@@ -279,6 +295,7 @@ export async function generateEquipmentExport(
       { header: 'Availability', key: 'availability', width: 18 },
       { header: 'Condition', key: 'condition', width: 18 },
       { header: 'Status', key: 'status', width: 15 },
+      { header: 'Line decisions', key: 'decisions', width: 50 },
       { header: 'Location', key: 'location', width: 20 },
     ];
     sheet.addRows(rows);

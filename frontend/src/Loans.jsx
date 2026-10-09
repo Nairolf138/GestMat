@@ -133,7 +133,7 @@ function Loans() {
     const pending = [];
     const nonPending = [];
     list.forEach((loan) => {
-      if (loan.status === 'pending') {
+      if (loan.hasPendingItems ?? loan.status === 'pending') {
         pending.push(loan);
       } else {
         nonPending.push(loan);
@@ -148,7 +148,8 @@ function Loans() {
   const filterLoansByStatus = (list) => {
     const now = new Date();
     return list.filter((loan) => {
-      if (statusFilter === 'pending') return loan.status === 'pending';
+      if (statusFilter === 'pending')
+        return loan.hasPendingItems ?? loan.status === 'pending';
       if (statusFilter === 'active') return isActiveLoan(loan, now);
       if (statusFilter === 'upcoming') return isUpcomingLoan(loan, now);
       if (statusFilter === 'active_upcoming')
@@ -160,12 +161,16 @@ function Loans() {
   const structureId = user?.structure?._id || user?.structure;
   const ownerLoanList = filterLoansByStatus(
     loans.filter(
-      (l) => l.owner?._id === structureId || l.owner === structureId,
+      (l) =>
+        l.permissions?.asOwner ??
+        (l.owner?._id === structureId || l.owner === structureId),
     ),
   );
   const borrowerLoanList = filterLoansByStatus(
     loans.filter(
-      (l) => l.borrower?._id === structureId || l.borrower === structureId,
+      (l) =>
+        l.permissions?.asBorrower ??
+        (l.borrower?._id === structureId || l.borrower === structureId),
     ),
   );
   const ownerSplit = splitPendingLoans(ownerLoanList);

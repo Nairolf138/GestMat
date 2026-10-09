@@ -57,30 +57,25 @@ export const mergePreferences = (
     > &
       Partial<Pick<EmailNotificationPreferences, 'structureUpdates'>>;
 
-    const combined: MutableEmailPreferences = {
-      ...DEFAULT_USER_PREFERENCES.emailNotifications,
+    const explicit = {
       ...(base?.emailNotifications ?? {}),
       ...(overrides?.emailNotifications ?? {}),
     };
-
-    const { structureUpdates, ...rest } = combined;
-    const restWithoutStructure: Record<
-      MappedPreferenceKey,
-      boolean | undefined
-    > = rest;
-
+    const { structureUpdates, ...rest } = explicit;
+    const restWithoutStructure: MutableEmailPreferences = {
+      ...DEFAULT_USER_PREFERENCES.emailNotifications,
+      ...rest,
+    };
+    delete restWithoutStructure.structureUpdates;
     if (structureUpdates !== undefined) {
-      const mappedPreferences: MappedPreferenceKey[] = [
+      for (const key of [
         'loanRequests',
         'loanStatusChanges',
         'returnReminders',
         'vehicleReminders',
-      ];
-
-      for (const key of mappedPreferences) {
-        if (restWithoutStructure[key] === undefined) {
+      ] as MappedPreferenceKey[]) {
+        if (explicit[key] === undefined)
           restWithoutStructure[key] = structureUpdates;
-        }
       }
     }
 
@@ -161,5 +156,14 @@ export async function updateUser(
       { $set: data },
       { returnDocument: 'after' },
     );
+  if (res.value && (data.role !== undefined || data.structure !== undefined)) {
+    await db.collection('vehicles').updateMany(
+      {
+        managerIds: new ObjectId(id),
+        managerAssignmentSource: 'migration-general',
+      },
+      { $set: { managerReviewRequired: true } },
+    );
+  }
   return res.value;
 }

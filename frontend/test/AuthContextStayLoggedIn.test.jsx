@@ -14,7 +14,6 @@ vi.mock('@tanstack/react-query', async () => {
 });
 
 const DEFAULT_LIMIT = 30 * 60 * 1000;
-const EXTENDED_LIMIT = 7 * 24 * 60 * 60 * 1000;
 
 function renderWithProviders(ui, client) {
   return render(
@@ -73,7 +72,7 @@ describe('AuthProvider stay logged in preference', () => {
     expect(Number(localStorage.getItem('lastActivity'))).toBeGreaterThan(0);
   });
 
-  it('extends inactivity timeout and resets activity when preference is enabled', async () => {
+  it('disables inactivity logout and clears activity when persistent session is enabled', async () => {
     const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
     const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
     const queryClient = new QueryClient();
@@ -92,13 +91,14 @@ describe('AuthProvider stay logged in preference', () => {
 
     await waitFor(() => {
       expect(
-        setTimeoutSpy.mock.calls.some(([, delay]) => delay === EXTENDED_LIMIT),
-      ).toBe(true);
+        setTimeoutSpy.mock.calls.some(
+          ([, delay]) => delay === 7 * 24 * 60 * 60 * 1000,
+        ),
+      ).toBe(false);
     });
 
     expect(clearTimeoutSpy).toHaveBeenCalled();
-    const updatedActivity = Number(localStorage.getItem('lastActivity'));
-    expect(updatedActivity).toBeGreaterThan(initialTimestamp);
+    expect(localStorage.getItem('lastActivity')).toBeNull();
     expect(localStorage.getItem('stayLoggedIn')).toBe('true');
   });
 });

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -25,16 +25,6 @@ function Vehicles() {
     availableStart: '',
     availableEnd: '',
   });
-
-  useEffect(() => {
-    if (user?.structure) {
-      const structureId =
-        typeof user.structure === 'object'
-          ? user.structure._id
-          : user.structure;
-      setFilters((prev) => ({ ...prev, structure: structureId || '' }));
-    }
-  }, [user]);
 
   const {
     data: vehicles = [],
@@ -103,13 +93,15 @@ function Vehicles() {
           </h1>
           <p className="text-muted mb-0">{t('vehicles.subtitle')}</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setShowForm((prev) => !prev)}
-        >
-          {showForm ? t('common.close') : t('vehicles.form.create_title')}
-        </button>
+        {['Administrateur', 'Regisseur General'].includes(user?.role) && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setShowForm((prev) => !prev)}
+          >
+            {showForm ? t('common.close') : t('vehicles.form.create_title')}
+          </button>
+        )}
       </div>
 
       <form

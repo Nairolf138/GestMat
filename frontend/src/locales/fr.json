@@ -560,7 +560,8 @@
       "pending": "En attente",
       "accepted": "Accepté",
       "refused": "Refusé",
-      "cancelled": "Annulé"
+      "cancelled": "Annulé",
+      "partial": "Partiellement acceptée"
     },
     "note_label": "Note",
     "note_not_provided": "Aucune note renseignée",

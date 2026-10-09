@@ -68,11 +68,11 @@ describe('Vehicles', () => {
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
     expect(
-      screen.getByRole('heading', { name: 'Parc véhicules - Structure 1' }),
+      screen.getByRole('heading', { name: 'Parc véhicules' }),
     ).toBeTruthy();
-    expect(screen.getByText('Camion atelier')).toBeTruthy();
+    expect(await screen.findByText('Camion atelier')).toBeTruthy();
     expect(screen.getByText('AB-123-CD')).toBeTruthy();
-    expect(screen.getByText('Disponible')).toBeTruthy();
+    expect(screen.getAllByText('Disponible')).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Début de période'), {
       target: { value: '2099-01-09' },
@@ -87,7 +87,7 @@ describe('Vehicles', () => {
         expect.stringContaining('availableStart=2099-01-09'),
       ),
     );
-    expect(screen.getByText('Réservé sur cette période')).toBeTruthy();
+    expect(await screen.findByText('Réservé sur cette période')).toBeTruthy();
   });
 
   it('allows resetting filters', async () => {

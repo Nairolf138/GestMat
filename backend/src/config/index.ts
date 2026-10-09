@@ -94,7 +94,9 @@ const envSchema = z.object({
   JWT_SECRET: z.string(),
   SMTP_URL: z.string().optional(),
   NOTIFY_EMAIL: z.string().optional(),
+  LOAN_ARCHIVE_EMAIL: z.string().optional(),
   NODE_ENV: z.string().default('development'),
+  GESTMAT_READ_ONLY: strictBoolean(false),
   API_PREFIX: z.string().optional(),
   API_URL: z.string().optional(),
   COOKIE_SAME_SITE: z
@@ -193,7 +195,12 @@ export const MONGODB_URI = env.MONGODB_URI;
 export const JWT_SECRET = env.JWT_SECRET;
 export const SMTP_URL = env.SMTP_URL;
 export const NOTIFY_EMAIL = env.NOTIFY_EMAIL;
+export const LOAN_ARCHIVE_EMAIL =
+  env.LOAN_ARCHIVE_EMAIL ??
+  env.NOTIFY_EMAIL ??
+  'notifications@nairolfconcept.fr';
 export const NODE_ENV = env.NODE_ENV;
+export const GESTMAT_READ_ONLY = env.GESTMAT_READ_ONLY;
 export const API_PREFIX = normalizeApiPrefix(env.API_PREFIX);
 export const API_URL =
   env.API_URL ?? `http://localhost:${env.PORT}${API_PREFIX || ''}`;
@@ -231,6 +238,7 @@ export default {
   JWT_SECRET,
   SMTP_URL,
   NOTIFY_EMAIL,
+  LOAN_ARCHIVE_EMAIL,
   NODE_ENV,
   API_PREFIX,
   API_URL,

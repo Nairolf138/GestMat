@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import {
   findUsers,
@@ -142,10 +143,33 @@ router.delete(
   '/:id',
   auth(MANAGE_USERS),
   checkId(),
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     const db = req.app.locals.db;
-    await deleteUserById(db, req.params.id);
-    res.json({ message: 'User deleted' });
+    const session = db.client.startSession();
+    try {
+      await session.withTransaction(async () => {
+        if (
+          await db
+            .collection('vehicles')
+            .findOne({ managerIds: new ObjectId(req.params.id) }, { session })
+        ) {
+          throw Object.assign(
+            new Error(
+              'Remove vehicle manager assignments before deleting this account',
+            ),
+            { status: 409 },
+          );
+        }
+        await db
+          .collection('users')
+          .deleteOne({ _id: new ObjectId(req.params.id) }, { session });
+      });
+      res.json({ message: 'User deleted' });
+    } catch (err) {
+      next(err);
+    } finally {
+      await session.endSession();
+    }
   },
 );
 

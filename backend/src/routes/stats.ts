@@ -100,13 +100,13 @@ router.get(
           .distinct('userId')
           .then((users: string[]) => users.length),
         db.collection('loanrequests').countDocuments({
-          status: 'accepted',
+          status: { $in: ['accepted', 'partial'] },
           startDate: { $lte: now },
           endDate: { $gte: now },
           archived: { $ne: true },
         }),
         db.collection('loanrequests').countDocuments({
-          status: 'accepted',
+          status: { $in: ['accepted', 'partial'] },
           endDate: { $gte: startOfYear, $lte: now },
           archived: { $ne: true },
         }),
@@ -350,8 +350,17 @@ router.get(
       const agg = await db
         .collection('loanrequests')
         .aggregate([
-          { $match: { status: 'refused' } },
           { $unwind: '$items' },
+          {
+            $match: {
+              $expr: {
+                $eq: [
+                  { $ifNull: ['$items.decision.status', '$status'] },
+                  'refused',
+                ],
+              },
+            },
+          },
           {
             $group: {
               _id: '$items.equipment',

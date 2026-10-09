@@ -69,7 +69,7 @@ describe('Equipments', () => {
       }),
     ).toBeTruthy();
     await screen.findByText('Eq1');
-    expect(screen.getByText('Loc')).toBeTruthy();
+
     expect(screen.getByText('Available')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'Nouvel équipement' }),
@@ -81,12 +81,6 @@ describe('Equipments', () => {
     expect(
       screen.getByPlaceholderText('Recherche').getAttribute('autocomplete'),
     ).toBe('off');
-    expect(
-      screen.getByPlaceholderText('Type').getAttribute('autocomplete'),
-    ).toBe('off');
-    expect(
-      screen.getByPlaceholderText('Emplacement').getAttribute('autocomplete'),
-    ).toBe('off');
     const sortSelect = screen.getByLabelText('Tri');
     fireEvent.change(sortSelect, { target: { value: 'name' } });
     await waitFor(() =>
@@ -97,17 +91,15 @@ describe('Equipments', () => {
     fireEvent.change(screen.getByPlaceholderText('Recherche'), {
       target: { value: 'foo' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Type'), {
-      target: { value: 'bar' },
+    fireEvent.change(screen.getByLabelText('Type'), {
+      target: { value: 'Son' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Emplacement'), {
-      target: { value: 'baz' },
-    });
+
     fireEvent.change(sortSelect, { target: { value: 'type' } });
     fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser' }));
     expect(screen.getByPlaceholderText('Recherche').value).toBe('');
-    expect(screen.getByPlaceholderText('Type').value).toBe('');
-    expect(screen.getByPlaceholderText('Emplacement').value).toBe('');
+    expect(screen.getByLabelText('Type').value).toBe('');
+
     expect(sortSelect.value).toBe('');
     await waitFor(() =>
       expect(api.api).toHaveBeenLastCalledWith(
@@ -195,7 +187,7 @@ describe('Equipments', () => {
     expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
   });
 
-  it('hides management buttons for Autre role', async () => {
+  it('Autre can add its category but cannot edit or delete Son', async () => {
     api.api.mockResolvedValue([
       {
         _id: 'eq1',
@@ -226,7 +218,7 @@ describe('Equipments', () => {
     await screen.findByText('Eq1');
     expect(
       screen.queryByRole('button', { name: 'Nouvel équipement' }),
-    ).toBeNull();
+    ).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Éditer' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Supprimer' })).toBeNull();
   });

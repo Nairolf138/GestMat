@@ -18,7 +18,9 @@ import {
   COOKIE_SAME_SITE,
   COOKIE_SECURE,
   LOAN_OVERDUE_NOTIFICATIONS_ENABLED,
+  GESTMAT_READ_ONLY,
 } from './config';
+import readOnlyGuard from './middleware/readOnly';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import structureRoutes from './routes/structures';
@@ -236,7 +238,7 @@ export async function start(
     });
     await ensureSessionIndexes(db);
     await ensurePasswordResetIndexes(db);
-    if (NODE_ENV !== 'test') {
+    if (NODE_ENV !== 'test' && !GESTMAT_READ_ONLY) {
       reminderSchedule = scheduleLoanReminders(db);
       if (LOAN_OVERDUE_NOTIFICATIONS_ENABLED) {
         overdueInterval = scheduleOverdueLoanNotifications(db);
@@ -256,6 +258,10 @@ export async function start(
 
   configureApp?.(app);
 
+  app.use(withApiPrefix('/'), readOnlyGuard(GESTMAT_READ_ONLY));
+  app.get(withApiPrefix('/auth/runtime'), (req, res) =>
+    res.json({ readOnly: GESTMAT_READ_ONLY }),
+  );
   app.use(withApiPrefix('/auth'), authRoutes);
   app.use(withApiPrefix('/users'), userRoutes);
   app.use(withApiPrefix('/structures'), structureRoutes);

@@ -1,3 +1,5 @@
+const { accountHeaders } = require('./utils/accountFixture');
+let fixtureDb;
 const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
@@ -20,15 +22,13 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
+  fixtureDb = db;
   app.use(withApiPrefix('/equipments'), equipmentRoutes);
   return { app, client, mongod };
 }
 
-function auth(role = ADMIN_ROLE) {
-  const token = jwt.sign({ id: 'u1', role }, 'test', {
-    expiresIn: '1h',
-  });
-  return { Authorization: `Bearer ${token}` };
+async function auth(role = ADMIN_ROLE) {
+  return accountHeaders(fixtureDb, 'u1', role, undefined);
 }
 
 test('concurrent equipment creation enforces unique name', async () => {
@@ -38,8 +38,14 @@ test('concurrent equipment creation enforces unique name', async () => {
 
   const payload = { name: 'Mic', type: 'Son', condition: 'Neuf', totalQty: 1 };
   const results = await Promise.allSettled([
-    request(app).post(withApiPrefix('/equipments')).set(auth()).send(payload),
-    request(app).post(withApiPrefix('/equipments')).set(auth()).send(payload),
+    request(app)
+      .post(withApiPrefix('/equipments'))
+      .set(await auth())
+      .send(payload),
+    request(app)
+      .post(withApiPrefix('/equipments'))
+      .set(await auth())
+      .send(payload),
   ]);
   const statuses = results.map((r) => r.value?.statusCode || r.reason?.status);
   assert.ok(statuses.includes(200));

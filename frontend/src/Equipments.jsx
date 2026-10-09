@@ -46,6 +46,7 @@ function Equipments() {
     queryKey: ['equipments', { search, type, sort, userStructure }],
     queryFn: async () => {
       const params = new URLSearchParams({
+        all: 'true',
         search,
         type,
         structure: userStructure,

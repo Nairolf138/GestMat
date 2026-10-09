@@ -81,8 +81,8 @@ test('findLoans excludes archived loans unless explicitly requested', async () =
   const archivedOnly = await findLoans(db, {}, undefined, undefined, {
     includeArchived: true,
   });
-  assert.strictEqual(archivedOnly.length, 1);
-  assert.strictEqual(archivedOnly[0].archived, true);
+  assert.strictEqual(archivedOnly.length, 2);
+  assert.strictEqual(archivedOnly.filter((loan) => loan.archived).length, 1);
 
   await client.close();
   await mongod.stop();

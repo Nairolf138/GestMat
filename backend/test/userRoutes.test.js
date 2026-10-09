@@ -1,3 +1,5 @@
+const { accountHeaders } = require('./utils/accountFixture');
+let fixtureDb;
 const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
@@ -22,6 +24,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
+  fixtureDb = db;
   app.use(withApiPrefix('/users'), userRoutes);
   return { app, client, mongod, db };
 }
@@ -30,8 +33,8 @@ function token(id, role = AUTRE_ROLE) {
   return jwt.sign({ id, role }, 'test', { expiresIn: '1h' });
 }
 
-function auth(id, role) {
-  return { Authorization: `Bearer ${token(id, role)}` };
+async function auth(id, role) {
+  return accountHeaders(fixtureDb, id, role || AUTRE_ROLE, undefined);
 }
 
 test('GET users requires admin role', async () => {
@@ -44,13 +47,13 @@ test('GET users requires admin role', async () => {
   // non admin
   await request(app)
     .get(withApiPrefix('/users'))
-    .set(auth('u1', AUTRE_ROLE))
+    .set(await auth('u1', AUTRE_ROLE))
     .expect(403);
 
   // admin
   const res = await request(app)
     .get(withApiPrefix('/users'))
-    .set(auth('a1', ADMIN_ROLE))
+    .set(await auth('a1', ADMIN_ROLE))
     .expect(200);
   assert.strictEqual(Array.isArray(res.body), true);
   await client.close();
@@ -68,7 +71,7 @@ test('GET users supports search and pagination', async () => {
   let res = await request(app)
     .get(withApiPrefix('/users'))
     .query({ search: 'ali' })
-    .set(auth('a1', ADMIN_ROLE))
+    .set(await auth('a1', ADMIN_ROLE))
     .expect(200);
   assert.strictEqual(res.body.length, 1);
   assert.strictEqual(res.body[0].username, 'alice');
@@ -76,7 +79,7 @@ test('GET users supports search and pagination', async () => {
   res = await request(app)
     .get(withApiPrefix('/users'))
     .query({ page: 2, limit: 1 })
-    .set(auth('a1', ADMIN_ROLE))
+    .set(await auth('a1', ADMIN_ROLE))
     .expect(200);
   assert.strictEqual(res.body.length, 1);
   assert.strictEqual(res.body[0].username, 'bob');
@@ -93,7 +96,7 @@ test('POST /users allows admins to create accounts', async () => {
 
   const res = await request(app)
     .post(withApiPrefix('/users'))
-    .set(auth('admin', ADMIN_ROLE))
+    .set(await auth('admin', ADMIN_ROLE))
     .send({
       username: 'newuser',
       password: 'StrongSecret123',
@@ -119,7 +122,7 @@ test('POST /users allows admins to create accounts', async () => {
 
   const weakPassword = await request(app)
     .post(withApiPrefix('/users'))
-    .set(auth('admin', ADMIN_ROLE))
+    .set(await auth('admin', ADMIN_ROLE))
     .send({ username: 'weak', password: 'shortpass1A' });
   assert.strictEqual(weakPassword.status, 400);
   assert(
@@ -144,7 +147,7 @@ test('PUT users/me updates user and checks auth failures', async () => {
   // success
   const up = await request(app)
     .put(withApiPrefix('/users/me'))
-    .set(auth(id.toString(), AUTRE_ROLE))
+    .set(await auth(id.toString(), AUTRE_ROLE))
     .send({ email: 'bob@example.com' })
     .expect(200);
   assert.strictEqual(up.body.email, 'bob@example.com');
@@ -152,9 +155,11 @@ test('PUT users/me updates user and checks auth failures', async () => {
   // not found
   await request(app)
     .put(withApiPrefix('/users/me'))
-    .set(auth(new ObjectId().toString(), AUTRE_ROLE))
+    .set({
+      Authorization: `Bearer ${token(new ObjectId().toString(), AUTRE_ROLE)}`,
+    })
     .send({ email: 'x@x.com' })
-    .expect(404);
+    .expect(401);
 
   // missing token
   await request(app).put(withApiPrefix('/users/me')).send({}).expect(401);
@@ -189,7 +194,7 @@ test('PUT users/me ignores role and structure', async () => {
 
   await request(app)
     .put(withApiPrefix('/users/me'))
-    .set(auth(id.toString(), AUTRE_ROLE))
+    .set(await auth(id.toString(), AUTRE_ROLE))
     .send({
       role: ADMIN_ROLE,
       structure: structure2.toString(),
@@ -225,13 +230,13 @@ test('DELETE users/:id respects authorization', async () => {
   // non admin
   await request(app)
     .delete(withApiPrefix(`/users/${id}`))
-    .set(auth('u1', AUTRE_ROLE))
+    .set(await auth('u1', AUTRE_ROLE))
     .expect(403);
 
   // admin success
   await request(app)
     .delete(withApiPrefix(`/users/${id}`))
-    .set(auth('a1', ADMIN_ROLE))
+    .set(await auth('a1', ADMIN_ROLE))
     .expect(200);
 
   await client.close();
@@ -248,7 +253,7 @@ test('cannot change role via users/me', async () => {
 
   const res = await request(app)
     .put(withApiPrefix('/users/me'))
-    .set(auth(id.toString(), AUTRE_ROLE))
+    .set(await auth(id.toString(), AUTRE_ROLE))
     .send({ role: ADMIN_ROLE })
     .expect(200);
   assert.strictEqual(res.body.role, AUTRE_ROLE);

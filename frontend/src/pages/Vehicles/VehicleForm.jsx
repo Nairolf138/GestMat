@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api';
 import Alert from '../../Alert.jsx';
@@ -62,7 +62,11 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
       structure:
         typeof vehicle?.structure === 'object'
           ? vehicle?.structure?._id
-          : vehicle?.structure || user?.structure?._id || '',
+          : vehicle?.structure ||
+            (typeof user?.structure === 'string'
+              ? user.structure
+              : user?.structure?._id) ||
+            '',
       brand: vehicle?.brand || '',
       model: vehicle?.model || '',
       registrationNumber: vehicle?.registrationNumber || '',
@@ -90,11 +94,17 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
         : '',
       notes: vehicle?.notes || '',
     }),
-    [vehicle, user?.structure?._id],
+    [vehicle, user?.structure],
   );
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
+  const [managerIds, setManagerIds] = useState([]);
+  const candidates = useQuery({
+    queryKey: ['vehicle-manager-candidates'],
+    queryFn: () => api('/vehicles/manager-candidates'),
+    enabled: !vehicle,
+  });
 
   const mutation = useMutation({
     mutationFn: (payload) => {
@@ -156,6 +166,7 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
     if (!payload.characteristics) delete payload.characteristics;
     if (!payload.maintenance) delete payload.maintenance;
     if (!payload.insurance) delete payload.insurance;
+    if (!vehicle && managerIds.length) payload.managerIds = managerIds;
     return payload;
   };
 
@@ -193,6 +204,42 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
         )}
       </div>
       <Alert message={error} />
+      {!vehicle && (
+        <div className="mb-3">
+          <label htmlFor="new-vehicle-managers" className="form-label">
+            Gestionnaires du véhicule
+          </label>
+          <select
+            id="new-vehicle-managers"
+            multiple
+            className="form-select"
+            value={managerIds}
+            onChange={(event) =>
+              setManagerIds(
+                [...event.target.selectedOptions].map((option) => option.value),
+              )
+            }
+          >
+            {(candidates.data || []).map((candidate) => (
+              <option key={candidate._id} value={candidate._id}>
+                {[candidate.firstName, candidate.lastName]
+                  .filter(Boolean)
+                  .join(' ') || candidate.username}{' '}
+                —{' '}
+                {structures.find(
+                  (structure) => structure._id === candidate.structure,
+                )?.name || candidate.role}
+              </option>
+            ))}
+          </select>
+          <p className="form-text">
+            Sans sélection, les régisseurs généraux de la structure propriétaire
+            seront désignés. Une sélection peut inclure des membres d’autres
+            structures.
+          </p>
+          <Alert message={candidates.error?.message} />
+        </div>
+      )}
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label" htmlFor="veh-name">
@@ -290,6 +337,7 @@ function VehicleForm({ vehicle, onCompleted, onCancel }) {
             {t('vehicles.form.structure')}
           </label>
           <select
+            disabled={user?.role !== 'Administrateur'}
             id="veh-structure"
             name="structure"
             value={form.structure}

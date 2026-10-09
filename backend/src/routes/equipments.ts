@@ -187,9 +187,15 @@ router.put(
       const newType = req.body.type
         ? normalizeType(req.body.type)
         : normalizeType(current.type as string);
-      if (!newType || !canModify(req.user!.role, newType)) {
+      if (
+        !newType ||
+        !canModify(req.user!.role, current.type as string) ||
+        !canModify(req.user!.role, newType)
+      ) {
         return next(forbidden('Access denied'));
       }
+      if (req.body.structure !== undefined && req.user!.role !== ADMIN_ROLE)
+        return next(forbidden('Access denied'));
       const updateData = req.body.type
         ? { ...req.body, type: newType }
         : req.body;
@@ -197,7 +203,7 @@ router.put(
       if (!updated) return next(notFound('Equipment not found'));
       res.json(updated);
     } catch (err) {
-      next(badRequest('Invalid request'));
+      next(err);
     }
   },
 );
@@ -229,7 +235,7 @@ router.delete(
       if (!removed) return next(notFound('Equipment not found'));
       res.json({ message: 'Equipment deleted' });
     } catch (err) {
-      next(badRequest('Invalid request'));
+      next(err);
     }
   },
 );

@@ -1,3 +1,5 @@
+const { accountHeaders } = require('./utils/accountFixture');
+let fixtureDb;
 const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
@@ -22,14 +24,14 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
+  fixtureDb = db;
   app.use(withApiPrefix('/loans'), loanRoutes);
   return { app, client, mongod };
 }
 
 const userId = new ObjectId().toString();
-function auth(role = ADMIN_ROLE) {
-  const token = jwt.sign({ id: userId, role }, 'test', { expiresIn: '1h' });
-  return { Authorization: `Bearer ${token}` };
+async function auth(role = ADMIN_ROLE) {
+  return accountHeaders(fixtureDb, userId, role, undefined);
 }
 
 test('concurrent loan creation only allows one reservation', async () => {
@@ -41,7 +43,12 @@ test('concurrent loan creation only allows one reservation', async () => {
     await db.collection('structures').insertOne({ name: 'S2' })
   ).insertedId;
   const eqId = (
-    await db.collection('equipments').insertOne({ name: 'E1', totalQty: 1 })
+    await db.collection('equipments').insertOne({
+      name: 'E1',
+      type: 'Autre',
+      structure: structId,
+      totalQty: 1,
+    })
   ).insertedId;
   await db
     .collection('users')
@@ -55,8 +62,14 @@ test('concurrent loan creation only allows one reservation', async () => {
   };
 
   const results = await Promise.allSettled([
-    request(app).post(withApiPrefix('/loans')).set(auth()).send(payload),
-    request(app).post(withApiPrefix('/loans')).set(auth()).send(payload),
+    request(app)
+      .post(withApiPrefix('/loans'))
+      .set(await auth())
+      .send(payload),
+    request(app)
+      .post(withApiPrefix('/loans'))
+      .set(await auth())
+      .send(payload),
   ]);
   const statuses = results.map((r) => r.value?.statusCode || r.reason?.status);
   assert.ok(statuses.includes(400));

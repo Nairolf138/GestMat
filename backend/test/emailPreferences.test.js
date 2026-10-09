@@ -126,6 +126,7 @@ test('email notification preferences', async (t) => {
       const equipment = await db.collection('equipments').insertOne({
         name: 'Console',
         type: 'Lumiere',
+        totalQty: 2,
         structure: owner.insertedId,
       });
 
@@ -176,14 +177,19 @@ test('email notification preferences', async (t) => {
 
       const { updateLoanRequest } = loadLoanServiceWithNotify(undefined);
 
+      const admin = (
+        await db.collection('users').insertOne({ role: ADMIN_ROLE })
+      ).insertedId;
       await updateLoanRequest(
         db,
-        { id: new ObjectId().toString(), role: ADMIN_ROLE },
+        { id: admin.toString(), role: ADMIN_ROLE },
         loan.insertedId.toString(),
         { status: 'accepted' },
       );
 
-      assert.strictEqual(sent.length, 0);
+      assert.strictEqual(sent.length, 1);
+      assert.ok(sent[0].bcc);
+      assert.strictEqual(sent[0].to, undefined);
 
       await client.close();
       await mongod.stop();

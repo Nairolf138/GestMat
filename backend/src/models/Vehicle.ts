@@ -1,4 +1,4 @@
-import { Db, Filter, ObjectId, WithId } from 'mongodb';
+import { Db, Filter, ObjectId, WithId, ClientSession } from 'mongodb';
 import { Structure } from './Structure';
 import { VEHICLE_USAGE_TYPES } from '../config/permissions';
 
@@ -66,6 +66,7 @@ export type NewVehicle = Pick<Vehicle, 'name'> &
 export interface Vehicle {
   _id?: ObjectId;
   name: string;
+  managerIds?: ObjectId[];
   type?: string;
   usage?: (typeof VEHICLE_USAGE_TYPES)[number];
   structure?: ObjectId | Structure | string;
@@ -102,6 +103,8 @@ function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
   if (normalized.structure) {
     normalized.structure = new ObjectId(normalized.structure as any);
   }
+  if (normalized.managerIds)
+    normalized.managerIds = normalized.managerIds.map((id) => new ObjectId(id));
   if (normalized.usage) {
     normalized.usage = normalized.usage.toString().toLowerCase() as any;
   }
@@ -192,7 +195,7 @@ export function buildAvailabilityFilter(
           },
         ],
       },
-      { status: { $ne: 'maintenance' } },
+      { status: { $nin: ['maintenance', 'retired', 'unavailable'] } },
     ],
   } as Filter<Vehicle>;
 }
@@ -217,6 +220,7 @@ export function findVehicles(
 export async function createVehicle(
   db: Db,
   data: NewVehicle,
+  session?: ClientSession,
 ): Promise<WithId<Vehicle>> {
   const vehicle: Vehicle = {
     status: 'available',
@@ -226,7 +230,9 @@ export async function createVehicle(
     downtimeDays: 0,
     ...normalizeVehicleDates(data),
   };
-  const result = await db.collection<Vehicle>('vehicles').insertOne(vehicle);
+  const result = await db
+    .collection<Vehicle>('vehicles')
+    .insertOne(vehicle, { session });
   return { _id: result.insertedId, ...vehicle };
 }
 
@@ -234,6 +240,7 @@ export async function updateVehicle(
   db: Db,
   id: string,
   data: Partial<Vehicle>,
+  session?: ClientSession,
 ): Promise<Vehicle | null> {
   const updates = normalizeVehicleDates(data);
   const unset: Record<string, ''> = {};
@@ -254,14 +261,19 @@ export async function updateVehicle(
     .collection<Vehicle>('vehicles')
     .findOneAndUpdate({ _id: new ObjectId(id) }, updateDoc, {
       returnDocument: 'after',
+      session,
     });
   return res.value;
 }
 
-export async function deleteVehicle(db: Db, id: string): Promise<boolean> {
+export async function deleteVehicle(
+  db: Db,
+  id: string,
+  session?: ClientSession,
+): Promise<boolean> {
   const res = await db
     .collection('vehicles')
-    .deleteOne({ _id: new ObjectId(id) });
+    .deleteOne({ _id: new ObjectId(id) }, { session });
   return res.deletedCount > 0;
 }
 

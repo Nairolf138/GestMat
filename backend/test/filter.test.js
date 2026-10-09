@@ -47,3 +47,17 @@ test('createEquipmentFilter excludes provided statuses', () => {
     status: { $nin: ['HS', 'En maintenance'] },
   });
 });
+
+test('category filters match accented and historical type spellings', () => {
+  for (const [category, legacy] of [
+    ['Vidéo', 'Video'],
+    ['Lumière', 'Lumiere'],
+    ['Autre', 'Autres'],
+  ]) {
+    const filter = createFilter({ type: category });
+    const regex = new RegExp(filter.type.$regex, filter.type.$options);
+    assert.equal(regex.test(category), true);
+    assert.equal(regex.test(legacy), true);
+    assert.equal(regex.test('Son'), false);
+  }
+});

@@ -5,7 +5,11 @@ import type {
   VehicleStatus,
 } from '../models/Vehicle';
 
-const UNAVAILABLE_STATUSES: VehicleStatus[] = ['maintenance', 'retired'];
+const UNAVAILABLE_STATUSES: VehicleStatus[] = [
+  'maintenance',
+  'retired',
+  'unavailable',
+];
 
 function hasReservationConflict(
   reservations: VehicleReservation[] = [],

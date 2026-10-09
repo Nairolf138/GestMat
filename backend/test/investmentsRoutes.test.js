@@ -1,3 +1,5 @@
+const { accountHeaders } = require('./utils/accountFixture');
+let fixtureDb;
 const test = require('node:test');
 const assert = require('assert');
 const request = require('supertest');
@@ -20,6 +22,7 @@ async function createApp() {
   const app = express();
   app.use(express.json());
   app.locals.db = db;
+  fixtureDb = db;
   app.use(withApiPrefix('/investments'), investmentsRoutes);
   app.use((err, _req, res, _next) => {
     res.status(err.statusCode || 500).json({ message: err.message });
@@ -27,13 +30,8 @@ async function createApp() {
   return { app, client, mongod, db };
 }
 
-function auth({ role = REGISSEUR_GENERAL_ROLE, structure } = {}) {
-  const token = jwt.sign(
-    { id: new ObjectId().toString(), role, structure },
-    'test',
-    { expiresIn: '1h' },
-  );
-  return { Authorization: `Bearer ${token}` };
+async function auth({ role = REGISSEUR_GENERAL_ROLE, structure } = {}) {
+  return accountHeaders(fixtureDb, 'u1', role, structure);
 }
 
 test('GET /api/investments forces non-admin listing on own structure even with another structure query', async () => {
@@ -66,7 +64,7 @@ test('GET /api/investments forces non-admin listing on own structure even with a
 
   const res = await request(app)
     .get(withApiPrefix(`/investments?structure=${otherStructure.toString()}`))
-    .set(auth({ structure: ownStructure.toString() }))
+    .set(await auth({ structure: ownStructure.toString() }))
     .expect(200);
 
   assert.strictEqual(res.body.length, 1);
@@ -106,7 +104,7 @@ test('GET /api/investments allows admin to query a specific structure', async ()
 
   const res = await request(app)
     .get(withApiPrefix(`/investments?structure=${secondStructure.toString()}`))
-    .set(auth({ role: ADMIN_ROLE, structure: firstStructure.toString() }))
+    .set(await auth({ role: ADMIN_ROLE, structure: firstStructure.toString() }))
     .expect(200);
 
   assert.strictEqual(res.body.length, 1);

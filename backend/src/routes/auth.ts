@@ -242,16 +242,17 @@ router.post(
 
       const stayLoggedIn = (payload as AuthUser).stayLoggedIn ?? true;
       const user = await findUserById(db, String(payload.id));
-      const structureId = resolveStructureId(user?.structure);
+      if (!user?.role) return next(unauthorized('Account unavailable'));
+      const structureId = resolveStructureId(user.structure);
       const token = jwt.sign(
-        { id: payload.id, role: payload.role, structure: structureId },
+        { id: payload.id, role: user.role, structure: structureId },
         JWT_SECRET,
         { expiresIn: '1h' },
       );
       const newRefreshToken = jwt.sign(
         {
           id: payload.id,
-          role: payload.role,
+          role: user.role,
           structure: structureId,
           stayLoggedIn,
         },
