@@ -45,20 +45,18 @@ describe('Cart note handling', () => {
     );
 
     await waitFor(() => expect(api.api).toHaveBeenCalledTimes(1));
-    expect(api.api).toHaveBeenCalledWith(
-      '/loans',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          owner: 's1',
-          startDate: '2024-01-01',
-          endDate: '2024-01-02',
-          items: [{ equipment: 'eq1', quantity: 1 }],
-          borrower: 'borrower-1',
-          note: '',
-        }),
-      }),
-    );
+    const [path, request] = api.api.mock.calls[0];
+    expect(path).toBe('/loans');
+    expect(request.method).toBe('POST');
+    expect(JSON.parse(request.body)).toEqual({
+      owner: 's1',
+      startDate: '2024-01-01',
+      endDate: '2024-01-02',
+      items: [{ equipment: 'eq1', quantity: 1 }],
+      borrower: 'borrower-1',
+      note: '',
+      clientRequestId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+    });
   });
 
   it('restores and persists the entered note between sessions', async () => {
@@ -107,5 +105,46 @@ describe('Cart note handling', () => {
       'Saisissez une quantité entière supérieure à zéro',
     );
     expect(JSON.parse(localStorage.getItem('cart'))).toEqual(sampleCart);
+  });
+
+  it('keeps only failed groups and reuses their request id on retry', async () => {
+    const second = {
+      ...sampleCart[0],
+      equipment: {
+        _id: 'eq2',
+        name: 'Micro',
+        structure: { _id: 's2', name: 'Structure 2' },
+      },
+    };
+    localStorage.setItem('cart', JSON.stringify([...sampleCart, second]));
+    api.api
+      .mockResolvedValueOnce({ _id: 'loan-1' })
+      .mockRejectedValueOnce(new Error('Network error'));
+    render(
+      <AuthContext.Provider
+        value={{ user: { structure: { _id: 'borrower-1' } } }}
+      >
+        <Cart />
+      </AuthContext.Provider>,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Valider la demande de prêt' }),
+    );
+    await waitFor(() =>
+      expect(JSON.parse(localStorage.getItem('cart'))).toEqual([second]),
+    );
+    const firstFailedId = JSON.parse(
+      api.api.mock.calls[1][1].body,
+    ).clientRequestId;
+    expect(screen.getByText(/demande reste dans le panier/)).toBeTruthy();
+    api.api.mockResolvedValueOnce({ _id: 'loan-2' });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Valider la demande de prêt' }),
+    );
+    await waitFor(() => expect(api.api).toHaveBeenCalledTimes(3));
+    expect(JSON.parse(api.api.mock.calls[2][1].body).clientRequestId).toBe(
+      firstFailedId,
+    );
+    await waitFor(() => expect(localStorage.getItem('cart')).toBeNull());
   });
 });

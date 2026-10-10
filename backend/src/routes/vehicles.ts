@@ -19,13 +19,14 @@ import {
   Vehicle,
   VehicleStatus,
   VEHICLE_STATUSES,
-  buildAvailabilityFilter,
   createVehicle,
   deleteVehicle,
   findVehicleById,
   findVehicles,
   updateVehicle,
 } from '../models/Vehicle';
+import { parseReservationPeriod } from '../utils/reservationPeriod';
+import { hasReservationConflict } from '../utils/checkVehicleAvailability';
 import {
   createVehicleValidator,
   updateVehicleValidator,
@@ -97,14 +98,6 @@ function buildVehicleFilter(query: any): Filter<Vehicle> {
   if (query.usage) {
     filter.usage = (query.usage as string).toLowerCase();
   }
-  if (query.availableStart && query.availableEnd) {
-    const start = new Date(query.availableStart as string);
-    const end = new Date(query.availableEnd as string);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      throw badRequest('Invalid availability range');
-    }
-    filter.$and = [...(filter.$and || []), buildAvailabilityFilter(start, end)];
-  }
   return filter;
 }
 
@@ -119,7 +112,34 @@ router.get(
       const limit = req.query.limit
         ? parseInt(req.query.limit as string, 10)
         : 0;
-      const vehicles = await findVehicles(db, filter, page, limit);
+      const period =
+        req.query.availableStart && req.query.availableEnd
+          ? parseReservationPeriod(
+              req.query.availableStart,
+              req.query.availableEnd,
+            )
+          : null;
+      let vehicles = await findVehicles(
+        db,
+        filter,
+        period ? 1 : page,
+        period ? 0 : limit,
+      );
+      if (period) {
+        vehicles = vehicles.filter(
+          (vehicle) =>
+            !['maintenance', 'retired', 'unavailable'].includes(
+              vehicle.status || '',
+            ) &&
+            !hasReservationConflict(
+              vehicle.reservations,
+              period.start,
+              period.endExclusive,
+            ),
+        );
+        if (limit > 0)
+          vehicles = vehicles.slice((page - 1) * limit, page * limit);
+      }
       res.json(
         await Promise.all(
           vehicles.map(async (vehicle) => ({

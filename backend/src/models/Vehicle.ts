@@ -14,6 +14,8 @@ export type VehicleStatus = (typeof VEHICLE_STATUSES)[number];
 export interface VehicleReservation {
   start: Date;
   end: Date;
+  mode?: 'day' | 'time';
+  timeZone?: string;
   status?: VehicleStatus;
   note?: string;
   loanRequestId?: ObjectId;
@@ -175,29 +177,6 @@ function normalizeVehicleDates<T extends Partial<Vehicle>>(vehicle: T): T {
     };
   }
   return normalized;
-}
-
-export function buildAvailabilityFilter(
-  start: Date,
-  end: Date,
-): Filter<Vehicle> {
-  return {
-    $and: [
-      {
-        $or: [
-          { reservations: { $exists: false } },
-          {
-            reservations: {
-              $not: {
-                $elemMatch: { start: { $lt: end }, end: { $gt: start } },
-              },
-            },
-          },
-        ],
-      },
-      { status: { $nin: ['maintenance', 'retired', 'unavailable'] } },
-    ],
-  } as Filter<Vehicle>;
 }
 
 export function findVehicles(

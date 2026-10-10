@@ -1,6 +1,7 @@
 import { Db, ObjectId, ClientSession } from 'mongodb';
+import { storedReservationPeriod } from './reservationPeriod';
 
-// Availability is computed dynamically from total quantity and overlapping loan requests.
+// Inventory availableQty is the usable stock before reservations.
 export async function checkEquipmentAvailability(
   db: Db,
   equipmentId: string,
@@ -18,38 +19,47 @@ export async function checkEquipmentAvailability(
   }
   let reserved = 0;
   if (start && end) {
-    const agg = await db
+    const loans = await db
       .collection('loanrequests')
-      .aggregate(
-        [
-          {
-            $match: {
-              ...(excludedLoanRequestId
-                ? { _id: { $ne: excludedLoanRequestId } }
-                : {}),
-              status: { $nin: ['refused', 'cancelled'] },
-              // Overlap check treats loan end dates as exclusive to allow
-              // back-to-back reservations without double counting the
-              // midnight boundary.
-              startDate: { $lt: end },
-              endDate: { $gt: start },
-              items: { $elemMatch: { equipment: eq._id } },
-            },
+      .find(
+        {
+          ...(excludedLoanRequestId
+            ? { _id: { $ne: excludedLoanRequestId } }
+            : {}),
+          status: { $nin: ['refused', 'cancelled'] },
+          startDate: { $lt: end },
+          endDate: { $gte: new Date(start.getTime() - 86400000) },
+          items: { $elemMatch: { equipment: eq._id } },
+        },
+        {
+          session,
+          projection: {
+            startDate: 1,
+            endDate: 1,
+            reservationMode: 1,
+            items: 1,
           },
-          { $unwind: '$items' },
-          {
-            $match: {
-              'items.equipment': eq._id,
-              'items.decision.status': { $nin: ['refused', 'cancelled'] },
-            },
-          },
-          { $group: { _id: null, qty: { $sum: '$items.quantity' } } },
-        ],
-        { session },
+        },
       )
       .toArray();
-    reserved = agg[0]?.qty || 0;
+    for (const loan of loans) {
+      const period = storedReservationPeriod(loan as any);
+      if (period.start >= end || period.endExclusive <= start) continue;
+      for (const item of loan.items || []) {
+        if (item.equipment?.toString() !== eq._id.toString()) continue;
+        if (['refused', 'cancelled'].includes(item.decision?.status)) continue;
+        reserved += Number(item.quantity) || 0;
+      }
+    }
   }
-  const availQty = (eq.totalQty || 0) - reserved;
+  const enteredStock = Number(eq.availableQty);
+  const stock =
+    eq.availableQty == null || !Number.isFinite(enteredStock)
+      ? Number(eq.totalQty) || 0
+      : enteredStock;
+  const usable = ['HS', 'En maintenance'].includes(eq.status)
+    ? 0
+    : Math.max(0, Math.min(Number(eq.totalQty) || 0, stock));
+  const availQty = Math.max(0, usable - reserved);
   return { available: quantity <= availQty, availableQty: availQty };
 }

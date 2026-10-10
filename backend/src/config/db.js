@@ -9,6 +9,13 @@ async function connectDB() {
   await db.collection('loanrequests').createIndex({ status: 1 });
   await db.collection('loanrequests').createIndex({ startDate: 1 });
   await db.collection('loanrequests').createIndex({ 'items.equipment': 1 });
+  await db.collection('loanrequests').createIndex(
+    { requestedBy: 1, clientRequestId: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { clientRequestId: { $type: 'string' } },
+    },
+  );
   await db.collection('equipments').createIndex({ structure: 1 });
   return db;
 }
