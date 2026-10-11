@@ -515,6 +515,7 @@
     "review_lines": "Examiner les équipements",
     "request_kind": {
       "vehicle": "Réservation de véhicule",
+      "equipment": "Demande de matériel",
       "mixed": "Demande de matériel et de véhicule"
     },
     "resource_kind": {
@@ -522,6 +523,8 @@
       "equipment": "Matériel"
     },
     "requested_slot": "Créneau demandé",
+    "requester_label": "Demandeur",
+    "requester_unknown": "Non renseigné",
     "line_decisions_form": "Décisions par ligne",
     "vehicle_decision": {
       "accept": "Confirmer la réservation",

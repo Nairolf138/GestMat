@@ -100,7 +100,15 @@ describe('Loans', () => {
     renderLoans();
 
     await screen.findByText('Eq1 x1');
+    expect(screen.getByText('Demande de matériel')).toBeInTheDocument();
     expect(screen.getByText('Eq2 x1')).toBeInTheDocument();
+    expect(screen.getAllByText('Matériel')).toHaveLength(2);
+    expect(screen.getByText('Eq1 x1').closest('li')).toHaveClass(
+      'loan-line-resource',
+    );
+    expect(screen.getByText('Eq2 x1').closest('li')).toHaveClass(
+      'loan-line-resource',
+    );
     expect(screen.queryByRole('button', { name: 'Accepter' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Refuser' })).toBeNull();
   });
@@ -111,6 +119,7 @@ describe('Loans', () => {
         _id: 'l-veh',
         owner: { _id: 's1', name: 'S1' },
         borrower: { _id: 's2', name: 'S2' },
+        requestedBy: { firstName: 'Jeanne', lastName: 'Martin' },
         reservationMode: 'time',
         timeZone: 'Europe/Paris',
         startDate: '2026-10-16T07:00:00.000Z',
@@ -138,6 +147,9 @@ describe('Loans', () => {
 
     expect(screen.getByText('Réservation de véhicule')).toBeInTheDocument();
     expect(screen.getByText('Véhicule')).toBeInTheDocument();
+    expect(screen.getByText('Demandeur :').parentElement).toHaveTextContent(
+      'Jeanne Martin',
+    );
     expect(
       screen.getByText('Créneau demandé :').parentElement,
     ).toHaveTextContent(/16\/10\/2026 09:00.*16\/10\/2026 12:00/);

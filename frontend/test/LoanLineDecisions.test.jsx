@@ -1,4 +1,5 @@
 import { it, expect, vi, afterEach } from 'vitest';
+import '@testing-library/jest-dom/vitest';
 import {
   render,
   screen,
@@ -127,7 +128,7 @@ it('distinguishes a vehicle from equipment in a mixed decision without adding x1
           {
             lineId: 'speaker',
             kind: 'equipment',
-            equipment: { name: 'Enceinte' },
+            equipment: { name: 'Enceinte', type: 'Son' },
             quantity: 2,
             decision: { status: 'pending' },
             permissions: { canDecide: true },
@@ -138,7 +139,13 @@ it('distinguishes a vehicle from equipment in a mixed decision without adding x1
     />,
   );
   expect(screen.getByText('Véhicule')).toBeTruthy();
-  expect(screen.getByText('Matériel')).toBeTruthy();
+  expect(screen.getByText('Son')).toBeTruthy();
+  expect(screen.getByText('Camion (AB-123-CD)').closest('li')).toHaveClass(
+    'loan-line-resource',
+  );
+  expect(screen.getByText('Enceinte x2').closest('li')).toHaveClass(
+    'loan-line-resource',
+  );
   expect(
     screen.getByLabelText('Décision pour Camion (AB-123-CD)'),
   ).toBeTruthy();
