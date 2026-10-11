@@ -1,9 +1,10 @@
 import { Db, ObjectId, WithId } from 'mongodb';
 import PDFDocument from 'pdfkit';
-import { API_PREFIX, API_URL, REPORT_CHECK_INTERVAL_HOURS } from '../config';
+import { API_URL, REPORT_CHECK_INTERVAL_HOURS } from '../config';
 import { getStructures, Structure } from '../models/Structure';
 import logger from '../utils/logger';
-import { sendMail, formatSubject } from '../utils/sendMail';
+import { formatSubject } from '../utils/sendMail';
+import { processMailOutbox, queueMail } from './mailOutboxService';
 import { getStructureEmails } from '../utils/getStructureEmails';
 import { LoanRequest } from '../models/LoanRequest';
 
@@ -43,6 +44,8 @@ export interface StoredReport {
   stats: StructureStatsSummary;
   pdf: Buffer;
   recipients?: string[];
+  deliveredRecipients?: string[];
+  emailSuppressed?: boolean;
   sentAt?: Date;
   errors?: string[];
 }
@@ -143,6 +146,7 @@ export async function collectStructureStats(
         ],
         topEquipments: [
           { $unwind: '$items' },
+          { $match: { 'items.equipment': { $exists: true, $ne: null } } },
           {
             $group: {
               _id: '$items.equipment',
@@ -231,7 +235,7 @@ export async function renderReportPdf(
 
   doc
     .fontSize(20)
-    .text('Rapport annuel des prêts/émprunts', { align: 'center' });
+    .text('Rapport annuel des demandes et réservations', { align: 'center' });
   doc.moveDown();
   doc
     .fontSize(14)
@@ -244,8 +248,8 @@ export async function renderReportPdf(
     .fontSize(11)
     .list([
       `Total des dossiers: ${stats.totalLoans}`,
-      `Prêts émis: ${stats.roleCounts.owner}`,
-      `Emprunts reçus: ${stats.roleCounts.borrower}`,
+      `Dossiers comme structure responsable: ${stats.roleCounts.owner}`,
+      `Dossiers comme structure demandeuse: ${stats.roleCounts.borrower}`,
       `Durée moyenne (jours): ${stats.averageDurationDays.toFixed(1)}`,
     ]);
   doc.moveDown();
@@ -284,13 +288,13 @@ async function alreadyGenerated(
   db: Db,
   structureId: ObjectId,
   period: ReportPeriod,
-): Promise<boolean> {
+): Promise<WithId<StoredReport> | null> {
   const existing = await db.collection<StoredReport>('reports').findOne({
     structureId,
     periodStart: period.start,
     periodEnd: period.end,
   });
-  return Boolean(existing);
+  return existing;
 }
 
 async function persistReport(
@@ -307,31 +311,88 @@ async function persistReport(
 }
 
 async function sendReportEmail(
+  db: Db,
   report: WithId<StoredReport>,
   structure: WithId<Structure>,
   recipients: string[],
-): Promise<void> {
-  if (!recipients.length) {
-    return;
+): Promise<number> {
+  if (!recipients.length || report.sentAt || report.emailSuppressed) return 0;
+  const prefix = `report:${report._id}:recipient:`;
+  const completed = await db
+    .collection<{ _id: string; status: string }>('mailOutbox')
+    .find({
+      _id: {
+        $in: recipients.map(
+          (email) => `${prefix}${email.trim().toLowerCase()}`,
+        ),
+      },
+      status: 'sent',
+    })
+    .toArray();
+  if (completed.length) {
+    const recovered = completed.map((entry) =>
+      String(entry._id).slice(prefix.length),
+    );
+    await db
+      .collection('reports')
+      .updateOne(
+        { _id: report._id },
+        { $addToSet: { deliveredRecipients: { $each: recovered } } },
+      );
   }
-  const downloadUrl = `${API_URL}${API_PREFIX || ''}/reports/${report._id?.toString()}/download`;
-  await sendMail({
-    to: recipients.join(','),
-    subject: formatSubject('Rapport annuel des prêts/émprunts'),
-    text: `Bonjour,
+  const current = await db.collection<StoredReport>('reports').findOne({
+    _id: report._id,
+  });
+  const alreadyDelivered = new Set(
+    (current?.deliveredRecipients || []).map((email) => email.toLowerCase()),
+  );
+  if (recipients.every((email) => alreadyDelivered.has(email.toLowerCase()))) {
+    await db
+      .collection('reports')
+      .updateOne(
+        { _id: report._id, sentAt: { $exists: false } },
+        { $set: { sentAt: new Date() } },
+      );
+    return 0;
+  }
+  const downloadUrl = `${API_URL}/reports/${report._id?.toString()}/download`;
+  for (const recipient of recipients) {
+    const address = recipient.trim().toLowerCase();
+    if (!address || alreadyDelivered.has(address)) continue;
+    await queueMail(
+      db,
+      `report:${report._id}:recipient:${address}`,
+      {
+        to: address,
+        subject: formatSubject('Rapport annuel des demandes et réservations'),
+        text: `Bonjour,
 
 Veuillez trouver en pièce jointe le rapport annuel pour ${
-      structure.name || 'votre structure'
-    } (${report.periodStart.toISOString().substring(0, 10)} -> ${report.periodEnd
-      .toISOString()
-      .substring(0, 10)}).\nTéléchargement: ${downloadUrl}\n\n--\nGestMat`,
-    attachments: [
-      {
-        filename: `rapport-${report.structureName || 'structure'}.pdf`,
-        content: report.pdf,
+          structure.name || 'votre structure'
+        } (${report.periodStart.toISOString().substring(0, 10)} -> ${report.periodEnd
+          .toISOString()
+          .substring(0, 10)}).\nTéléchargement: ${downloadUrl}\n\n--\nGestMat`,
+        reportAttachment: {
+          reportId: String(report._id),
+          filename: `rapport-${report.structureName || 'structure'}.pdf`,
+        },
       },
-    ],
+      undefined,
+      {
+        kind: 'annual-report',
+        resourceId: String(report._id),
+        email: address,
+      },
+    );
+  }
+  await processMailOutbox(db);
+  const updated = await db.collection<StoredReport>('reports').findOne({
+    _id: report._id,
   });
+  return Math.max(
+    (updated?.deliveredRecipients?.length || 0) - alreadyDelivered.size,
+    0,
+  );
 }
 
 export async function generateAnnualReports(
@@ -355,17 +416,6 @@ export async function generateAnnualReports(
   let emailed = 0;
 
   const jobKey = `annual-${period.key}`;
-  const meta = await db
-    .collection<ReportJob>('reportJobs')
-    .findOne({ _id: jobKey });
-  if (meta && !force) {
-    logger.info(
-      'Annual reports already generated for %s, skipping',
-      period.key,
-    );
-    return { period, generated, skipped: filtered.length, emailed, errors };
-  }
-
   await db
     .collection<ReportJob>('reportJobs')
     .updateOne(
@@ -377,8 +427,18 @@ export async function generateAnnualReports(
   for (const structure of filtered) {
     const structureId = structure._id as ObjectId;
     try {
-      if (!force && (await alreadyGenerated(db, structureId, period))) {
+      const existing = !force
+        ? await alreadyGenerated(db, structureId, period)
+        : null;
+      if (existing) {
         skipped += 1;
+        if (sendEmails && !existing.sentAt && !existing.emailSuppressed)
+          emailed += await sendReportEmail(
+            db,
+            existing,
+            structure as WithId<Structure>,
+            existing.recipients || [],
+          );
         continue;
       }
 
@@ -391,16 +451,17 @@ export async function generateAnnualReports(
       const recipients = new Set<string>();
       const structureEmail = (structure as any).email;
       if (typeof structureEmail === 'string' && structureEmail.trim()) {
-        recipients.add(structureEmail.trim());
+        recipients.add(structureEmail.trim().toLowerCase());
       }
       const memberEmails = await getStructureEmails(
         db,
         structureId.toString(),
         {
           requireSystemAlerts: true,
+          preference: 'annualReports',
         },
       );
-      memberEmails.forEach((e) => recipients.add(e));
+      memberEmails.forEach((e) => recipients.add(e.trim().toLowerCase()));
 
       const stored = await persistReport(db, {
         structureId,
@@ -411,19 +472,17 @@ export async function generateAnnualReports(
         stats,
         pdf,
         recipients: Array.from(recipients),
+        emailSuppressed: !sendEmails,
       });
 
       if (sendEmails && recipients.size) {
         try {
-          await sendReportEmail(
+          emailed += await sendReportEmail(
+            db,
             stored,
             structure as WithId<Structure>,
             Array.from(recipients),
           );
-          await db
-            .collection('reports')
-            .updateOne({ _id: stored._id }, { $set: { sentAt: new Date() } });
-          emailed += recipients.size;
         } catch (err) {
           const message = `Email sending failed for report ${stored._id}: ${(err as Error).message}`;
           errors.push(message);

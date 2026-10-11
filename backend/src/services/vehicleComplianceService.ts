@@ -9,7 +9,7 @@ import { vehicleManagerIds } from '../utils/vehicleAccess';
 import { isNotificationEnabled } from '../utils/notificationPreferences';
 import logger from '../utils/logger';
 import { vehicleComplianceReminderTemplate } from '../utils/mailTemplates';
-import { sendMail } from '../utils/sendMail';
+import { processMailOutbox, queueMail } from './mailOutboxService';
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -77,7 +77,8 @@ async function sendComplianceReminder(
         .filter(
           (user) =>
             user.email &&
-            isNotificationEnabled(user as any, 'vehicleReminders'),
+            isNotificationEnabled(user as any, 'vehicleReminders') &&
+            isNotificationEnabled(user as any, 'systemAlerts'),
         )
         .map((user) => String(user.email).trim().toLowerCase()),
     ),
@@ -97,7 +98,20 @@ async function sendComplianceReminder(
     kind,
     expiryDate,
   });
-  await sendMail({ to: recipients.join(','), ...template });
+  const eventKey = `vehicle:${vehicle._id}:compliance:${kind}:${new Date(expiryDate).toISOString()}`;
+  for (const recipient of recipients)
+    await queueMail(
+      db,
+      `${eventKey}:recipient:${recipient}`,
+      { to: recipient, ...template },
+      new Date(expiryDate),
+      {
+        kind: 'vehicle-compliance',
+        resourceId: String(vehicle._id),
+        date: new Date(expiryDate).toISOString(),
+        document: kind,
+      },
+    );
 
   const reminderField =
     kind === 'insurance'
@@ -110,6 +124,7 @@ async function sendComplianceReminder(
       { _id: new ObjectId(vehicle._id) },
       { $set: { [reminderField]: new Date() } },
     );
+  await processMailOutbox(db);
 }
 
 export async function processVehicleComplianceReminders(

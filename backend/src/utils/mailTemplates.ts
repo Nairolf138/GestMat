@@ -6,6 +6,7 @@ type LoanRecipientRole = 'owner' | 'borrower' | 'requester';
 interface LoanMailContext {
   loan: LoanRequest;
   role?: LoanRecipientRole;
+  appUrl?: string;
 }
 
 interface LoanStatusContext extends LoanMailContext {
@@ -144,7 +145,7 @@ function getItemsLabel(items: LoanItem[] = []): string {
   const hasEquipment = items.some((item) => item.kind !== 'vehicle');
 
   if (hasVehicle && hasEquipment) {
-    return 'Éléments prêtés';
+    return 'Ressources demandées';
   }
 
   if (hasVehicle) {
@@ -152,6 +153,35 @@ function getItemsLabel(items: LoanItem[] = []): string {
   }
 
   return 'Matériel';
+}
+
+type RequestKind = 'equipment' | 'vehicle' | 'mixed';
+
+function requestKind(loan: LoanRequest): RequestKind {
+  const items = loan.items || [];
+  const hasVehicle = items.some((item) => item.kind === 'vehicle');
+  const hasEquipment = items.some((item) => item.kind !== 'vehicle');
+  return hasVehicle ? (hasEquipment ? 'mixed' : 'vehicle') : 'equipment';
+}
+
+function requestName(kind: RequestKind): string {
+  if (kind === 'vehicle') return 'réservation de véhicule';
+  if (kind === 'mixed') return 'demande de matériel et de véhicule';
+  return 'demande de prêt de matériel';
+}
+
+function requestSummaryTitle(kind: RequestKind): string {
+  if (kind === 'vehicle') return 'Résumé de la réservation';
+  if (kind === 'mixed') return 'Résumé de la demande';
+  return 'Résumé du prêt';
+}
+
+function statusForKind(status: string | undefined, kind: RequestKind): string {
+  if (kind === 'vehicle') {
+    if (status === 'accepted') return 'confirmée';
+    if (status === 'partial') return 'partiellement confirmée';
+  }
+  return translateStatus(status);
 }
 
 function formatItems(items: LoanItem[] = []): { text: string; html: string } {
@@ -199,9 +229,11 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
     const detail = decision
       ? ` — ${translateStatus(decision.status)}${decision.actor ? ` — ${getUserLabel(decision.actor)}` : ''}${decision.note ? ` — ${decision.note}` : ''}`
       : '';
-    textItems.push(`- ${label} (quantité : ${quantity})${detail}`);
+    textItems.push(
+      `- ${label}${kind === 'vehicle' ? '' : ` (quantité : ${quantity})`}${detail}`,
+    );
     htmlItems.push(
-      `<li><strong>${escapeHtml(String(label))}</strong> — quantité : ${quantity}${escapeHtml(detail)}</li>`,
+      `<li><strong>${escapeHtml(String(label))}</strong>${kind === 'vehicle' ? '' : ` — quantité : ${quantity}`}${escapeHtml(detail)}</li>`,
     );
   }
   return { text: textItems.join('\n'), html: htmlItems.join('') };
@@ -214,7 +246,11 @@ export function buildLoanSummary(loan: LoanRequest): {
   const borrower = getStructureLabel(loan.borrower);
   const owner = getStructureLabel(loan.owner);
   const requester = getUserLabel(loan.requestedBy);
-  const status = translateStatus(loan.status as string);
+  const kind = requestKind(loan);
+  const status = statusForKind(loan.status as string, kind);
+  const ownerLabel = kind === 'equipment' ? 'Prêteur' : 'Structure responsable';
+  const borrowerLabel =
+    kind === 'equipment' ? 'Emprunteur' : 'Structure demandeuse';
   const loanDate = (value: any) =>
     loan.reservationMode === 'day'
       ? new Date(value).toLocaleDateString('fr-FR', {
@@ -233,25 +269,27 @@ export function buildLoanSummary(loan: LoanRequest): {
   );
 
   const text =
-    `Prêteur : ${owner}\n` +
-    `Emprunteur : ${borrower}\n` +
+    `${ownerLabel} : ${owner}\n` +
+    `${borrowerLabel} : ${borrower}\n` +
     `Demandeur : ${requester}\n` +
     `Début : ${start}\n` +
     `Fin : ${end}\n` +
     `Statut : ${status}\n` +
-    `${itemsLabel} :\n${itemsText}\n` +
-    `Note : ${noteText}`;
+    `${itemsLabel} :\n${itemsText}` +
+    (loan.note?.toString().trim() ? `\nNote : ${noteText}` : '');
 
   const html = [
-    '<ul aria-label="Détails du prêt">',
-    `<li><strong>Prêteur :</strong> ${owner}</li>`,
-    `<li><strong>Emprunteur :</strong> ${borrower}</li>`,
-    `<li><strong>Demandeur :</strong> ${requester}</li>`,
-    `<li><strong>Début :</strong> ${start}</li>`,
-    `<li><strong>Fin :</strong> ${end}</li>`,
-    `<li><strong>Statut :</strong> ${status}</li>`,
+    `<ul aria-label="${requestSummaryTitle(kind)}">`,
+    `<li><strong>${ownerLabel} :</strong> ${escapeHtml(owner)}</li>`,
+    `<li><strong>${borrowerLabel} :</strong> ${escapeHtml(borrower)}</li>`,
+    `<li><strong>Demandeur :</strong> ${escapeHtml(requester)}</li>`,
+    `<li><strong>Début :</strong> ${escapeHtml(start)}</li>`,
+    `<li><strong>Fin :</strong> ${escapeHtml(end)}</li>`,
+    `<li><strong>Statut :</strong> ${escapeHtml(status)}</li>`,
     `<li><strong>${itemsLabel} :</strong><ul>${itemsHtml}</ul></li>`,
-    `<li><strong>Note :</strong> ${noteHtml}</li>`,
+    ...(loan.note?.toString().trim()
+      ? [`<li><strong>Note :</strong> ${noteHtml}</li>`]
+      : []),
     '</ul>',
   ].join('');
 
@@ -260,8 +298,14 @@ export function buildLoanSummary(loan: LoanRequest): {
 
 function getLoanLabel(loan: LoanRequest): string {
   const id = (loan as any)?._id;
-  if (!id) return 'prêt';
-  return typeof id === 'string' ? id : id.toString();
+  if (!id) return 'sans référence';
+  const value = typeof id === 'string' ? id : id.toString();
+  return `#${value.slice(-8).toUpperCase()}`;
+}
+
+function getLoanUrl(loan: LoanRequest, appUrl?: string): string | undefined {
+  if (!appUrl || !loan._id) return undefined;
+  return `${appUrl.replace(/\/+$/u, '')}/loans/${encodeURIComponent(String(loan._id))}`;
 }
 
 function renderLoanTemplate({
@@ -271,6 +315,8 @@ function renderLoanTemplate({
   action,
   summary,
   decisionNote,
+  summaryTitle = 'Résumé du prêt',
+  url,
 }: {
   subject: string;
   preamble: string;
@@ -278,6 +324,8 @@ function renderLoanTemplate({
   action: string;
   summary: { text: string; html: string };
   decisionNote?: { text: string; html: string };
+  summaryTitle?: string;
+  url?: string;
 }): MailTemplate {
   const text = [
     GREETING,
@@ -286,8 +334,9 @@ function renderLoanTemplate({
     eventLine,
     '',
     ...(decisionNote ? [`Note de décision : ${decisionNote.text}`, ''] : []),
-    'Résumé du prêt :',
+    `${summaryTitle} :`,
     summary.text,
+    ...(url ? ['', `Ouvrir la demande : ${url}`] : []),
     '',
     `Action à entreprendre : ${action}`,
     '',
@@ -296,13 +345,18 @@ function renderLoanTemplate({
 
   const html = [
     `<p>${GREETING}</p>`,
-    `<p>${preamble}</p>`,
-    `<p>${eventLine}</p>`,
+    `<p>${escapeHtml(preamble)}</p>`,
+    `<p>${escapeHtml(eventLine)}</p>`,
     decisionNote
       ? `<p><strong>Note de décision :</strong> ${decisionNote.html}</p>`
       : '',
-    `<div role="group" aria-label="Résumé du prêt">${summary.html}</div>`,
-    `<p><strong>Action à entreprendre :</strong> ${action}</p>`,
+    `<div role="group" aria-label="${escapeHtml(summaryTitle)}">${summary.html}</div>`,
+    ...(url
+      ? [
+          `<p><a href="${escapeHtml(url)}">Ouvrir la demande dans GestMat</a></p>`,
+        ]
+      : []),
+    `<p><strong>Action à entreprendre :</strong> ${escapeHtml(action)}</p>`,
     `<p>${SIGNATURE}</p>`,
   ]
     .filter(Boolean)
@@ -311,11 +365,40 @@ function renderLoanTemplate({
   return { subject, text, html };
 }
 
-function creationRoleCopy(role: LoanRecipientRole): {
+function creationRoleCopy(
+  role: LoanRecipientRole,
+  kind: RequestKind,
+): {
   subject: string;
   preamble: string;
   action: string;
 } {
+  if (kind === 'vehicle') {
+    if (role === 'owner')
+      return {
+        subject: 'Nouvelle réservation de véhicule à examiner',
+        preamble: 'Vous gérez le véhicule demandé.',
+        action:
+          'Examiner les dates et horaires, puis confirmer ou refuser la réservation dans GestMat.',
+      };
+    if (role === 'requester')
+      return {
+        subject: 'Votre demande de réservation de véhicule a été créée',
+        preamble: 'Votre demande de réservation a été enregistrée.',
+        action: 'Consulter GestMat pour suivre la décision du gestionnaire.',
+      };
+    return {
+      subject: 'Nouvelle réservation de véhicule pour votre structure',
+      preamble: 'Votre structure est indiquée comme utilisatrice du véhicule.',
+      action: 'Consulter la demande dans GestMat.',
+    };
+  }
+  if (kind === 'mixed')
+    return {
+      subject: 'Nouvelle demande de matériel et de véhicule',
+      preamble: 'Une demande concernant vos ressources a été créée.',
+      action: 'Consulter les ressources et les dates dans GestMat.',
+    };
   switch (role) {
     case 'borrower':
       return {
@@ -343,12 +426,48 @@ function creationRoleCopy(role: LoanRecipientRole): {
 function statusRoleCopy(
   role: LoanRecipientRole,
   status?: string,
+  kind: RequestKind = 'equipment',
+  decisionLabel?: string,
 ): {
   subject: string;
   preamble: string;
   action: string;
 } {
-  const statusLabel = translateStatus(status);
+  const statusLabel = decisionLabel || statusForKind(status, kind);
+  if (kind === 'vehicle') {
+    const noun = 'Réservation de véhicule';
+    return {
+      subject: `${noun} : ${statusLabel}`,
+      preamble:
+        role === 'owner'
+          ? 'Vous gérez le véhicule concerné.'
+          : role === 'requester'
+            ? 'Une décision concerne votre demande de réservation.'
+            : 'Une décision concerne une réservation de votre structure.',
+      action:
+        status === 'accepted' ||
+        (status === 'decision' && decisionLabel === 'confirmée')
+          ? 'Vérifier les dates et horaires confirmés dans GestMat.'
+          : status === 'refused' || status === 'cancelled'
+            ? 'Aucune action nécessaire ; consulter GestMat pour le détail.'
+            : 'Lire la décision pour chaque véhicule dans GestMat.',
+    };
+  }
+  if (kind === 'mixed')
+    return {
+      subject: `Demande de matériel et de véhicule : ${statusLabel}`,
+      preamble: 'Une mise à jour concerne votre demande.',
+      action: 'Vérifier la décision pour chaque ressource dans GestMat.',
+    };
+  if (status === 'decision')
+    return {
+      subject: `Demande de prêt de matériel : ${statusLabel}`,
+      preamble:
+        role === 'requester'
+          ? 'Une décision a été prise sur votre demande de matériel.'
+          : 'Une décision a été prise sur une demande de matériel qui vous concerne.',
+      action: 'Lire la décision pour chaque matériel dans GestMat.',
+    };
   const actionByStatus = (roleAction: {
     accepted: string;
     refused: string;
@@ -364,11 +483,11 @@ function statusRoleCopy(
   switch (role) {
     case 'borrower':
       return {
-        subject: `Statut de prêt ${statusLabel} - emprunteur`,
+        subject: `Demande de prêt de matériel : ${statusLabel}`,
         preamble: 'Votre structure est emprunteur sur ce prêt.',
         action: actionByStatus({
           accepted:
-            'Préparer la réception du matériel et convenir des modalités avec le prêteur.',
+            'Vérifier les dates et les modalités convenues avec le prêteur.',
           refused: 'Aucune action nécessaire, la demande est refusée.',
           cancelled: 'Aucune action, la demande a été annulée.',
           default: "Suivre l'avancement dans GestMat.",
@@ -376,7 +495,7 @@ function statusRoleCopy(
       };
     case 'requester':
       return {
-        subject: `Mise à jour de votre demande de prêt : ${statusLabel}`,
+        subject: `Votre demande de prêt de matériel : ${statusLabel}`,
         preamble: 'Vous êtes à l’origine de cette demande.',
         action: actionByStatus({
           accepted:
@@ -389,11 +508,11 @@ function statusRoleCopy(
     case 'owner':
     default:
       return {
-        subject: `Demande de prêt ${statusLabel} - prêteur`,
+        subject: `Demande de prêt de matériel : ${statusLabel}`,
         preamble: 'Vous êtes le prêteur associé à ce prêt.',
         action: actionByStatus({
           accepted:
-            'Préparer la mise à disposition et confirmer la remise du matériel.',
+            'Vérifier les dates et les modalités convenues avec l’emprunteur.',
           refused: 'Aucune action supplémentaire requise.',
           cancelled: 'La demande a été annulée ; aucune action requise.',
           default: "Vérifier l'état du prêt dans GestMat.",
@@ -402,11 +521,31 @@ function statusRoleCopy(
   }
 }
 
-function startReminderRoleCopy(role: LoanRecipientRole): {
+function startReminderRoleCopy(
+  role: LoanRecipientRole,
+  kind: RequestKind,
+): {
   subject: string;
   preamble: string;
   action: string;
 } {
+  if (kind === 'vehicle')
+    return {
+      subject: 'Rappel : votre réservation de véhicule commence bientôt',
+      preamble:
+        role === 'owner'
+          ? 'Une réservation du véhicule que vous gérez commence bientôt.'
+          : 'Une réservation de véhicule qui vous concerne commence bientôt.',
+      action:
+        'Vérifier les horaires et les modalités de prise en charge dans GestMat.',
+    };
+  if (kind === 'mixed')
+    return {
+      subject:
+        'Rappel : votre demande de matériel et de véhicule commence bientôt',
+      preamble: 'Une demande qui vous concerne commence bientôt.',
+      action: 'Vérifier les ressources et les horaires dans GestMat.',
+    };
   switch (role) {
     case 'borrower':
       return {
@@ -433,34 +572,48 @@ function startReminderRoleCopy(role: LoanRecipientRole): {
   }
 }
 
-function overdueRoleCopy(role: LoanRecipientRole): {
+function overdueRoleCopy(
+  role: LoanRecipientRole,
+  kind: RequestKind,
+): {
   subject: string;
   preamble: string;
   action: string;
 } {
+  if (kind === 'vehicle')
+    return {
+      subject: 'Date de fin de réservation de véhicule dépassée',
+      preamble: 'La date de fin prévue pour cette réservation est dépassée.',
+      action:
+        'Vérifier la situation du véhicule dans GestMat et contacter les personnes concernées si nécessaire.',
+    };
+  if (kind === 'mixed')
+    return {
+      subject: 'Date de fin de demande dépassée',
+      preamble: 'La date de fin prévue pour cette demande est dépassée.',
+      action: 'Vérifier la situation de chaque ressource dans GestMat.',
+    };
   switch (role) {
     case 'borrower':
       return {
-        subject: 'Prêt en retard - emprunteur',
-        preamble:
-          'Votre structure n’a pas restitué le matériel dans les délais.',
+        subject: 'Date de fin de prêt dépassée - emprunteur',
+        preamble: 'La date de fin prévue pour ce prêt est dépassée.',
         action:
-          "Restituer le matériel au plus vite et prévenir le prêteur de l'avancement.",
+          'Vérifier la situation dans GestMat et contacter le prêteur si nécessaire.',
       };
     case 'requester':
       return {
-        subject: 'Prêt en retard - suivi de votre demande',
+        subject: 'Date de fin de prêt dépassée - suivi de votre demande',
         preamble: 'Vous êtes le demandeur de ce prêt.',
         action:
-          "Relancer l'emprunteur sur la restitution du matériel et mettre à jour GestMat si nécessaire.",
+          "Vérifier la situation avec l'emprunteur et mettre à jour GestMat si nécessaire.",
       };
     case 'owner':
     default:
       return {
-        subject: 'Prêt en retard - prêteur',
+        subject: 'Date de fin de prêt dépassée - prêteur',
         preamble: 'Votre structure est prêteuse pour ce prêt.',
-        action:
-          "Contacter l'emprunteur et organiser le retour du matériel au plus vite.",
+        action: "Vérifier la situation avec l'emprunteur dans GestMat.",
       };
   }
 }
@@ -468,18 +621,37 @@ function overdueRoleCopy(role: LoanRecipientRole): {
 export function loanCreationTemplate({
   loan,
   role = 'owner',
+  appUrl,
 }: LoanMailContext): MailTemplate {
+  const kind = requestKind(loan);
   const { text, html } = buildLoanSummary(loan);
-  const { subject, preamble, action } = creationRoleCopy(role);
+  const { subject, preamble, action } = creationRoleCopy(role, kind);
   const loanLabel = getLoanLabel(loan);
 
   return renderLoanTemplate({
     subject,
     preamble,
-    eventLine: `Une nouvelle demande de prêt (${loanLabel}) a été créée.`,
+    eventLine: `Une nouvelle ${requestName(kind)} (${loanLabel}) a été créée.`,
     action,
     summary: { text, html },
+    summaryTitle: requestSummaryTitle(kind),
+    url: getLoanUrl(loan, appUrl),
   });
+}
+
+function decisionLabel(loan: LoanRequest, kind: RequestKind): string {
+  const statuses = [
+    ...new Set(
+      (loan.items || [])
+        .map((item) => (item.decision as any)?.status as string | undefined)
+        .filter((status): status is string => Boolean(status)),
+    ),
+  ];
+  return statuses.length === 1
+    ? statuses[0] === 'pending'
+      ? 'remise en attente'
+      : statusForKind(statuses[0], kind)
+    : 'décisions enregistrées';
 }
 
 export function loanStatusTemplate({
@@ -487,7 +659,9 @@ export function loanStatusTemplate({
   status,
   actor,
   role = 'owner',
+  appUrl,
 }: LoanStatusContext & { role?: LoanRecipientRole }): MailTemplate {
+  const kind = requestKind(loan);
   const { text, html } = buildLoanSummary(loan);
   const hasDecisionNote =
     typeof loan.decisionNote === 'string' &&
@@ -496,52 +670,75 @@ export function loanStatusTemplate({
     hasDecisionNote && (status === 'accepted' || status === 'refused')
       ? formatDecisionNote(loan.decisionNote as string | null)
       : undefined;
-  const statusLabel = translateStatus(status);
+  const statusLabel =
+    status === 'decision'
+      ? decisionLabel(loan, kind)
+      : statusForKind(status, kind);
   const actorLine = actor ? ` par ${actor}` : '';
-  const { subject, preamble, action } = statusRoleCopy(role, status);
+  const { subject, preamble, action } = statusRoleCopy(
+    role,
+    status,
+    kind,
+    status === 'decision' ? statusLabel : undefined,
+  );
   const loanLabel = getLoanLabel(loan);
 
   return renderLoanTemplate({
     subject,
     preamble,
-    eventLine: `La demande de prêt ${loanLabel} est ${statusLabel}${actorLine}.`,
+    eventLine:
+      status === 'decision'
+        ? statusLabel === 'décisions enregistrées'
+          ? `Des décisions ont été enregistrées pour la ${requestName(kind)} ${loanLabel}${actorLine}.`
+          : `La ${requestName(kind)} ${loanLabel} a été ${statusLabel}${actorLine}.`
+        : `La ${requestName(kind)} ${loanLabel} est ${statusLabel}${actorLine}.`,
     action,
     summary: { text, html },
     decisionNote,
+    summaryTitle: requestSummaryTitle(kind),
+    url: getLoanUrl(loan, appUrl),
   });
 }
 
 export function loanStartReminderTemplate({
   loan,
   role = 'owner',
+  appUrl,
 }: StartReminderContext & { role?: LoanRecipientRole }): MailTemplate {
+  const kind = requestKind(loan);
   const { text, html } = buildLoanSummary(loan);
-  const { subject, preamble, action } = startReminderRoleCopy(role);
+  const { subject, preamble, action } = startReminderRoleCopy(role, kind);
   const loanLabel = getLoanLabel(loan);
 
   return renderLoanTemplate({
     subject,
     preamble,
-    eventLine: `Le prêt ${loanLabel} va bientôt commencer.`,
+    eventLine: `La ${requestName(kind)} ${loanLabel} va bientôt commencer.`,
     action,
     summary: { text, html },
+    summaryTitle: requestSummaryTitle(kind),
+    url: getLoanUrl(loan, appUrl),
   });
 }
 
 export function loanOverdueTemplate({
   loan,
   role = 'owner',
+  appUrl,
 }: LoanMailContext): MailTemplate {
+  const kind = requestKind(loan);
   const { text, html } = buildLoanSummary(loan);
-  const { subject, preamble, action } = overdueRoleCopy(role);
+  const { subject, preamble, action } = overdueRoleCopy(role, kind);
   const loanLabel = getLoanLabel(loan);
 
   return renderLoanTemplate({
     subject,
     preamble,
-    eventLine: `Le prêt ${loanLabel} est en retard.`,
+    eventLine: `La date de fin de la ${requestName(kind)} ${loanLabel} est dépassée.`,
     action,
     summary: { text, html },
+    summaryTitle: requestSummaryTitle(kind),
+    url: getLoanUrl(loan, appUrl),
   });
 }
 
@@ -555,7 +752,9 @@ export function vehicleComplianceReminderTemplate({
     kind === 'insurance' ? "d'assurance" : 'de contrôle technique';
   const vehicleLabel = `${vehicle.name || 'Véhicule'}${
     vehicle.registrationNumber ? ` (${vehicle.registrationNumber})` : ''
-  }`;
+  }`
+    .replace(/[\r\n]+/gu, ' ')
+    .trim();
 
   return {
     subject: `Rappel ${kindLabel} pour ${vehicleLabel}`,
@@ -566,7 +765,7 @@ export function vehicleComplianceReminderTemplate({
       SIGNATURE,
     html: `
       <p>Bonjour,</p>
-      <p>L'échéance ${kindLabel} du véhicule <strong>${vehicleLabel}</strong> approche : <strong>${formattedDate}</strong>.</p>
+      <p>L'échéance ${kindLabel} du véhicule <strong>${escapeHtml(vehicleLabel)}</strong> approche : <strong>${escapeHtml(formattedDate)}</strong>.</p>
       <p>Merci de vérifier les documents de conformité associés et de planifier le renouvellement si nécessaire.</p>
       <p>${SIGNATURE}</p>
     `,
@@ -591,12 +790,12 @@ export function accountCreationTemplate({
       `Action à entreprendre : connectez-vous à GestMat pour vérifier vos informations.\n\n` +
       SIGNATURE,
     html: `
-      <p>Bonjour ${displayName},</p>
+      <p>Bonjour ${escapeHtml(displayName)},</p>
       <p>Votre compte GestMat a été créé.</p>
       <ul>
-        <li><strong>Identifiant :</strong> ${username}</li>
-        <li><strong>Structure :</strong> ${structureLabel}</li>
-        <li><strong>Rôle :</strong> ${role}</li>
+        <li><strong>Identifiant :</strong> ${escapeHtml(username)}</li>
+        <li><strong>Structure :</strong> ${escapeHtml(structureLabel)}</li>
+        <li><strong>Rôle :</strong> ${escapeHtml(role)}</li>
       </ul>
       <p><strong>Action à entreprendre :</strong> connectez-vous à GestMat pour vérifier vos informations.</p>
       <p>${SIGNATURE}</p>
@@ -618,8 +817,8 @@ export function accountUpdateTemplate({
       `Si vous n'êtes pas à l'origine de ces modifications, merci de contacter un administrateur.\n\n` +
       SIGNATURE,
     html: `
-      <p>Bonjour ${displayName},</p>
-      <p>Les informations suivantes de votre compte GestMat ont été mises à jour : ${formattedChanges}.</p>
+      <p>Bonjour ${escapeHtml(displayName)},</p>
+      <p>Les informations suivantes de votre compte GestMat ont été mises à jour : ${escapeHtml(formattedChanges)}.</p>
       <p>Si vous n'êtes pas à l'origine de ces modifications, merci de contacter un administrateur.</p>
       <p>${SIGNATURE}</p>
     `,
@@ -640,13 +839,13 @@ export function passwordResetTemplate({
       `Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.\n\n` +
       SIGNATURE,
     html: `
-      <p>Bonjour ${displayName},</p>
+      <p>Bonjour ${escapeHtml(displayName)},</p>
       <p>Une demande de réinitialisation de mot de passe a été effectuée.</p>
       <p>
         Pour définir un nouveau mot de passe, utilisez le lien ci-dessous (valable
         <strong>${expiresInHours}h</strong>) :
       </p>
-      <p><a href="${resetLink}">${resetLink}</a></p>
+      <p><a href="${escapeHtml(resetLink)}">${escapeHtml(resetLink)}</a></p>
       <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.</p>
       <p>${SIGNATURE}</p>
     `,
@@ -665,8 +864,8 @@ export function usernameReminderTemplate({
       `Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.\n\n` +
       SIGNATURE,
     html: `
-      <p>Bonjour ${displayName},</p>
-      <p>Suite à votre demande, voici votre identifiant GestMat : <strong>${username}</strong>.</p>
+      <p>Bonjour ${escapeHtml(displayName)},</p>
+      <p>Suite à votre demande, voici votre identifiant GestMat : <strong>${escapeHtml(username)}</strong>.</p>
       <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.</p>
       <p>${SIGNATURE}</p>
     `,

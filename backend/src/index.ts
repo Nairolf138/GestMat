@@ -42,6 +42,10 @@ import { scheduleLoanArchiving } from './services/archiveService';
 import { scheduleAnnualReports } from './services/reportService';
 import { scheduleVehicleComplianceReminders } from './services/vehicleComplianceService';
 import {
+  ensureMailOutboxIndexes,
+  scheduleMailOutbox,
+} from './services/mailOutboxService';
+import {
   registerMonitoringMetrics,
   refreshMonitoringMetrics,
 } from './utils/monitoring';
@@ -220,6 +224,7 @@ export async function start(
   let archiveInterval: NodeJS.Timeout | undefined;
   let reportInterval: NodeJS.Timeout | undefined;
   let vehicleComplianceSchedule: { cancel: () => void } | undefined;
+  let mailOutboxInterval: NodeJS.Timeout | undefined;
   try {
     db = await connect();
     app.locals.db = db;
@@ -238,7 +243,9 @@ export async function start(
     });
     await ensureSessionIndexes(db);
     await ensurePasswordResetIndexes(db);
+    await ensureMailOutboxIndexes(db);
     if (NODE_ENV !== 'test' && !GESTMAT_READ_ONLY) {
+      mailOutboxInterval = scheduleMailOutbox(db);
       reminderSchedule = scheduleLoanReminders(db);
       if (LOAN_OVERDUE_NOTIFICATIONS_ENABLED) {
         overdueInterval = scheduleOverdueLoanNotifications(db);
@@ -317,6 +324,7 @@ export async function start(
   const shutdown = () => {
     reminderSchedule?.cancel();
     vehicleComplianceSchedule?.cancel();
+    if (mailOutboxInterval) clearInterval(mailOutboxInterval);
     if (overdueInterval) {
       clearInterval(overdueInterval);
     }
@@ -336,6 +344,7 @@ export async function start(
   server.on('close', () => {
     reminderSchedule?.cancel();
     vehicleComplianceSchedule?.cancel();
+    if (mailOutboxInterval) clearInterval(mailOutboxInterval);
     if (overdueInterval) {
       clearInterval(overdueInterval);
     }

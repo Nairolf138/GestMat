@@ -118,3 +118,124 @@ test('annual report emails exclude members without system alerts', async () => {
   await client.close();
   await mongod.stop();
 });
+
+test('annual reports use private recipient envelopes and retry failed deliveries', async () => {
+  const { db, client, mongod } = await createDb();
+  try {
+    const structureId = new ObjectId();
+    await db.collection('structures').insertOne({
+      _id: structureId,
+      name: 'Structure A',
+    });
+    await db.collection('users').insertMany([
+      { structure: structureId, email: 'one@example.test' },
+      { structure: structureId, email: 'two@example.test' },
+      {
+        structure: structureId,
+        email: 'no-report@example.test',
+        preferences: { emailNotifications: { annualReports: false } },
+      },
+    ]);
+    const mailer = require('../src/utils/sendMail');
+    const originalSendMail = mailer.sendMail;
+    const sent = [];
+    let failSecond = true;
+    mailer.sendMail = async (message) => {
+      if (message.to === 'two@example.test' && failSecond) {
+        failSecond = false;
+        throw new Error('temporary SMTP failure');
+      }
+      sent.push(message);
+    };
+    try {
+      const {
+        generateAnnualReports,
+      } = require('../src/services/reportService');
+      const {
+        processMailOutbox,
+      } = require('../src/services/mailOutboxService');
+      const result = await generateAnnualReports(db, {
+        now: new Date('2024-09-15T12:00:00Z'),
+      });
+      assert.equal(result.emailed, 1);
+      assert.deepEqual(
+        sent.map((mail) => mail.to),
+        ['one@example.test'],
+      );
+      assert.ok(sent[0].attachments?.[0]?.content);
+      let report = await db.collection('reports').findOne({ structureId });
+      assert.equal(report.sentAt, undefined);
+
+      await db
+        .collection('mailOutbox')
+        .updateOne(
+          { _id: `report:${report._id}:recipient:two@example.test` },
+          { $set: { nextAttemptAt: new Date(0) } },
+        );
+      await processMailOutbox(db);
+      report = await db.collection('reports').findOne({ structureId });
+      assert.deepEqual(
+        sent.map((mail) => mail.to),
+        ['one@example.test', 'two@example.test'],
+      );
+      assert.ok(report.sentAt);
+      assert.equal(report.deliveredRecipients.length, 2);
+    } finally {
+      mailer.sendMail = originalSendMail;
+    }
+  } finally {
+    await client.close();
+    await mongod.stop();
+  }
+});
+
+test('a queued annual report is not sent after its recipient leaves the structure', async () => {
+  const { db, client, mongod } = await createDb();
+  const mailer = require('../src/utils/sendMail');
+  const originalSendMail = mailer.sendMail;
+  try {
+    const structureId = new ObjectId();
+    await db.collection('structures').insertOne({
+      _id: structureId,
+      name: 'Structure A',
+    });
+    const memberId = new ObjectId();
+    await db.collection('users').insertOne({
+      _id: memberId,
+      structure: structureId,
+      email: 'former-member@example.test',
+    });
+    mailer.sendMail = async () => {
+      throw new Error('temporary SMTP failure');
+    };
+    const { generateAnnualReports } = require('../src/services/reportService');
+    await generateAnnualReports(db, {
+      now: new Date('2024-09-15T12:00:00Z'),
+    });
+    const report = await db.collection('reports').findOne({ structureId });
+    assert.ok(report);
+
+    await db
+      .collection('users')
+      .updateOne({ _id: memberId }, { $set: { structure: new ObjectId() } });
+    const sent = [];
+    mailer.sendMail = async (message) => sent.push(message);
+    await db
+      .collection('mailOutbox')
+      .updateOne(
+        { _id: `report:${report._id}:recipient:former-member@example.test` },
+        { $set: { nextAttemptAt: new Date(0) } },
+      );
+    const { processMailOutbox } = require('../src/services/mailOutboxService');
+    await processMailOutbox(db);
+    assert.equal(sent.length, 0);
+    assert.equal(
+      await db.collection('mailOutbox').countDocuments({ status: 'expired' }),
+      1,
+    );
+  } finally {
+    mailer.sendMail = originalSendMail;
+    await client.close();
+    await mongod.stop();
+  }
+});

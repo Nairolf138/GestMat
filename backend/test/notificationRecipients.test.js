@@ -67,3 +67,53 @@ test('vehicles target only requester and named managers, deduplicating identical
     ['outside@example.test'],
   );
 });
+
+test('mixed requests respect separate equipment and vehicle opt-outs per line', async (t) => {
+  const f = await fixture(t);
+  const vehicleId = (
+    await f.db.collection('vehicles').insertOne({
+      name: 'Van',
+      structure: f.owner,
+      managerIds: [f.accounts.outside._id],
+    })
+  ).insertedId;
+  await f.db.collection('users').updateOne(
+    { _id: f.accounts.requester._id },
+    {
+      $set: {
+        preferences: {
+          emailNotifications: {
+            loanRequests: true,
+            vehicleRequests: false,
+          },
+        },
+      },
+    },
+  );
+  const loan = {
+    ...f.payload(['Son']),
+    requestedBy: f.accounts.requester._id,
+    items: [
+      { kind: 'equipment', equipment: f.equipment.Son._id, quantity: 1 },
+      { kind: 'vehicle', vehicle: vehicleId, quantity: 1 },
+    ],
+  };
+  const targets = await getLoanNotificationTargets(f.db, loan, {
+    equipment: 'loanRequests',
+    vehicle: 'vehicleRequests',
+  });
+  const requester = targets.find(
+    (target) => target.email === 'requester@example.test',
+  );
+  const manager = targets.find(
+    (target) => target.email === 'outside@example.test',
+  );
+  assert.deepEqual(
+    requester.items.map((item) => item.kind),
+    ['equipment'],
+  );
+  assert.deepEqual(
+    manager.items.map((item) => item.kind),
+    ['vehicle'],
+  );
+});

@@ -23,6 +23,7 @@ import {
   summarizeLines,
 } from '../utils/loanLines';
 import { deliverLoanNotification } from '../utils/getLoanRecipients';
+import { PUBLIC_APP_URL } from '../config';
 import {
   loanCreationTemplate,
   loanStatusTemplate,
@@ -427,23 +428,37 @@ async function notify(
   db: Db,
   loan: LoanRequest,
   action: string,
-  actor?: string,
-  creation = false,
+  options: {
+    actor?: string;
+    creation?: boolean;
+    eventKey: string;
+  },
 ): Promise<void> {
   try {
+    const creation = options.creation && action === 'pending';
     await deliverLoanNotification(
       db,
       loan,
       ({ loan: scopedLoan, role }) =>
-        creation && action === 'pending'
-          ? loanCreationTemplate({ loan: scopedLoan, role })
+        creation
+          ? loanCreationTemplate({
+              loan: scopedLoan,
+              role,
+              appUrl: PUBLIC_APP_URL,
+            })
           : loanStatusTemplate({
               loan: scopedLoan,
               role,
               status: action,
-              actor,
+              actor: options.actor,
+              appUrl: PUBLIC_APP_URL,
             }),
-      creation && action === 'pending' ? 'loanRequests' : 'loanStatusChanges',
+      creation
+        ? { equipment: 'loanRequests', vehicle: 'vehicleRequests' }
+        : { equipment: 'loanStatusChanges', vehicle: 'vehicleStatusChanges' },
+      {
+        eventKey: options.eventKey,
+      },
     );
   } catch (err) {
     logger.error('Loan notification error for %s: %o', loan._id, err);
@@ -574,13 +589,11 @@ export async function createLoanRequest(
     throw err;
   }
   const populated = await populateLoanRequest(db, loan);
-  await notify(
-    db,
-    populated,
-    populated.status as string,
-    actorName(current),
-    true,
-  );
+  await notify(db, populated, populated.status as string, {
+    actor: actorName(current),
+    creation: true,
+    eventKey: `loan:${idOf(populated)}:created`,
+  });
   return (await viewLoan(db, populated, current))!;
 }
 
@@ -851,6 +864,16 @@ export async function updateLoanRequest(
       revision: (raw.revision || 0) + 1,
       ...(deciding ? { processedBy: new ObjectId(current.id) } : {}),
     };
+    if (
+      data.startDate &&
+      new Date(next.startDate).getTime() !== new Date(raw.startDate).getTime()
+    )
+      delete next.startReminderSentAt;
+    if (
+      data.endDate &&
+      new Date(next.endDate).getTime() !== new Date(raw.endDate).getTime()
+    )
+      delete next.overdueNotifiedAt;
     dates(next);
     await syncAvailability(db, next, raw, session, editing);
     await db
@@ -870,8 +893,11 @@ export async function updateLoanRequest(
     await notify(
       db,
       eventLoan,
-      (data.status as string) || (data.decisions ? 'updated' : 'modified'),
-      actorName(current),
+      data.decisions ? 'decision' : (data.status as string) || 'modified',
+      {
+        actor: actorName(current),
+        eventKey: `loan:${idOf(populated)}:revision:${populated.revision}`,
+      },
     );
   }
   return viewLoan(db, populated, current);
@@ -939,12 +965,10 @@ export async function deleteLoanRequest(
       .replaceOne({ _id: raw._id }, next, { session });
     return next;
   });
-  await notify(
-    db,
-    await populateLoanRequest(db, archived),
-    'cancelled',
-    actorName(current),
-  );
+  await notify(db, await populateLoanRequest(db, archived), 'cancelled', {
+    actor: actorName(current),
+    eventKey: `loan:${idOf(archived)}:cancelled:${new Date(archived.archivedAt as Date).toISOString()}`,
+  });
   return { message: 'Loan request deleted' };
 }
 

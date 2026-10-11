@@ -71,6 +71,28 @@ test('collectStructureStats aggregates active and archived loans', async () => {
   await mongod.stop();
 });
 
+test('vehicle bookings count as dossiers without appearing as unknown equipment', async () => {
+  const { db, client, mongod } = await createDb();
+  try {
+    const structureId = new ObjectId();
+    const period = getAnnualReportPeriod(new Date('2024-09-15T12:00:00Z'));
+    await db.collection('loanrequests').insertOne({
+      owner: structureId,
+      borrower: new ObjectId(),
+      status: 'accepted',
+      startDate: new Date('2024-02-01T10:00:00Z'),
+      endDate: new Date('2024-02-01T12:00:00Z'),
+      items: [{ kind: 'vehicle', vehicle: new ObjectId(), quantity: 1 }],
+    });
+    const stats = await collectStructureStats(db, structureId, period);
+    assert.equal(stats.totalLoans, 1);
+    assert.deepEqual(stats.topEquipments, []);
+  } finally {
+    await client.close();
+    await mongod.stop();
+  }
+});
+
 test('renderReportPdf embeds summary text', async () => {
   const structure = { _id: new ObjectId(), name: 'Structure A' };
   const period = getAnnualReportPeriod(new Date('2024-09-15T12:00:00Z'));
@@ -91,7 +113,7 @@ test('renderReportPdf embeds summary text', async () => {
     .join(' ')
     .replace(/\s+/g, '');
   const normalizedLabel = period.label.replace(/\s+/g, '');
-  assert.ok(decoded.toLowerCase().includes('rapportannueldesprêts'));
+  assert.ok(decoded.toLowerCase().includes('rapportannueldesdemandes'));
   assert.ok(decoded.includes('StructureA'));
   assert.ok(decoded.includes(normalizedLabel));
 });

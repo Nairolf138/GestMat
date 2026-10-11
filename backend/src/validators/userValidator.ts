@@ -61,6 +61,26 @@ export const updateUserValidator: ValidationChain[] = [
     .optional()
     .isBoolean()
     .toBoolean(),
+  body('preferences.emailNotifications.vehicleRequests')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.vehicleStatusChanges')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.vehicleBookingReminders')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.vehicleReminders')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
+  body('preferences.emailNotifications.annualReports')
+    .optional()
+    .isBoolean()
+    .toBoolean(),
   body('preferences.emailNotifications.structureUpdates')
     .optional()
     .isBoolean()
