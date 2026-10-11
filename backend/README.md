@@ -34,11 +34,13 @@ The API reads its configuration from the following variables:
 | `COOKIE_SAME_SITE`                             | SameSite policy for authentication cookies. Accepts `lax`, `strict` or `none`; defaults to `lax`. Use `none` for cross-domain or webview/mobile clients and combine it with an HTTPS `API_URL` so browsers accept the cookie.                                                                  |
 | `SMTP_URL`                                     | SMTP connection string to enable email notifications and derive a default sender.                                                                                                                                                                                                              |
 | `NOTIFY_EMAIL`                                 | Optional sender/recipient address for notification emails (overrides the derived sender).                                                                                                                                                                                                      |
+| `PUBLIC_APP_URL`                               | Public frontend URL for direct links to requests in notification emails. Optional.                                                                                                                                                                                                             |
+| `LOAN_ARCHIVE_EMAIL`                           | Optional archive mailbox for one extra copy of each loan or booking event. No archive copy is sent when unset.                                                                                                                                                                                 |
 | `RATE_LIMIT_MAX`                               | Maximum requests allowed per 15 minutes. Defaults to `100`; increase for development.                                                                                                                                                                                                          |
-| `LOAN_REMINDER_OFFSET_HOURS`                   | Hours before the start or end date to trigger reminder emails. Defaults to `24`.                                                                                                                                                                                                               |
+| `LOAN_REMINDER_OFFSET_HOURS`                   | Hours before the start date to trigger reminder emails. Defaults to `24`.                                                                                                                                                                                                                      |
 | `LOAN_REMINDER_DAILY_SCHEDULE_ENABLED`         | Enable the daily 9:00 reminder sweep. Accepts lowercase `true`/`false`; set to `false` to disable this schedule.                                                                                                                                                                               |
-| `LOAN_REMINDER_INTERVAL_MINUTES`               | Interval used for reminder retries when the fallback scheduler is enabled. Defaults to `60`.                                                                                                                                                                                                   |
-| `LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED`      | Toggle interval-based reminder retries alongside or instead of the daily 9:00 schedule. Accepts lowercase `true`/`false`; set to `false` to disable the job. Defaults to `false`.                                                                                                              |
+| `LOAN_REMINDER_INTERVAL_MINUTES`               | Interval for additional reminder sweeps when enabled. Defaults to `15`; repeated sweeps do not create a second mail for the same start date.                                                                                                                                                   |
+| `LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED`      | Run interval-based sweeps alongside or instead of the daily 9:00 schedule. Accepts lowercase `true`/`false`; defaults to `true` so short bookings are checked during the day.                                                                                                                  |
 | `LOAN_ARCHIVE_MIN_AGE_DAYS`                    | Age in days before a finished loan is eligible for archiving. Defaults to `365`.                                                                                                                                                                                                               |
 | `LOAN_ARCHIVE_INTERVAL_DAYS`                   | Interval in days between archive jobs. Defaults to `1` (daily).                                                                                                                                                                                                                                |
 | `LOAN_ARCHIVE_BATCH_SIZE`                      | Maximum number of loans processed per archive run. Defaults to `100`.                                                                                                                                                                                                                          |
@@ -76,9 +78,18 @@ permission to be granted.
 - **Recommended cross-domain/mobile setup**: Serve the API over HTTPS, set `API_URL` to its public HTTPS URL and set `COOKIE_SAME_SITE=none`. Also ensure `CORS_ORIGIN` lists the consuming origins and that requests are sent with credentials enabled so refresh tokens are transmitted.
 
 To enable email notifications, set `SMTP_URL` in `.env` with a valid SMTP
-connection string. When `NOTIFY_EMAIL` is provided, it becomes the sender and
-recipient by default; otherwise the sender falls back to `no-reply@<SMTP host>`
-derived from the configured SMTP URL.
+connection string. `NOTIFY_EMAIL` is the optional sender address and receives
+administrator copies of account updates. Global loan/booking archive copies
+require `LOAN_ARCHIVE_EMAIL` explicitly. Without `NOTIFY_EMAIL`, the sender
+falls back to `notifications@nairolfconcept.fr`.
+
+Loan, booking, account update, annual report and vehicle document notifications are stored in the MongoDB
+`mailOutbox` collection before delivery. SMTP failures are retried with backoff;
+without `SMTP_URL`, messages remain pending instead of being treated as sent.
+Completed entries are retained for 30 days. Start reminders and document
+expiry notices are discarded if their relevant date has already passed.
+The `/metrics` endpoint exposes the number and age of pending messages for
+operational alerts.
 
 ## Initial administrator account
 

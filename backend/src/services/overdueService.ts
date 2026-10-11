@@ -1,29 +1,18 @@
-import { Db, ObjectId } from 'mongodb';
-import { LoanRequest, populateLoanRequest } from '../models/LoanRequest';
+import { Db } from 'mongodb';
+import { LoanRequest } from '../models/LoanRequest';
 import { deliverLoanNotification } from '../utils/getLoanRecipients';
 import { lineStatus } from '../utils/loanLines';
-import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import {
   LOAN_OVERDUE_CHECK_INTERVAL_MINUTES,
   LOAN_OVERDUE_NOTIFICATIONS_ENABLED,
-  NOTIFY_EMAIL,
+  PUBLIC_APP_URL,
 } from '../config';
 import { loanOverdueTemplate } from '../utils/mailTemplates';
 
 const MINUTES_IN_MS = 60 * 1000;
 const defaultIntervalMs = LOAN_OVERDUE_CHECK_INTERVAL_MINUTES * MINUTES_IN_MS;
 const closedStatuses = ['refused', 'cancelled'];
-
-function toObjectIdString(value: unknown): string | null {
-  const str = (value as any)?._id?.toString?.() || (value as any)?.toString?.();
-  if (!str) return null;
-  try {
-    return new ObjectId(str).toString();
-  } catch {
-    return null;
-  }
-}
 
 export async function processOverdueLoans(db: Db): Promise<void> {
   if (!LOAN_OVERDUE_NOTIFICATIONS_ENABLED) {
@@ -54,9 +43,26 @@ export async function processOverdueLoans(db: Db): Promise<void> {
       await deliverLoanNotification(
         db,
         { ...loan, items },
-        loanOverdueTemplate,
-        'loanStatusChanges',
-        { requireSystemAlerts: true },
+        ({ loan: scopedLoan, role }) =>
+          loanOverdueTemplate({
+            loan: scopedLoan,
+            role,
+            appUrl: PUBLIC_APP_URL,
+          }),
+        {
+          equipment: 'returnReminders',
+          vehicle: 'vehicleBookingReminders',
+        },
+        {
+          requireSystemAlerts: true,
+          eventKey: `loan:${loan._id}:overdue:${new Date(loan.endDate as Date).toISOString()}`,
+          validity: {
+            kind: 'loan-overdue',
+            resourceId: String(loan._id),
+            date: new Date(loan.endDate as Date).toISOString(),
+            lineIds: items.map((item) => String(item.lineId)),
+          },
+        },
       );
 
       await db

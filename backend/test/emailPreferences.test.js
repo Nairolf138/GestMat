@@ -43,6 +43,22 @@ async function createDb() {
 
 test('email notification preferences', async (t) => {
   await t.test('skips account update emails when disabled', async () => {
+    const { db, client, mongod } = await createDb();
+    const user = {
+      _id: new ObjectId(),
+      username: 'alice',
+      email: 'alice@example.test',
+      preferences: {
+        emailNotifications: {
+          accountUpdates: false,
+          loanRequests: true,
+          loanStatusChanges: true,
+          returnReminders: true,
+          systemAlerts: true,
+        },
+      },
+    };
+    await db.collection('users').insertOne(user);
     delete process.env.NOTIFY_EMAIL;
     clearModule('../src/config');
     clearModule('../src/config/index');
@@ -55,10 +71,22 @@ test('email notification preferences', async (t) => {
 
     const { notifyAccountUpdate } = reloadUsersRoute();
 
-    await notifyAccountUpdate(
-      {
-        username: 'alice',
-        email: 'alice@example.test',
+    await notifyAccountUpdate(db, user, ['mot de passe']);
+
+    assert.strictEqual(sent.length, 0);
+    assert.strictEqual(await db.collection('mailOutbox').countDocuments(), 0);
+    await client.close();
+    await mongod.stop();
+  });
+
+  await t.test(
+    'falls back to admin when user disabled account updates',
+    async () => {
+      const { db, client, mongod } = await createDb();
+      const user = {
+        _id: new ObjectId(),
+        username: 'bob',
+        email: 'bob@example.test',
         preferences: {
           emailNotifications: {
             accountUpdates: false,
@@ -68,16 +96,8 @@ test('email notification preferences', async (t) => {
             systemAlerts: true,
           },
         },
-      },
-      ['mot de passe'],
-    );
-
-    assert.strictEqual(sent.length, 0);
-  });
-
-  await t.test(
-    'falls back to admin when user disabled account updates',
-    async () => {
+      };
+      await db.collection('users').insertOne(user);
       process.env.NOTIFY_EMAIL = 'admin@example.test';
       clearModule('../src/config');
       clearModule('../src/config/index');
@@ -90,25 +110,61 @@ test('email notification preferences', async (t) => {
 
       const { notifyAccountUpdate } = reloadUsersRoute();
 
-      await notifyAccountUpdate(
-        {
-          username: 'bob',
-          email: 'bob@example.test',
-          preferences: {
-            emailNotifications: {
-              accountUpdates: false,
-              loanRequests: true,
-              loanStatusChanges: true,
-              returnReminders: true,
-              systemAlerts: true,
-            },
-          },
-        },
-        ['adresse e-mail'],
-      );
+      await notifyAccountUpdate(db, user, ['adresse e-mail']);
 
       assert.strictEqual(sent.length, 1);
       assert.strictEqual(sent[0].to, 'admin@example.test');
+      await client.close();
+      await mongod.stop();
+    },
+  );
+
+  await t.test(
+    'keeps account recipients private and drops an old address',
+    async () => {
+      const { db, client, mongod } = await createDb();
+      const user = {
+        _id: new ObjectId(),
+        username: 'charlie',
+        email: 'old@example.test',
+        preferences: { emailNotifications: { accountUpdates: true } },
+      };
+      await db.collection('users').insertOne(user);
+      process.env.NOTIFY_EMAIL = 'admin@example.test';
+      const mailer = require('../src/utils/sendMail');
+      const sent = [];
+      mailer.sendMail = async (message) => {
+        if (message.to === 'old@example.test')
+          throw new Error('temporary SMTP failure');
+        sent.push(message);
+      };
+      const { notifyAccountUpdate } = reloadUsersRoute();
+      await notifyAccountUpdate(db, user, ['mot de passe']);
+      assert.deepStrictEqual(
+        sent.map((message) => message.to),
+        ['admin@example.test'],
+      );
+      assert.equal(sent[0].bcc, undefined);
+
+      await db
+        .collection('users')
+        .updateOne({ _id: user._id }, { $set: { email: 'new@example.test' } });
+      await db
+        .collection('mailOutbox')
+        .updateOne(
+          { 'message.to': 'old@example.test' },
+          { $set: { nextAttemptAt: new Date(0) } },
+        );
+      const {
+        processMailOutbox,
+      } = require('../src/services/mailOutboxService');
+      await processMailOutbox(db);
+      assert.equal(
+        await db.collection('mailOutbox').countDocuments({ status: 'expired' }),
+        1,
+      );
+      await client.close();
+      await mongod.stop();
     },
   );
 
@@ -187,9 +243,7 @@ test('email notification preferences', async (t) => {
         { status: 'accepted' },
       );
 
-      assert.strictEqual(sent.length, 1);
-      assert.ok(sent[0].bcc);
-      assert.strictEqual(sent[0].to, undefined);
+      assert.strictEqual(sent.length, 0);
 
       await client.close();
       await mongod.stop();

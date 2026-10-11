@@ -3,6 +3,8 @@ import assert from 'assert';
 import { ObjectId } from 'mongodb';
 import {
   buildLoanSummary,
+  loanCreationTemplate,
+  loanStatusTemplate,
   loanOverdueTemplate,
   loanStartReminderTemplate,
 } from '../src/utils/mailTemplates';
@@ -10,6 +12,8 @@ import {
 process.env.TZ = 'UTC';
 
 const SIGNATURE = "L'équipe GestMat";
+const escapeHtml = (value: string) =>
+  value.replaceAll('&', '&amp;').replaceAll("'", '&#39;');
 const dateFormatter = (value: Date) =>
   new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'full',
@@ -18,6 +22,7 @@ const dateFormatter = (value: Date) =>
   }).format(value);
 
 const loanId = new ObjectId('507f1f77bcf86cd799439011');
+const shortReference = '#99439011';
 const startDate = new Date('2025-01-01T10:00:00.000Z');
 const endDate = new Date('2025-01-10T16:30:00.000Z');
 
@@ -50,7 +55,7 @@ const expectedSummaryText = [
 ].join('\n');
 
 const expectedSummaryHtml = [
-  '<ul aria-label="Détails du prêt">',
+  '<ul aria-label="Résumé du prêt">',
   '<li><strong>Prêteur :</strong> Structure Prêteuse</li>',
   '<li><strong>Emprunteur :</strong> Structure Emprunteuse</li>',
   '<li><strong>Demandeur :</strong> Ada Lovelace</li>',
@@ -74,26 +79,26 @@ const vehicleLoan = {
 };
 
 const expectedVehicleSummaryText = [
-  'Prêteur : Structure Prêteuse',
-  'Emprunteur : Structure Emprunteuse',
+  'Structure responsable : Structure Prêteuse',
+  'Structure demandeuse : Structure Emprunteuse',
   'Demandeur : Ada Lovelace',
   `Début : ${dateFormatter(startDate)}`,
   `Fin : ${dateFormatter(endDate)}`,
   'Statut : en attente',
   'Véhicule :',
-  '- Renault Kangoo - AB-123-CD (quantité : 1)',
+  '- Renault Kangoo - AB-123-CD',
   'Note : Livraison avant midi.',
 ].join('\n');
 
 const expectedVehicleSummaryHtml = [
-  '<ul aria-label="Détails du prêt">',
-  '<li><strong>Prêteur :</strong> Structure Prêteuse</li>',
-  '<li><strong>Emprunteur :</strong> Structure Emprunteuse</li>',
+  '<ul aria-label="Résumé de la réservation">',
+  '<li><strong>Structure responsable :</strong> Structure Prêteuse</li>',
+  '<li><strong>Structure demandeuse :</strong> Structure Emprunteuse</li>',
   '<li><strong>Demandeur :</strong> Ada Lovelace</li>',
   `<li><strong>Début :</strong> ${dateFormatter(startDate)}</li>`,
   `<li><strong>Fin :</strong> ${dateFormatter(endDate)}</li>`,
   '<li><strong>Statut :</strong> en attente</li>',
-  '<li><strong>Véhicule :</strong><ul><li><strong>Renault Kangoo - AB-123-CD</strong> — quantité : 1</li></ul></li>',
+  '<li><strong>Véhicule :</strong><ul><li><strong>Renault Kangoo - AB-123-CD</strong></li></ul></li>',
   '<li><strong>Note :</strong> Livraison avant midi.</li>',
   '</ul>',
 ].join('');
@@ -128,7 +133,7 @@ function buildExpectedTemplate({
     `<p>${preamble}</p>`,
     `<p>${eventLine}</p>`,
     `<div role="group" aria-label="Résumé du prêt">${expectedSummaryHtml}</div>`,
-    `<p><strong>Action à entreprendre :</strong> ${action}</p>`,
+    `<p><strong>Action à entreprendre :</strong> ${escapeHtml(action)}</p>`,
     `<p>${SIGNATURE}</p>`,
   ].join('');
 
@@ -152,7 +157,7 @@ test('loanStartReminderTemplate conserve un gabarit harmonisé', () => {
   const expected = buildExpectedTemplate({
     subject: 'Rappel : début de prêt imminent - emprunteur',
     preamble: 'Votre structure est sur le point de commencer un prêt.',
-    eventLine: `Le prêt ${loanId.toString()} va bientôt commencer.`,
+    eventLine: `La demande de prêt de matériel ${shortReference} va bientôt commencer.`,
     action:
       'Préparer la réception du matériel et vérifier les modalités avec le prêteur.',
   });
@@ -169,7 +174,7 @@ test("buildLoanSummary gère les items de type kind='vehicle'", () => {
   });
 });
 
-test("buildLoanSummary utilise 'Éléments prêtés' quand les items sont mixtes", () => {
+test("buildLoanSummary utilise 'Ressources demandées' quand les items sont mixtes", () => {
   const mixedLoan = {
     ...sampleLoan,
     items: [
@@ -183,9 +188,9 @@ test("buildLoanSummary utilise 'Éléments prêtés' quand les items sont mixtes
 
   const summary = buildLoanSummary(mixedLoan as any);
 
-  assert.match(summary.text, /Éléments prêtés :/);
-  assert.match(summary.html, /<strong>Éléments prêtés :<\/strong>/);
-  assert.match(summary.text, /- Peugeot Partner - EF-456-GH \(quantité : 1\)/);
+  assert.match(summary.text, /Ressources demandées :/);
+  assert.match(summary.html, /<strong>Ressources demandées :<\/strong>/);
+  assert.match(summary.text, /- Peugeot Partner - EF-456-GH/);
 });
 
 test('loanOverdueTemplate conserve un gabarit harmonisé', () => {
@@ -194,11 +199,11 @@ test('loanOverdueTemplate conserve un gabarit harmonisé', () => {
     role: 'requester',
   });
   const expected = buildExpectedTemplate({
-    subject: 'Prêt en retard - suivi de votre demande',
+    subject: 'Date de fin de prêt dépassée - suivi de votre demande',
     preamble: 'Vous êtes le demandeur de ce prêt.',
-    eventLine: `Le prêt ${loanId.toString()} est en retard.`,
+    eventLine: `La date de fin de la demande de prêt de matériel ${shortReference} est dépassée.`,
     action:
-      "Relancer l'emprunteur sur la restitution du matériel et mettre à jour GestMat si nécessaire.",
+      "Vérifier la situation avec l'emprunteur et mettre à jour GestMat si nécessaire.",
   });
 
   assert.deepStrictEqual(template, expected);
@@ -220,4 +225,76 @@ test('les templates de prêt ne contiennent pas de libellés par défaut', () =>
     assert.ok(!reminderTemplate.text.includes(label));
     assert.ok(!reminderTemplate.html.includes(label));
   }
+});
+
+test('une réservation de véhicule nomme le véhicule, les horaires et la bonne action', () => {
+  const loan = {
+    ...vehicleLoan,
+    reservationMode: 'time',
+    timeZone: 'Europe/Paris',
+  };
+  const template = loanCreationTemplate({
+    loan: loan as any,
+    role: 'owner',
+    appUrl: 'https://gestmat.example.test/',
+  });
+  assert.match(template.subject, /réservation de véhicule/i);
+  assert.doesNotMatch(template.subject, /prêt|matériel/i);
+  assert.match(template.text, /Renault Kangoo - AB-123-CD/);
+  assert.match(template.text, /Europe\/Paris/);
+  assert.match(template.text, /dates et horaires/);
+  assert.match(
+    template.text,
+    new RegExp(`https://gestmat.example.test/loans/${loanId}`),
+  );
+});
+
+test('les décisions par ligne sont explicites dans les objets des mails', () => {
+  const acceptedVehicle = {
+    ...vehicleLoan,
+    items: [{ ...vehicleLoan.items[0], decision: { status: 'accepted' } }],
+    status: 'accepted',
+  };
+  const refusedEquipment = {
+    ...sampleLoan,
+    items: [
+      {
+        kind: 'equipment',
+        equipment: { name: 'Caméra 4K' },
+        quantity: 1,
+        decision: { status: 'refused', note: 'Indisponible' },
+      },
+    ],
+    status: 'refused',
+  };
+  const vehicleMail = loanStatusTemplate({
+    loan: acceptedVehicle as any,
+    status: 'decision',
+    role: 'requester',
+  });
+  const equipmentMail = loanStatusTemplate({
+    loan: refusedEquipment as any,
+    status: 'decision',
+    role: 'borrower',
+  });
+  assert.match(vehicleMail.subject, /décision sur 1 ligne de la demande/i);
+  assert.doesNotMatch(vehicleMail.subject, /modifiée/i);
+  assert.match(equipmentMail.subject, /décision sur 1 ligne de la demande/i);
+  assert.doesNotMatch(equipmentMail.text, /La demande .* a été refusée/);
+  assert.match(equipmentMail.text, /Caméra 4K.*refusée.*Indisponible/);
+});
+
+test('le contenu HTML échappe les noms et le nom du décideur', () => {
+  const loan = {
+    ...vehicleLoan,
+    owner: { name: '<Service véhicule>' },
+  };
+  const template = loanStatusTemplate({
+    loan: loan as any,
+    status: 'accepted',
+    actor: '<Responsable>',
+  });
+  assert.doesNotMatch(template.html, /<Service véhicule>|<Responsable>/);
+  assert.match(template.html, /&lt;Service véhicule&gt;/);
+  assert.match(template.html, /&lt;Responsable&gt;/);
 });

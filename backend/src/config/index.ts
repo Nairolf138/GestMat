@@ -95,6 +95,14 @@ const envSchema = z.object({
   SMTP_URL: z.string().optional(),
   NOTIFY_EMAIL: z.string().optional(),
   LOAN_ARCHIVE_EMAIL: z.string().optional(),
+  PUBLIC_APP_URL: z
+    .string()
+    .url()
+    .refine(
+      (value) => /^https?:\/\//u.test(value),
+      'PUBLIC_APP_URL must be HTTP(S)',
+    )
+    .optional(),
   NODE_ENV: z.string().default('development'),
   GESTMAT_READ_ONLY: strictBoolean(false),
   API_PREFIX: z.string().optional(),
@@ -105,9 +113,9 @@ const envSchema = z.object({
     .transform((val) => normalizeSameSite(val)),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   LOAN_REMINDER_OFFSET_HOURS: z.coerce.number().positive().default(24),
-  LOAN_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
+  LOAN_REMINDER_INTERVAL_MINUTES: z.coerce.number().positive().default(15),
   LOAN_REMINDER_DAILY_SCHEDULE_ENABLED: strictBoolean(true),
-  LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: strictBoolean(false),
+  LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED: strictBoolean(true),
   LOAN_OVERDUE_NOTIFICATIONS_ENABLED: strictBoolean(false),
   LOAN_OVERDUE_CHECK_INTERVAL_MINUTES: z.coerce.number().positive().default(60),
   LOAN_ARCHIVE_MIN_AGE_DAYS: z.coerce.number().positive().default(365),
@@ -195,10 +203,8 @@ export const MONGODB_URI = env.MONGODB_URI;
 export const JWT_SECRET = env.JWT_SECRET;
 export const SMTP_URL = env.SMTP_URL;
 export const NOTIFY_EMAIL = env.NOTIFY_EMAIL;
-export const LOAN_ARCHIVE_EMAIL =
-  env.LOAN_ARCHIVE_EMAIL ??
-  env.NOTIFY_EMAIL ??
-  'notifications@nairolfconcept.fr';
+export const LOAN_ARCHIVE_EMAIL = env.LOAN_ARCHIVE_EMAIL;
+export const PUBLIC_APP_URL = env.PUBLIC_APP_URL;
 export const NODE_ENV = env.NODE_ENV;
 export const GESTMAT_READ_ONLY = env.GESTMAT_READ_ONLY;
 export const API_PREFIX = normalizeApiPrefix(env.API_PREFIX);
@@ -239,6 +245,7 @@ export default {
   SMTP_URL,
   NOTIFY_EMAIL,
   LOAN_ARCHIVE_EMAIL,
+  PUBLIC_APP_URL,
   NODE_ENV,
   API_PREFIX,
   API_URL,

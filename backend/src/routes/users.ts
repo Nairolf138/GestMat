@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { ObjectId } from 'mongodb';
+import { Db, ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import {
   findUsers,
@@ -18,9 +18,9 @@ import {
   updateUserValidator,
 } from '../validators/userValidator';
 import { ApiError, notFound } from '../utils/errors';
-import { sendMail } from '../utils/sendMail';
 import { NOTIFY_EMAIL } from '../config';
 import logger from '../utils/logger';
+import { processMailOutbox, queueMail } from '../services/mailOutboxService';
 import type { User } from '../models/User';
 import { DEFAULT_USER_PREFERENCES, mergePreferences } from '../models/User';
 import { accountUpdateTemplate } from '../utils/mailTemplates';
@@ -34,15 +34,23 @@ const DEFAULT_ROLE = AUTRE_ROLE;
 const ALLOWED_ROLES = ROLES.filter((r) => r !== ADMIN_ROLE);
 
 export const notifyAccountUpdate = async (
+  db: Db,
   user: User,
   changedFields: string[],
 ): Promise<void> => {
   if (!changedFields.length) return;
 
+  const userRecipient = isNotificationEnabled(user, 'accountUpdates')
+    ? user.email?.trim()
+    : undefined;
+  const administratorRecipient = NOTIFY_EMAIL?.trim();
   const recipients = [
-    isNotificationEnabled(user, 'accountUpdates') ? user.email : undefined,
-    NOTIFY_EMAIL,
-  ].filter((value): value is string => Boolean(value));
+    ...new Set(
+      [userRecipient, administratorRecipient]
+        .filter((address): address is string => Boolean(address))
+        .map((address) => address.toLowerCase()),
+    ),
+  ];
 
   if (!recipients.length) {
     logger.info(
@@ -63,15 +71,26 @@ export const notifyAccountUpdate = async (
   });
 
   try {
-    await sendMail({
-      to: recipients.join(','),
-      subject,
-      text,
-      html,
-    });
+    const eventId = new ObjectId().toHexString();
+    for (const recipient of recipients) {
+      await queueMail(
+        db,
+        `account:${user._id}:${eventId}:${recipient}`,
+        { to: recipient, subject, text, html },
+        undefined,
+        userRecipient?.toLowerCase() === recipient && user._id
+          ? {
+              kind: 'account-update',
+              resourceId: user._id.toString(),
+              email: recipient,
+            }
+          : undefined,
+      );
+    }
+    await processMailOutbox(db);
   } catch (error) {
     logger.error(
-      'Failed to send account update notification for user %s: %o',
+      'Failed to queue account update notification for user %s: %o',
       user.username,
       error,
     );
@@ -235,18 +254,12 @@ router.put(
     if (data.role !== undefined && data.role !== existingUser.role) {
       changedFields.push('rôle');
     }
-    if (
-      data.preferences !== undefined &&
-      JSON.stringify(data.preferences) !== JSON.stringify(currentPreferences)
-    ) {
-      changedFields.push('préférences');
-    }
     if (updated.structure) {
       const struct = await findStructureById(db, updated.structure.toString());
       if (struct) updated.structure = struct;
     }
     delete updated.password;
-    await notifyAccountUpdate(updated, changedFields);
+    await notifyAccountUpdate(db, updated, changedFields);
     res.json(updated);
   },
 );
@@ -333,19 +346,13 @@ router.put(
     ) {
       changedFields.push('structure');
     }
-    if (
-      data.preferences !== undefined &&
-      JSON.stringify(data.preferences) !== JSON.stringify(currentPreferences)
-    ) {
-      changedFields.push('préférences');
-    }
 
     if (updated.structure) {
       const struct = await findStructureById(db, updated.structure.toString());
       if (struct) updated.structure = struct;
     }
     delete updated.password;
-    await notifyAccountUpdate(updated, changedFields);
+    await notifyAccountUpdate(db, updated, changedFields);
     res.json(updated);
   },
 );

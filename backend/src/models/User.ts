@@ -7,8 +7,12 @@ export interface EmailNotificationPreferences {
   loanRequests: boolean;
   loanStatusChanges: boolean;
   returnReminders: boolean;
+  vehicleRequests: boolean;
+  vehicleStatusChanges: boolean;
+  vehicleBookingReminders: boolean;
   systemAlerts: boolean;
   vehicleReminders: boolean;
+  annualReports: boolean;
   /**
    * @deprecated Utilisé pour les anciens profils ; les nouvelles préférences explicites doivent être utilisées.
    */
@@ -25,8 +29,12 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     loanRequests: true,
     loanStatusChanges: true,
     returnReminders: true,
+    vehicleRequests: true,
+    vehicleStatusChanges: true,
+    vehicleBookingReminders: true,
     systemAlerts: true,
     vehicleReminders: true,
+    annualReports: true,
     structureUpdates: true,
   },
 };
@@ -78,6 +86,17 @@ export const mergePreferences = (
           restWithoutStructure[key] = structureUpdates;
       }
     }
+    // Preserve existing opt-outs when introducing separate vehicle categories.
+    for (const [vehicleKey, loanKey] of [
+      ['vehicleRequests', 'loanRequests'],
+      ['vehicleStatusChanges', 'loanStatusChanges'],
+      ['vehicleBookingReminders', 'returnReminders'],
+    ] as const) {
+      if (explicit[vehicleKey] === undefined)
+        restWithoutStructure[vehicleKey] = restWithoutStructure[loanKey];
+    }
+    if (explicit.annualReports === undefined)
+      restWithoutStructure.annualReports = restWithoutStructure.systemAlerts;
 
     return restWithoutStructure as EmailNotificationPreferences;
   })(),

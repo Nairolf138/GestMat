@@ -2,15 +2,11 @@ import nodemailer, { Transporter, SendMailOptions } from 'nodemailer';
 import { NOTIFY_EMAIL, SMTP_URL } from '../config';
 import logger from './logger';
 
-let transporter:
-  | Transporter
-  | { sendMail: (opts: SendMailOptions) => Promise<void> };
+let transporter: Transporter;
 
 let defaultSender: string | undefined;
 
-function getTransporter():
-  | Transporter
-  | { sendMail: (opts: SendMailOptions) => Promise<void> } {
+function getTransporter(): Transporter {
   if (!transporter) {
     if (SMTP_URL) {
       try {
@@ -38,12 +34,7 @@ function getTransporter():
         defaultSender ??= NOTIFY_EMAIL ?? 'notifications@nairolfconcept.fr';
       }
     } else {
-      transporter = {
-        sendMail: async (opts: SendMailOptions) => {
-          logger.info('Email disabled. Would send: %o', opts);
-        },
-      };
-      defaultSender ??= NOTIFY_EMAIL ?? 'notifications@nairolfconcept.fr';
+      throw new Error('SMTP_URL is not configured');
     }
   }
   return transporter;
@@ -60,8 +51,7 @@ export async function sendMail(options: SendMailOptions): Promise<void> {
   };
 
   if (!resolved.from) {
-    logger.warn('Email not sent: missing sender address');
-    return;
+    throw new Error('Email sender address is missing');
   }
 
   await transport.sendMail(resolved);

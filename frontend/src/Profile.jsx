@@ -24,6 +24,11 @@ function Profile() {
         loanRequests: true,
         loanStatusChanges: true,
         returnReminders: true,
+        vehicleRequests: true,
+        vehicleStatusChanges: true,
+        vehicleBookingReminders: true,
+        vehicleReminders: true,
+        annualReports: true,
         systemAlerts: true,
         structureUpdates: true,
       },
@@ -43,6 +48,11 @@ function Profile() {
         loanRequests: true,
         loanStatusChanges: true,
         returnReminders: true,
+        vehicleRequests: true,
+        vehicleStatusChanges: true,
+        vehicleBookingReminders: true,
+        vehicleReminders: true,
+        annualReports: true,
         systemAlerts: true,
         structureUpdates: true,
       },
@@ -62,18 +72,26 @@ function Profile() {
         },
       };
 
+      const stored = user.preferences?.emailNotifications || {};
       const { structureUpdates, ...emailNotifications } =
         preferences.emailNotifications;
-
-      if (structureUpdates !== undefined) {
-        ['loanRequests', 'loanStatusChanges', 'returnReminders'].forEach(
-          (key) => {
-            if (emailNotifications[key] === undefined) {
-              emailNotifications[key] = structureUpdates;
-            }
-          },
-        );
+      for (const key of [
+        'loanRequests',
+        'loanStatusChanges',
+        'returnReminders',
+      ]) {
+        emailNotifications[key] = stored[key] ?? structureUpdates ?? true;
       }
+      emailNotifications.vehicleRequests =
+        stored.vehicleRequests ?? emailNotifications.loanRequests;
+      emailNotifications.vehicleStatusChanges =
+        stored.vehicleStatusChanges ?? emailNotifications.loanStatusChanges;
+      emailNotifications.vehicleBookingReminders =
+        stored.vehicleBookingReminders ?? emailNotifications.returnReminders;
+      emailNotifications.vehicleReminders =
+        stored.vehicleReminders ?? structureUpdates ?? true;
+      emailNotifications.annualReports =
+        stored.annualReports ?? emailNotifications.systemAlerts;
 
       preferences.emailNotifications = emailNotifications;
       setForm((f) => ({
@@ -307,6 +325,45 @@ function Profile() {
               <input
                 className="form-check-input"
                 type="checkbox"
+                id="system-alerts"
+                name="preferences.emailNotifications.systemAlerts"
+                checked={form.preferences.emailNotifications.systemAlerts}
+                onChange={handleChange}
+              />
+              <label className="form-check-label" htmlFor="system-alerts">
+                {t('profile.preferences.email_notifications.system_alerts')}
+              </label>
+              <div className="form-text">
+                {t(
+                  'profile.preferences.email_notifications.system_alerts_help',
+                )}
+              </div>
+            </div>
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="annual-reports"
+                name="preferences.emailNotifications.annualReports"
+                checked={form.preferences.emailNotifications.annualReports}
+                onChange={handleChange}
+              />
+              <label className="form-check-label" htmlFor="annual-reports">
+                {t('profile.preferences.email_notifications.annual_reports')}
+              </label>
+              <div className="form-text">
+                {t(
+                  'profile.preferences.email_notifications.annual_reports_help',
+                )}
+              </div>
+            </div>
+            <h4 className="h6 mt-3">
+              {t('profile.preferences.email_notifications.equipment_title')}
+            </h4>
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
                 id="loan-requests"
                 name="preferences.emailNotifications.loanRequests"
                 checked={form.preferences.emailNotifications.loanRequests}
@@ -359,24 +416,43 @@ function Profile() {
                 )}
               </div>
             </div>
-            <div className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="system-alerts"
-                name="preferences.emailNotifications.systemAlerts"
-                checked={form.preferences.emailNotifications.systemAlerts}
-                onChange={handleChange}
-              />
-              <label className="form-check-label" htmlFor="system-alerts">
-                {t('profile.preferences.email_notifications.system_alerts')}
-              </label>
-              <div className="form-text">
-                {t(
-                  'profile.preferences.email_notifications.system_alerts_help',
-                )}
-              </div>
-            </div>
+            <h4 className="h6 mt-3">
+              {t('profile.preferences.email_notifications.vehicle_title')}
+            </h4>
+            {[
+              'vehicleRequests',
+              'vehicleStatusChanges',
+              'vehicleBookingReminders',
+              'vehicleReminders',
+            ].map((key) => {
+              const labelKey = key.replace(
+                /[A-Z]/g,
+                (letter) => `_${letter.toLowerCase()}`,
+              );
+              return (
+                <div className="form-check" key={key}>
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={labelKey.replaceAll('_', '-')}
+                    name={`preferences.emailNotifications.${key}`}
+                    checked={form.preferences.emailNotifications[key]}
+                    onChange={handleChange}
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor={labelKey.replaceAll('_', '-')}
+                  >
+                    {t(`profile.preferences.email_notifications.${labelKey}`)}
+                  </label>
+                  <div className="form-text">
+                    {t(
+                      `profile.preferences.email_notifications.${labelKey}_help`,
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div className="mb-3">
             <label className="form-label" htmlFor="language-select">

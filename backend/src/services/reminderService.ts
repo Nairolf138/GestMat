@@ -1,14 +1,14 @@
-import { Db, ObjectId } from 'mongodb';
-import { LoanRequest, populateLoanRequest } from '../models/LoanRequest';
+import { Db } from 'mongodb';
+import { LoanRequest } from '../models/LoanRequest';
 import { deliverLoanNotification } from '../utils/getLoanRecipients';
 import { lineStatus } from '../utils/loanLines';
-import { sendMail } from '../utils/sendMail';
 import logger from '../utils/logger';
 import {
   LOAN_REMINDER_INTERVAL_MINUTES,
   LOAN_REMINDER_OFFSET_HOURS,
   LOAN_REMINDER_DAILY_SCHEDULE_ENABLED,
   LOAN_REMINDER_FALLBACK_INTERVAL_ENABLED,
+  PUBLIC_APP_URL,
 } from '../config';
 import { loanStartReminderTemplate } from '../utils/mailTemplates';
 
@@ -33,16 +33,6 @@ function getNextReminderDate(targetHour: number): Date {
   return next;
 }
 
-function toObjectId(value: unknown): string | null {
-  const str = (value as any)?._id?.toString?.() || (value as any)?.toString?.();
-  if (!str) return null;
-  try {
-    return new ObjectId(str).toString();
-  } catch {
-    return null;
-  }
-}
-
 async function sendLoanReminder(
   db: Db,
   loan: LoanRequest,
@@ -50,6 +40,7 @@ async function sendLoanReminder(
   templateFactory: (context: {
     loan: LoanRequest;
     role: 'owner' | 'borrower' | 'requester';
+    appUrl?: string;
   }) => {
     subject: string;
     text: string;
@@ -64,9 +55,23 @@ async function sendLoanReminder(
     await deliverLoanNotification(
       db,
       { ...loan, items: activeItems },
-      templateFactory,
-      'returnReminders',
-      { requireSystemAlerts: true },
+      ({ loan: scopedLoan, role }) =>
+        templateFactory({ loan: scopedLoan, role, appUrl: PUBLIC_APP_URL }),
+      {
+        equipment: 'returnReminders',
+        vehicle: 'vehicleBookingReminders',
+      },
+      {
+        requireSystemAlerts: true,
+        eventKey: `loan:${loan._id}:start:${new Date(loan.startDate as Date).toISOString()}`,
+        expiresAt: new Date(loan.startDate as Date),
+        validity: {
+          kind: 'loan-start',
+          resourceId: String(loan._id),
+          date: new Date(loan.startDate as Date).toISOString(),
+          lineIds: activeItems.map((item) => String(item.lineId)),
+        },
+      },
     );
 
     await db

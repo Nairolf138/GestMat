@@ -15,7 +15,7 @@ import {
   NotificationPreference,
   isNotificationEnabled,
 } from './notificationPreferences';
-import { sendMail } from './sendMail';
+import { processMailOutbox, queueMail } from '../services/mailOutboxService';
 import logger from './logger';
 import { LOAN_ARCHIVE_EMAIL } from '../config';
 
@@ -29,7 +29,27 @@ interface Context {
 }
 interface Options {
   requireSystemAlerts?: boolean;
+  eventKey?: string;
+  expiresAt?: Date;
+  validity?: Extract<
+    import('../services/mailOutboxService').MailValidity,
+    { kind: 'loan-start' | 'loan-overdue' | 'loan-event' }
+  >;
   trace?: (value: any) => void;
+}
+export type LoanNotificationPreference =
+  | NotificationPreference
+  | { equipment: NotificationPreference; vehicle: NotificationPreference };
+
+function preferenceForItem(
+  preference: LoanNotificationPreference,
+  item: LoanItem,
+): NotificationPreference {
+  return typeof preference === 'string'
+    ? preference
+    : item.kind === 'vehicle'
+      ? preference.vehicle
+      : preference.equipment;
 }
 export interface LoanRecipientGroups {
   ownerRecipients: string[];
@@ -40,12 +60,13 @@ export interface LoanNotificationTarget {
   email: string;
   role: RecipientRole;
   items: LoanItem[];
+  userIds: string[];
 }
 
 export async function getLoanNotificationTargets(
   db: Db,
   loan: LoanRequest,
-  preference: NotificationPreference,
+  preference: LoanNotificationPreference,
   options: Options = {},
 ): Promise<LoanNotificationTarget[]> {
   const populated = await populateLoanRequest(db, {
@@ -88,7 +109,6 @@ export async function getLoanNotificationTargets(
   for (const user of users) {
     if (
       !user.email ||
-      !isNotificationEnabled(user as any, preference) ||
       (options.requireSystemAlerts &&
         !isNotificationEnabled(user as any, 'systemAlerts'))
     ) {
@@ -100,14 +120,27 @@ export async function getLoanNotificationTargets(
       });
       continue;
     }
-    const relevant = items.filter((item) =>
-      item.kind === 'vehicle'
-        ? idOf(user) === idOf(loan.requestedBy) ||
-          (managers.get(idOf(item.vehicle)) || []).includes(idOf(user))
-        : canAccessEquipmentLine(user, item, populated),
+    const relevant = items.filter(
+      (item) =>
+        isNotificationEnabled(
+          user as any,
+          preferenceForItem(preference, item),
+        ) &&
+        (item.kind === 'vehicle'
+          ? idOf(user) === idOf(loan.requestedBy) ||
+            (managers.get(idOf(item.vehicle)) || []).includes(idOf(user))
+          : canAccessEquipmentLine(user, item, populated)),
     );
-    if (!relevant.length) continue;
+    if (!relevant.length) {
+      options.trace?.({
+        identifier: idOf(user),
+        preference,
+        reason: 'no relevant line, insufficient access or opt-out',
+      });
+      continue;
+    }
     const email = String(user.email).trim().toLowerCase();
+    if (!email) continue;
     const role: RecipientRole =
       idOf(user.structure) === idOf(loan.owner) ||
       relevant.some(
@@ -126,7 +159,15 @@ export async function getLoanNotificationTargets(
       existing.items.push(
         ...relevant.filter((item) => !known.has(item.lineId)),
       );
-    } else byEmail.set(email, { email, role, items: relevant });
+      if (!existing.userIds.includes(idOf(user)))
+        existing.userIds.push(idOf(user));
+    } else
+      byEmail.set(email, {
+        email,
+        role,
+        items: relevant,
+        userIds: [idOf(user)],
+      });
   }
   if (!byEmail.size) logger.warn('Loan notification: no recipients found');
   return [...byEmail.values()];
@@ -195,7 +236,7 @@ export async function deliverLoanNotification(
     text: string;
     html: string;
   },
-  preference: NotificationPreference,
+  preference: LoanNotificationPreference,
   options: Options = {},
 ): Promise<void> {
   const populated = await populateLoanRequest(db, {
@@ -209,9 +250,33 @@ export async function deliverLoanNotification(
     options,
   );
   const archiveEmail = LOAN_ARCHIVE_EMAIL?.trim().toLowerCase();
-  const deliveries: Promise<unknown>[] = [];
+  const archiveAccount = archiveEmail
+    ? await db.collection('users').findOne({
+        email: {
+          $regex: `^${archiveEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+          $options: 'i',
+        },
+      })
+    : null;
+  if (archiveAccount)
+    logger.warn(
+      'Loan archive address belongs to a user account; archive copy skipped',
+    );
+  const sendArchive = Boolean(archiveEmail && !archiveAccount);
+  const eventKey =
+    options.eventKey ||
+    `loan:${idOf(loan)}:${String(loan.revision ?? 0)}:${String(loan.status ?? 'unknown')}:${typeof preference === 'string' ? preference : preference.equipment}`;
+  const baseValidity: NonNullable<Options['validity']> = options.validity || {
+    kind: 'loan-event',
+    resourceId: idOf(loan),
+    revision: Number(loan.revision || 0),
+  };
+  const preferences =
+    typeof preference === 'string'
+      ? { equipment: preference, vehicle: preference }
+      : preference;
   for (const target of targets) {
-    if (target.email === archiveEmail) continue;
+    if (sendArchive && target.email === archiveEmail) continue;
     const lineIds = new Set(target.items.map((item) => item.lineId));
     const scoped = {
       ...populated,
@@ -221,22 +286,37 @@ export async function deliverLoanNotification(
         (entry) => !entry.lineId || lineIds.has(entry.lineId),
       ),
     };
-    deliveries.push(
-      sendMail({
+    await queueMail(
+      db,
+      `${eventKey}:recipient:${target.email}`,
+      {
         to: target.email,
         ...template({ loan: scoped, role: target.role }),
-      }),
+      },
+      options.expiresAt,
+      {
+        ...baseValidity,
+        recipient: {
+          email: target.email,
+          userIds: target.userIds,
+          lineIds: target.items.map((item) => String(item.lineId)),
+          preferences,
+          requireSystemAlerts: options.requireSystemAlerts,
+        },
+      },
     );
   }
-  // Separate BCC-only archive envelope: complete event, once, even if every user opted out.
-  if (archiveEmail)
-    deliveries.push(
-      sendMail({
+  // An archive is sent only when explicitly configured.
+  if (sendArchive && archiveEmail)
+    await queueMail(
+      db,
+      `${eventKey}:archive`,
+      {
         bcc: archiveEmail,
         ...template({ loan: populated, role: 'owner' }),
-      }),
+      },
+      options.expiresAt,
+      baseValidity,
     );
-  for (const result of await Promise.allSettled(deliveries))
-    if (result.status === 'rejected')
-      logger.error('Loan mail delivery failed: %o', result.reason);
+  await processMailOutbox(db);
 }
