@@ -35,7 +35,21 @@ function LoanItem({ loan, isOwner, refresh }) {
       : '';
   const hasVehicle = loan.items?.some((item) => item.kind === 'vehicle');
   const hasEquipment = loan.items?.some((item) => item.kind !== 'vehicle');
-  const requestKind = hasVehicle ? (hasEquipment ? 'mixed' : 'vehicle') : null;
+  const requestKind = hasVehicle
+    ? hasEquipment
+      ? 'mixed'
+      : 'vehicle'
+    : hasEquipment
+      ? 'equipment'
+      : null;
+  const requesterActors = [loan.requestedBy, loan.requesterIdentity];
+  const requester =
+    requesterActors.find((actor) => actor?.firstName || actor?.lastName) ||
+    requesterActors.find((actor) => actor?.username);
+  const requesterName =
+    [requester?.firstName, requester?.lastName].filter(Boolean).join(' ') ||
+    requester?.username ||
+    t('loans.requester_unknown');
 
   const cancelLoan = async () => {
     setActionError('');
@@ -107,6 +121,11 @@ function LoanItem({ loan, isOwner, refresh }) {
             {loan.owner?.name} → {loan.borrower?.name}{' '}
             {!hasVehicle && period && `: ${period}`}
           </div>
+          {hasVehicle && (
+            <div className="mt-1">
+              <strong>{t('loans.requester_label')} :</strong> {requesterName}
+            </div>
+          )}
           {hasVehicle && period && (
             <div className="mt-1 loan-request-period">
               <strong>{t('loans.requested_slot')} :</strong> {period}

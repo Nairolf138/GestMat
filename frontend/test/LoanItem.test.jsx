@@ -26,8 +26,21 @@ const renderBorrowerLoan = (overrides = {}) =>
 describe('LoanItem borrower actions', () => {
   it('keeps a day-based equipment loan date-only', () => {
     renderBorrowerLoan({ status: 'pending' });
+    expect(screen.getByText('Demande de matériel')).toBeInTheDocument();
     expect(screen.getByText(/10\/01\/2020 – 12\/01\/2020/)).toBeInTheDocument();
     expect(screen.queryByText('Créneau demandé')).not.toBeInTheDocument();
+  });
+
+  it('uses the saved requester identity when the current account has no name', () => {
+    renderBorrowerLoan({
+      status: 'pending',
+      requestedBy: { username: 'jmartin' },
+      requesterIdentity: { firstName: 'Jeanne', lastName: 'Martin' },
+      items: [{ kind: 'vehicle', vehicle: { name: 'Camion' } }],
+    });
+    expect(screen.getByText('Demandeur :').parentElement).toHaveTextContent(
+      'Jeanne Martin',
+    );
   });
 
   it('shows cancel for a pending borrower request even after the start date', () => {

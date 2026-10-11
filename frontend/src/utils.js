@@ -51,6 +51,29 @@ export const formatLoanItemLabel = (item) => {
   return `${name}${quantity ? ` x${quantity}` : ''}`;
 };
 
+export const getLoanEquipmentTypeKey = (item) => {
+  const type =
+    item?.equipmentType ||
+    item?.equipment?.type ||
+    item?.resourceIdentity?.type;
+  if (typeof type !== 'string') return null;
+  const normalized = type
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toLowerCase();
+  return (
+    {
+      son: 'sound',
+      lumiere: 'light',
+      plateau: 'stage',
+      video: 'video',
+      autre: 'other',
+      autres: 'other',
+    }[normalized] || null
+  );
+};
+
 export const ALL_TYPES = ['Son', 'Lumière', 'Plateau', 'Vidéo', 'Autre'];
 
 const roleMap = {

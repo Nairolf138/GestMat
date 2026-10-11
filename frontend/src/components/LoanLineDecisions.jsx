@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api';
 import Alert from '../Alert.jsx';
-import { formatLoanItemLabel } from '../utils';
+import { formatLoanItemLabel, getLoanEquipmentTypeKey } from '../utils';
 import { formatDate } from '../utils/dateFormat';
 
 const actorName = (actor) =>
@@ -39,9 +39,6 @@ export default function LoanLineDecisions({ loan, refresh }) {
       item.permissions?.canDecide &&
       item.decision?.status === 'pending',
   );
-  const hasMixedKinds =
-    loan.items?.some((item) => item.kind === 'vehicle') &&
-    loan.items?.some((item) => item.kind !== 'vehicle');
   const submit = async (event) => {
     event.preventDefault();
     if (!decisions.length || saving) return;
@@ -75,19 +72,19 @@ export default function LoanLineDecisions({ loan, refresh }) {
             item.permissions?.canDecide &&
             decision.status === 'pending';
           const isVehicle = item.kind === 'vehicle';
+          const equipmentTypeKey = isVehicle
+            ? null
+            : getLoanEquipmentTypeKey(item);
           return (
-            <li
-              className={`list-group-item ${isVehicle ? 'loan-line-vehicle' : ''}`}
-              key={lineId}
-            >
+            <li className="list-group-item loan-line-resource" key={lineId}>
               <div>
-                {(isVehicle || hasMixedKinds) && (
-                  <span className="loan-line-kind me-2">
-                    {t(
-                      `loans.resource_kind.${isVehicle ? 'vehicle' : 'equipment'}`,
-                    )}
-                  </span>
-                )}
+                <span className="loan-line-kind me-2">
+                  {isVehicle
+                    ? t('loans.resource_kind.vehicle')
+                    : equipmentTypeKey
+                      ? t(`equipments.add.types.${equipmentTypeKey}`)
+                      : t('loans.resource_kind.equipment')}
+                </span>
                 <strong>{formatLoanItemLabel(item)}</strong> —{' '}
                 {t(`loans.status.${decision.status}`)}
               </div>

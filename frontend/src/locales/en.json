@@ -515,6 +515,7 @@
     "review_lines": "Review equipment",
     "request_kind": {
       "vehicle": "Vehicle reservation",
+      "equipment": "Equipment request",
       "mixed": "Equipment and vehicle request"
     },
     "resource_kind": {
@@ -522,6 +523,8 @@
       "equipment": "Equipment"
     },
     "requested_slot": "Requested time slot",
+    "requester_label": "Requested by",
+    "requester_unknown": "Not provided",
     "line_decisions_form": "Decisions by line",
     "vehicle_decision": {
       "accept": "Confirm reservation",
