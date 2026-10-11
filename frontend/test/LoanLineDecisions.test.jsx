@@ -109,3 +109,39 @@ it('shows the original actor and handles a stale decision failure without losing
     'accepted',
   );
 });
+
+it('distinguishes a vehicle from equipment in a mixed decision without adding x1', () => {
+  render(
+    <LoanLineDecisions
+      loan={{
+        _id: 'mixed',
+        status: 'pending',
+        items: [
+          {
+            lineId: 'van',
+            kind: 'vehicle',
+            vehicle: { name: 'Camion', registrationNumber: 'AB-123-CD' },
+            decision: { status: 'pending' },
+            permissions: { canDecide: true },
+          },
+          {
+            lineId: 'speaker',
+            kind: 'equipment',
+            equipment: { name: 'Enceinte' },
+            quantity: 2,
+            decision: { status: 'pending' },
+            permissions: { canDecide: true },
+          },
+        ],
+      }}
+      refresh={vi.fn()}
+    />,
+  );
+  expect(screen.getByText('Véhicule')).toBeTruthy();
+  expect(screen.getByText('Matériel')).toBeTruthy();
+  expect(
+    screen.getByLabelText('Décision pour Camion (AB-123-CD)'),
+  ).toBeTruthy();
+  expect(screen.getByLabelText('Décision pour Enceinte x2')).toBeTruthy();
+  expect(screen.queryByText(/Camion.*x1/)).toBeNull();
+});

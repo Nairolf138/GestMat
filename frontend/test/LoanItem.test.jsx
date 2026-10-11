@@ -24,6 +24,12 @@ const renderBorrowerLoan = (overrides = {}) =>
   );
 
 describe('LoanItem borrower actions', () => {
+  it('keeps a day-based equipment loan date-only', () => {
+    renderBorrowerLoan({ status: 'pending' });
+    expect(screen.getByText(/10\/01\/2020 – 12\/01\/2020/)).toBeInTheDocument();
+    expect(screen.queryByText('Créneau demandé')).not.toBeInTheDocument();
+  });
+
   it('shows cancel for a pending borrower request even after the start date', () => {
     renderBorrowerLoan({ status: 'pending' });
 

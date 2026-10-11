@@ -39,6 +39,9 @@ export default function LoanLineDecisions({ loan, refresh }) {
       item.permissions?.canDecide &&
       item.decision?.status === 'pending',
   );
+  const hasMixedKinds =
+    loan.items?.some((item) => item.kind === 'vehicle') &&
+    loan.items?.some((item) => item.kind !== 'vehicle');
   const submit = async (event) => {
     event.preventDefault();
     if (!decisions.length || saving) return;
@@ -61,7 +64,7 @@ export default function LoanLineDecisions({ loan, refresh }) {
     <form
       onSubmit={submit}
       className="mt-2"
-      aria-label="Décisions par matériel"
+      aria-label={t('loans.line_decisions_form')}
     >
       <ul className="list-group mb-2">
         {(loan.items || []).map((item, index) => {
@@ -71,9 +74,20 @@ export default function LoanLineDecisions({ loan, refresh }) {
             !loan.archived &&
             item.permissions?.canDecide &&
             decision.status === 'pending';
+          const isVehicle = item.kind === 'vehicle';
           return (
-            <li className="list-group-item" key={lineId}>
+            <li
+              className={`list-group-item ${isVehicle ? 'loan-line-vehicle' : ''}`}
+              key={lineId}
+            >
               <div>
+                {(isVehicle || hasMixedKinds) && (
+                  <span className="loan-line-kind me-2">
+                    {t(
+                      `loans.resource_kind.${isVehicle ? 'vehicle' : 'equipment'}`,
+                    )}
+                  </span>
+                )}
                 <strong>{formatLoanItemLabel(item)}</strong> —{' '}
                 {t(`loans.status.${decision.status}`)}
               </div>
@@ -105,8 +119,16 @@ export default function LoanLineDecisions({ loan, refresh }) {
                       disabled={saving}
                     >
                       <option value="">Ne pas décider maintenant</option>
-                      <option value="accepted">Accepter toute la ligne</option>
-                      <option value="refused">Refuser toute la ligne</option>
+                      <option value="accepted">
+                        {isVehicle
+                          ? t('loans.vehicle_decision.accept')
+                          : t('loans.equipment_decision.accept')}
+                      </option>
+                      <option value="refused">
+                        {isVehicle
+                          ? t('loans.vehicle_decision.refuse')
+                          : t('loans.equipment_decision.refuse')}
+                      </option>
                     </select>
                   </div>
                   <div className="col-md-8">

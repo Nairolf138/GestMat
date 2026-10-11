@@ -105,23 +105,30 @@ describe('Loans', () => {
     expect(screen.queryByRole('button', { name: 'Refuser' })).toBeNull();
   });
 
-  it('renders a vehicle loan item with registration number and fixed quantity', async () => {
+  it('identifies a vehicle approval and shows its requested hours without quantity', async () => {
     api.api.mockResolvedValue([
       {
         _id: 'l-veh',
         owner: { _id: 's1', name: 'S1' },
         borrower: { _id: 's2', name: 'S2' },
+        reservationMode: 'time',
+        timeZone: 'Europe/Paris',
+        startDate: '2026-10-16T07:00:00.000Z',
+        endDate: '2026-10-16T10:00:00.000Z',
         items: [
           {
+            lineId: 'veh1',
             kind: 'vehicle',
             vehicle: {
               _id: 'veh1',
               name: 'Camion atelier',
               registrationNumber: 'AB-123-CD',
             },
+            decision: { status: 'pending' },
+            permissions: { canDecide: true },
           },
         ],
-        status: 'accepted',
+        status: 'pending',
       },
     ]);
 
@@ -129,8 +136,18 @@ describe('Loans', () => {
 
     await waitFor(() => expect(api.api).toHaveBeenCalledWith('/loans'));
 
+    expect(screen.getByText('Réservation de véhicule')).toBeInTheDocument();
+    expect(screen.getByText('Véhicule')).toBeInTheDocument();
     expect(
-      screen.getByText('Camion atelier (AB-123-CD) x1'),
+      screen.getByText('Créneau demandé :').parentElement,
+    ).toHaveTextContent(/16\/10\/2026 09:00.*16\/10\/2026 12:00/);
+    expect(screen.getByText('Camion atelier (AB-123-CD)')).toBeInTheDocument();
+    expect(screen.queryByText(/Camion atelier.*x1/)).not.toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Décision pour Camion atelier (AB-123-CD)'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Confirmer la réservation' }),
     ).toBeInTheDocument();
   });
 
