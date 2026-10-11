@@ -46,15 +46,19 @@ it('sends independent whole-line decisions in one save and hides unauthorized co
   const refresh = vi.fn();
   render(<LoanLineDecisions loan={loan} refresh={refresh} />);
   expect(screen.getAllByRole('combobox')).toHaveLength(2);
+  const confirm = screen.getByRole('button', {
+    name: 'Valider les décisions sélectionnées',
+  });
+  expect(confirm.disabled).toBe(true);
   fireEvent.change(screen.getByLabelText('Décision pour MacAura x4'), {
     target: { value: 'accepted' },
   });
+  expect(api).not.toHaveBeenCalled();
   fireEvent.change(screen.getByLabelText('Décision pour Parfect x2'), {
     target: { value: 'refused' },
   });
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Enregistrer les décisions' }),
-  );
+  expect(confirm.disabled).toBe(false);
+  fireEvent.click(confirm);
   await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
   const payload = JSON.parse(api.mock.calls[0][1].body);
   expect(payload.decisions).toEqual([
@@ -95,7 +99,9 @@ it('shows the original actor and handles a stale decision failure without losing
     target: { value: 'accepted' },
   });
   fireEvent.click(
-    screen.getByRole('button', { name: 'Enregistrer les décisions' }),
+    screen.getByRole('button', {
+      name: 'Valider les décisions sélectionnées',
+    }),
   );
   expect(await screen.findByText('Ligne déjà traitée')).toBeTruthy();
   expect(refresh).not.toHaveBeenCalled();

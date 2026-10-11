@@ -28,7 +28,9 @@ function VehicleDetail() {
   const [loanForm, setLoanForm] = useState({
     borrower: defaultBorrowerId,
     startDate: '',
+    startTime: '',
     endDate: '',
+    endTime: '',
     note: '',
   });
 
@@ -48,6 +50,10 @@ function VehicleDetail() {
     typeof vehicle?.structure === 'string'
       ? vehicle.structure
       : vehicle?.structure?._id || '';
+  const ownerStructureName =
+    structures.find((structure) => structure._id === ownerStructureId)?.name ||
+    vehicle?.structure?.name ||
+    t('vehicles.detail.not_provided');
 
   const updateLoanField = (field, value) => {
     setLoanForm((prev) => ({ ...prev, [field]: value }));
@@ -63,13 +69,21 @@ function VehicleDetail() {
     if (
       !loanForm.borrower ||
       !loanForm.startDate ||
+      !loanForm.startTime ||
       !loanForm.endDate ||
+      !loanForm.endTime ||
       !ownerStructureId
     ) {
       setLoanFormError(t('vehicles.detail.request_missing_fields'));
       return;
     }
-    if (new Date(loanForm.startDate) >= new Date(loanForm.endDate)) {
+    const start = new Date(`${loanForm.startDate}T${loanForm.startTime}`);
+    const end = new Date(`${loanForm.endDate}T${loanForm.endTime}`);
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      start >= end
+    ) {
       setLoanFieldErrors({
         startDate: t('vehicles.detail.request_invalid_dates'),
         endDate: t('vehicles.detail.request_invalid_dates'),
@@ -80,8 +94,8 @@ function VehicleDetail() {
     const payload = {
       owner: ownerStructureId,
       borrower: loanForm.borrower,
-      startDate: new Date(loanForm.startDate).toISOString(),
-      endDate: new Date(loanForm.endDate).toISOString(),
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       note: loanForm.note,
       items: [{ kind: 'vehicle', vehicle: id }],
@@ -127,12 +141,12 @@ function VehicleDetail() {
       <Alert message={error?.message} />
       {isFetching && <Loading />}
       {!isFetching && vehicle && (
-        <div className="row g-4">
+        <div className="row g-4 vehicle-detail">
           <div className="col-lg-8">
             <div className="card shadow-sm">
               <div className="card-body">
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
+                <div className="row g-3">
+                  <div className="col-12 col-md-6 text-break">
                     <h1 className="h2 mb-1">{vehicle.name}</h1>
                     <p className="text-muted mb-2">
                       {[vehicle.brand, vehicle.model].filter(Boolean).join(' ')}
@@ -147,7 +161,7 @@ function VehicleDetail() {
                       {t(`vehicles.status.${vehicle.status || 'unavailable'}`)}
                     </p>
                   </div>
-                  <div className="text-end">
+                  <div className="col-12 col-md-6 text-break">
                     <p className="mb-1">
                       <strong>{t('vehicles.detail.location')}:</strong>{' '}
                       {vehicle.location || '—'}
@@ -158,10 +172,7 @@ function VehicleDetail() {
                     </p>
                     <p className="mb-0">
                       <strong>{t('vehicles.detail.structure')}:</strong>{' '}
-                      {typeof vehicle.structure === 'object'
-                        ? vehicle.structure?.name
-                        : vehicle.structure ||
-                          t('vehicles.detail.not_provided')}
+                      {ownerStructureName}
                     </p>
                   </div>
                 </div>
@@ -307,50 +318,64 @@ function VehicleDetail() {
                       </div>
                     )}
                   </div>
-                  <div className="row g-2">
-                    <div className="col-6">
-                      <label
-                        className="form-label"
-                        htmlFor="vehicle-loan-start"
-                      >
-                        {t('vehicles.detail.request_start_date')}
-                      </label>
-                      <input
-                        id="vehicle-loan-start"
-                        type="datetime-local"
-                        className={`form-control ${loanFieldErrors.startDate ? 'is-invalid' : ''}`}
-                        value={loanForm.startDate}
-                        onChange={(e) =>
-                          updateLoanField('startDate', e.target.value)
-                        }
-                        required
-                      />
-                      {loanFieldErrors.startDate && (
-                        <div className="invalid-feedback">
-                          {loanFieldErrors.startDate}
+                  <div className="row g-3">
+                    {['start', 'end'].map((boundary) => (
+                      <fieldset className="col-12" key={boundary}>
+                        <legend className="fs-6 fw-semibold mb-2">
+                          {t(`vehicles.detail.request_${boundary}`)}
+                        </legend>
+                        <div className="row g-2">
+                          <div className="col-12 col-sm-6 vehicle-booking-field">
+                            <label
+                              className="form-label"
+                              htmlFor={`vehicle-loan-${boundary}-date`}
+                            >
+                              {t('vehicles.detail.request_date')}
+                            </label>
+                            <input
+                              id={`vehicle-loan-${boundary}-date`}
+                              type="date"
+                              className={`form-control ${loanFieldErrors[`${boundary}Date`] ? 'is-invalid' : ''}`}
+                              value={loanForm[`${boundary}Date`]}
+                              onChange={(e) =>
+                                updateLoanField(
+                                  `${boundary}Date`,
+                                  e.target.value,
+                                )
+                              }
+                              required
+                            />
+                          </div>
+                          <div className="col-12 col-sm-6 vehicle-booking-field">
+                            <label
+                              className="form-label"
+                              htmlFor={`vehicle-loan-${boundary}-time`}
+                            >
+                              {t('vehicles.detail.request_time')}
+                            </label>
+                            <input
+                              id={`vehicle-loan-${boundary}-time`}
+                              type="time"
+                              step="60"
+                              className={`form-control ${loanFieldErrors[`${boundary}Date`] ? 'is-invalid' : ''}`}
+                              value={loanForm[`${boundary}Time`]}
+                              onChange={(e) =>
+                                updateLoanField(
+                                  `${boundary}Time`,
+                                  e.target.value,
+                                )
+                              }
+                              required
+                            />
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    <div className="col-6">
-                      <label className="form-label" htmlFor="vehicle-loan-end">
-                        {t('vehicles.detail.request_end_date')}
-                      </label>
-                      <input
-                        id="vehicle-loan-end"
-                        type="datetime-local"
-                        className={`form-control ${loanFieldErrors.endDate ? 'is-invalid' : ''}`}
-                        value={loanForm.endDate}
-                        onChange={(e) =>
-                          updateLoanField('endDate', e.target.value)
-                        }
-                        required
-                      />
-                      {loanFieldErrors.endDate && (
-                        <div className="invalid-feedback">
-                          {loanFieldErrors.endDate}
-                        </div>
-                      )}
-                    </div>
+                        {loanFieldErrors[`${boundary}Date`] && (
+                          <div className="text-danger small mt-1" role="alert">
+                            {loanFieldErrors[`${boundary}Date`]}
+                          </div>
+                        )}
+                      </fieldset>
+                    ))}
                   </div>
                   <div className="form-text">
                     {t('vehicles.detail.local_time_zone', {
@@ -370,19 +395,21 @@ function VehicleDetail() {
                       maxLength={500}
                     />
                   </div>
-                  <button
-                    type="submit"
-                    className="btn btn-primary mt-3"
-                    disabled={isSubmittingLoan}
-                  >
-                    {isSubmittingLoan
-                      ? t('vehicles.detail.request_submitting')
-                      : t('vehicles.detail.request_action')}
-                  </button>
+                  <div className="d-grid d-sm-block mt-3">
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={isSubmittingLoan}
+                    >
+                      {isSubmittingLoan
+                        ? t('vehicles.detail.request_submitting')
+                        : t('vehicles.detail.request_action')}
+                    </button>
+                  </div>
                 </form>
               </div>
               <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between gap-2 mb-2">
                   <h3 className="h5 mb-0">{t('vehicles.detail.history')}</h3>
                   <Link
                     to="/vehicles"
@@ -428,7 +455,7 @@ function VehicleDetail() {
             )}
             <div className="card shadow-sm">
               <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between gap-2 mb-3">
                   <h3 className="h5 mb-0">{t('vehicles.detail.edit_title')}</h3>
                   <button
                     type="button"

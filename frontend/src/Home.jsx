@@ -15,7 +15,6 @@ import HomeHeader from './components/HomeHeader.jsx';
 import ActivityRail from './components/ActivityRail.jsx';
 import Notifications from './components/Notifications.jsx';
 import OnboardingTour from './components/OnboardingTour.jsx';
-import { showToast } from './toast';
 import { formatDate } from './utils/dateFormat.js';
 
 function Home() {
@@ -26,7 +25,6 @@ function Home() {
   const location = useLocation();
   const [message, setMessage] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(true);
-  const [actionLoadingId, setActionLoadingId] = useState('');
   const [runTour, setRunTour] = useState(false);
 
   const structureId = useMemo(
@@ -121,63 +119,6 @@ function Home() {
     [isBorrowerLoan, isOwnerLoan, loans],
   );
 
-  const promptDecisionNote = useCallback(
-    (status) => {
-      if (!['accepted', 'refused'].includes(status)) return '';
-      const promptMessage = t('loans.decision_note_prompt', {
-        status: t(`loans.status.${status}`),
-      });
-      let lastInput = '';
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        // eslint-disable-next-line no-alert
-        const decisionNote = window.prompt(promptMessage, lastInput);
-        if (decisionNote === null) {
-          return null;
-        }
-        if (decisionNote.length <= 500) {
-          return decisionNote;
-        }
-        lastInput = decisionNote.slice(0, 500);
-        showToast(t('loans.decision_note_too_long'));
-      }
-    },
-    [t],
-  );
-
-  const updateLoanStatus = useCallback(
-    async (loanId, status) => {
-      const decisionNote = promptDecisionNote(status);
-      if (decisionNote === null) return;
-      setActionLoadingId(loanId);
-      setError('');
-      setMessage('');
-      try {
-        const trimmedDecisionNote =
-          typeof decisionNote === 'string' ? decisionNote.trim() : undefined;
-        const payload =
-          status === 'accepted' || status === 'refused'
-            ? { status, decisionNote: trimmedDecisionNote }
-            : { status };
-        await api(`/loans/${loanId}`, {
-          method: 'PUT',
-          body: JSON.stringify(payload),
-        });
-        setMessage(
-          t('home.status_update_success', {
-            status: t(`loans.status.${status}`),
-          }),
-        );
-        await refreshLoans();
-      } catch (err) {
-        setError(err.message || t('home.status_update_error'));
-      } finally {
-        setActionLoadingId('');
-      }
-    },
-    [promptDecisionNote, refreshLoans, t],
-  );
-
   const ownerActiveLoans = useMemo(
     () => loans.filter((l) => isOwnerLoan(l) && isActiveLoan(l)),
     [isActiveLoan, isOwnerLoan, loans],
@@ -229,8 +170,6 @@ function Home() {
         title: t('home.tabs.pending'),
         loans: pendingApprovals,
         emptyMessage: t('home.no_requests'),
-        onAccept: (loanId) => updateLoanStatus(loanId, 'accepted'),
-        onDecline: (loanId) => updateLoanStatus(loanId, 'refused'),
       },
       {
         key: 'ongoing',
@@ -245,7 +184,7 @@ function Home() {
         emptyMessage: t('home.no_loans'),
       },
     ],
-    [currentLoans, pendingApprovals, t, upcomingLoans, updateLoanStatus],
+    [currentLoans, pendingApprovals, t, upcomingLoans],
   );
 
   const formatDateLabel = useCallback(
@@ -505,9 +444,6 @@ function Home() {
         sections={tabSections}
         loading={loading}
         previewCount={previewCount}
-        onAccept={(loanId) => updateLoanStatus(loanId, 'accepted')}
-        onDecline={(loanId) => updateLoanStatus(loanId, 'refused')}
-        actionInProgressId={actionLoadingId}
       />
       <h2 className="h2">{t('home.shortcuts')}</h2>
       <div className="quick-actions">

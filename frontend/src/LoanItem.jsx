@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { api } from './api';
 import Alert from './Alert.jsx';
 import LoanLineDecisions from './components/LoanLineDecisions.jsx';
-import { formatLoanItemLabel, toLoanItemsPayload } from './utils';
+import { toLoanItemsPayload } from './utils';
 import { formatDate } from './utils/dateFormat.js';
-import { showToast } from './toast';
 
 function LoanItem({ loan, isOwner, refresh }) {
   const { t } = useTranslation();
@@ -33,41 +32,12 @@ function LoanItem({ loan, isOwner, refresh }) {
   const period =
     start && end ? `${formatDate(start)} – ${formatDate(end)}` : '';
 
-  const promptDecisionNote = (status) => {
-    if (!['accepted', 'refused'].includes(status)) return '';
-    const promptMessage = t('loans.decision_note_prompt', {
-      status: t(`loans.status.${status}`),
-    });
-    let lastInput = '';
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      // eslint-disable-next-line no-alert
-      const decisionNote = window.prompt(promptMessage, lastInput);
-      if (decisionNote === null) {
-        return null;
-      }
-      if (decisionNote.length <= 500) {
-        return decisionNote;
-      }
-      lastInput = decisionNote.slice(0, 500);
-      showToast(t('loans.decision_note_too_long'));
-    }
-  };
-
-  const changeStatus = async (status) => {
+  const cancelLoan = async () => {
     setActionError('');
-    const decisionNote = promptDecisionNote(status);
-    if (decisionNote === null) return;
-    const trimmedDecisionNote =
-      typeof decisionNote === 'string' ? decisionNote.trim() : undefined;
     try {
-      const payload =
-        status === 'accepted' || status === 'refused'
-          ? { status, decisionNote: trimmedDecisionNote }
-          : { status };
       await api(`/loans/${loan._id}`, {
         method: 'PUT',
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ status: 'cancelled' }),
       });
       refresh();
     } catch (err) {
@@ -108,10 +78,6 @@ function LoanItem({ loan, isOwner, refresh }) {
     }
   };
 
-  const cancelLoan = async () => {
-    await changeStatus('cancelled');
-  };
-
   const closedStatuses = ['cancelled', 'refused'];
   const borrowerCanModify =
     loan.permissions?.canEdit ?? (isFuture && loan.status === 'pending');
@@ -127,10 +93,6 @@ function LoanItem({ loan, isOwner, refresh }) {
         <div className="ms-2 me-auto">
           <div>
             {loan.owner?.name} → {loan.borrower?.name} {period && `: ${period}`}
-          </div>
-          <div>
-            {!loan.permissions &&
-              loan.items?.map((it) => formatLoanItemLabel(it)).join(', ')}
           </div>
           <div className="mt-1">
             <strong>{t('loans.note_label')}:</strong>{' '}
@@ -160,26 +122,7 @@ function LoanItem({ loan, isOwner, refresh }) {
           {t(`loans.status.${loan.status}`)}
         </span>
       </div>
-      {loan.permissions && <LoanLineDecisions loan={loan} refresh={refresh} />}
-      {!loan.permissions && isOwner && loan.status === 'pending' && (
-        <div className="mt-2">
-          <button
-            onClick={() => changeStatus('accepted')}
-            className="btn btn-success btn-sm me-2"
-          >
-            {t('loans.accept')}
-          </button>
-          <button
-            onClick={() => changeStatus('refused')}
-            className="btn btn-danger btn-sm me-2"
-          >
-            {t('loans.refuse')}
-          </button>
-          <button onClick={cancelLoan} className="btn btn-secondary btn-sm">
-            {t('loans.cancel')}
-          </button>
-        </div>
-      )}
+      <LoanLineDecisions loan={loan} refresh={refresh} />
       {!isOwner && (borrowerCanModify || borrowerCanCancel) && (
         <div className="mt-2">
           {borrowerCanModify && (

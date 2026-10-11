@@ -93,4 +93,37 @@ describe('Home upcoming loans', () => {
     const upcomingCards = container.querySelectorAll('.card.accepted');
     expect(upcomingCards.length).toBe(1);
   });
+
+  it('opens the line review instead of approving an entire pending request', async () => {
+    api.mockResolvedValueOnce([
+      {
+        ...baseLoan,
+        _id: 'multi-pending',
+        owner: { _id: 'struct1', name: 'Owner' },
+        borrower: { _id: 'other', name: 'Borrower' },
+        status: 'pending',
+        items: [
+          { equipment: { name: 'Eq1' }, quantity: 1 },
+          { equipment: { name: 'Eq2' }, quantity: 1 },
+        ],
+      },
+    ]);
+
+    render(
+      <AuthContext.Provider value={{ user }}>
+        <MemoryRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
+          <Home />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+
+    const review = await screen.findByRole('link', {
+      name: 'Examiner les équipements',
+    });
+    expect(review.getAttribute('href')).toBe('/loans/multi-pending');
+    expect(screen.queryByRole('button', { name: 'Accepter' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Refuser' })).toBeNull();
+  });
 });
