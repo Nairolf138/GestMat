@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatLoanDate } from './utils/dateFormat.js';
 
-function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
+function LoanSummaryItem({ loan, showDecisionLink = false }) {
   const { t } = useTranslation();
   const start = formatLoanDate(loan.startDate, loan);
   const end = formatLoanDate(loan.endDate, loan);
@@ -47,12 +47,6 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
     return null;
   }, [loan.endDate, t]);
 
-  const showActions =
-    !loan.permissions &&
-    (loan.hasPendingItems ?? loan.status === 'pending') &&
-    (typeof onAccept === 'function' || typeof onDecline === 'function');
-  const isProcessing = actionInProgressId === loan._id;
-
   return (
     <div className={`card ${loan.status}`}>
       <Link to={link} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -84,29 +78,10 @@ function LoanSummaryItem({ loan, onAccept, onDecline, actionInProgressId }) {
           {decisionNoteContent || t('loans.decision_note_not_provided')}
         </div>
       )}
-      {showActions && (
-        <div className="d-flex gap-2 flex-wrap mt-2">
-          {typeof onAccept === 'function' && (
-            <button
-              type="button"
-              className="btn btn-sm btn-success"
-              onClick={() => onAccept(loan._id)}
-              disabled={isProcessing}
-            >
-              {t('loans.accept')}
-            </button>
-          )}
-          {typeof onDecline === 'function' && (
-            <button
-              type="button"
-              className="btn btn-sm btn-danger"
-              onClick={() => onDecline(loan._id)}
-              disabled={isProcessing}
-            >
-              {t('loans.refuse')}
-            </button>
-          )}
-        </div>
+      {showDecisionLink && (
+        <Link to={link} className="btn btn-sm btn-outline-primary mt-2">
+          {t('loans.review_lines')}
+        </Link>
       )}
     </div>
   );

@@ -218,6 +218,26 @@ test('accept MacAura and refuse Parfect as whole lines, retain actor and release
   assert.equal(messages.length, count);
 });
 
+test('global acceptance and refusal are rejected for a multi-line request', async () => {
+  const loan = await create(['MacAura', 'Parfect']);
+  for (const status of ['accepted', 'refused']) {
+    await request(app)
+      .put(api(`/loans/${loan._id}`))
+      .set(token('light'))
+      .send({ status })
+      .expect(400);
+  }
+  const unchanged = (
+    await request(app)
+      .get(api(`/loans/${loan._id}`))
+      .set(token('light'))
+      .expect(200)
+  ).body;
+  assert.ok(
+    unchanged.items.every((item) => item.decision.status === 'pending'),
+  );
+});
+
 test('concurrent specialists preserve independent line decisions', async () => {
   const loan = await create(['MacAura', 'Sound']);
   await Promise.all([

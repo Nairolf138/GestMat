@@ -726,6 +726,13 @@ export async function updateLoanRequest(
           !['accepted', 'refused', 'cancelled'].includes(data.status as string)
         )
           throw badRequest('Invalid decision');
+        if (
+          ['accepted', 'refused'].includes(data.status as string) &&
+          oldLines.length > 1
+        )
+          throw badRequest(
+            'Decide each line of a multi-item request separately',
+          );
         decisions = [];
         for (const item of oldLines) {
           const rights = await lineRights(db, current, item, populated);

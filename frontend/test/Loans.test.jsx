@@ -33,33 +33,76 @@ describe('Loans', () => {
     vi.spyOn(window, 'alert').mockImplementation(() => {});
   });
 
-  it('updates loan status', async () => {
+  it('confirms an owner decision for one line without a global approval', async () => {
     api.api
       .mockResolvedValueOnce([
         {
           _id: 'l1',
           owner: { _id: 's1', name: 'S1' },
           borrower: { _id: 's2', name: 'S2' },
-          items: [{ equipment: { name: 'Eq1' }, quantity: 1 }],
+          permissions: { asOwner: true },
+          items: [
+            {
+              lineId: 'eq1',
+              equipment: { name: 'Eq1' },
+              quantity: 1,
+              decision: { status: 'pending' },
+              permissions: { canDecide: true },
+            },
+          ],
           status: 'pending',
         },
       ])
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([]);
 
-    const { getByText } = renderLoans();
+    renderLoans();
 
     await waitFor(() => expect(api.api).toHaveBeenCalled());
-    fireEvent.click(getByText('Accepter'));
+    fireEvent.change(screen.getByLabelText('Décision pour Eq1 x1'), {
+      target: { value: 'accepted' },
+    });
+    expect(api.api).toHaveBeenCalledTimes(1);
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Valider les décisions sélectionnées',
+      }),
+    );
     await waitFor(() =>
       expect(api.api).toHaveBeenCalledWith(
         '/loans/l1',
         expect.objectContaining({
           method: 'PUT',
-          body: JSON.stringify({ status: 'accepted', decisionNote: '' }),
+          body: JSON.stringify({
+            decisions: [
+              { lineId: 'eq1', status: 'accepted', expectedStatus: 'pending' },
+            ],
+          }),
         }),
       ),
     );
+  });
+
+  it('never offers global approval for a multi-equipment request without permission metadata', async () => {
+    api.api.mockResolvedValue([
+      {
+        _id: 'legacy-multi',
+        owner: { _id: 's1', name: 'S1' },
+        borrower: { _id: 's2', name: 'S2' },
+        items: [
+          { equipment: { name: 'Eq1' }, quantity: 1 },
+          { equipment: { name: 'Eq2' }, quantity: 1 },
+        ],
+        status: 'pending',
+      },
+    ]);
+
+    renderLoans();
+
+    await screen.findByText('Eq1 x1');
+    expect(screen.getByText('Eq2 x1')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Accepter' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Refuser' })).toBeNull();
   });
 
   it('renders a vehicle loan item with registration number and fixed quantity', async () => {

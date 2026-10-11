@@ -14,8 +14,13 @@ test('status mail targets only changed domains and keeps the deciding actor', as
   );
   f.messages.length = 0;
   await updateLoanRequest(f.db, f.user('sound'), loan._id.toString(), {
-    status: 'refused',
-    decisionNote: 'Indisponible',
+    decisions: [
+      {
+        lineId: loan.items[0].lineId,
+        status: 'refused',
+        note: 'Indisponible',
+      },
+    ],
   });
   assert.deepEqual(
     f.messages

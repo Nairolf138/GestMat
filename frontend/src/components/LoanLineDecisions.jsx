@@ -33,8 +33,15 @@ export default function LoanLineDecisions({ loan, refresh }) {
           }
         : {}),
     }));
+  const canDecideAny = loan.items?.some(
+    (item) =>
+      !loan.archived &&
+      item.permissions?.canDecide &&
+      item.decision?.status === 'pending',
+  );
   const submit = async (event) => {
     event.preventDefault();
+    if (!decisions.length || saving) return;
     setError('');
     setSaving(true);
     try {
@@ -123,10 +130,19 @@ export default function LoanLineDecisions({ loan, refresh }) {
           );
         })}
       </ul>
-      {!!decisions.length && (
-        <button type="submit" className="btn btn-primary" disabled={saving}>
-          {saving ? t('common.loading') : 'Enregistrer les décisions'}
-        </button>
+      {canDecideAny && (
+        <>
+          <p className="small text-muted mb-2">
+            {t('loans.line_decisions_hint')}
+          </p>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={saving || !decisions.length}
+          >
+            {saving ? t('common.loading') : t('loans.line_decisions_submit')}
+          </button>
+        </>
       )}
       <Alert message={error} onClose={() => setError('')} />
     </form>

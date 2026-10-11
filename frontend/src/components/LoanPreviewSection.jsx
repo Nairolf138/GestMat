@@ -10,9 +10,7 @@ function LoanPreviewSection({
   emptyMessage,
   previewCount = 5,
   counterLabel,
-  onAccept,
-  onDecline,
-  actionInProgressId,
+  showDecisionLink = false,
   loading = false,
 }) {
   const { t } = useTranslation();
@@ -36,9 +34,7 @@ function LoanPreviewSection({
             <LoanSummaryItem
               key={l._id}
               loan={l}
-              onAccept={onAccept}
-              onDecline={onDecline}
-              actionInProgressId={actionInProgressId}
+              showDecisionLink={showDecisionLink}
             />
           ))}
         {!loading && !loans.length && (

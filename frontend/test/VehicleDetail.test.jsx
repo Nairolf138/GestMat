@@ -5,6 +5,7 @@ import {
   waitFor,
   cleanup,
   fireEvent,
+  within,
 } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -59,7 +60,10 @@ describe('VehicleDetail', () => {
           <GlobalContext.Provider
             value={{
               notify: vi.fn(),
-              structures: [{ _id: 'borrower', name: 'Borrower' }],
+              structures: [
+                { _id: 'owner', name: 'Owner' },
+                { _id: 'borrower', name: 'Borrower' },
+              ],
             }}
           >
             <AuthContext.Provider
@@ -90,16 +94,30 @@ describe('VehicleDetail', () => {
     expect(screen.getByText('POL123')).toBeTruthy();
     expect(screen.getByText('Vidange ok')).toBeTruthy();
     expect(screen.getByText(/Prêt local/)).toBeTruthy();
+    expect(screen.getAllByText('Owner').length).toBeGreaterThan(0);
+    expect(screen.queryByText('owner')).toBeNull();
   });
 
   it('sends a same-day vehicle slot with precise hours', async () => {
     renderDetail();
     await screen.findByText('Camion atelier');
-    fireEvent.change(screen.getByLabelText('Début (date et heure)'), {
-      target: { value: '2099-01-01T09:00' },
+    const start = within(
+      screen.getByRole('group', { name: 'Début de la réservation' }),
+    );
+    const end = within(
+      screen.getByRole('group', { name: 'Fin de la réservation' }),
+    );
+    fireEvent.change(start.getByLabelText('Date'), {
+      target: { value: '2099-01-01' },
     });
-    fireEvent.change(screen.getByLabelText('Fin (date et heure)'), {
-      target: { value: '2099-01-01T12:00' },
+    fireEvent.change(start.getByLabelText('Heure'), {
+      target: { value: '09:00' },
+    });
+    fireEvent.change(end.getByLabelText('Date'), {
+      target: { value: '2099-01-01' },
+    });
+    fireEvent.change(end.getByLabelText('Heure'), {
+      target: { value: '12:00' },
     });
     fireEvent.click(
       screen.getByRole('button', { name: 'Demander ce véhicule' }),
@@ -114,5 +132,43 @@ describe('VehicleDetail', () => {
     expect(body.timeZone).toBe(
       Intl.DateTimeFormat().resolvedOptions().timeZone,
     );
+  });
+
+  it('requires both hours and rejects an end before the start', async () => {
+    renderDetail();
+    await screen.findByText('Camion atelier');
+    const start = within(
+      screen.getByRole('group', { name: 'Début de la réservation' }),
+    );
+    const end = within(
+      screen.getByRole('group', { name: 'Fin de la réservation' }),
+    );
+    fireEvent.change(start.getByLabelText('Date'), {
+      target: { value: '2099-01-01' },
+    });
+    fireEvent.change(end.getByLabelText('Date'), {
+      target: { value: '2099-01-01' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Demander ce véhicule' }),
+    );
+    expect(
+      screen.getByText('Merci de renseigner les champs obligatoires.'),
+    ).toBeTruthy();
+    expect(api.api.mock.calls.some(([path]) => path === '/loans')).toBe(false);
+    fireEvent.change(start.getByLabelText('Heure'), {
+      target: { value: '12:00' },
+    });
+    fireEvent.change(end.getByLabelText('Heure'), {
+      target: { value: '09:00' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Demander ce véhicule' }),
+    );
+    expect(
+      screen.getAllByText("L'heure de fin doit être après l'heure de début.")
+        .length,
+    ).toBeGreaterThan(0);
+    expect(api.api.mock.calls.some(([path]) => path === '/loans')).toBe(false);
   });
 });

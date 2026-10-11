@@ -6,9 +6,6 @@ function LoanSectionsTabs({
   sections = [],
   loading = false,
   previewCount = 5,
-  onAccept,
-  onDecline,
-  actionInProgressId,
 }) {
   const { t } = useTranslation();
   const [activeKey, setActiveKey] = useState(sections[0]?.key);
@@ -75,9 +72,7 @@ function LoanSectionsTabs({
         loans={sortedLoans}
         emptyMessage={activeSection?.emptyMessage}
         previewCount={previewCount}
-        onAccept={activeSection?.onAccept || onAccept}
-        onDecline={activeSection?.onDecline || onDecline}
-        actionInProgressId={actionInProgressId}
+        showDecisionLink={activeSection?.key === 'pending'}
         loading={loading}
         counterLabel={
           sortedLoans.length > previewCount
