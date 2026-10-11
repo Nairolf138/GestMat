@@ -458,6 +458,29 @@ async function notify(
         : { equipment: 'loanStatusChanges', vehicle: 'vehicleStatusChanges' },
       {
         eventKey: options.eventKey,
+        validity: {
+          kind: 'loan-event',
+          resourceId: idOf(loan),
+          revision: Number(loan.revision || 0),
+          eventType:
+            action === 'decision'
+              ? 'decision'
+              : action === 'cancelled'
+                ? 'cancelled'
+                : 'state',
+          ...(action === 'decision'
+            ? {
+                decisions: (loan.items || []).map((item) => ({
+                  lineId: String(item.lineId),
+                  status: String((item.decision as any)?.status),
+                  at: new Date((item.decision as any)?.at).toISOString(),
+                })),
+              }
+            : {}),
+          ...(action === 'cancelled'
+            ? { archivedAt: new Date(loan.archivedAt as Date).toISOString() }
+            : {}),
+        },
       },
     );
   } catch (err) {

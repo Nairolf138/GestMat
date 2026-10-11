@@ -316,7 +316,8 @@ async function sendReportEmail(
   structure: WithId<Structure>,
   recipients: string[],
 ): Promise<number> {
-  if (!recipients.length || report.sentAt || report.emailSuppressed) return 0;
+  if (!recipients.length || report.sentAt || report.emailSuppressed !== false)
+    return 0;
   const prefix = `report:${report._id}:recipient:`;
   const completed = await db
     .collection<{ _id: string; status: string }>('mailOutbox')
@@ -432,7 +433,11 @@ export async function generateAnnualReports(
         : null;
       if (existing) {
         skipped += 1;
-        if (sendEmails && !existing.sentAt && !existing.emailSuppressed)
+        if (
+          sendEmails &&
+          !existing.sentAt &&
+          existing.emailSuppressed === false
+        )
           emailed += await sendReportEmail(
             db,
             existing,

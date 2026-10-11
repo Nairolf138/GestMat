@@ -118,6 +118,156 @@ test('queued reminders are dropped after their date or source record changes', a
   );
 });
 
+test('a line decision survives an unrelated revision while stale creation and cancellation are handled', async (t) => {
+  const mongod = await MongoMemoryReplSet.create();
+  const client = new MongoClient(mongod.getUri());
+  await client.connect();
+  const originalSendMail = mailer.sendMail;
+  t.after(async () => {
+    mailer.sendMail = originalSendMail;
+    await client.close();
+    await mongod.stop();
+  });
+  const db = client.db();
+  const loanId = new ObjectId();
+  const firstAt = new Date();
+  const secondAt = new Date(firstAt.getTime() + 1000);
+  await db.collection('loanrequests').insertOne({
+    _id: loanId,
+    status: 'pending',
+    revision: 2,
+    items: [
+      { lineId: 'son', decision: { status: 'accepted', at: firstAt } },
+      { lineId: 'light', decision: { status: 'refused', at: secondAt } },
+    ],
+  });
+  const sent = [];
+  mailer.sendMail = async (message) => sent.push(message);
+  const resourceId = String(loanId);
+  await queueMail(
+    db,
+    'created',
+    { to: 'user@example.test', subject: 'Création', text: 'old' },
+    undefined,
+    {
+      kind: 'loan-event',
+      resourceId,
+      revision: 0,
+      eventType: 'state',
+    },
+  );
+  await queueMail(
+    db,
+    'first-decision',
+    { to: 'user@example.test', subject: 'Son', text: 'son accepted' },
+    undefined,
+    {
+      kind: 'loan-event',
+      resourceId,
+      revision: 1,
+      eventType: 'decision',
+      decisions: [
+        { lineId: 'son', status: 'accepted', at: firstAt.toISOString() },
+      ],
+    },
+  );
+  await queueMail(
+    db,
+    'second-decision',
+    { to: 'user@example.test', subject: 'Lumière', text: 'light refused' },
+    undefined,
+    {
+      kind: 'loan-event',
+      resourceId,
+      revision: 2,
+      eventType: 'decision',
+      decisions: [
+        { lineId: 'light', status: 'refused', at: secondAt.toISOString() },
+      ],
+    },
+  );
+  await processMailOutbox(db);
+  assert.deepEqual(
+    sent.map((mail) => mail.text),
+    ['son accepted', 'light refused'],
+  );
+  assert.equal(
+    await db
+      .collection('mailOutbox')
+      .findOne({ _id: 'created' })
+      .then((row) => row.status),
+    'expired',
+  );
+
+  const archivedAt = new Date();
+  await db.collection('loanrequests').updateOne(
+    { _id: loanId },
+    {
+      $set: { archived: true, archivedAt, status: 'cancelled' },
+    },
+  );
+  await queueMail(
+    db,
+    'late-edit',
+    { to: 'user@example.test', subject: 'Modification', text: 'stale edit' },
+    undefined,
+    {
+      kind: 'loan-event',
+      resourceId,
+      revision: 2,
+      eventType: 'state',
+    },
+  );
+  await queueMail(
+    db,
+    'cancellation',
+    { to: 'user@example.test', subject: 'Annulation', text: 'cancelled' },
+    undefined,
+    {
+      kind: 'loan-event',
+      resourceId,
+      revision: 2,
+      eventType: 'cancelled',
+      archivedAt: archivedAt.toISOString(),
+    },
+  );
+  await processMailOutbox(db);
+  assert.deepEqual(
+    sent.map((mail) => mail.text),
+    ['son accepted', 'light refused', 'cancelled'],
+  );
+  assert.equal(
+    await db
+      .collection('mailOutbox')
+      .findOne({ _id: 'late-edit' })
+      .then((row) => row.status),
+    'expired',
+  );
+  await db.collection('users').insertOne({ email: 'archive@example.test' });
+  await queueMail(
+    db,
+    'legacy-archive',
+    { bcc: 'archive@example.test', subject: 'Archive', text: 'all lines' },
+    undefined,
+    {
+      kind: 'loan-event',
+      resourceId,
+      revision: 2,
+      eventType: 'cancelled',
+      archivedAt: archivedAt.toISOString(),
+    },
+  );
+  await processMailOutbox(db);
+  assert.equal(sent.length, 3);
+  assert.equal(
+    await db
+      .collection('mailOutbox')
+      .findOne({ _id: 'legacy-archive' })
+      .then((row) => row.status),
+    'expired',
+  );
+});
+
 test('a queued loan mail is dropped when its recipient loses access', async (t) => {
   const mongod = await MongoMemoryReplSet.create();
   const client = new MongoClient(mongod.getUri());

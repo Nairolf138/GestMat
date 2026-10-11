@@ -239,7 +239,10 @@ function formatItems(items: LoanItem[] = []): { text: string; html: string } {
   return { text: textItems.join('\n'), html: htmlItems.join('') };
 }
 
-export function buildLoanSummary(loan: LoanRequest): {
+export function buildLoanSummary(
+  loan: LoanRequest,
+  scopedDecision = false,
+): {
   text: string;
   html: string;
 } {
@@ -274,7 +277,7 @@ export function buildLoanSummary(loan: LoanRequest): {
     `Demandeur : ${requester}\n` +
     `Début : ${start}\n` +
     `Fin : ${end}\n` +
-    `Statut : ${status}\n` +
+    `${scopedDecision ? 'Statut des lignes concernées' : 'Statut'} : ${status}\n` +
     `${itemsLabel} :\n${itemsText}` +
     (loan.note?.toString().trim() ? `\nNote : ${noteText}` : '');
 
@@ -285,7 +288,7 @@ export function buildLoanSummary(loan: LoanRequest): {
     `<li><strong>Demandeur :</strong> ${escapeHtml(requester)}</li>`,
     `<li><strong>Début :</strong> ${escapeHtml(start)}</li>`,
     `<li><strong>Fin :</strong> ${escapeHtml(end)}</li>`,
-    `<li><strong>Statut :</strong> ${escapeHtml(status)}</li>`,
+    `<li><strong>${scopedDecision ? 'Statut des lignes concernées' : 'Statut'} :</strong> ${escapeHtml(status)}</li>`,
     `<li><strong>${itemsLabel} :</strong><ul>${itemsHtml}</ul></li>`,
     ...(loan.note?.toString().trim()
       ? [`<li><strong>Note :</strong> ${noteHtml}</li>`]
@@ -662,7 +665,7 @@ export function loanStatusTemplate({
   appUrl,
 }: LoanStatusContext & { role?: LoanRecipientRole }): MailTemplate {
   const kind = requestKind(loan);
-  const { text, html } = buildLoanSummary(loan);
+  const { text, html } = buildLoanSummary(loan, status === 'decision');
   const hasDecisionNote =
     typeof loan.decisionNote === 'string' &&
     loan.decisionNote.trim().length > 0;
@@ -682,15 +685,15 @@ export function loanStatusTemplate({
     status === 'decision' ? statusLabel : undefined,
   );
   const loanLabel = getLoanLabel(loan);
+  const lineCount = (loan.items || []).length;
+  const decisionSubject = `Décision${lineCount > 1 ? 's' : ''} sur ${lineCount} ligne${lineCount > 1 ? 's' : ''} de la demande ${loanLabel}`;
 
   return renderLoanTemplate({
-    subject,
+    subject: status === 'decision' ? decisionSubject : subject,
     preamble,
     eventLine:
       status === 'decision'
-        ? statusLabel === 'décisions enregistrées'
-          ? `Des décisions ont été enregistrées pour la ${requestName(kind)} ${loanLabel}${actorLine}.`
-          : `La ${requestName(kind)} ${loanLabel} a été ${statusLabel}${actorLine}.`
+        ? `${lineCount} ligne${lineCount > 1 ? 's' : ''} de la demande ${loanLabel} ${lineCount > 1 ? 'ont' : 'a'} reçu une décision${actorLine}. Le détail de chaque ligne figure ci-dessous.`
         : `La ${requestName(kind)} ${loanLabel} est ${statusLabel}${actorLine}.`,
     action,
     summary: { text, html },

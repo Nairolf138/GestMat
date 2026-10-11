@@ -1,5 +1,6 @@
 import { Db, ObjectId } from 'mongodb';
-import { NODE_ENV, SMTP_URL } from '../config';
+import { createHash } from 'node:crypto';
+import { NODE_ENV, NOTIFY_EMAIL, SMTP_URL } from '../config';
 import logger from '../utils/logger';
 import { sendMail } from '../utils/sendMail';
 import { vehicleManagerIds } from '../utils/vehicleAccess';
@@ -49,6 +50,9 @@ export type MailValidity =
       kind: 'loan-event';
       resourceId: string;
       revision: number;
+      eventType?: 'state' | 'decision' | 'cancelled';
+      decisions?: { lineId: string; status: string; at: string }[];
+      archivedAt?: string;
       recipient?: LoanRecipientValidity;
     }
   | {
@@ -143,7 +147,8 @@ async function isStillRelevant(db: Db, entry: OutboxEntry, now: Date) {
   }
   if (validity.kind === 'annual-report') {
     const report = await db.collection('reports').findOne({ _id });
-    if (!report || report.emailSuppressed || !report.structureId) return false;
+    if (!report || report.emailSuppressed !== false || !report.structureId)
+      return false;
     const structure = await db
       .collection('structures')
       .findOne({ _id: report.structureId });
@@ -162,6 +167,16 @@ async function isStillRelevant(db: Db, entry: OutboxEntry, now: Date) {
     );
   }
   if (validity.kind !== 'vehicle-compliance') {
+    if (entry.message.bcc) {
+      const address = entry.message.bcc.trim();
+      const registered = await db.collection('users').findOne({
+        email: {
+          $regex: `^${address.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+          $options: 'i',
+        },
+      });
+      if (registered) return false;
+    }
     const date =
       validity.kind === 'loan-event' ? undefined : new Date(validity.date);
     const loan = await db.collection('loanrequests').findOne({
@@ -175,11 +190,39 @@ async function isStillRelevant(db: Db, entry: OutboxEntry, now: Date) {
           }),
     });
     if (!loan) return false;
-    if (
-      validity.kind === 'loan-event' &&
-      Number(loan.revision || 0) !== validity.revision
-    )
-      return false;
+    if (validity.kind === 'loan-event') {
+      if (validity.eventType === 'cancelled') {
+        if (
+          !loan.archived ||
+          loan.status !== 'cancelled' ||
+          !loan.archivedAt ||
+          new Date(loan.archivedAt).getTime() !==
+            new Date(validity.archivedAt || '').getTime()
+        )
+          return false;
+      } else if (validity.eventType === 'decision') {
+        if (
+          loan.archived ||
+          !validity.decisions?.length ||
+          !validity.decisions.every((decision) => {
+            const line = (loan.items || []).find(
+              (item: any) => String(item.lineId) === decision.lineId,
+            );
+            return (
+              line?.decision?.status === decision.status &&
+              Boolean(line.decision.at) &&
+              new Date(line.decision.at).getTime() ===
+                new Date(decision.at).getTime()
+            );
+          })
+        )
+          return false;
+      } else if (
+        loan.archived ||
+        Number(loan.revision || 0) !== validity.revision
+      )
+        return false;
+    }
     if (validity.kind === 'loan-overdue' && date && date >= now) return false;
     if (
       'lineIds' in validity &&
@@ -262,8 +305,7 @@ async function isStillRelevant(db: Db, entry: OutboxEntry, now: Date) {
 }
 
 export async function processMailOutbox(db: Db, limit = 50): Promise<number> {
-  // The development transport only logs messages. Keep them pending for a
-  // configured SMTP transport rather than reporting a false delivery.
+  // Keep queued messages pending until an SMTP transport is configured.
   if (!SMTP_URL && NODE_ENV !== 'test') return 0;
 
   const collection = db.collection<OutboxEntry>(COLLECTION);
@@ -306,6 +348,10 @@ export async function processMailOutbox(db: Db, limit = 50): Promise<number> {
 
     try {
       const { reportAttachment, ...message } = entry.message;
+      const messageDomain = (
+        NOTIFY_EMAIL || 'notifications@nairolfconcept.fr'
+      ).split('@')[1];
+      const messageId = `<${createHash('sha256').update(entry._id).digest('hex')}@${messageDomain}>`;
       if (reportAttachment) {
         const report = await db.collection('reports').findOne({
           _id: new ObjectId(reportAttachment.reportId),
@@ -313,12 +359,13 @@ export async function processMailOutbox(db: Db, limit = 50): Promise<number> {
         if (!report?.pdf) throw new Error('Report attachment is unavailable');
         await sendMail({
           ...message,
+          messageId,
           attachments: [
             { filename: reportAttachment.filename, content: report.pdf },
           ],
         });
       } else {
-        await sendMail(message);
+        await sendMail({ ...message, messageId });
       }
       await collection.updateOne(
         { _id: entry._id, status: 'sending' },

@@ -250,6 +250,19 @@ export async function deliverLoanNotification(
     options,
   );
   const archiveEmail = LOAN_ARCHIVE_EMAIL?.trim().toLowerCase();
+  const archiveAccount = archiveEmail
+    ? await db.collection('users').findOne({
+        email: {
+          $regex: `^${archiveEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+          $options: 'i',
+        },
+      })
+    : null;
+  if (archiveAccount)
+    logger.warn(
+      'Loan archive address belongs to a user account; archive copy skipped',
+    );
+  const sendArchive = Boolean(archiveEmail && !archiveAccount);
   const eventKey =
     options.eventKey ||
     `loan:${idOf(loan)}:${String(loan.revision ?? 0)}:${String(loan.status ?? 'unknown')}:${typeof preference === 'string' ? preference : preference.equipment}`;
@@ -263,7 +276,7 @@ export async function deliverLoanNotification(
       ? { equipment: preference, vehicle: preference }
       : preference;
   for (const target of targets) {
-    if (target.email === archiveEmail) continue;
+    if (sendArchive && target.email === archiveEmail) continue;
     const lineIds = new Set(target.items.map((item) => item.lineId));
     const scoped = {
       ...populated,
@@ -294,7 +307,7 @@ export async function deliverLoanNotification(
     );
   }
   // An archive is sent only when explicitly configured.
-  if (archiveEmail)
+  if (sendArchive && archiveEmail)
     await queueMail(
       db,
       `${eventKey}:archive`,

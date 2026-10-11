@@ -277,9 +277,10 @@ test('les décisions par ligne sont explicites dans les objets des mails', () =>
     status: 'decision',
     role: 'borrower',
   });
-  assert.match(vehicleMail.subject, /réservation de véhicule : confirmée/i);
+  assert.match(vehicleMail.subject, /décision sur 1 ligne de la demande/i);
   assert.doesNotMatch(vehicleMail.subject, /modifiée/i);
-  assert.match(equipmentMail.subject, /matériel : refusée/i);
+  assert.match(equipmentMail.subject, /décision sur 1 ligne de la demande/i);
+  assert.doesNotMatch(equipmentMail.text, /La demande .* a été refusée/);
   assert.match(equipmentMail.text, /Caméra 4K.*refusée.*Indisponible/);
 });
 

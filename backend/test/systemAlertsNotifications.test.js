@@ -239,3 +239,43 @@ test('a queued annual report is not sent after its recipient leaves the structur
     await mongod.stop();
   }
 });
+
+test('legacy preview reports without a delivery flag are never emailed on a later run', async () => {
+  const { db, client, mongod } = await createDb();
+  const mailer = require('../src/utils/sendMail');
+  const originalSendMail = mailer.sendMail;
+  try {
+    const structureId = new ObjectId();
+    await db.collection('structures').insertOne({
+      _id: structureId,
+      name: 'Structure A',
+      email: 'structure@example.test',
+    });
+    const {
+      generateAnnualReports,
+      getAnnualReportPeriod,
+    } = require('../src/services/reportService');
+    const period = getAnnualReportPeriod(new Date('2024-09-15T12:00:00Z'));
+    await db.collection('reports').insertOne({
+      structureId,
+      periodStart: period.start,
+      periodEnd: period.end,
+      recipients: ['structure@example.test'],
+      pdf: Buffer.from('legacy preview'),
+    });
+    const sent = [];
+    mailer.sendMail = async (message) => sent.push(message);
+    const result = await generateAnnualReports(db, {
+      now: new Date('2024-09-15T12:00:00Z'),
+      sendEmails: true,
+    });
+    assert.equal(result.skipped, 1);
+    assert.equal(result.emailed, 0);
+    assert.equal(sent.length, 0);
+    assert.equal(await db.collection('mailOutbox').countDocuments(), 0);
+  } finally {
+    mailer.sendMail = originalSendMail;
+    await client.close();
+    await mongod.stop();
+  }
+});
