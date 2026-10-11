@@ -43,7 +43,7 @@ export const formatLoanItemLabel = (item) => {
     const registrationSuffix = registrationNumber
       ? ` (${registrationNumber})`
       : '';
-    return `${vehicleName}${registrationSuffix} x1`;
+    return `${vehicleName}${registrationSuffix}`;
   }
   const name = item?.equipment?.name || item?.resourceIdentity?.name;
   if (!name) return '';

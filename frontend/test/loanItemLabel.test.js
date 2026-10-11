@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { formatLoanItemLabel } from '../src/utils.js';
 
 describe('formatLoanItemLabel', () => {
-  it('formats vehicle loan items with registration number and fixed quantity', () => {
+  it('formats vehicle loan items with registration number and no quantity', () => {
     expect(
       formatLoanItemLabel({
         kind: 'vehicle',
@@ -11,7 +11,7 @@ describe('formatLoanItemLabel', () => {
           registrationNumber: 'AB-123-CD',
         },
       }),
-    ).toBe('Camion atelier (AB-123-CD) x1');
+    ).toBe('Camion atelier (AB-123-CD)');
   });
 
   it('formats vehicle loan items without registration number', () => {
@@ -22,7 +22,7 @@ describe('formatLoanItemLabel', () => {
           name: 'Renault Kangoo',
         },
       }),
-    ).toBe('Renault Kangoo x1');
+    ).toBe('Renault Kangoo');
   });
 
   it('keeps a deleted vehicle identifiable from its booking snapshot', () => {
@@ -34,7 +34,7 @@ describe('formatLoanItemLabel', () => {
           registrationNumber: 'AB-123-CD',
         },
       }),
-    ).toBe('Camion atelier (AB-123-CD) x1');
+    ).toBe('Camion atelier (AB-123-CD)');
   });
 
   it('keeps equipment formatting unchanged', () => {

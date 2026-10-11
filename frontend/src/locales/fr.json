@@ -513,6 +513,24 @@
     "accept": "Accepter",
     "refuse": "Refuser",
     "review_lines": "Examiner les équipements",
+    "request_kind": {
+      "vehicle": "Réservation de véhicule",
+      "mixed": "Demande de matériel et de véhicule"
+    },
+    "resource_kind": {
+      "vehicle": "Véhicule",
+      "equipment": "Matériel"
+    },
+    "requested_slot": "Créneau demandé",
+    "line_decisions_form": "Décisions par ligne",
+    "vehicle_decision": {
+      "accept": "Confirmer la réservation",
+      "refuse": "Refuser la réservation"
+    },
+    "equipment_decision": {
+      "accept": "Accepter toute la ligne",
+      "refuse": "Refuser toute la ligne"
+    },
     "line_decisions_hint": "Choisissez les lignes à traiter, puis confirmez. Les autres restent en attente.",
     "line_decisions_submit": "Valider les décisions sélectionnées",
     "modify": "Modifier",

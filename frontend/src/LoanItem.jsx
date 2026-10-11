@@ -4,7 +4,7 @@ import { api } from './api';
 import Alert from './Alert.jsx';
 import LoanLineDecisions from './components/LoanLineDecisions.jsx';
 import { toLoanItemsPayload } from './utils';
-import { formatDate } from './utils/dateFormat.js';
+import { formatLoanDate } from './utils/dateFormat.js';
 
 function LoanItem({ loan, isOwner, refresh }) {
   const { t } = useTranslation();
@@ -30,7 +30,12 @@ function LoanItem({ loan, isOwner, refresh }) {
   };
 
   const period =
-    start && end ? `${formatDate(start)} – ${formatDate(end)}` : '';
+    start && end
+      ? `${formatLoanDate(start, loan)} – ${formatLoanDate(end, loan)}`
+      : '';
+  const hasVehicle = loan.items?.some((item) => item.kind === 'vehicle');
+  const hasEquipment = loan.items?.some((item) => item.kind !== 'vehicle');
+  const requestKind = hasVehicle ? (hasEquipment ? 'mixed' : 'vehicle') : null;
 
   const cancelLoan = async () => {
     setActionError('');
@@ -89,11 +94,27 @@ function LoanItem({ loan, isOwner, refresh }) {
 
   return (
     <li className="list-group-item">
-      <div className="d-flex justify-content-between align-items-start">
-        <div className="ms-2 me-auto">
+      <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div className="ms-2 me-auto loan-request-heading">
+          {requestKind && (
+            <div className="mb-2">
+              <span className={`loan-request-kind ${requestKind}`}>
+                {t(`loans.request_kind.${requestKind}`)}
+              </span>
+            </div>
+          )}
           <div>
-            {loan.owner?.name} → {loan.borrower?.name} {period && `: ${period}`}
+            {loan.owner?.name} → {loan.borrower?.name}{' '}
+            {!hasVehicle && period && `: ${period}`}
           </div>
+          {hasVehicle && period && (
+            <div className="mt-1 loan-request-period">
+              <strong>{t('loans.requested_slot')} :</strong> {period}
+              {loan.reservationMode === 'time' &&
+                loan.timeZone &&
+                ` (${loan.timeZone})`}
+            </div>
+          )}
           <div className="mt-1">
             <strong>{t('loans.note_label')}:</strong>{' '}
             <span style={{ whiteSpace: 'pre-wrap' }}>

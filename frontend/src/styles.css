@@ -808,6 +808,36 @@ body {
   align-items: center;
 }
 
+.loan-request-heading {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.loan-request-kind,
+.loan-line-kind {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.loan-request-kind.mixed {
+  background: color-mix(in srgb, var(--color-secondary) 15%, transparent);
+  color: var(--color-secondary);
+}
+
+.loan-request-period {
+  line-height: 1.5;
+}
+
+.loan-line-vehicle {
+  box-shadow: inset 4px 0 var(--color-primary);
+}
+
 .loan-chips {
   display: flex;
   gap: var(--spacing-xs);

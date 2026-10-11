@@ -513,6 +513,24 @@
     "accept": "Accept",
     "refuse": "Refuse",
     "review_lines": "Review equipment",
+    "request_kind": {
+      "vehicle": "Vehicle reservation",
+      "mixed": "Equipment and vehicle request"
+    },
+    "resource_kind": {
+      "vehicle": "Vehicle",
+      "equipment": "Equipment"
+    },
+    "requested_slot": "Requested time slot",
+    "line_decisions_form": "Decisions by line",
+    "vehicle_decision": {
+      "accept": "Confirm reservation",
+      "refuse": "Decline reservation"
+    },
+    "equipment_decision": {
+      "accept": "Accept entire line",
+      "refuse": "Decline entire line"
+    },
     "line_decisions_hint": "Choose the lines to process, then confirm. Other lines remain pending.",
     "line_decisions_submit": "Confirm selected decisions",
     "modify": "Modify",
